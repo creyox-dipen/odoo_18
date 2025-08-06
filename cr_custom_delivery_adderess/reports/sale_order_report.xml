@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <template id="inherited_saleorder_report_id" inherit_id="sale.report_saleorder_document">
+        <xpath expr="//t[@t-if='doc.partner_shipping_id != doc.partner_invoice_id']" position="after">
+            <div>
+                <strong>Shipping Address</strong>
+                <br/>
+                <span>
+                    <t t-esc="doc.partner_id.display_name"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="doc.custom_street"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="doc.custom_street2"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="doc.custom_state_id.name"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="doc.custom_zip"/>
+                </span>
+                <span>
+                    <t t-esc="doc.custom_city"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="doc.custom_country_id.name"/>
+                </span>
+            </div>
+        </xpath>
+
+        <xpath expr="//t[@t-if='doc.partner_shipping_id == doc.partner_invoice_id                              and doc.partner_invoice_id != doc.partner_id                              or doc.partner_shipping_id != doc.partner_invoice_id']"
+               position="after">
+            <t t-else="">
+                <t t-set="information_block">
+                    <div>
+                        <strong>Shipping Address</strong>
+                        <br/>
+                        <span>
+                            <t t-esc="doc.partner_id.display_name"/>
+                        </span>
+                        <br/>
+                        <span>
+                            <t t-esc="doc.custom_street"/>
+                        </span>
+                        <br/>
+                        <span>
+                            <t t-esc="doc.custom_street2"/>
+                        </span>
+                        <br/>
+                        <span>
+                            <t t-esc="doc.custom_state_id.name"/>
+                        </span>
+                        <br/>
+                        <span>
+                            <t t-esc="doc.custom_zip"/>
+                        </span>
+                        <span>
+                            <t t-esc="doc.custom_city"/>
+                        </span>
+                        <br/>
+                        <span>
+                            <t t-esc="doc.custom_country_id.name"/>
+                        </span>
+                    </div>
+                </t>
+            </t>
+        </xpath>
+    </template>
+</odoo>

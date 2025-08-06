@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <!--  customizing shipping address in delivery slip   -->
+    <template id="inherited_delivery_slip_report_id" inherit_id="stock.report_delivery_document">
+        <xpath expr="//div[@t-out='o.move_ids[0].partner_id or o.partner_id']" position="replace">
+            <div>
+                <span>
+                    <t t-esc="o.partner_id.display_name"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_street"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_street2"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_state_id.name"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_city"/>
+                </span>
+                <span>
+                    <t t-esc="o.custom_zip"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_country_id.name"/>
+                </span>
+                <br/>
+            </div>
+        </xpath>
+    </template>
+
+    <!--  customizing shipping address in picking operation  -->
+    <template id="inherited_picking_operation_report_id" inherit_id="stock.report_picking">
+        <xpath expr="//div[@t-out='o.move_ids[0].partner_id or o.partner_id']" position="replace">
+            <div>
+                <span>
+                    <t t-esc="o.partner_id.display_name"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_street"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_street2"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_state_id.name"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_city"/>
+                </span>
+                <span>
+                    <t t-esc="o.custom_zip"/>
+                </span>
+                <br/>
+                <span>
+                    <t t-esc="o.custom_country_id.name"/>
+                </span>
+                <br/>
+            </div>
+        </xpath>
+    </template>
+</odoo>

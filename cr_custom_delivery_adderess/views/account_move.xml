@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="custom_address_account_move_from_view_id" model="ir.ui.view">
+        <field name="name">inherited account move form view</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@id='header_left_group']//div" position="after">
+                <div class="o_address_format">
+                    <field name="custom_street" placeholder="Street..." class="o_address_street"/>
+                    <field name="custom_street2" placeholder="Street 2..." class="o_address_street"/>
+                    <field name="custom_city" placeholder="City" class="o_address_city"/>
+                    <field name="custom_state_id" placeholder="State" class="o_address_state"/>
+                    <field name="custom_zip" placeholder="Zip" class="o_address_zip"/>
+                    <div name="partner_address_country" class="d-flex justify-content-between">
+                        <field name="custom_country_id" placeholder="Country" class="o_address_country"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

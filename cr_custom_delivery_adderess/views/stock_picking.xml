@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="custom_address_stock_picking_from_view_id" model="ir.ui.view">
+        <field name="name">inherited stock picking form view</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <div class="o_address_format">
+                    <field name="custom_street" placeholder="Street..." class="o_address_street"/>
+                    <field name="custom_street2" placeholder="Street 2..." class="o_address_street"/>
+                    <field name="custom_state_id" placeholder="State" class="o_address_state"/>
+                    <field name="custom_zip" placeholder="Zip" class="o_address_zip"/>
+                    <field name="custom_city" placeholder="City" class="o_address_city"/>
+                    <div name="partner_address_country" class="d-flex justify-content-between">
+                        <field name="custom_country_id" placeholder="Country" class="o_address_country"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
