@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="find_duplicate_form_id" model="ir.ui.view">
+        <field name="name">find duplicate form</field>
+        <field name="model">duplicate.wiz</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="is_selected_records"/>
+                        <field name="field_ids"/>
+                    </group>
+                    <footer>
+                        <button type="object" string="Find Duplicate Records" class="oe_highlight"
+                                name="action_find_duplicates"/>
+                        <button type="object" class="oe_highlight" string="Cancel" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>
+        <!--    <record id="find_duplicate_form_id" model="ir.ui.view">-->
+        <!--        <field name="name">find duplicate form</field>-->
+        <!--        <field name="model">find.duplicate</field>-->
+        <!--        <field name="arch" type="xml">-->
+        <!--            <form>-->
+        <!--                <sheet>-->
+        <!--                    <field name="action"/>-->
+        <!--                    <field name=""/>-->
+        <!--                    <footer>-->
+        <!--                        <button type="object" string="Merge Data" class="oe_highlight" name="merge_data"/>-->
+        <!--                        <button type="object" class="oe_highlight" string="Cancel" special="cancel"/>-->
+        <!--                    </footer>-->
+        <!--                </sheet>-->
+        <!--            </form>-->
+        <!--        </field>-->
+        <!--    </record>-->
+
