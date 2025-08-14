@@ -5,7 +5,7 @@
         <field name="name">find duplicate form</field>
         <field name="model">duplicate.wiz</field>
         <field name="arch" type="xml">
-            <form>
+            <form string="Find Duplicate Data">
                 <sheet>
                     <group>
                         <field name="is_selected_records"/>
@@ -21,21 +21,19 @@
         </field>
     </record>
 
+    <record id="merge_duplicate_data_form_id" model="ir.ui.view">
+        <field name="name">Merge Duplicate Data</field>
+        <field name="model">duplicate.wiz</field>
+        <field name="arch" type="xml">
+            <form string="Merge Duplicate Data">
+                <sheet>
+                    <field name="actions" widget="radio"/>
+                    <footer>
+                        <button type="object" string="Merge Data" class="oe_highlight" name="merge_data"/>
+                        <button type="object" class="oe_highlight" string="Cancel" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
 </odoo>
-        <!--    <record id="find_duplicate_form_id" model="ir.ui.view">-->
-        <!--        <field name="name">find duplicate form</field>-->
-        <!--        <field name="model">find.duplicate</field>-->
-        <!--        <field name="arch" type="xml">-->
-        <!--            <form>-->
-        <!--                <sheet>-->
-        <!--                    <field name="action"/>-->
-        <!--                    <field name=""/>-->
-        <!--                    <footer>-->
-        <!--                        <button type="object" string="Merge Data" class="oe_highlight" name="merge_data"/>-->
-        <!--                        <button type="object" class="oe_highlight" string="Cancel" special="cancel"/>-->
-        <!--                    </footer>-->
-        <!--                </sheet>-->
-        <!--            </form>-->
-        <!--        </field>-->
-        <!--    </record>-->
-
