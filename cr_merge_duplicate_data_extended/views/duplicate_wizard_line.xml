@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="duplicate_wiz_line_tree_view_id_1" model="ir.ui.view">
+        <field name="name">duplicate.wiz.line.tree</field>
+        <field name="model">duplicate.wiz.line</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="is_original"/>
+                <field name="record_id" readonly="1"/>
+                <field name="display_name" readonly="1"/>
+            </tree>
+        </field>
+    </record>
+</odoo>

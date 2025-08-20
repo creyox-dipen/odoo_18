@@ -17,13 +17,12 @@
     "depends": ["base"],
     "data": [
         "security/ir.model.access.csv",
-        "views/find_duplicate_wiz.xml",
         "views/res_partner.xml",
+        "views/find_duplicate_wiz.xml",
     ],
     # "images": ["static/description/banner.png"],
     "installable": True,
     "application": True,
     # "price": ,
     "currency": "USD",
-    # 'pre_init_hook': 'create_global_server_actions',
 }
