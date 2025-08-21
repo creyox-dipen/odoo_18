@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Part of Creyox Technologies.
-from odoo import models, fields
-
+from odoo import models
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'

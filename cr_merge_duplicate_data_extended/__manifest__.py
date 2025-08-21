@@ -20,6 +20,7 @@
         "views/res_partner.xml",
         "views/find_duplicate_wiz.xml",
         "views/merge_menu.xml",
+        "views/merge_access.xml",
     ],
     # "images": ["static/description/banner.png"],
     "installable": True,
