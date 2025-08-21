@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <record id="merge_data_menu_form_id" model="ir.ui.view">
+        <field name="name">Merge Data Form</field>
+        <field name="model">merge.menu.wiz</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="original_record"/>
+                    </group>
+                    <group>
+                        <field name="duplicate_record"/>
+                    </group>
+                    <group>
+                        <field name="actions" widget="radio"/>
+                    </group>
+                    <footer>
+                        <button type="object" string="Merge Data" class="oe_highlight" name="merge_records"/>
+                        <button type="object" class="oe_highlight" string="Cancel" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="merge_data_menu_action_id" model="ir.actions.act_window">
+        <field name="name">Merge Data</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">merge.menu.wiz</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem name="Merge Data" parent="base.menu_administration" id="merge_data_sub_menu_id" sequence="120"
+              action="merge_data_menu_action_id"/>
+
+</odoo>

@@ -27,7 +27,10 @@
         <field name="arch" type="xml">
             <form string="Merge Duplicate Data">
                 <sheet>
-                    <field name="actions" widget="radio"/>
+                    <group>
+                        <field name="actions" widget="radio"/>
+                    </group>
+
                     <field name="duplicate_lines">
                         <list editable="bottom">
                             <field name="is_original"/>

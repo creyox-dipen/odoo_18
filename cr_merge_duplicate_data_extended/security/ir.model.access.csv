@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 find_duplicate_wiz_id,find_duplicate_wiz,model_duplicate_wiz,,1,1,1,1
 duplicate_wiz_line_id,duplicate_wizard_line,model_duplicate_wiz_line,,1,1,1,1
+merge_data_wiz_id,merge_menu,model_merge_menu_wiz,,1,1,1,1

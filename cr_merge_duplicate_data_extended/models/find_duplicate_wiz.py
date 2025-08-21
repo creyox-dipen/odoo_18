@@ -2,6 +2,7 @@
 # Part of Creyox Technologies.
 
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 
 class DuplicateWiz(models.TransientModel):
     _name = "duplicate.wiz"
@@ -73,13 +74,29 @@ class DuplicateWiz(models.TransientModel):
 
     def merge_data(self):
         lines = self.duplicate_lines
-        if lines:
-            action_records = lines.filtered(lambda line: not line.is_original).mapped('record_id')
-            records = self.env['res.partner'].browse(action_records)
-            if self.actions == 'delete':
-                records.mapped(lambda rec: rec.unlink())
-            elif self.actions == 'archive':
-                records.write({'active': False})
+        if not lines:
+            return
+
+        # Step 1: Identify master + duplicates
+        original = lines.filtered(lambda l: l.is_original)
+        duplicates = lines.filtered(lambda l: not l.is_original)
+
+        if not original:
+            raise UserError("Please select at least one record as Original.")
+
+        # FIX: record_id is already an int
+        master_id = original[0].record_id
+        duplicate_ids = duplicates.mapped('record_id')
+
+        # Step 2: Reassign references safely
+        self._reassign_references('res.partner', master_id, duplicate_ids)
+
+        # Step 3: Apply chosen action to duplicates
+        records = self.env['res.partner'].browse(duplicate_ids)
+        if self.actions == 'delete':
+            records.unlink()
+        elif self.actions == 'archive':
+            records.write({'active': False})
 
     def create(self, vals):
         if vals.get("duplicate_lines"):
@@ -104,6 +121,30 @@ class DuplicateWiz(models.TransientModel):
             vals["duplicate_lines"] = new_lines
 
         return super().create(vals)
+
+    def _reassign_references(self, model_name, master_id, duplicate_ids):
+        """
+        Reassign all Many2one references of duplicates to master record.
+        Example: if partner B is duplicate of A,
+        then every field pointing to B will now point to A.
+        """
+        master_id = int(master_id)
+        duplicate_ids = [int(d) for d in duplicate_ids]
+
+        # 1. Find all fields that point to the given model
+        fields_to_fix = self.env['ir.model.fields'].search([
+            ('relation', '=', model_name),
+            ('ttype', '=', 'many2one')
+        ])
+
+        # 2. For each field, update references using ORM
+        for field in fields_to_fix:
+            related_model = self.env[field.model]
+
+            # Search for records where the field points to a duplicate
+            recs = related_model.search([(field.name, 'in', duplicate_ids)])
+            if recs:
+                recs.write({field.name: master_id})
 
 
 class DuplicateWizLine(models.TransientModel):
