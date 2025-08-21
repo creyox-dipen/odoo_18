@@ -21,7 +21,6 @@ class ResPartner(models.Model):
         }
 
     def merge_duplicate_data(self):
-        print(self.ids)
         return {
             'name': 'Merge Duplicate Data',
             'type': 'ir.actions.act_window',

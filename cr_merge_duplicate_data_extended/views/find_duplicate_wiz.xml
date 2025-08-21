@@ -28,12 +28,12 @@
             <form string="Merge Duplicate Data">
                 <sheet>
                     <field name="actions" widget="radio"/>
-                    <field name="duplicate_lines" options="{'no_create': True, 'no_create_edit': True, 'no_open': True}">
-                        <tree>
+                    <field name="duplicate_lines">
+                        <list editable="bottom">
                             <field name="is_original"/>
-                            <field name="record_id"/>
-                            <field name="display_name"/>
-                        </tree>
+                            <field name="record_id" readonly="1"/>
+                            <field name="display_name" readonly="1"/>
+                        </list>
                     </field>
                     <footer>
                         <button type="object" string="Merge Data" class="oe_highlight" name="merge_data"/>
