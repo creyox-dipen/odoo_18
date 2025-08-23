@@ -2,21 +2,8 @@
 
 <odoo>
 
-<!--    <record id="group_merge_duplicates" model="res.groups">-->
-<!--        <field name="name">Can Merge Duplicates</field>-->
-<!--        <field name="category_id" ref="base.module_category_tools"/>-->
-<!--    </record>-->
-
-<!--    <record id="inherit_user_group_view_id" model="ir.ui.view">-->
-<!--        <field name="name">res.users.form.inherit.merge</field>-->
-<!--        <field name="model">res.users</field>-->
-<!--        <field name="inherit_id" ref="base.user_groups_view"/>-->
-<!--        <field name="arch" type="xml">-->
-<!--            <xpath expr="//group[@groups='base.group_no_one' and @class='o_label_nowrap' and @invisible='sel_groups_1_10_11 != 1']/-->
-<!--            group[5]/field" position="after">-->
-<!--                <field name="can_merge_duplicates"/>-->
-<!--            </xpath>-->
-<!--        </field>-->
-<!--    </record>-->
+    <record id="merge_data_group_id" model="res.groups">
+        <field name="name">Can Merge Data</field>
+    </record>
 
 </odoo>

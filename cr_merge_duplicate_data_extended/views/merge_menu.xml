@@ -34,6 +34,6 @@
     </record>
 
     <menuitem name="Merge Data" parent="base.menu_administration" id="merge_data_sub_menu_id" sequence="120"
-              action="merge_data_menu_action_id"/>
+              action="merge_data_menu_action_id" groups="cr_merge_duplicate_data_extended.merge_data_group_id"/>
 
 </odoo>

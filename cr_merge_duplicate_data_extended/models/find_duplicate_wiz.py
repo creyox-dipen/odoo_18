@@ -82,7 +82,9 @@ class DuplicateWiz(models.TransientModel):
         duplicates = lines.filtered(lambda l: not l.is_original)
 
         if not original:
-            raise UserError("Please select at least one record as Original.")
+            raise UserError("Please select one record as Original.")
+        elif len(original) != 1:
+            raise UserError("Please select exactly one Original Record")
 
         # FIX: record_id is already an int
         master_id = original[0].record_id
@@ -130,7 +132,6 @@ class DuplicateWiz(models.TransientModel):
         """
         master_id = int(master_id)
         duplicate_ids = [int(d) for d in duplicate_ids]
-
         # 1. Find all fields that point to the given model
         fields_to_fix = self.env['ir.model.fields'].search([
             ('relation', '=', model_name),
@@ -140,7 +141,6 @@ class DuplicateWiz(models.TransientModel):
         # 2. For each field, update references using ORM
         for field in fields_to_fix:
             related_model = self.env[field.model]
-
             # Search for records where the field points to a duplicate
             recs = related_model.search([(field.name, 'in', duplicate_ids)])
             if recs:
