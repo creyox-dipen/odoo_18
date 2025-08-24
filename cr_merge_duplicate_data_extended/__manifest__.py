@@ -25,6 +25,6 @@
     # "images": ["static/description/banner.png"],
     "installable": True,
     "application": True,
-    # "price": ,
+    "price": 40,
     "currency": "USD",
 }

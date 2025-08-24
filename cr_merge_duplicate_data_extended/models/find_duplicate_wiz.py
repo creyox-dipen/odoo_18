@@ -29,7 +29,7 @@ class DuplicateWiz(models.TransientModel):
 
     def get_fields(self):
         model_id = self.env['ir.model'].search([('model', '=', 'res.partner')], limit=1)
-        return [('model_id', '=', model_id.id)]
+        return [('model_id', '=', model_id.id), ('ttype', '=', 'char')]
 
     def action_find_duplicates(self):
         """
