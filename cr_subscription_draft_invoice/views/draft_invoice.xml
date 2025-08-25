@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="inherit_sale_subscription_plan_form_view_id" model="ir.ui.view">
+        <field name="name">inherit sale subscription plan form</field>
+        <field name="model">sale.subscription.plan</field>
+        <field name="inherit_id" ref="sale_subscription.sale_subscription_plan_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_mail_template_id']" position="after">
+                <field name="is_draft"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

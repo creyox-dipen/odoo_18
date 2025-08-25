@@ -60,10 +60,10 @@
     How to hide repeated order lines for grid products in Odoo reports,
     How to improve sales quotation PDF layout in Odoo,
     """,
-    "depends": ['base', 'sale', 'product_matrix', 'sale_product_matrix'],
-    'data': [
-        'security/ir.model.access.csv',
-        'views/order_matrix.xml',
+    "depends": ["base", "sale", "product_matrix", "sale_product_matrix"],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/order_matrix.xml",
     ],
     "images": ["static/description/banner.png"],
     "installable": True,
