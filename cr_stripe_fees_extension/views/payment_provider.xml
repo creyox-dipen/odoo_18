@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<odoo>
+
+    <record id="inherit_payment_provider_form_view" model="ir.ui.view">
+        <field name="name">Inherited Payment Provider Form</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='configuration']" position="after">
+                <page name="fees" string="Fees">
+                    <group>
+                        <field name="is_extra_fees"/>
+                        <field name="fix_domestic_fees"/>
+                        <field name="var_domestic_fees"/>
+                        <field name="fix_international_fees"/>
+                        <field name="var_international_fees"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

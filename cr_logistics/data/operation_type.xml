@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="sequence_pallet_transfer" model="ir.sequence">
+        <field name="name">Pallet Transfer Sequence</field>
+        <field name="code">stock.picking.pallet_transfer</field>
+        <field name="prefix">PT</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="pallet_transfer_operation_type_id" model="stock.picking.type">
+        <field name="name">Pallet Transfer</field>
+        <field name="code">internal</field>
+        <field name="sequence_code">PT</field>
+        <field name="show_entire_packs" eval="True"/>
+        <field name="warehouse_id" ref="stock.warehouse0"/>
+        <field name="sequence_id" ref="sequence_pallet_transfer"/>
+    </record>
+</odoo>
