@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend Stripe inline form to show extra fees -->
+    <template id="stripe_inline_form_with_fees" inherit_id="payment_stripe.inline_form">
+        <!-- Calculate fees based on provider config and amount -->
+        <xpath expr="//div[@name='o_stripe_element_container']" position="after">
+            <t t-set="base_amount" t-value="amount"/>
+            <t t-set="total_fixed_fees" t-value="provider_sudo.fix_domestic_fees + provider_sudo.fix_international_fees"/>
+            <t t-set="total_percent_fees" t-value="((provider_sudo.var_domestic_fees + provider_sudo.var_international_fees) * base_amount) / 100"/>
+            <t t-set="fees" t-value="total_fixed_fees + total_percent_fees"/>
+
+            <div class="alert alert-info mt-2">
+                <span class="fw-bold">Extra Fees Applied:</span>
+                <t t-esc="fees"/>
+            </div>
+        </xpath>
+    </template>
+</odoo>

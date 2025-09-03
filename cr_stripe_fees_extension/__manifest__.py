@@ -14,11 +14,12 @@
     "description": """
         Stripe Fees Extension
     """,
-    "depends": ["base", "payment"],
+    "depends": ["base", "payment_stripe"],
     "data": [
         "security/ir.model.access.csv",
         "views/payment_provider.xml",
         "views/payment_transaction.xml",
+        "views/stripe_payment_fees_badge.xml",
     ],
     # "images": ["static/description/banner.png"],
     "installable": True,
