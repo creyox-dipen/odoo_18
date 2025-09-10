@@ -14,7 +14,7 @@
     "description": """
         Stripe ACH Payment Provider
     """,
-    "depends": ["base", "payment_stripe"],
+    "depends": ["base", "payment_stripe", "account"],
     "data": [
         "security/ir.model.access.csv",
         "views/account_move_views.xml",

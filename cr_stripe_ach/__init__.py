@@ -2,3 +2,4 @@
 # Part of Creyox Technologies.
 
 from . import models
+from . import controllers

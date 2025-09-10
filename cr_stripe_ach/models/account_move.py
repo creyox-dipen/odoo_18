@@ -8,31 +8,6 @@ from odoo.exceptions import UserError
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    # def action_pay_with_ach(self):
-    #     self.ensure_one()
-    #     provider = self.env['payment.provider'].search(
-    #         [('code', '=', 'stripe'), ('company_id', '=', self.company_id.id), ('state', '!=', 'disabled')], limit=1)
-    #     if not provider:
-    #         raise UserError('The Stripe payment provider is not configured or disabled.')
-    #     ach_method = self.env['payment.method'].search([('code', '=', 'ach_direct_debit')], limit=1)
-    #     if not ach_method:
-    #         raise UserError('The ACH payment method is not available.')
-    #     if ach_method.id not in provider.payment_method_ids.ids:
-    #         raise UserError('The Stripe provider does not support ACH.')
-    #     wizard = self.env['payment.link.wizard'].create({
-    #         'res_id': self.id,
-    #         'res_model': 'account.move',
-    #         'partner_id': self.partner_id.id,
-    #         'amount': self.amount_residual,
-    #         'currency_id': self.currency_id.id,
-    #     })
-    #     url = f"{wizard.link}&provider_id={provider.id}&payment_method_id={ach_method.id}"
-    #     return {
-    #         'type': 'ir.actions.act_url',
-    #         'target': 'new',
-    #         'url': url,
-    #     }
-
     def action_pay_with_ach(self):
         self.ensure_one()
 
@@ -50,7 +25,7 @@ class AccountMove(models.Model):
         tx_vals = {
             'provider_id': provider.id,
             'payment_method_id': ach_method.id,
-            'reference': self.name,
+            'reference': f'INV-{self.id}',
             'amount': self.amount_residual,
             'currency_id': self.currency_id.id,
             'partner_id': self.partner_id.id,
@@ -59,6 +34,7 @@ class AccountMove(models.Model):
         }
         tx = self.env['payment.transaction'].create(tx_vals)
         tx._set_pending()
+        # This reads Odoo’s configured website base URL (the domain + optional port + scheme), e.g.https://company.example.com or http://localhost:8069.
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         portal_url = self.get_portal_url()
         success_url = base_url + portal_url
@@ -77,8 +53,10 @@ class AccountMove(models.Model):
             'success_url': success_url,
             'cancel_url': cancel_url,
             # Flatten metadata as well:
+            'metadata[reference]': tx.reference,  # <--- ensures webhook can map it back
             'metadata[tx_id]': str(tx.id),
             'metadata[invoice_id]': str(self.id),
+            'payment_intent_data[description]': tx.reference,
         }
         if self.partner_id.email:
             payload['customer_email'] = self.partner_id.email
