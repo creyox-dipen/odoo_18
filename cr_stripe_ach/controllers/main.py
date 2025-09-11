@@ -82,28 +82,30 @@ from odoo.http import request
 from odoo.addons.payment_stripe.controllers.main import StripeController
 import logging, pprint
 from odoo.exceptions import UserError
-
 _logger = logging.getLogger(__name__)
-
-
 class StripeController(StripeController):
 
-    @http.route(StripeController._webhook_url, type='http', auth='public', methods=['POST'], csrf=False)
+    @http.route(StripeController._webhook_url, type="http", auth="public", methods=["POST"], csrf=False)
     def stripe_webhook(self):
-        """Intercept webhook to patch missing reference, then call base logic."""
         event = request.get_json_data()
-        stripe_object = event.get("data", {}).get("object", {})
+        # Pre-process ACH-specific data (inject reference if missing)
+        stripe_object = event["data"]["object"]
         metadata = stripe_object.get("metadata", {})
 
-        # PATCH: Inject reference if missing
-        if not stripe_object.get("description"):
-            reference = metadata.get("reference") or metadata.get("tx_id")
-            if reference:
-                stripe_object["description"] = reference
-                _logger.info("✅ Injected missing reference into stripe_object: %s", reference)
+        if not stripe_object.get("description") and metadata.get("tx_id"):
+            # Patch the object so Odoo base handler can find the transaction
+            stripe_object["description"] = metadata["tx_id"]
 
-        _logger.info("➡️ Forwarding to base Stripe webhook...")
-        _logger.debug("[ACH] Patched event:\n%s", pprint.pformat(event))
+        # Call Odoo’s original webhook handler
+        response = super().stripe_webhook()
+        # Post-process ACH finalization
+        if event["type"] in ("payment_intent.succeeded", "charge.succeeded"):
+            tx_id = metadata.get("tx_id")
+            _logger.info("tx id : %s",tx_id)
+            if tx_id:
+                tx = request.env["payment.transaction"].sudo().browse(int(tx_id))
+                if tx and tx.state not in ("done", "cancel"):
+                    tx._set_done()
+                    tx._finalize_post_processing()
 
-        # Call original logic with patched event still in request.json
-        return super(StripeController, self).stripe_webhook()
+        return response

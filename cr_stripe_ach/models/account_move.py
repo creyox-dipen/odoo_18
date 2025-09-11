@@ -53,9 +53,12 @@ class AccountMove(models.Model):
             'success_url': success_url,
             'cancel_url': cancel_url,
             # Flatten metadata as well:
-            'metadata[reference]': tx.reference,  # <--- ensures webhook can map it back
-            'metadata[tx_id]': str(tx.id),
-            'metadata[invoice_id]': str(self.id),
+            # 'metadata[reference]': tx.reference,  # <--- ensures webhook can map it back
+            # 'metadata[tx_id]': str(tx.id),
+            # 'metadata[invoice_id]': str(self.id),
+            'payment_intent_data[metadata][reference]': tx.reference,
+            'payment_intent_data[metadata][tx_id]': str(tx.id),
+            'payment_intent_data[metadata][invoice_id]': str(self.id),
             'payment_intent_data[description]': tx.reference,
         }
         if self.partner_id.email:
