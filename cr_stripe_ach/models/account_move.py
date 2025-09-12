@@ -22,18 +22,41 @@ class AccountMove(models.Model):
             raise UserError('The Stripe provider does not support ACH.')
         if self.currency_id.name != 'USD':
             raise UserError('ACH payments are only available in USD.')
-        tx_vals = {
-            'provider_id': provider.id,
-            'payment_method_id': ach_method.id,
-            'reference': f'INV-{self.id}',
-            'amount': self.amount_residual,
-            'currency_id': self.currency_id.id,
-            'partner_id': self.partner_id.id,
-            'invoice_ids': [(6, 0, [self.id])],
-            'state': 'draft',
-        }
-        tx = self.env['payment.transaction'].create(tx_vals)
-        tx._set_pending()
+
+        # let user repayment if payment not done yet
+        tx = self.env['payment.transaction'].search([
+            ('invoice_ids', 'in', self.ids),
+            ('provider_id', '=', provider.id),
+        ], limit=1, order="id desc")
+
+        if tx and tx.state in ['done']:
+            raise UserError("This invoice is already paid.")
+
+        if tx and tx.state in ['draft', 'pending', 'in_process']:
+            # Option 1: Reuse the existing transaction
+            tx.write({
+                'reference': f'INV-{self.id}',
+                'amount': self.amount_residual,
+                'currency_id': self.currency_id.id,
+                'partner_id': self.partner_id.id,
+            })
+            tx._set_pending()
+        else:
+            # Option 2: Create a new transaction
+            tx_vals = {
+                'provider_id': provider.id,
+                'payment_method_id': ach_method.id,
+                'reference': f'INV-{self.id}',
+                'amount': self.amount_residual,
+                'currency_id': self.currency_id.id,
+                'partner_id': self.partner_id.id,
+                'invoice_ids': [(6, 0, [self.id])],
+                'state': 'draft',
+            }
+            tx = self.env['payment.transaction'].create(tx_vals)
+            tx._set_pending()
+
+
         # This reads Odoo’s configured website base URL (the domain + optional port + scheme), e.g.https://company.example.com or http://localhost:8069.
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         portal_url = self.get_portal_url()
