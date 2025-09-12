@@ -80,8 +80,8 @@
 from odoo import http
 from odoo.http import request
 from odoo.addons.payment_stripe.controllers.main import StripeController
-import logging, pprint
-from odoo.exceptions import UserError
+import logging
+
 _logger = logging.getLogger(__name__)
 class StripeController(StripeController):
 

@@ -59,6 +59,7 @@ class AccountMove(models.Model):
 
         # This reads Odoo’s configured website base URL (the domain + optional port + scheme), e.g.https://company.example.com or http://localhost:8069.
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        # generates the customer portal link for this invoice. Example: "/my/invoices/1234?access_token=abcd1234".
         portal_url = self.get_portal_url()
         success_url = base_url + portal_url
         cancel_url = base_url + portal_url

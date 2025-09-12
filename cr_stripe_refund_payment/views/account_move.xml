@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="inherit_account_move_form_view_refund_id" model="ir.ui.view">
+        <field name="name">inherit_account_move_form_view_refund</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_reverse']" position="after">
+                <button
+                        string="Refund (Stripe)"
+                        name="action_stripe_refund_invoice"
+                        type="object"
+                        id="stripe_invoice_refund_button_id"
+                        invisible="(state != 'posted' or payment_state != 'paid')"
+                />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

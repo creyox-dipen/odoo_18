@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<odoo>
+
+    <record id="payment_refund_wizard_form_view_id" model="ir.ui.view">
+        <field name="name">payment.refund.wizard.form</field>
+        <field name="model">payment.refund.wiz</field>
+        <field name="arch" type="xml">
+            <form string="Stripe Refund Payment">
+                <group>
+                    <field name="payment_transaction_id"/>
+                    <field name="refund_amount"/>
+                </group>
+                <footer>
+                    <button string="Apply" name="make_refund_request" class="oe_highlight" type="object" id="btn_refund_request_id"/>
+                    <button string="Cancel" type="object" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
