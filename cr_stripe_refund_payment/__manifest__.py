@@ -18,6 +18,7 @@
     "data": [
         "security/ir.model.access.csv",
         "views/account_move.xml",
+        "views/payment_refund_wiz.xml"
     ],
     # "images": ["static/description/banner.png"],
     "installable": True,

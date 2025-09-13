@@ -16,4 +16,5 @@ class AccountMove(models.Model):
             'res_model': 'payment.refund.wiz',
             'view_mode': 'form',
             'target': 'new',
+            'context': {'default_move_id': self.id }
         }
