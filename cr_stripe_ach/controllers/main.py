@@ -1,92 +1,53 @@
-# # Part of Odoo. See LICENSE file for full copyright and licensing details.
-#
-# import logging
-# import pprint
-#
 # from odoo import http
 # from odoo.http import request
-# from odoo.exceptions import ValidationError
-#
 # from odoo.addons.payment_stripe.controllers.main import StripeController
-# from odoo.addons.payment_stripe.const import HANDLED_WEBHOOK_EVENTS
-#
+# import logging
+
 # _logger = logging.getLogger(__name__)
-#
-#
-# # Extend handled events with ACH-related ones
-# ACH_EVENTS = [
-#     "payment_intent.processing",   # ACH debits are being verified/collected
-#     "charge.succeeded",            # Final ACH settlement confirmation
-#     "payment_intent.succeeded",    # Sometimes Stripe still sends this for ACH
-# ]
-# for ev in ACH_EVENTS:
-#     if ev not in HANDLED_WEBHOOK_EVENTS:
-#         HANDLED_WEBHOOK_EVENTS.append(ev)
-#
-#
-# class StripeACHController(StripeController):
-#
+# class StripeController(StripeController):
+
 #     @http.route(StripeController._webhook_url, type="http", auth="public", methods=["POST"], csrf=False)
 #     def stripe_webhook(self):
-#         """Extend Stripe webhook handler to support ACH events."""
+#         _logger.info("➡️➡️➡️ webhook initiated")
 #         event = request.get_json_data()
-#         print(event)
-#         _logger.info("[ACH] Stripe Webhook received: %s", pprint.pformat(event))
-#
-#         try:
-#             if event["type"] not in HANDLED_WEBHOOK_EVENTS:
-#                 _logger.info("[ACH] Ignoring unhandled event type: %s", event["type"])
-#                 return request.make_json_response("")
-#
-#             stripe_object = event["data"]["object"]
-#             print(event['data'])
-#             print(stripe_object)
-#             # Build minimal notification data
-#             data = {
-#                 "reference": stripe_object.get("description"),
-#                 "event_type": event["type"],
-#                 "object_id": stripe_object["id"],
-#             }
-#
-#             tx_sudo = request.env["payment.transaction"].sudo()._get_tx_from_notification_data(
-#                 "stripe", data
-#             )
-#             self._verify_notification_signature(tx_sudo)
-#
-#             if event["type"] == "charge.succeeded":
-#                 # ACH settlement confirmed
-#                 _logger.info("[ACH] Processing charge.succeeded for tx %s", tx_sudo.reference)
-#                 self._include_payment_intent_in_notification_data(stripe_object, data)
-#
-#             elif event["type"] == "payment_intent.processing":
-#                 # Funds are being collected - keep tx pending
-#                 _logger.info("[ACH] Payment is processing for tx %s", tx_sudo.reference)
-#                 self._include_payment_intent_in_notification_data(stripe_object, data)
-#
-#             elif event["type"] == "payment_intent.succeeded":
-#                 # Final confirmation
-#                 _logger.info("[ACH] Payment intent succeeded for tx %s", tx_sudo.reference)
-#                 self._include_payment_intent_in_notification_data(stripe_object, data)
-#
-#             # Call Odoo's core handler
-#             tx_sudo._handle_notification_data("stripe", data)
-#
-#         except ValidationError:
-#             _logger.exception("[ACH] Unable to handle webhook; skipping but acknowledging")
-#
-#         # Always acknowledge the webhook to Stripe
-#         return request.make_json_response("")
+#         # Pre-process ACH-specific data (inject reference if missing)
+#         stripe_object = event["data"]["object"]
+#         metadata = stripe_object.get("metadata", {})
+
+#         if not stripe_object.get("description") and metadata.get("tx_id"):
+#             # Patch the object so Odoo base handler can find the transaction
+#             stripe_object["description"] = metadata["tx_id"]
+
+#         # Call Odoo’s original webhook handler
+#         response = super().stripe_webhook()
+#         # Post-process ACH finalization
+#         if event["type"] in ("payment_intent.succeeded", "charge.succeeded"):
+#             tx_id = metadata.get("tx_id")
+#             _logger.info("tx id : %s",tx_id)
+#             if tx_id:
+#                 tx = request.env["payment.transaction"].sudo().browse(int(tx_id))
+#                 _logger.info("TX : %s",tx)
+#                 _logger.info("TX : %s",tx.state)
+#                 if tx and tx.state not in ("done", "cancel"):
+#                     _logger.info("🤣🤣 transaction getting paid")
+#                     tx._set_done()
+#                     tx._finalize_post_processing()
+
+#         return response
 
 from odoo import http
 from odoo.http import request
-from odoo.addons.payment_stripe.controllers.main import StripeController
+from odoo.addons.payment_stripe.controllers.main import StripeController as BaseStripeController
 import logging
+import psycopg2
 
 _logger = logging.getLogger(__name__)
-class StripeController(StripeController):
 
-    @http.route(StripeController._webhook_url, type="http", auth="public", methods=["POST"], csrf=False)
+class StripeController(BaseStripeController):
+
+    @http.route(BaseStripeController._webhook_url, type="http", auth="public", methods=["POST"], csrf=False)
     def stripe_webhook(self):
+        _logger.info("➡️➡️➡️ webhook initiated")
         event = request.get_json_data()
         # Pre-process ACH-specific data (inject reference if missing)
         stripe_object = event["data"]["object"]
@@ -96,16 +57,46 @@ class StripeController(StripeController):
             # Patch the object so Odoo base handler can find the transaction
             stripe_object["description"] = metadata["tx_id"]
 
-        # Call Odoo’s original webhook handler
+        # Call Odoo’s original webhook handler (keeps existing behaviour)
         response = super().stripe_webhook()
-        # Post-process ACH finalization
+
+        # Post-process ACH finalization: ensure transaction is done AND post-processed
         if event["type"] in ("payment_intent.succeeded", "charge.succeeded"):
             tx_id = metadata.get("tx_id")
-            _logger.info("tx id : %s",tx_id)
+            _logger.info("Webhook finalization: tx id : %s", tx_id)
             if tx_id:
                 tx = request.env["payment.transaction"].sudo().browse(int(tx_id))
-                if tx and tx.state not in ("done", "cancel"):
-                    tx._set_done()
-                    tx._finalize_post_processing()
+                if not tx:
+                    _logger.warning("Transaction id %s not found", tx_id)
+                else:
+                    try:
+                        # If not done, set to done.
+                        if tx.state not in ("done", "cancel"):
+                            _logger.info("Setting tx %s to done", tx.id)
+                            tx._set_done()
+
+                        # Ensure post-processing happens: this creates account.payment / reconciliations.
+                        # Call it only if not already post-processed.
+                        if not tx.is_post_processed:
+                            _logger.info("Post-processing tx %s", tx.id)
+                            try:
+                                # Post-process in sudo mode (gives access to referenced documents)
+                                tx._post_process()
+                            except (psycopg2.OperationalError, psycopg2.IntegrityError) as db_e:
+                                # rollback and ask for retry (same pattern as Odoo's post_processing)
+                                request.env.cr.rollback()
+                                _logger.exception("DB error while post-processing tx %s: %s", tx.id, db_e)
+                                raise Exception("retry")
+                            except Exception as e:
+                                request.env.cr.rollback()
+                                _logger.exception("Error while post-processing tx %s: %s", tx.id, e)
+                                # Don't crash the webhook: re-raise so Stripe retries if you want, or handle it silently.
+                                raise
+                        else:
+                            _logger.info("Transaction %s already post-processed", tx.id)
+
+                    except Exception:
+                        # Let exception bubble (Stripe will retry webhooks), but we already logged
+                        raise
 
         return response
