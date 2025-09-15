@@ -4,7 +4,6 @@
 from odoo import models, fields
 from odoo.exceptions import UserError
 
-
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
@@ -76,10 +75,6 @@ class AccountMove(models.Model):
             'line_items[0][price_data][product_data][name]': f"Payment for {self.name}",
             'success_url': success_url,
             'cancel_url': cancel_url,
-            # Flatten metadata as well:
-            # 'metadata[reference]': tx.reference,  # <--- ensures webhook can map it back
-            # 'metadata[tx_id]': str(tx.id),
-            # 'metadata[invoice_id]': str(self.id),
             'payment_intent_data[metadata][reference]': tx.reference,
             'payment_intent_data[metadata][tx_id]': str(tx.id),
             'payment_intent_data[metadata][invoice_id]': str(self.id),

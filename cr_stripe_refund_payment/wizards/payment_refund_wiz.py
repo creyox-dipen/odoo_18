@@ -35,7 +35,7 @@ class PaymentRefund(models.TransientModel):
         return res
 
     def make_refund_request(self):
-        _logger.info("refund process started...")
+        _logger.info("Refund process started...")
 
         provider = self.env['payment.provider'].search(
             [('code', '=', 'stripe'), ('state', '!=', 'disabled')], limit=1)
@@ -44,10 +44,17 @@ class PaymentRefund(models.TransientModel):
             raise UserError('The Stripe payment provider is not configured or disabled.')
 
         if self.payment_transaction_id.provider_code != 'stripe':
-            raise UserError("Transaction is done by another provider")
+            raise UserError("This transaction was made using another payment provider.")
 
-        if self.refund_amount <= 0 or self.refund_amount > self.payment_transaction_id.amount:
-            raise UserError("Refund amount must be positive and not exceed the original transaction amount.")
+        if self.refund_amount <= 0:
+            raise UserError("Refund amount must be greater than zero.")
+
+        if self.refund_amount > self.payment_transaction_id.amount:
+            raise UserError("Refund amount cannot exceed the original transaction amount.")
+
+        # Extra check: prevent double refund
+        if self.move_id.payment_state == 'reversed':
+            raise UserError("This invoice is already refunded.")
 
         base_amount = self.refund_amount
         amount_cents = payment_utils.to_minor_currency_units(base_amount, self.payment_transaction_id.currency_id)
@@ -59,37 +66,50 @@ class PaymentRefund(models.TransientModel):
 
         try:
             response = provider._stripe_make_request('refunds', payload=payload, method='POST')
-            if 'error' in response:
-                raise UserError(f"Stripe error: {response['error'].get('message', 'Unknown error')}")
-            if response.get('status') != 'succeeded':
-                raise UserError(f"Stripe refund initiated but not succeeded: {response.get('status')}")
+            _logger.info("Stripe refund response: %s", response)
 
-            # Create credit note with explicit 'partner_id' to avoid KeyError
+            if response.get('error'):
+                error_msg = response['error'].get('message', 'Unknown error occurred while processing refund.')
+                raise UserError(f"Refund failed: {error_msg}")
+
+            status = response.get('status')
+
+            if status == 'succeeded':
+                message = f"Refund of {self.refund_amount} processed successfully and credit note created."
+            elif status in ('pending', 'requires_action', 'processing'):
+                message = "Refund request submitted to Stripe. It is still processing — please check back later."
+            else:
+                raise UserError(f"Refund could not be processed. Stripe status: {status}")
+
+            # Credit note creation
             default_values = {
                 'ref': f"{'Partial ' if self.refund_amount != self.payment_transaction_id.amount else ''}Refund of {self.move_id.name} via Stripe ({self.refund_amount})",
-                'partner_id': self.move_id.partner_id.id,  # Explicitly set to prevent KeyError
+                'partner_id': self.move_id.partner_id.id,
             }
 
             if self.refund_amount == self.payment_transaction_id.amount:
-                # Full refund: Use full reverse
                 credit_note = self.move_id._reverse_moves(default_values_list=[default_values])
             else:
-                # Partial refund: Create credit note, copy lines, prorate amounts
                 credit_note = self.move_id._reverse_moves(default_values_list=[default_values])
-                # Prorate: Adjust each line's price_unit by refund ratio
                 ratio = self.refund_amount / self.payment_transaction_id.amount
-                for line in credit_note.line_ids.filtered(lambda l: l.debit or l.credit):  # Adjust revenue/tax lines
+                for line in credit_note.line_ids.filtered(lambda l: l.debit or l.credit):
                     if line.price_unit:
                         line.with_context(check_move_validity=False).price_unit *= ratio
-                credit_note._compute_amount()  # Recompute totals
+                credit_note._compute_amount()
 
-            credit_note.action_post()  # Post the credit note
+            credit_note.action_post()
 
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
-                'params': {'message': 'Refund processed successfully and credit note created.', 'type': 'success'}
+                'params': {
+                    'message': f"Refund of {self.refund_amount} processed successfully and credit note created.",
+                    'type': 'success'
+                }
             }
+
+        except UserError:
+            raise  # Re-raise clean user errors
         except Exception as e:
-            _logger.error(f"Stripe refund failed: {str(e)}")
-            raise UserError(f"Refund failed: {str(e)}")
+            _logger.error("Unexpected Stripe refund failure: %s", str(e))
+            raise UserError("An unexpected error occurred while processing the refund. Please try again or check logs.")

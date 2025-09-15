@@ -9,7 +9,7 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     def action_stripe_refund_invoice(self):
-        log.info("➡️➡️➡️🎯🎯🎯 Refund is initiating...")
+        log.info("➡️➡️➡️ Refund is initiating...")
 
         return {
             'type': 'ir.actions.act_window',
