@@ -5,13 +5,24 @@
         <!-- Calculate fees based on provider config and amount -->
         <xpath expr="//div[@name='o_stripe_element_container']" position="after">
             <t t-set="base_amount" t-value="amount"/>
-            <t t-set="total_fixed_fees" t-value="provider_sudo.fix_domestic_fees + provider_sudo.fix_international_fees"/>
-            <t t-set="total_percent_fees" t-value="((provider_sudo.var_domestic_fees + provider_sudo.var_international_fees) * base_amount) / 100"/>
-            <t t-set="fees" t-value="total_fixed_fees + total_percent_fees"/>
+            <t t-set="partner_country" t-value="partner.country_id"/>
+            <t t-set="company_country" t-value="request.env.company.country_id"/>
+            <t t-set="is_international"
+               t-value="partner_country and company_country and partner_country.id != company_country.id"/>
+
+            <t t-set="fees" t-value="0.0"/>
+            <t t-if="is_international">
+                <t t-set="fees"
+                   t-value="provider_sudo.fix_domestic_fees + provider_sudo.fix_international_fees + ((provider_sudo.var_domestic_fees + provider_sudo.var_international_fees) * base_amount) / 100"/>
+            </t>
+            <t t-else="">
+                <t t-set="fees"
+                   t-value="provider_sudo.fix_domestic_fees + (provider_sudo.var_domestic_fees * base_amount) / 100"/>
+            </t>
 
             <div class="alert alert-info mt-2">
-                <span class="fw-bold">Extra Fees Applied:</span>
-                <t t-esc="fees"/>
+                <span class="fw-bold">+ $</span>
+                <t t-esc="fees"/> Fees
             </div>
         </xpath>
     </template>

@@ -31,12 +31,10 @@ class StripeACHController(StripeController):
             _logger.info("Webhook finalization: tx id: %s", tx_id)
 
             if not tx_id:
-                _logger.warning("No tx_id in metadata; cannot finalize.")
                 return response
 
             tx = request.env["payment.transaction"].sudo().browse(int(tx_id))
             if not tx:
-                _logger.warning("Transaction %s not found", tx_id)
                 return response
 
             try:
@@ -54,18 +52,16 @@ class StripeACHController(StripeController):
                     except (psycopg2.OperationalError, psycopg2.IntegrityError) as db_e:
                         # DB issues: rollback and ask for retry
                         request.env.cr.rollback()
-                        _logger.exception("DB error while post-processing tx %s: %s", tx.id, db_e)
                         raise Exception("retry")
                     except Exception as e:
                         request.env.cr.rollback()
-                        _logger.exception("Error while post-processing tx %s: %s", tx.id, e)
                         # bubble up to let Stripe retry if desired
                         raise
 
                 else:
                     _logger.info("Transaction %s already post-processed", tx.id)
 
-                # Step 3: Debug info - payment & lines
+
                 payment = tx.payment_id or tx.account_payment_id or None
                 if payment:
                     _logger.info("Payment created for tx %s: %s", tx.id, payment.id)
@@ -75,10 +71,8 @@ class StripeACHController(StripeController):
                         "Payment move lines: %s",
                         [(l.id, l.account_id.display_name, float(l.balance), bool(l.reconciled)) for l in pm_lines]
                     )
-                else:
-                    _logger.warning("No account.payment linked to tx %s after _post_process()", tx.id)
 
-                # Step 4: Force reconciliation if invoice not paid
+                # Force reconciliation if invoice not paid
                 for inv in tx.invoice_ids:
                     _logger.info("Invoice %s before reconcile: state=%s payment_state=%s", inv.id, inv.state, inv.payment_state)
 
@@ -89,16 +83,13 @@ class StripeACHController(StripeController):
                     # invoice receivable lines (unreconciled)
                     inv_receivables = inv.line_ids.filtered(lambda l: l.account_id.account_type == 'asset_receivable' and not l.reconciled and l.parent_state == 'posted')
                     if not inv_receivables:
-                        _logger.warning("No unreconciled receivable lines found for invoice %s", inv.id)
                         continue
 
                     if not payment:
-                        _logger.warning("No payment available to reconcile invoice %s (tx %s)", inv.id, tx.id)
                         continue
 
                     pay_receivables = payment.move_id.line_ids.filtered(lambda l: l.account_id.account_type == 'asset_receivable' and not l.reconciled and l.parent_state == 'posted')
                     if not pay_receivables:
-                        _logger.warning("No receivable-type lines on payment %s to reconcile with invoice %s", payment.id, inv.id)
                         # Sometimes payment uses a different account name: try to match by account id from invoice
                         pay_receivables = payment.move_id.line_ids.filtered(lambda l: l.account_id == inv_receivables[0].account_id and not l.reconciled and l.parent_state == 'posted')
 
@@ -116,10 +107,10 @@ class StripeACHController(StripeController):
                             reconciled_any = True
                             _logger.info("Reconciled invoice %s with payment %s on account %s", inv.id, payment.id, acc.display_name)
                         except Exception as e:
-                            _logger.exception("Failed to reconcile invoice %s with payment %s on account %s: %s", inv.id, payment.id, acc.display_name, e)
+                            _logger.info("Failed to reconcile invoice %s with payment %s on account %s: %s", inv.id, payment.id, acc.display_name, e)
 
                     if not reconciled_any:
-                        _logger.warning("Could not reconcile invoice %s with payment %s automatically; please check account/partner/currency settings.", inv.id, payment.id if payment else None)
+                        _logger.info("Could not reconcile invoice %s with payment %s automatically; please check account/partner/currency settings.", inv.id, payment.id if payment else None)
 
                     # Log invoice state after attempt
                     _logger.info("Invoice %s after reconcile attempt: state=%s payment_state=%s", inv.id, inv.state, inv.payment_state)
