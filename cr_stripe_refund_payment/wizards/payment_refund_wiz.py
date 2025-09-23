@@ -62,6 +62,8 @@ class PaymentRefund(models.TransientModel):
         payload = {
             'amount': amount_cents,
             'payment_intent': self.payment_transaction_id.provider_reference,
+            'metadata[move_id]': self.move_id.id,
+            'metadata[tx_id]': self.payment_transaction_id.id,
         }
 
         try:
@@ -104,7 +106,11 @@ class PaymentRefund(models.TransientModel):
                 'tag': 'display_notification',
                 'params': {
                     'message': f"Refund of {self.refund_amount} processed successfully and credit note created.",
-                    'type': 'success'
+                    'type': 'success',
+                    'sticky': False,
+                    'next': {
+                        'type': 'ir.actions.act_window_close'
+                    }
                 }
             }
 
@@ -113,3 +119,4 @@ class PaymentRefund(models.TransientModel):
         except Exception as e:
             _logger.error("Unexpected Stripe refund failure: %s", str(e))
             raise UserError("An unexpected error occurred while processing the refund. Please try again or check logs.")
+

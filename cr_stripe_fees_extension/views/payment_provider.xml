@@ -9,12 +9,22 @@
         <field name="arch" type="xml">
             <xpath expr="//page[@name='configuration']" position="after">
                 <page name="fees" string="Fees" invisible="code != 'stripe'">
-                    <group>
+                    <group string="Card Fees" name="card_fees">
                         <field name="is_extra_fees"/>
-                        <field name="fix_domestic_fees"/>
-                        <field name="var_domestic_fees"/>
-                        <field name="fix_international_fees"/>
-                        <field name="var_international_fees"/>
+                    </group>
+                    <group>
+                        <group string="Domestic Fees" name="domestic_fees">
+                            <field name="fix_domestic_fees"/>
+                            <field name="var_domestic_fees"/>
+                            <field name="is_free_domestic"/>
+                            <field name="free_domestic_amount"/>
+                        </group>
+                        <group string="International Fees" name="international_fees">
+                            <field name="fix_international_fees"/>
+                            <field name="var_international_fees"/>
+                            <field name="is_free_international"/>
+                            <field name="free_international_amount"/>
+                        </group>
                     </group>
                 </page>
             </xpath>

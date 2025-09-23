@@ -11,8 +11,12 @@ class PaymentProvider(models.Model):
     is_extra_fees = fields.Boolean(string="Add Extra Fees")
     fix_domestic_fees = fields.Float(string="Fixed Domestic Fees")
     var_domestic_fees = fields.Float(string="Variable Domestic Fees (in percent)")
+    is_free_domestic = fields.Boolean(string="Free Domestic Fees if Amount is Above")
+    free_domestic_amount = fields.Float(string="Domestic Total Amount")
     fix_international_fees = fields.Float(string="Fixed International Fees")
     var_international_fees = fields.Float(string="Variable International Fees (in percent)")
+    is_free_international = fields.Boolean(string="Free International Fees if Amount is Above")
+    free_international_amount = fields.Float(string="International Total Amount")
 
     def _stripe_get_inline_form_values(self, amount, currency, partner_id, is_validation, payment_method_sudo=None, sale_order_id=None, **kwargs):
         """ Extend the standard Stripe inline form values to include fees """
