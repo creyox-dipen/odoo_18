@@ -1,4 +1,5 @@
-# controllers/main.py
+# -*- coding: utf-8 -*-
+# Part of Creyox Technologies.
 import logging
 import psycopg2
 
@@ -8,7 +9,7 @@ from odoo.addons.payment_stripe.controllers.main import StripeController
 
 _logger = logging.getLogger(__name__)
 
-class StripeACHController(StripeController):
+class StripeController(StripeController):
 
     @http.route(StripeController._webhook_url, type="http", auth="public", methods=["POST"], csrf=False)
     def stripe_webhook(self):
@@ -60,7 +61,7 @@ class StripeACHController(StripeController):
                 else:
                     _logger.info("Transaction %s already post-processed", tx.id)
 
-                payment = tx.payment_id or tx.account_payment_id or None
+                payment = tx.payment_id or None
 
                 # Force reconciliation if invoice not paid
                 for inv in tx.invoice_ids:

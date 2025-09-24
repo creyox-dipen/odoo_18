@@ -10,7 +10,7 @@
                 <button name="action_pay_with_stripe" id="pay_with_stripe_button_id"
                         groups="cr_payment_stripe_ext.stripe_payment_access_group_id"
                         type="object" class="oe_highlight"
-                        invisible="(state != 'posted' or payment_state not in ('not_paid', 'partial', 'in_payment') or move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'))"
+                        invisible="(state != 'posted' or payment_state not in ('not_paid', 'partial', 'in_payment') or move_type != 'out_invoice')"
                         string="Pay With Stripe"
                 />
             </xpath>
