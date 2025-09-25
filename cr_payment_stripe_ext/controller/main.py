@@ -13,7 +13,6 @@ class StripeController(StripeController):
 
     @http.route(StripeController._webhook_url, type="http", auth="public", methods=["POST"], csrf=False)
     def stripe_webhook(self):
-        _logger.info("➡️➡️➡️➡️➡️ Stripe webhook initiated")
         event = request.get_json_data()
         stripe_object = event.get("data", {}).get("object", {})
         metadata = stripe_object.get("metadata", {}) or {}

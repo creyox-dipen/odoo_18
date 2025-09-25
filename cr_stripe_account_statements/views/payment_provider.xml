@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<odoo>
+    <record id="view_payment_provider_form_inherit_stripe" model="ir.ui.view">
+        <field name="name">payment.provider.form.stripe.inherit</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='code']" position="before">
+                <field name="stripe_journal_id" invisible="code != 'stripe'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

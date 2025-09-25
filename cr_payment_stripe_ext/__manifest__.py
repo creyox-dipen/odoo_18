@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Creyox Technologies.
 {
-    "name": "Payment Stripe Extension in Odoo | Invoice Online Payment via Stripe | Odoo Stripe Payment Integration | Stripe Online Invoice Payment",
+    "name": "Payment Stripe Extension in Odoo | Stripe Payment for Invoices | Odoo Stripe Payment Integration | Odoo Stripe Backend Invoice Payment Extension",
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "support@creyox.com",
@@ -163,7 +163,7 @@
     How to handle pending or failed ACH payments in Odoo,
     """,
     "license": "OPL-1",
-    "version": "18.0",
+    "version": "18.0.0.0",
     "description": """
     The Stripe Payment Extension for Odoo enables businesses to accept online card payments directly from backend invoices. A secure “Pay with Stripe” button appears on the invoice form view only for authorized users, allowing them to process payments with Visa, MasterCard, and other major cards via Stripe’s checkout page. Unlike Odoo’s default website payment option, this module is designed specifically for invoice payments from the Odoo backend, making it ideal for internal teams and accounting users.
 

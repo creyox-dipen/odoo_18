@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="inherit_account_journal_form_view_id_statements" model="ir.ui.view">
+        <field name="name">inherit.account.journal.form.statements</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']/button[@class='oe_stat_button']" position="after">
+                <button icon="fa-download" type="object" name="action_fetch_transactions">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Fetch Transactions</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -79,7 +79,7 @@
                 <div class="row py-4 py-lg-0">
                     <div class="col-md-12">
                         <h1 style="font-family:'system-ui'; font-style:normal; font-weight:bold; font-size:calc(2.06rem + 1vw); line-height:120%; text-align:center; text-transform:capitalize">
-                            <span style="font-family:system-ui; color:#10488A; font-size:calc(2.06rem + 1vw)">Stripe ACH Invoice Integration</span>
+                            <span style="font-family:system-ui; color:#10488A; font-size:calc(2.06rem + 1vw)">Stripe Fees Extension</span>
                         </h1>
                     </div>
                     <div class="col-md-12 py-2 text-center">
@@ -107,10 +107,10 @@
                         <div class="col-12 col-md-12">
                             <div class="col-10 col-md-12" style="padding-left: 30px;">
                                 <p style="font-size: 20px;">
-                                    The Stripe ACH Invoice Integration module allows US-based businesses to easily collect invoice payments from customers through ACH Direct Debit (bank transfer) using Stripe. Since ACH is available only for US bank accounts and payments in US dollars, this module is designed specifically for companies operating with USD transactions. Instead of relying only on cards or manual payments, it brings the convenience of ACH directly into your Odoo system. Once configured, your customers can pay invoices securely with their US bank account details, and the payment status will be automatically updated in Odoo when Stripe confirms the transaction.
+                                    The Odoo Stripe Domestic & International Fees module helps you manage extra payment charges when using Stripe in Odoo. It lets you set up different rules for domestic and international payments, so the right fee is added based on the customer’s location. The charges are calculated automatically during checkout, which saves time and avoids mistakes in invoices.
                                 </p>
                                 <p style="font-size: 20px;">
-                                    With this integration, you no longer need to manually track ACH payments or reconcile them with invoices. The module ensures a smooth, automated payment flow from generating the invoice, initiating the ACH payment, receiving Stripe’s confirmation, and finally marking the invoice as paid in Odoo. This not only saves time but also reduces errors, giving you a faster, safer, and more professional way to handle invoice payments.
+                                    This module also gives flexibility to the admin by allowing charges to be removed when the order amount is higher than a limit set by the company. For example, if the base amount is more than the limit, no extra fee will be added for the customer. With these simple features, the module makes payment handling easier, more transparent, and smoother for both businesses and customers.
                                 </p>
                             </div>
                         </div>
@@ -130,7 +130,7 @@
                             <div class="d-flex justify-content-center align-items-center rounded shadow"
                                  style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
                                 <span style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                    Direct invoice payment with ACH
+                                    Domestic & International Fees
                                 </span>
                             </div>
                         </div>
@@ -138,7 +138,7 @@
                             <div class="d-flex justify-content-center align-items-center rounded shadow"
                                  style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
                                 <span style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                    Automated invoice marked as paid
+                                    Automatic Fee Calculation
                                 </span>
                             </div>
                         </div>
@@ -146,7 +146,7 @@
                             <div class="d-flex justify-content-center align-items-center rounded shadow"
                                  style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
                                 <span style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                    Secure bank account payments
+                                    Free Fee Above Limit
                                 </span>
                             </div>
                         </div>
@@ -154,7 +154,7 @@
                             <div class="d-flex justify-content-center align-items-center rounded shadow"
                                  style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
                                 <span style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                     Quick Payment Process
+                                     Transparent Payment Process
                                 </span>
                             </div>
                         </div>
@@ -162,7 +162,7 @@
                             <div class="d-flex justify-content-center align-items-center rounded shadow"
                                  style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
                                 <span style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                    Real-time Stripe status updates
+                                    Configurable Fee Settings
                                 </span>
                             </div>
                         </div>
@@ -170,7 +170,7 @@
                             <div class="d-flex justify-content-center align-items-center rounded shadow"
                                  style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
                                 <span style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                    Fully integrated with Stripe ACH
+                                    Simple Setup & Use
                                 </span>
                             </div>
                         </div>
@@ -192,7 +192,7 @@
                                 <span class="fa fa-arrow-right"
                                       style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
                             <span style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                Pay Odoo invoices directly through ACH bank transfer
+                                Automatically calculates fees for domestic and international payments
                             </span>
                         </div>
                     </div>
@@ -202,7 +202,7 @@
                                 <span class="fa fa-arrow-right"
                                       style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
                             <span style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                Automatically mark invoices as paid after Stripe confirmation
+                                Allows separate rules for local and global transactions
                             </span>
                         </div>
                     </div>
@@ -212,7 +212,7 @@
                                 <span class="fa fa-arrow-right"
                                       style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
                             <span style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                Supports only US bank accounts and USD currency
+                                Charges can be removed if order exceeds limit
                             </span>
                         </div>
                     </div>
@@ -222,7 +222,7 @@
                                 <span class="fa fa-arrow-right"
                                       style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
                             <span style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                Secure invoice payments using Stripe ACH integration
+                                Provides clear and accurate invoice fee details
                             </span>
                         </div>
                     </div>
@@ -232,7 +232,7 @@
                                 <span class="fa fa-arrow-right"
                                       style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
                             <span style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                Simple setup for ACH payments inside Odoo backend
+                                Admin can easily configure fees and rules
                             </span>
                         </div>
                     </div>
@@ -242,7 +242,7 @@
                                 <span class="fa fa-arrow-right"
                                       style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
                             <span style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                Streamlined workflow for faster invoice payment collection
+                                Integrates seamlessly with Odoo Stripe payment system
                             </span>
                         </div>
                     </div>
@@ -272,7 +272,7 @@
                             home-tab">
                     <div class="row mb-5">
                         <div class="col-12 col-md-12 text-center text-md-left">
-                            <center><h1 style="color: #000099;">Stripe ACH Invoice Integration</h1>
+                            <center><h1 style="color: #000099;">Stripe Fees Extension</h1>
                             </center>
                         </div>
                     </div>
@@ -445,7 +445,7 @@
                                            style="font-size:16px; margin:0; color:#212121; text-decoration:none; font-weight:600; letter-spacing:1px; display:flex">
                                             <span class="fa fa-question-circle"
                                                   style="color:#3363c1; font-weight:600; font-size:18px; padding-right:10px"></span>
-                                            What does this module do?
+                                            Can I set different fees for domestic and international payments?
                                         </a>
                                     </h4>
                                 </div>
@@ -454,7 +454,7 @@
                                     <div class="panel-body" style="padding-top:20px">
                                         <ul style="font-size:16px; padding-left:30px; color:#555; margin:0">
                                             <li style="margin-bottom:0px">
-                                                Accept invoice payments via ACH bank transfer in Odoo for US-based customers.
+                                                Yes, the module lets you define separate rules for domestic and international fees. This ensures accurate charges based on the customer’s location.
                                             </li>
                                         </ul>
                                     </div>
@@ -469,7 +469,7 @@
                                            style="font-size:16px; margin:0; color:#212121; text-decoration:none; font-weight:600; letter-spacing:1px; display:flex">
                                             <span class="fa fa-question-circle"
                                                   style="color:#3363c1; font-weight:600; font-size:18px; padding-right:10px"></span>
-                                            Can ACH be used outside the US?
+                                            Are the fees applied automatically during checkout?
                                         </a>
                                     </h4>
                                 </div>
@@ -478,7 +478,7 @@
                                     <div class="panel-body" style="padding-top:20px">
                                         <ul style="font-size:16px; padding-left:30px; color:#555; margin:0">
                                             <li style="margin-bottom:0px">
-                                                No, ACH payments are only for US bank accounts and in USD.
+                                                Yes, the fees are calculated automatically when a customer completes the payment, saving time and reducing manual errors.
                                             </li>
                                         </ul>
                                     </div>
@@ -493,7 +493,7 @@
                                            style="font-size:16px; margin:0; color:#212121; text-decoration:none; font-weight:600; letter-spacing:1px; display:flex">
                                             <span class="fa fa-question-circle"
                                                   style="color:#3363c1; font-weight:600; font-size:18px; padding-right:10px"></span>
-                                            Is it secure?
+                                            Can fees be free for large orders?
                                         </a>
                                     </h4>
                                 </div>
@@ -502,7 +502,7 @@
                                     <div class="panel-body" style="padding-top:20px">
                                         <ul style="font-size:16px; padding-left:30px; color:#555; margin:0">
                                             <li style="margin-bottom:0px">
-                                               Yes, Bank account details are handled securely through Stripe, following industry-standard security and compliance rules.
+                                               Yes, the admin can configure a limit amount. If the order total is higher than this amount, no extra fee is added.
                                             </li>
                                         </ul>
                                     </div>
