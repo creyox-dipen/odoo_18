@@ -19,6 +19,7 @@
         "security/ir.model.access.csv",
         "views/payment_provider.xml",
         "views/account_journal.xml",
+        "wizard/fetch_transaction_wiz.xml"
     ],
     # "images": ["static/description/banner.png"],
     "installable": True,
@@ -26,3 +27,4 @@
     "price": 40,
     "currency": "USD",
 }
+
