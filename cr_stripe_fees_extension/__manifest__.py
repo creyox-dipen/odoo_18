@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Creyox Technologies.
 {
-    "name": "Stripe Fees Extension | Stripe Transaction Fees in Odoo | Stripe Charges & Fees Extension Odoo | Odoo Stripe Payment Fee Integration",
+    "name": "Stripe Fees Extension | Stripe Transaction Fees in Odoo | Stripe Charges & Fees Extension Odoo | Stripe Domestic and International Fees",
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "support@creyox.com",
@@ -320,7 +320,7 @@
     How to reconcile ACH payments with invoices in Odoo automatically,    
     How to handle pending or failed ACH payments in Odoo,
     """,
-    "depends": ["base", "payment_stripe"],
+    "depends": ["base", "payment_stripe", "account"],
     "data": [
         "security/ir.model.access.csv",
         "views/payment_provider.xml",
@@ -334,7 +334,7 @@
         ],
     },
 
-    # "images": ["static/description/banner.png"],
+    "images": ["static/description/banner.png"],
     "installable": True,
     "application": True,
     "price": 70,

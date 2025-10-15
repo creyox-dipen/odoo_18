@@ -163,7 +163,7 @@
     How to handle pending or failed ACH payments in Odoo,
     """,
     "license": "OPL-1",
-    "version": "18.0",
+    "version": "18.0.0.0",
     "description": """
     The Stripe Refund Payment module in Odoo allows businesses to process refunds for Stripe payments directly from the Odoo backend. Once a payment has been made through Stripe, users can trigger a refund from Odoo without switching between platforms. The module ensures the refund request is sent to Stripe and linked to the original payment transaction, keeping records organized and consistent.
 

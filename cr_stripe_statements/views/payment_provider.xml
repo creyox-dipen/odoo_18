@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_payment_provider_form_inherit_id" model="ir.ui.view">
+        <field name="name">payment.provider.form.inherit.stripe.bank.statements</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='payment_followup']" position="after">
+                <group string="Stripe Statements Collections">
+                    <field name="is_stripe_collection" invisible="code != 'stripe'"/>
+                    <field name="stripe_fees_partner" invisible="code != 'stripe'"/>
+                    <field name="transfer_account" invisible="code != 'stripe'"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

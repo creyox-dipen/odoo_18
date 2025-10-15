@@ -11,7 +11,6 @@
           integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
     <link href=https://apps.odoocdn.com/web/content/7247337-184ae0e/1/web.assets_frontend.css" rel="stylesheet">
-
 </head>
 
 <body>
@@ -30,7 +29,6 @@
         <hr/>
     </header>
 
-    <!-- <center><span style="font-size: 28px;" class="text-success">We are offering a 20% discount on any odoo service.</span></center> -->
     <div class="px-md-5 py-md-4 p-2 mb-4 bg-white shadow " style="border-radius:20px; font-family:'system-ui'">
 
         <div class="position-relative mb-4" style="border-radius:10px">
@@ -84,8 +82,8 @@
                     </div>
                     <div class="col-md-12 py-2 text-center">
                         <a class="btn btn-primary btn-lg mt8" target="_blank" style="color: #FFFFFF !important;"
-                           href="https://youtu.be/Y2Ilynl0n0M">
-                            <i class="fa fa-check-square"></i> Watch Video </a>
+                           href="https://youtu.be/UrVN3IQXJ2I">
+                            <i class="fa fa-check-square"></i>Watch Video</a>
                     </div>
                 </div>
             </div>
@@ -107,7 +105,7 @@
                         <div class="col-12 col-md-12">
                             <div class="col-10 col-md-12" style="padding-left: 30px;">
                                 <p style="font-size: 20px;">
-                                    The Odoo Stripe Domestic & International Fees module helps you manage extra payment charges when using Stripe in Odoo. It lets you set up different rules for domestic and international payments, so the right fee is added based on the customer’s location. The charges are calculated automatically during checkout, which saves time and avoids mistakes in invoices.
+                                    The Odoo Stripe Fees Extension module helps you manage extra payment charges when using Stripe in Odoo. It lets you set up different rules for domestic and international payments, so the right fee is added based on the customer’s location. The charges are calculated automatically during checkout, which saves time and avoids mistakes in invoices.
                                 </p>
                                 <p style="font-size: 20px;">
                                     This module also gives flexibility to the admin by allowing charges to be removed when the order amount is higher than a limit set by the company. For example, if the base amount is more than the limit, no extra fee will be added for the customer. With these simple features, the module makes payment handling easier, more transparent, and smoother for both businesses and customers.
@@ -222,7 +220,7 @@
                                 <span class="fa fa-arrow-right"
                                       style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
                             <span style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                Provides clear and accurate invoice fee details
+                                Provides clear and accurate Transaction fee details
                             </span>
                         </div>
                     </div>
@@ -298,28 +296,56 @@
                                 <img src="images/4.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <li>Navigate to the <b>Configuration</b> tab and ensure <b>ACH Direct Debit</b> is enabled.</li>
+                                <li>User can see a dedicated <b>Fees</b> tab to configure rules.</li>
+                                <li>User can configure <b>Domestic</b> and <b>International</b> fees separately.</li>
                                 <img src="images/5.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <li>If it is not enabled, click on <b>Enable Payment Methods</b> and activate the <b>ACH Direct Debit</b> option.</li>
+                                <li>If the company's country and the customer's delivery address country match, then <b>Domestic Fees</b> will be applied. otherwise, <b>International Fees</b> will be applied.</li>
+                                <img src="images/12.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                     loading="lazy"
+                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <img src="images/13.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                     loading="lazy"
+                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <li>Here, both countries are same so <b>Domestic Fees</b> will be applied.</li>
+                                <li>Whenever the user goes to the checkout page, they will see a <b>Fees Badge</b> inside the payment method line.</li>
+                                <li>Domestic Fees = <b>2%</b> of total amount + <b>Fixed Fees</b></li>
+                                <li>Domestic Fees = <b>2%</b> of <b>320</b> + <b>0.30</b></li>
+                                <li>Domestic Fees = <b>6.4</b> + <b>0.30</b></li>
+                                <li>Domestic Fees = <b>6.70</b></li>
                                 <img src="images/6.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>
                             <ul style="font-size: 22px;">
-                                <li>Whenever a user creates and confirms an invoice, the <b>Pay With ACH</b> button will appear on the invoice form.</li>
+                                <li>After payment, the user can see <b>Fee</b> details in the <b>Payment Transaction</b> form view.</li>
                                 <img src="images/7.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
-                                     loading="lazy"
-                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <li>Clicking the <b>Pay With ACH</b> button will redirect you to the <b>ACH Payment</b> checkout page.</li>
-                                <li>On the checkout page, enter the required bank account details, connect the bank account, and complete the payment for the invoice.</li>
-                                <img src="images/8.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>
                             <ul style="font-size: 22px;">
-                                <li>After submitting the payment, the system sends a request to Stripe and automatically receives the payment response.</li>
+                                <li>If the Customer's delivery address country does not match with the company's country, then <b>International Fees</b> will be applied.</li>
+                                <img src="images/12.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                     loading="lazy"
+                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <img src="images/16.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                     loading="lazy"
+                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <li>Whenever the user goes to the checkout page, they will see a <b>Fees Badge</b> inside the payment method line.</li>
+                                <li>International Fees = <b>3%</b> of total amount + <b>Fixed Fees</b></li>
+                                <li>International Fees = <b>3%</b> of <b>320</b> + <b>0.60</b></li>
+                                <li>International Fees = <b>9.6</b> + <b>0.60</b></li>
+                                <li>International Fees = <b>10.20</b></li>
+                                <img src="images/17.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                     loading="lazy"
+                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <img src="images/18.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                     loading="lazy"
+                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            </ul>
+                            <ul style="font-size: 22px;">
+                                <li>The <b>Fees Badge</b> is also visible when the user pays an <b>invoice</b> using the <b>Stripe</b> payment method.</li>
                                 <img src="images/9.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
@@ -327,7 +353,7 @@
                                 <img src="images/10.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <li>The invoice will then be automatically marked as <b>Paid</b> in Odoo invoicing.</li>
+                                <li>A <b>Fees</b> field is added in the <b>Payment Transaction</b> form view.</li>
                                 <img src="images/11.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>

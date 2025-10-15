@@ -1,48 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo> <!-- Extend Stripe inline form to show extra fees -->
-    <template id="stripe_inline_form_with_fees"
-              inherit_id="payment_stripe.inline_form"> <!-- Calculate fees based on provider config and amount -->
-        <xpath expr="//div[@name='o_stripe_element_container']" position="after">
-            <t t-set="base_amount" t-value="amount"/>
-            <t t-set="total_fixed_fees"
-               t-value="provider_sudo.fix_domestic_fees + provider_sudo.fix_international_fees"/>
-            <t t-set="total_percent_fees"
-               t-value="((provider_sudo.var_domestic_fees + provider_sudo.var_international_fees) * base_amount) / 100"/>
-            <t t-set="fees" t-value="total_fixed_fees + total_percent_fees"/>
-            <div class="alert alert-info mt-2">
-                <span class="fw-bold">Extra Fees Applied:</span>
-                <t t-esc="fees"/>
+    <template id="payment_token_form_stripe_fees" inherit_id="payment.token_form">
+        <xpath expr="//label[@t-attf-for='o_payment_token_{{token_sudo.id}}']" position="after">
+            <!-- Fee badge container for tokens -->
+            <div class="stripe-token-fees-badge d-none"
+                 t-att-data-token-id="token_sudo.id"
+                 t-att-data-provider-code="token_sudo.provider_id._get_code()">
             </div>
         </xpath>
     </template>
 </odoo>
-
-<!--<?xml version="1.0" encoding="utf-8"?>-->
-<!--<odoo>-->
-<!--    &lt;!&ndash; Extend Stripe inline form to show extra fees &ndash;&gt;-->
-<!--    <template id="stripe_inline_form_with_fees" inherit_id="payment_stripe.inline_form">-->
-<!--        &lt;!&ndash; Calculate fees based on provider config and amount &ndash;&gt;-->
-<!--        <xpath expr="//div[@name='o_stripe_element_container']" position="after">-->
-<!--            <t t-set="base_amount" t-value="amount"/>-->
-<!--            <t t-set="partner_country" t-value="partner.country_id"/>-->
-<!--            <t t-set="company_country" t-value="request.env.company.country_id"/>-->
-<!--            <t t-set="is_international"-->
-<!--               t-value="partner_country and company_country and partner_country.id != company_country.id"/>-->
-
-<!--            <t t-set="fees" t-value="0.0"/>-->
-<!--            <t t-if="is_international">-->
-<!--                <t t-set="fees"-->
-<!--                   t-value="provider_sudo.fix_domestic_fees + provider_sudo.fix_international_fees + ((provider_sudo.var_domestic_fees + provider_sudo.var_international_fees) * base_amount) / 100"/>-->
-<!--            </t>-->
-<!--            <t t-else="">-->
-<!--                <t t-set="fees"-->
-<!--                   t-value="provider_sudo.fix_domestic_fees + (provider_sudo.var_domestic_fees * base_amount) / 100"/>-->
-<!--            </t>-->
-
-<!--            <div class="alert alert-info mt-2">-->
-<!--                <span class="fw-bold">+ $</span>-->
-<!--                <t t-esc="fees"/> Fees-->
-<!--            </div>-->
-<!--        </xpath>-->
-<!--    </template>-->
-<!--</odoo>-->

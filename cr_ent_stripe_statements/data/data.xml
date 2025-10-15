@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Stripe Fee Account -->
+    <record id="account_expense_custom_600001_id" model="account.account">
+        <field name="name">Stripe Fees Acc</field>
+        <field name="code">600001</field>
+        <field name="account_type">expense</field>
+        <field name="reconcile">False</field>
+        <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+    </record>
+
+    <!-- Stripe Journal -->
+    <record id="stripe_journal_statement_data_id" model="account.journal">
+        <field name="name">Stripe</field>
+        <field name="type">bank</field>
+        <field name="code">STRP</field>
+        <field name="company_id" ref="base.main_company"/>
+    </record>
+
+    <!-- Stripe Fee Partner -->
+    <record id="stripe_fee_partner_id" model="res.partner">
+        <field name="name">Stripe Fee</field>
+        <field name="company_type">company</field>
+        <field name="supplier_rank">1</field>
+        <field name="company_id" ref="base.main_company"/>
+    </record>
+
+    <!-- Stripe Fee Product -->
+    <record id="stripe_statement_product_fee_id" model="product.template">
+        <field name="name">Stripe Fees</field>
+        <field name="type">service</field>
+        <field name="categ_id" ref="product.product_category_all"/>
+        <field name="property_account_expense_id" ref="account_expense_custom_600001_id"/>
+        <field name="purchase_ok">True</field> <!-- for bill creation -->
+        <field name="sale_ok">False</field>
+        <field name="supplier_taxes_id" eval="[(6, 0, [])]"/>
+        <field name="company_id" ref="base.main_company"/>
+    </record>
+</odoo>
