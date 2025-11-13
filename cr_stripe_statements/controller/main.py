@@ -1,4 +1,5 @@
-# controllers/main.py
+# -*- coding: utf-8 -*-
+# Part of Creyox Technologies.
 import logging
 import stripe
 from odoo import http
