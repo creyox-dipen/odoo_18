@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_material_costing,material.costing,model_material_costing,base.group_user,1,1,1,1
+access_labour_costing,labour.costing,model_labour_costing,base.group_user,1,1,1,1
+access_overhead_costing,overhead.costing,model_overhead_costing,base.group_user,1,1,1,1

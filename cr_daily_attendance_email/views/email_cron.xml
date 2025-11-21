@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="cron_daily_attendance_morning" model="ir.cron">
+        <field name="name">Daily Attendance Report - Morning (12:00 PM Israel)</field>
+        <field name="model_id" ref="model_hr_attendance"/>
+        <field name="state">code</field>
+        <field name="code">model.send_daily_attendance_report('morning')</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(DateTime.now().astimezone(pytz.timezone('Asia/Jerusalem')).replace(hour=12, minute=0, second=0, microsecond=0) + timedelta(days=1 if DateTime.now().astimezone(pytz.timezone('Asia/Jerusalem')).hour >= 12 else 0)).astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+
+    <record id="cron_daily_attendance_evening" model="ir.cron">
+        <field name="name">Daily Attendance Report - Evening (7:00 PM Israel)</field>
+        <field name="model_id" ref="model_hr_attendance"/>
+        <field name="state">code</field>
+        <field name="code">model.send_daily_attendance_report('evening')</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(DateTime.now().astimezone(pytz.timezone('Asia/Jerusalem')).replace(hour=19, minute=0, second=0, microsecond=0) + timedelta(days=1 if DateTime.now().astimezone(pytz.timezone('Asia/Jerusalem')).hour >= 19 else 0)).astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+</odoo>

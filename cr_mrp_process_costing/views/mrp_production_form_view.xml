@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mrp_production_form_view" model="ir.ui.view">
+        <field name="name">mrp.production.form.view</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/notebook/page[@name='miscellaneous']" position="after">
+                <page string="Material Costing" name="Material Costing">
+                    <field name="material_costing_ids" widget="one2many">
+                        <list string="Material Costing" editable="bottom">
+                            <field name="mat_operation_id" readonly="1" force_save="1"/>
+                            <field name="mat_product_id" readonly="1" force_save="1"/>
+                            <field name="mat_planned_qty" readonly="1" force_save="1"/>
+                            <field name="mat_actual_qty"/>
+                            <field name="mat_uom" readonly="1" force_save="1"/>
+                            <field name="mat_cost_per_unit" sum="Total Cost Per unit" readonly="1" force_save="1"/>
+                            <field name="mat_total_product_cost" sum="Total Estimated Cost" readonly="1"
+                                   force_save="1"/>
+                            <field name="mat_total_actual_product_cost" sum="Total Actual Cost"/>
+                        </list>
+                    </field>
+                    <div style="display: flex; justify-content: space-between;">
+                        <group class="oe_subtotal_footer" style="font-size: 18px; font-weight: bold;">
+                            <field name="mat_total_actual_cost" readonly="1" force_save="1"/>
+                        </group>
+                    </div>
+                </page>
+                <page string="Labour Costing" name="Labour Costing">
+                    <field name="labour_costing_ids" widget="one2many">
+                        <list string="Labour Costing" editable="bottom">
+                            <field name="lab_operation_id" readonly="1" force_save="1"/>
+                            <field name="lab_planned_hour" readonly="1" force_save="1"/>
+                            <field name="lab_actual_hour" readonly="is_costing_by_work_center == True "/>
+                            <field name="lab_cost_per_hour" sum="Total Cost" readonly="1" force_save="1"/>
+                            <field name="lab_total_operation_cost" sum=" Total Estimated Cost" readonly="1"
+                                   force_save="1"/>
+                            <field name="lab_total_actual_operation_cost" sum="Total Actual Cost"/>
+                            <field name="is_costing_by_work_center" column_invisible="1"/>
+                        </list>
+                    </field>
+                    <div style="display: flex; justify-content: space-between;">
+                        <group class="oe_subtotal_footer" style="font-size: 18px; font-weight: bold;">
+                            <field name="lab_total_actual_cost" readonly="1" force_save="1"/>
+                        </group>
+                    </div>
+                </page>
+                <page string="Overhead Costing" name="Overhead Costing">
+                    <field name="overhead_costing_ids" widget="one2many">
+                        <list string="Overhead Costing" editable="bottom">
+                            <field name="ove_operation_id" readonly="1" force_save="1"/>
+                            <field name="ove_planned_hour" readonly="1" force_save="1"/>
+                            <field name="ove_actual_hour" readonly="is_costing_by_work_center == True "/>
+                            <field name="ove_cost_per_hour" sum="Total Cost" readonly="1" force_save="1"/>
+                            <field name="ove_total_operation_cost" sum="Total Estimated Cost" readonly="1"
+                                   force_save="1"/>
+                            <field name="ove_total_actual_operation_cost" sum="Total Actual Cost"/>
+                            <field name="is_costing_by_work_center" column_invisible="1"/>
+
+                        </list>
+                    </field>
+                    <div style="display: flex; justify-content: space-between;">
+                        <group class="oe_subtotal_footer" style="font-size: 18px; font-weight: bold;">
+                            <field name="ove_total_actual_cost"/>
+                        </group>
+                    </div>
+
+                </page>
+                <page string="Total Costing" name="Total Costing">
+                    <group>
+                        <group>
+                            <field name="mat_total_cost" style="font-size: 14px; " readonly="1" force_save="1"/>
+                            <field name="lab_total_cost" style="font-size: 14px;" readonly="1" force_save="1"/>
+                            <field name="ove_total_cost" style="font-size: 14px;" readonly="1" force_save="1"/>
+                            <field name="total_cost" class="oe_subtotal_footer" readonly="1" force_save="1"
+                                   style="font-size: 18px; font-weight: bold;"/>
+                        </group>
+                        <group>
+                            <field name="mat_total_actual_cost" readonly="1" force_save="1" style="font-size: 14px;"/>
+                            <field name="lab_total_actual_cost" readonly="1" force_save="1" style="font-size: 14px;"/>
+                            <field name="ove_total_actual_cost" readonly="1" force_save="1" style="font-size: 14px;"/>
+                            <field name="product_unit_cost" readonly="1" force_save="1" class="oe_subtotal_footer"
+                                   style="font-size: 14px;"/>
+                            <field name="actual_total_cost" readonly="1" force_save="1" class="oe_subtotal_footer"
+                                   style="font-size: 18px; font-weight: bold;"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="stripe_statement_product_fee_id" model="product.template">
+        <field name="name">[PAYMENT_FEE] Payment Fee</field>
+        <field name="type">service</field>
+        <field name="categ_id" ref="product.product_category_all"/>
+<!--        <field name="property_account_expense_id" ref="account_expense_custom_600001_id"/>-->
+        <field name="purchase_ok">True</field> <!-- for bill creation -->
+        <field name="sale_ok">False</field>
+<!--        <field name="supplier_taxes_id" eval="[(6, 0, [])]"/>-->
+<!--        <field name="company_id" ref="base.main_company"/>-->
+    </record>
+
+</odoo>

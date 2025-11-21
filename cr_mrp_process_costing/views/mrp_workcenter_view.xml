@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mrp_workcenter_view" model="ir.ui.view">
+        <field name="name">mrp.workcenter.view</field>
+        <field name="model">mrp.workcenter</field>
+        <field name="inherit_id" ref="mrp.mrp_workcenter_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/notebook/page/group/group/div[@id='costs_hour']" position="after">
+                <label for="overhead_cost_per_hour"/>
+                <div>
+                    <field name="overhead_cost_per_hour" widget="monetary" class="oe_inline"/>
+                </div>
+                <label for="labour_cost_per_hour"/>
+                <div>
+                    <field name="labour_cost_per_hour" class="oe_inline"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

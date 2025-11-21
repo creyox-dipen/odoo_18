@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="10"/>
+        <field name="inherit_id" ref="mrp.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='mrp']/block[@name='process_operations_setting_container']" position="before">
+                <block title="Costing Approach for Manufacturing Orders" id="mo_costing_method">
+                    <setting id="costing_method_mo" help="Choose the method used for costing manufacturing orders"
+                             string="Costing Method Selection">
+                        <div>
+                            <span class="text-muted">
+                                Select the method used for costing:
+                            </span>
+                            <ul>
+                                <li>Manually: Assign values manually.</li>
+                                <li>Work-center: Automatically calculated from work center configurations.</li>
+                            </ul>
+                            <field name="costing_method_selection" string="Costing Method" class="o_light_label"/>
+                        </div>
+                    </setting>
+                    <setting id="accounting_for_mo" string="Journal Entries for Manufacturing Orders"
+                             help="Automatic Journal Entries For Manufacturing Order Costing">
+                        <field name="is_journal_entry" string="Enable Automatic Journal Entries"/>
+                        <div>
+                            <span class="text-muted">
+                                Specify the accounts for journal entries related to manufacturing costs:
+                            </span>
+                        </div>
+                        <br/>
+                        <group invisible="is_journal_entry == False">
+                            <field name="material_costing_debit_account_id" required="is_journal_entry == True" class="oe_inline"/>
+                            <field name="material_costing_credit_account_id" required="is_journal_entry == True" class="oe_inline"/>
+
+                            <field name="labour_costing_debit_account_id" required="is_journal_entry == True" class="oe_inline"/>
+                            <field name="labour_costing_credit_account_id" required="is_journal_entry == True" class="oe_inline"/>
+
+                            <field name="overhead_costing_debit_account_id" required="is_journal_entry == True" class="oe_inline"/>
+                            <field name="overhead_costing_credit_account_id" required="is_journal_entry == True" class="oe_inline"/>
+
+                            <field name="total_costing_debit_account_id" required="is_journal_entry == True" class="oe_inline"/>
+                            <field name="total_costing_credit_account_id" required="is_journal_entry == True" class="oe_inline"/>
+                        </group>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

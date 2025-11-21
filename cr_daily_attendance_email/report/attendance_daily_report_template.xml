@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+<!--        QWeb PDF Report-->
+        <report
+                id="action_report_attendance_daily"
+                model="hr.attendance"
+                string="Daily Attendance Report"
+                report_type="qweb-pdf"
+                name="cr_daily_attendance_email.attendance_daily_report_template"
+                file="cr_daily_attendance_email.attendance_daily_report_template"
+        />
+
+<!--  Template  -->
+        <template id="attendance_daily_report_template" name="Daily Attendance Report">
+            <t t-call="web.html_container">
+                <t t-call="web.external_layout">
+                    <t t-set="report_date" t-value="data.get('report_date')"/>
+                    <t t-set="report_type" t-value="data.get('report_type', 'morning')"/>
+                    <div class="page">
+                        <h2 class="text-center">ROVR Store - Daily Attendance Report</h2>
+                        <h4 class="text-center">
+                            <span t-esc="report_date.strftime('%d/%m/%Y')"/>
+                            -
+                            <span t-if="report_type == 'morning'">Morning Report (Check-in)</span>
+                            <span t-else="">Evening Report (Check-out)</span>
+                        </h4>
+                        <br/>
+
+                        <table class="table table-bordered table-sm">
+                            <thead style="background-color: #f0f0f0;">
+                                <tr>
+                                    <th style="width: 60%;">Employee</th>
+                                    <th style="width: 40%;">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="docs" t-as="att">
+                                    <t t-set="show" t-value="False"/>
+                                    <t t-if="report_type == 'morning' and att.check_in">
+                                        <t t-set="show" t-value="True"/>
+                                        <t t-set="time_label">Clock-in</t>
+                                        <t t-set="time_val" t-value="att.check_in"/>
+                                    </t>
+                                    <t t-elif="report_type == 'evening' and att.check_out">
+                                        <t t-set="show" t-value="True"/>
+                                        <t t-set="time_label">Clock-out</t>
+                                        <t t-set="time_val" t-value="att.check_out"/>
+                                    </t>
+
+                                    <t t-if="show">
+                                        <tr>
+                                            <td>
+                                                <span t-esc="att.employee_id.name"/>
+                                            </td>
+                                            <td>
+                                                <strong t-esc="time_label"/>:
+                                                <span t-esc="time_val"
+                                                      t-options="{'widget': 'datetime', 'format': 'HH:mm'}"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <div class="footer">
+                            <small>Report generated automatically on
+                                <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                                (Israel Time)
+                            </small>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

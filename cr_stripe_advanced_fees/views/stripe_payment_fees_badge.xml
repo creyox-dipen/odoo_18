@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo> <!-- Extend Stripe inline form to show extra fees -->
+    <template id="payment_token_form_stripe_fees" inherit_id="payment.token_form">
+        <xpath expr="//label[@t-attf-for='o_payment_token_{{token_sudo.id}}']" position="after">
+            <!-- Fee badge container for tokens -->
+            <div class="stripe-token-fees-badge d-none"
+                 t-att-data-token-id="token_sudo.id"
+                 t-att-data-provider-code="token_sudo.provider_id._get_code()">
+            </div>
+        </xpath>
+    </template>
+</odoo>

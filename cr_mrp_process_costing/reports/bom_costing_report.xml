@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="bill_of_material_details">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Bill of Material</h2>
+                        <span style="display:inline-block; width:400px; vertical-align:top;">
+                            <strong>Product:</strong>
+                            <t t-esc="doc.product_tmpl_id.name"/>
+                        </span>
+                        <span style="display:inline-block; vertical-align:top;">
+                            <strong>Reference:</strong>
+                            <t t-esc="doc.code"/>
+                        </span>
+                        <br/>
+
+                        <span style="display:inline-block; width:400px; vertical-align:top;">
+                            <strong>Product Variant:</strong>
+                            <t t-esc="doc.product_id.name"/>
+                        </span>
+                        <span style="display:inline-block; vertical-align:top;">
+                            <strong>BoM Type:</strong>
+                            <t t-esc="doc.type"/>
+                        </span>
+                        <br/>
+
+                        <span style="display:inline-block; width:400px; vertical-align:top;">
+                            <strong>Quantity:</strong>
+                            <t t-esc="doc.product_qty"/>
+                        </span>
+                        <span style="display:inline-block; vertical-align:top;">
+                            <strong>Company:</strong>
+                            <t t-esc="doc.company_id.name"/>
+                        </span>
+
+                        <br/>
+                        <br/>
+                        <t t-if="any(material for material in doc.material_costing_ids)">
+                            <div>
+                                <h3>Material Costing:</h3>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <t t-if="any(material.mat_operation_id for material in doc.material_costing_ids)">
+                                                <th>Operation</th>
+                                            </t>
+                                            <th>Products</th>
+                                            <th>Planned Quantity</th>
+                                            <th>Actual Quantity</th>
+                                            <th>Unit of Measure</th>
+                                            <th>Cost per Unit</th>
+                                            <th>Total Cost</th>
+                                            <th>Total Actual Material Cost</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="doc.material_costing_ids" t-as="material">
+                                            <tr>
+                                                <t t-if="any(material.mat_operation_id for material in doc.material_costing_ids)">
+                                                    <td>
+                                                        <t t-esc="material.mat_operation_id.name"/>
+                                                    </td>
+                                                </t>
+                                                <td>
+                                                    <t t-esc="material.mat_product_id.name"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="material.mat_planned_qty"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="material.mat_actual_qty"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="material.mat_uom"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="material.mat_cost_per_unit"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="material.mat_total_product_cost"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="material.mat_total_actual_product_cost"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <t t-if="any(material.mat_operation_id for material in doc.material_costing_ids)">
+                                                <td colspan="5" style="text-align: right;"/>
+                                            </t>
+                                            <t t-else="">
+                                                <td colspan="4" style="text-align: right;"/>
+                                            </t>
+                                            <td>
+                                                <b>
+                                                    <t t-esc="sum(material.mat_cost_per_unit for material in doc.material_costing_ids)"/>
+                                                </b>
+                                            </td>
+                                            <td>
+                                                <b>
+                                                    <t t-esc="sum(material.mat_total_product_cost for material in doc.material_costing_ids)"/>
+                                                </b>
+                                            </td>
+                                            <td>
+                                                <b>
+                                                    <t t-esc="sum(material.mat_total_actual_product_cost for material in doc.material_costing_ids)"/>
+                                                </b>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </t>
+                        <br/>
+                        <t t-if="any(labour for labour in doc.labour_costing_ids)">
+                            <div>
+                                <h3>Labour Costing:</h3>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <t t-if="any(labour.lab_operation_id for labour in doc.labour_costing_ids)">
+                                                <th>Operation</th>
+                                            </t>
+                                            <th>Planned Hours</th>
+                                            <th>Actual Hours</th>
+                                            <th>Cost per Hour</th>
+                                            <th>Total Cost</th>
+                                            <th>Total Actual Labour Cost</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="doc.labour_costing_ids" t-as="labour">
+                                            <tr>
+                                                <t t-if="any(labour.lab_operation_id for labour in doc.labour_costing_ids)">
+                                                    <td>
+                                                        <t t-esc="labour.lab_operation_id.name"/>
+                                                    </td>
+                                                </t>
+                                                <td>
+                                                    <t t-esc="labour.lab_planned_hour"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="labour.lab_actual_hour"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="labour.lab_cost_per_hour"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="labour.lab_total_operation_cost"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="labour.lab_total_actual_operation_cost"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <t t-if="any(labour.lab_operation_id for labour in doc.labour_costing_ids)">
+                                                <td colspan="3" style="text-align: right;"/>
+                                            </t>
+                                            <t t-else="">
+                                                <td colspan="2" style="text-align: right;"/>
+                                            </t>
+                                            <td>
+                                                <b>
+                                                    <t t-esc="sum(labour.lab_cost_per_hour for labour in doc.labour_costing_ids)"/>
+                                                </b>
+                                            </td>
+                                            <td>
+                                                <b>
+                                                    <t t-esc="sum(labour.lab_total_operation_cost for labour in doc.labour_costing_ids)"/>
+                                                </b>
+                                            </td>
+                                            <td>
+                                                <b>
+                                                    <t t-esc="sum(labour.lab_total_actual_operation_cost for labour in doc.labour_costing_ids)"/>
+                                                </b>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </t>
+                        <br/>
+                        <t t-if="any(overhead for overhead in doc.overhead_costing_ids)">
+                            <div>
+                                <h3>Overhead Costing:</h3>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <t t-if="any(labour.lab_operation_id for labour in doc.labour_costing_ids)">
+                                                <th>Operation</th>
+                                            </t>
+                                            <th>Planned Hours</th>
+                                            <th>Actual Hours</th>
+                                            <th>Cost per Hour</th>
+                                            <th>Total Cost</th>
+                                            <th>Total Actual Overhead Cost</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="doc.overhead_costing_ids" t-as="overhead">
+                                            <tr>
+                                                <t t-if="any(labour.lab_operation_id for labour in doc.labour_costing_ids)">
+                                                    <td>
+                                                        <t t-esc="overhead.ove_operation_id.name"/>
+                                                    </td>
+                                                </t>
+                                                <td>
+                                                    <t t-esc="overhead.ove_planned_hour"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="overhead.ove_actual_hour"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="overhead.ove_cost_per_hour"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="overhead.ove_total_operation_cost"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="overhead.ove_total_actual_operation_cost"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <t t-if="any(labour.lab_operation_id for labour in doc.labour_costing_ids)">
+                                                <td colspan="3" style="text-align: right;"/>
+                                            </t>
+                                            <t t-else="">
+                                                <td colspan="3" style="text-align: right;"/>
+                                            </t>
+                                            <td>
+                                                <b>
+                                                    <t t-esc="sum(overhead.ove_cost_per_hour for overhead in doc.overhead_costing_ids)"/>
+                                                </b>
+                                            </td>
+                                            <td>
+                                                <b>
+                                                    <t t-esc="sum(overhead.ove_total_operation_cost for overhead in doc.overhead_costing_ids)"/>
+                                                </b>
+                                            </td>
+                                            <td>
+                                                <b>
+                                                    <t t-esc="sum(overhead.ove_total_actual_operation_cost for overhead in doc.overhead_costing_ids)"/>
+                                                </b>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </t>
+                        <br/>
+
+
+                        <div class="d-flex justify-content-between">
+                            <div style="width: 48%;">
+                                <h4>
+                                    <strong>Total Estimated Cost:</strong>
+                                </h4>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Cost Type</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <strong>Estimated Material Cost:</strong>
+                                            </td>
+                                            <td>
+                                                <t t-esc="doc.mat_total_cost"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <strong>Estimated Labour Cost:</strong>
+                                            </td>
+                                            <td>
+                                                <t t-esc="doc.lab_total_cost"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <strong>Estimated Overhead Cost:</strong>
+                                            </td>
+                                            <td>
+                                                <t t-esc="doc.ove_total_cost"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <strong>Estimated Total Cost:</strong>
+                                            </td>
+                                            <td>
+                                                <strong>
+                                                    <t t-esc="doc.total_cost"/>
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                        <br/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_bill_of_material" model="ir.actions.report">
+        <field name="name">Bill of Material Report</field>
+        <field name="model">mrp.bom</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cr_mrp_process_costing.bill_of_material_details</field>
+        <field name="report_file">cr_mrp_process_costing.bill_of_material_details</field>
+        <field name="print_report_name">'Bill of Material Report'</field>
+        <field name="binding_model_id" ref="mrp.model_mrp_bom"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

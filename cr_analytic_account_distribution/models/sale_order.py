@@ -13,4 +13,7 @@ class SaleOrderLine(models.Model):
         res = super()._prepare_procurement_values(group_id=group_id)
         res['analytic_distribution'] = self.analytic_distribution
         res['analytic_precision'] = self.analytic_precision
+        print(res['analytic_distribution'])
+        print(res['analytic_precision'])
+        print(res)
         return res
