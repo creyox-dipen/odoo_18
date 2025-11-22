@@ -17,11 +17,8 @@
     'depends': ['base', 'hr_attendance', 'mail'],
     'data': [
         'views/email_cron.xml',
-        'views/user_group.xml'
+        'views/res_users.xml',
     ],
-    # 'images': ['static/description/banner.png'],
     'installable': True,
     'application': True,
-    "price": 100,
-    'currency': 'USD'
 }

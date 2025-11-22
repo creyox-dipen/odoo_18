@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <record id="inherit_res_users_daily_attendance_email_id" model="ir.ui.view">
+        <field name="name">Inherit Res Users Form View For Daily Attendance Email</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='preferences']/group/group[2]" position="after">
+                <group string="Menus Customization">
+                    <field name="enable_daily_attendance_email"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
