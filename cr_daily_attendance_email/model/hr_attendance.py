@@ -103,10 +103,10 @@ class HrAttendance(models.Model):
             employee_name = att.employee_id.name
             if report_type == 'morning' and att.check_in:
                 time_str = format_datetime(self.env, att.check_in, tz=israel_tz, dt_format='HH:mm')
-                worksheet.write_row(row, 0, [employee_name, f"Clock-in: {time_str}"], cell_format)
+                worksheet.write_row(row, 0, [employee_name, f"{time_str}"], cell_format)
             elif report_type == 'evening' and att.check_out:
                 time_str = format_datetime(self.env, att.check_out, tz=israel_tz, dt_format='HH:mm')
-                worksheet.write_row(row, 0, [employee_name, f"Clock-out: {time_str}"], cell_format)
+                worksheet.write_row(row, 0, [employee_name, f"{time_str}"], cell_format)
             row += 1
 
         worksheet.set_column('A:A', 30)

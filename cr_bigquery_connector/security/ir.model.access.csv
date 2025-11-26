@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cr_big_query_export,access_cr_big_query_export,model_cr_big_query_export,,1,1,1,1
+access_cr_big_query_config,access_cr_big_query_config,model_cr_big_query_config,,1,1,1,1
+access_cr_big_query_scheduler,access_cr_big_query_scheduler,model_cr_big_query_scheduler,,1,1,1,1

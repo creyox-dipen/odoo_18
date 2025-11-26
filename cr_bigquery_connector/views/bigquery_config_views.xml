@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- list View -->
+    <record id="view_bigquery_config_tree" model="ir.ui.view">
+        <field name="name">cr.big.query.config.list</field>
+        <field name="model">cr.big.query.config</field>
+        <field name="arch" type="xml">
+            <list string="BigQuery Configuration">
+                <field name="cr_name"/>
+                <field name="cr_project_id"/>
+                <field name="cr_dataset_id"/>
+                <field name="cr_company_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_bigquery_config_form" model="ir.ui.view">
+        <field name="name">cr.big.query.config.form</field>
+        <field name="model">cr.big.query.config</field>
+        <field name="arch" type="xml">
+            <form string="BigQuery Configuration">
+                <header>
+                    <field name="status" widget="statusbar" statusbar_visible="not_verified,verified"/>
+                    <button name="action_verify_credentials"
+                            type="object"
+                            string="Verify Settings"
+                            class="btn-primary"
+                            invisible="status == 'verified'" />
+                </header>
+                <sheet>
+                    <group>
+                        <field name="cr_name"/>
+                        <field name="cr_project_id"/>
+                        <field name="cr_dataset_id"/>
+                        <field name="cr_credentials_json" widget="text"/>
+                        <field name="cr_company_id"/>
+                    </group>
+                </sheet>
+            </form>
+
+        </field>
+    </record>
+    <!-- Action -->
+    <record id="action_bigquery_config" model="ir.actions.act_window">
+        <field name="name">Configuration</field>
+        <field name="res_model">cr.big.query.config</field>
+        <field name="view_mode">list,form</field>
+        <field name="target">current</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_bigquery_config_root" name="BigQuery Connector"  web_icon="cr_bigquery_connector,static/description/icon.png"/>
+
+    <menuitem id="menu_bigquery_config" name="Configuration" parent="menu_bigquery_config_root"
+              action="action_bigquery_config" sequence="20"/>
+
+</odoo>

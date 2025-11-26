@@ -1,15 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
 
-    <record id="stripe_statement_product_fee_id" model="product.template">
+    <record id="stripe_advanced_fees_product_id" model="product.template">
         <field name="name">[PAYMENT_FEE] Payment Fee</field>
         <field name="type">service</field>
+
+        <!-- Required fields -->
+        <!-- <field name="uom_id" ref="uom.product_uom_unit"/>
+        <field name="uom_po_id" ref="uom.product_uom_unit"/> -->
+
         <field name="categ_id" ref="product.product_category_all"/>
-<!--        <field name="property_account_expense_id" ref="account_expense_custom_600001_id"/>-->
-        <field name="purchase_ok">True</field> <!-- for bill creation -->
-        <field name="sale_ok">False</field>
-<!--        <field name="supplier_taxes_id" eval="[(6, 0, [])]"/>-->
-<!--        <field name="company_id" ref="base.main_company"/>-->
+
+        <!-- Use lowercase booleans -->
+        <field name="purchase_ok">true</field>
+        <field name="sale_ok">true</field>
+
+        <field name="company_id" ref="base.main_company"/>
+
+        <field name="supplier_taxes_id" eval="[(6, 0, [])]"/>
     </record>
 
 </odoo>

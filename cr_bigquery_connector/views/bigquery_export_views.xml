@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="cr_big_query_export_view_tree" model="ir.ui.view">
+        <field name="name">cr.big.query.export.view.list</field>
+        <field name="model">cr.big.query.export</field>
+        <field name="arch" type="xml">
+            <list string="BigQuery Configuration">
+                <field name="cr_name"/>
+                <field name="cr_config_id"/>
+                <field name="cr_export_model_ids" widget="many2many_tags"/>
+                <field name="cr_import_model_ids" widget="many2many_tags"/>
+            </list>
+        </field>
+    </record>
+    <record id="cr_big_query_export_view_form" model="ir.ui.view">
+        <field name="name">cr.big.query.export.view.form</field>
+        <field name="model">cr.big.query.export</field>
+        <field name="arch" type="xml">
+            <form string="BigQuery Export">
+                <div class="oe_title">
+                    <div style="margin-bottom: 10px;word-wrap: break-word;border: 1px dotted;padding: 3px;font-weight: bold;color: #666666;background: antiquewhite;"
+                    >
+                        <p>
+                            Please Make Sure Here You have Selected Table That Is Present In Bigquery Database For
+                            Import.
+                            Please Make Sure Here You have Selected Different Time for scheduling Export And Import .
+                            Please Make Sure Here You have Selected Table that are not selected in Operation with
+                            selected fields export / Import .
+                        </p>
+                    </div>
+                </div>
+                <group>
+                    <field name="cr_name"/>
+                    <field name="cr_config_id"/>
+                </group>
+
+                <group string="Settings" colspan="2">
+                    <group>
+                        <field name="cr_export_model_ids" options="{'no_create': True, 'no_edit': True}"
+                               widget="many2many_tags"/>
+                        <field name="cr_export_cron_value_"/>
+                        <field name="cr_export_scheduled_units_"/>
+                        <field name="cr_export_cron_job_id" invisible="1"/>
+                        <div style="display: flex; gap: 10px; flex-wrap: nowrap;">
+
+                            <button string="Create Scheduler"
+                                    class="oe_highlight"
+                                    type="object" invisible="cr_export_cron_job_id"
+                                    name="action_create_scheduler"/>
+                            <button string="Update Scheduler"
+                                    class="oe_highlight"
+                                    type="object" invisible="not cr_export_cron_job_id"
+                                    name="action_update_scheduler"/>
+                            <button string="Delete Scheduler"
+                                    class="btn-danger"
+                                    type="object" invisible="not cr_export_cron_job_id"
+                                    name="action_delete_scheduler"/>
+                            <button name="run_export_manually"
+                                    type="object"
+                                    string="Run Manually"
+                                    class="oe_highlight"
+                            />
+                        </div>
+                    </group>
+                    <group>
+                        <field name="cr_import_model_ids" options="{'no_create': True, 'no_edit': True}"
+                               widget="many2many_tags"/>
+                        <field name="cr_import_cron_value_"/>
+                        <field name="cr_import_scheduled_units_"/>
+                        <field name="cr_import_cron_job_id" invisible="1"/>
+                        <div style="display: flex; gap: 10px; flex-wrap: nowrap;">
+
+                            <button string="Create Scheduler"
+                                    class="oe_highlight"
+                                    type="object" invisible="cr_import_cron_job_id"
+                                    name="action_i_create_scheduler"/>
+                            <button string="Update Scheduler"
+                                    class="oe_highlight"
+                                    type="object" invisible="not cr_import_cron_job_id"
+                                    name="action_i_update_scheduler"/>
+                            <button string="Delete Scheduler"
+                                    class="btn-danger"
+                                    type="object" invisible="not cr_import_cron_job_id"
+                                    name="action_i_delete_scheduler"/>
+                            <button name="run_import_manually"
+                                    type="object"
+                                    string="Run Manually"
+                                    class="oe_highlight"/>
+                        </div>
+                    </group>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="cr_big_query_export_action" model="ir.actions.act_window">
+        <field name="name">Schedulers</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">cr.big.query.export</field>
+        <field name="view_mode">list,form</field>
+        <field name="target">current</field>
+    </record>
+    <menuitem
+            id="menu_scheduler_big_query"
+            name="Schedulers"
+            parent="menu_bigquery_config_root"
+            action='cr_big_query_export_action'
+            sequence="40"/>
+</odoo>

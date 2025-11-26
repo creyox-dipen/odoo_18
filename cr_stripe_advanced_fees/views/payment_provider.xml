@@ -9,16 +9,47 @@
         <field name="arch" type="xml">
             <xpath expr="//page[@name='configuration']" position="after">
                 <page name="fees" string="Fees" invisible="code != 'stripe'">
-                    <group string="Card Fees" name="card_fees">
-                        <field name="is_extra_fees"/>
-                    </group>
                     <group>
-                        <field name="fees_product"/>
-                    </group>
-                    <group>
+                        <group>
+                            <field name="is_extra_fees"/>
+                        </group>
+                        <group>
+                            <field name="fees_product"/>
+                        </group>
                         <field name="line_ids">
-                            <form>
+                            <list>
                                 <field name="payment_method_id"/>
+                                <field name="default_method"/>
+                                <field name="fix_domestic_fees"/>
+                                <field name="var_domestic_fees"/>
+                                <field name="is_free_domestic"/>
+                                <field name="free_domestic_amount"/>
+                                <field name="fix_international_fees"/>
+                                <field name="var_international_fees"/>
+                                <field name="is_free_international"/>
+                                <field name="free_international_amount"/>
+                            </list>
+                            <form>
+                                <group>
+                                    <group>
+                                        <field name="payment_method_id"/>
+                                    </group>
+                                    <group>
+                                        <field name="default_method"/>
+                                    </group>
+                                    <group string="Domestic Fees">
+                                        <field name="fix_domestic_fees"/>
+                                        <field name="var_domestic_fees"/>
+                                        <field name="is_free_domestic"/>
+                                        <field name="free_domestic_amount"/>
+                                    </group>
+                                    <group string="International Fees">
+                                        <field name="fix_international_fees"/>
+                                        <field name="var_international_fees"/>
+                                        <field name="is_free_international"/>
+                                        <field name="free_international_amount"/>
+                                    </group>
+                                </group>
                             </form>
                         </field>
                     </group>
