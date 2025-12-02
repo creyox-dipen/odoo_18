@@ -5,7 +5,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class PaymentMethodFees(models.Model):
     _name = "payment.method.fees"
     _description = "Fees Per Payment Method"
@@ -22,14 +21,7 @@ class PaymentMethodFees(models.Model):
     free_international_amount = fields.Float(string="International Total Amount")
     payment_provider_id = fields.Many2one(comodel_name="payment.provider")
 
-    _sql_constraints = [
-        ('default_method_unique', 'UNIQUE(payment_provider_id, default_method)',
-         'Only one payment method can be set as default per payment provider!')
-    ]
-
-    @api.onchange('default_method')
-    def _onchange_default_method(self):
-        if self.default_method:
-            logger.info("⚒️⚒️⚒️⚒️")
-            (self.payment_provider_id.line_ids - self).write({'default_method': False})
-            logger.info((self.payment_provider_id.line_ids - self).write({'default_method': False}))
+    # _sql_constraints = [
+    #     ('default_method_unique', 'UNIQUE(payment_provider_id, default_method)',
+    #      'Only one payment method can be set as default per payment provider!')
+    # ]

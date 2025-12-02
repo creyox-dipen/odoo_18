@@ -55,10 +55,8 @@
 	    BigQuery Integration Solutions in odoo,
         """,
     "license": "OPL-1",
-    'external_dependencies': {
-        'python': ['google-cloud-bigquery', 'google-auth']
-    },
-    "version": "18.0.0.2",
+    "external_dependencies": {"python": ["google-cloud-bigquery", "google-auth"]},
+    "version": "18.0.0.3",
     "description": """
     	 The BigQuery Odoo Connector streamlines data management by enabling seamless data synchronization
     	between Odoo and Google BigQuery. This integration allows businesses to export data from Odoo, 
@@ -107,12 +105,12 @@
         BigQuery Integration in odoo,
 	    BigQuery Integration Solutions in odoo,
         """,
-    "depends": ["base", 'web'],
+    "depends": ["base", "web"],
     "data": [
-        'security/ir.model.access.csv',
-        'views/bigquery_config_views.xml',
-        'views/bigquery_export_views.xml',
-        'views/bigquery_scheduler_views.xml',
+        "security/ir.model.access.csv",
+        "views/bigquery_config_views.xml",
+        "views/bigquery_export_views.xml",
+        "views/bigquery_scheduler_views.xml",
     ],
     "installable": True,
     "auto_install": False,

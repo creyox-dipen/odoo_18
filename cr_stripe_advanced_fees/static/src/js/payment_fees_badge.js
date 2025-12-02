@@ -1,24 +1,30 @@
+// payment_fees_badge.js
 import paymentForm from '@payment/js/payment_form';
-
 paymentForm.include({
     async _prepareInlineForm(providerId, providerCode, paymentOptionId, paymentMethodCode, flow) {
         await this._super(...arguments);
-        
         if (providerCode !== 'stripe') {
             return;
         }
-
         // Handle both tokens and payment methods
         const radio = document.querySelector('input[name="o_payment_radio"]:checked');
         const paymentOptionType = radio?.dataset.paymentOptionType;
+        // Determine method code
+        let methodCode = paymentMethodCode;
+        console.log("Method code : ",methodCode)
+        if (paymentOptionType === 'token') {
+            // Fetch token-specific method code (defaults to 'card' for Stripe tokens)
+            const tokenId = radio.dataset.paymentOptionId;
+            const tokenData = await this._fetchTokenMethod(tokenId);
+            methodCode = tokenData?.payment_method_code || 'card';
+            console.log("Method code : ", methodCode)
+        }
 
         // Fetch provider configuration
         const providerData = await this._fetchProviderConfig();
-        if (!providerData) return;
-
+        if (!providerData || !providerData.line_ids) return;
         // Fetch country data
-        const { companyCountryId, deliveryCountryId } = await this._fetchCountryData(providerData);
-        
+        const { companyCountryId, partnerCountryId } = await this._fetchCountryData(providerData);
         // Calculate fees
         if (providerData.is_extra_fees == true) {
             const baseAmount = parseFloat(this.paymentContext.amount || 0);
@@ -26,20 +32,18 @@ paymentForm.include({
                 baseAmount,
                 providerData,
                 companyCountryId,
-                deliveryCountryId
+                partnerCountryId,
+                methodCode
             );
-
             if (paymentOptionType === 'token') {
                 // Handle saved token
                 this._displayTokenFeeBadge(radio, calculatedFees, providerData);
+            } else {
+                // Handle payment method
+                this._displayPaymentMethodFeeBadge(radio, calculatedFees);
             }
-//            else {
-//                // Handle payment method (existing logic)
-//                this._displayPaymentMethodFeeBadge(radio, calculatedFees);
-//            }
         }
     },
-
     async _fetchProviderConfig() {
         try {
             const response = await fetch('/custom/stripe/provider_config', {
@@ -49,7 +53,6 @@ paymentForm.include({
             });
             const data = await response.json();
             const provider = data.result || {};
-            
             if (!provider || !provider.company_id) {
                 console.warn('[Stripe Badge] No provider or missing company_id');
                 return null;
@@ -60,11 +63,33 @@ paymentForm.include({
             return null;
         }
     },
+    async _fetchTokenMethod(tokenId) {
+        try {
+            const response = await fetch(`/custom/stripe/token_method/${tokenId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+            });
+            const data = await response.json();
+
+            // handle both shapes: { result: { ... } } or { payment_method_code: 'visa' }
+            const payload = data.result || data || {};
+            const code = payload.payment_method_code || payload.payment_method || payload.code || null;
+
+            // normalize to lower case if present
+            if (code) {
+                return { payment_method_code: String(code).toLowerCase() };
+            }
+            return {};
+        } catch (e) {
+            console.error('[Stripe Badge] Could not fetch token method:', e);
+            return {};
+        }
+    },
 
     async _fetchCountryData(provider) {
         let companyCountryId = null;
-        let deliveryCountryId = null;
-
+        let partnerCountryId = null;
         // Fetch company country
         try {
             const response = await fetch(`/custom/stripe/company_country/${provider.company_id[0] || provider.company_id}`, {
@@ -77,26 +102,23 @@ paymentForm.include({
         } catch (e) {
             console.error('[Stripe Badge] Could not fetch company country:', e);
         }
-
-        // Fetch delivery country
+        // Fetch partner (billing) country
         const orderId = this._extractOrderId();
         if (orderId) {
             try {
-                const response = await fetch(`/custom/stripe/order_shipping_country/${orderId}`, {
+                const response = await fetch(`/custom/stripe/order_partner_country/${orderId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({}),
                 });
                 const orderData = await response.json();
-                deliveryCountryId = orderData.result?.country_id || null;
+                partnerCountryId = orderData.result?.country_id || null;
             } catch (error) {
-                console.error('[Stripe Badge] Failed to fetch delivery country:', error);
+                console.error('[Stripe Badge] Failed to fetch partner country:', error);
             }
         }
-
-        return { companyCountryId, deliveryCountryId };
+        return { companyCountryId, partnerCountryId };
     },
-
     _extractOrderId() {
         if (this.paymentContext.transactionRoute) {
             const matches = this.paymentContext.transactionRoute.match(/\/transaction\/(\d+)/);
@@ -104,94 +126,88 @@ paymentForm.include({
         }
         return null;
     },
+    _calculateFees(baseAmount, providerData, companyCountryId, partnerCountryId, methodCode) {
+        const isInternational = partnerCountryId && companyCountryId && partnerCountryId !== companyCountryId;
+        // Find matching fee line
+        // Normalize input
+        const mcode = (methodCode || '').toLowerCase();
 
-    _calculateFees(baseAmount, provider, companyCountryId, deliveryCountryId) {
-        const isInternational = deliveryCountryId && companyCountryId && 
-                                deliveryCountryId !== companyCountryId;
+        // Try perfect match
+        let feeLine = providerData.line_ids.find(
+            line => (line.payment_method_code || '').toLowerCase() === mcode
+        );
 
+        // If nothing found → NO FEES
+        if (!feeLine) {
+            return 0;
+        }
         let totalFixedFees = 0;
         let totalPercentFees = 0;
-
+        let feeTypeFree, feeTypeFixed, feeTypeVar, feeTypeThreshold;
         if (isInternational) {
-            if (!provider.is_free_international) {
-                totalFixedFees = provider.fix_international_fees || 0;
-                totalPercentFees = (provider.var_international_fees || 0) * baseAmount / 100;
-            } else if (baseAmount < (provider.free_international_amount || 0)) {
-                totalFixedFees = provider.fix_international_fees || 0;
-                totalPercentFees = (provider.var_international_fees || 0) * baseAmount / 100;
-            }
+            feeTypeFree = feeLine.is_free_international;
+            feeTypeFixed = feeLine.fix_international_fees || 0;
+            feeTypeVar = feeLine.var_international_fees || 0;
+            feeTypeThreshold = feeLine.free_international_amount || 0;
         } else {
-            if (!provider.is_free_domestic) {
-                totalFixedFees = provider.fix_domestic_fees || 0;
-                totalPercentFees = (provider.var_domestic_fees || 0) * baseAmount / 100;
-            } else if (baseAmount < (provider.free_domestic_amount || 0)) {
-                totalFixedFees = provider.fix_domestic_fees || 0;
-                totalPercentFees = (provider.var_domestic_fees || 0) * baseAmount / 100;
-            }
+            feeTypeFree = feeLine.is_free_domestic;
+            feeTypeFixed = feeLine.fix_domestic_fees || 0;
+            feeTypeVar = feeLine.var_domestic_fees || 0;
+            feeTypeThreshold = feeLine.free_domestic_amount || 0;
         }
-
+        const applyFees = !feeTypeFree || baseAmount < feeTypeThreshold;
+        if (applyFees) {
+            totalFixedFees = feeTypeFixed;
+            totalPercentFees = (feeTypeVar * baseAmount) / 100;
+        }
         return Math.round((totalFixedFees + totalPercentFees) * 100) / 100;
     },
-
     _displayTokenFeeBadge(radio, calculatedFees, providerData) {
         const tokenId = radio.dataset.paymentOptionId;
         const badgeContainer = document.querySelector(
             `.stripe-token-fees-badge[data-token-id="${tokenId}"]`
         );
-
         if (!badgeContainer) {
             console.warn('[Stripe Badge] Token badge container not found');
             return;
         }
-
         // Get currency symbol from payment context or provider
         const currencySymbol = this.paymentContext.currencySymbol || '$';
-
         // Clear existing content
         badgeContainer.innerHTML = '';
         badgeContainer.classList.remove('d-none');
-
         // Add fee badge
         const badge = document.createElement('span');
         badge.className = 'badge bg-primary ms-2';
         badge.style.fontSize = '11px';
         badge.style.padding = '3px 8px';
         badge.textContent = `+ ${currencySymbol}${calculatedFees.toFixed(2)} Fees`;
-        
         badgeContainer.appendChild(badge);
         console.log('[Stripe Badge] Token fee badge displayed:', calculatedFees);
     },
-
     _displayPaymentMethodFeeBadge(radio, calculatedFees) {
         const inlineForm = this._getInlineForm(radio);
         const stripeInlineForm = inlineForm?.querySelector('[name="o_stripe_element_container"]');
-        
         if (!stripeInlineForm) return;
-
         const iframe = stripeInlineForm.querySelector("iframe");
         if (!iframe) {
             console.warn('[Stripe Badge] Iframe not found for payment method');
             return;
         }
-
         const iframeSrc = iframe.src || iframe.getAttribute('src') || '';
         const hasPrefilledCountry = iframeSrc.includes('publicOptions[defaultValues][billingDetails][address][country]=');
-
         if (!hasPrefilledCountry) {
             console.log('[Stripe Badge] Country selection enabled, skipping badge');
             return;
         }
-
         // Remove existing badge
         const existingBadge = stripeInlineForm.querySelector('.stripe-fees-badge');
         if (existingBadge) existingBadge.remove();
-
         // Get currency symbol
         const stripeInlineFormValues = JSON.parse(
             stripeInlineForm.dataset['stripeInlineFormValues']
         );
         const currencySymbol = stripeInlineFormValues.currency_symbol || '$';
-
         // Create new badge
         const badgeDiv = document.createElement("div");
         badgeDiv.className = 'stripe-fees-badge';
@@ -199,10 +215,8 @@ paymentForm.include({
         badgeDiv.style.position = "absolute";
         badgeDiv.style.zIndex = "9999";
         badgeDiv.style.pointerEvents = "none";
-
         stripeInlineForm.style.position = "relative";
         stripeInlineForm.appendChild(badgeDiv);
-
         // Position badge
         const updateBadgePosition = () => {
             const rect = iframe.getBoundingClientRect();
@@ -211,7 +225,6 @@ paymentForm.include({
             badgeDiv.style.left = rect.left - parentRect.left + 130 + "px";
             requestAnimationFrame(updateBadgePosition);
         };
-
         updateBadgePosition();
         console.log('[Stripe Badge] Payment method badge displayed:', calculatedFees);
     },

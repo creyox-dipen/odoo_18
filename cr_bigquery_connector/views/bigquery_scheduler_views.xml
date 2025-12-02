@@ -21,14 +21,17 @@
             <form string="BigQuery Automation Configuration">
                 <sheet>
                     <div class="oe_title" invisible="cr_operation =='export'">
-                                <div style="margin-bottom: 10px;word-wrap: break-word;border: 1px dotted;padding: 3px;font-weight: bold;color: #666666;background: antiquewhite;"
-                                     ><div style="display: flex; gap: 10px;flex-wrap: nowrap;">
+                        <div style="margin-bottom: 10px;word-wrap: break-word;border: 1px dotted;padding: 3px;font-weight: bold;color: #666666;background: antiquewhite;"
+                        >
+                            <div style="display: flex; gap: 10px;flex-wrap: nowrap;">
 
-                                    <p>
-                                       Please Make Sure Here You have Selected Table That Is Present In Bigquery Database For Import.
-                                    </p>
-                                </div>
-                                </div></div>
+                                <p>
+                                    Please Make Sure Here You have Selected Table That Is Present In Bigquery Database
+                                    For Import.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                     <group>
 
                         <field name="cr_name"/>
@@ -36,9 +39,10 @@
                         <field name="cr_config_id"/>
                         <field name="cr_export_model_id" invisible="cr_operation =='import'"/>
                         <field name="cr_import_model_id" invisible="cr_operation =='export'"/>
-                        <field name="cr_model_columns"  widget="many2many_tags" options="{'no_create': True,'no_edit':True}"/>
-                        <field name="cr_mailing_domain"   widget="domain"
-                                   options="{'model': 'cr_model_name', 'foldable': true}"/>
+                        <field name="cr_model_columns" widget="many2many_tags"
+                               options="{'no_create': True,'no_edit':True}"/>
+                        <field name="cr_mailing_domain" widget="domain"
+                               options="{'model': 'cr_model_name', 'foldable': true}"/>
                         <field name="cr_export_cron_value_" invisible="cr_operation =='import'"/>
                         <field name="cr_export_scheduled_units_" invisible="cr_operation =='import'"/>
                         <field name="available_field_ids" invisible="1"/>
@@ -48,27 +52,30 @@
                         <field name="cr_cron_job_id" invisible="1"/>
 
 
-                    </group><div style="display: flex; gap: 10px;flex-wrap: nowrap;" >
-                    <button name="action_create_scheduler"
-                            type="object"
-                            string="Create Scheduler"
-                            class="btn-primary" invisible="cr_cron_job_id"/>
+                    </group>
+                    <div style="display: flex; gap: 10px;flex-wrap: nowrap;">
+                        <button name="action_create_scheduler"
+                                type="object"
+                                string="Create Scheduler"
+                                class="btn-primary" invisible="cr_cron_job_id"/>
 
                         <button name="action_edit_scheduler"
-                            type="object"
-                            string="Edit Scheduler"
-                            class="btn-secondary"
-                            invisible="not cr_cron_job_id"/>
+                                type="object"
+                                string="Edit Scheduler"
+                                class="btn-secondary"
+                                invisible="not cr_cron_job_id"/>
 
                         <button name="action_delete_scheduler"
-                            type="object"
-                            string="Delete Scheduler"
-                            class="btn-danger"
-                                invisible="not cr_cron_job_id"/>   <button name="run_manually"
-                            type="object"
-                            string="Run Manually"
-                                                    class="oe_highlight"
-/></div>
+                                type="object"
+                                string="Delete Scheduler"
+                                class="btn-danger"
+                                invisible="not cr_cron_job_id"/>
+                        <button name="run_manually"
+                                type="object"
+                                string="Run Manually"
+                                class="oe_highlight"
+                        />
+                    </div>
                 </sheet>
             </form>
 

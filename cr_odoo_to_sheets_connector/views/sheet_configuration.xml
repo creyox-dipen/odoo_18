@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_google_sheet_connector_form" model="ir.ui.view">
+        <field name="name">Google Sheet Connector Configuration</field>
+        <field name="model">cr.google.sheet.connector.config</field>
+        <field name="arch" type="xml">
+            <form string=" ">
+                <sheet>
+                    <group>
+                        <field name="cr_connector_url"/>
+                        <field name="cr_access_token" />
+                        <button string="Generate Token" type="object" name="generate_token" class="oe_highlight"/>
+                        <button string="Generate App Script" type="object" name="generate_app_script" class="oe_highlight"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_google_sheet_connector_list" model="ir.ui.view">
+        <field name="name">Google Sheet Connector Configuration list</field>
+        <field name="model">cr.google.sheet.connector.config</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="cr_connector_url"/>
+                <field name="cr_access_token"/>
+            </list>
+        </field>
+    </record>
+     <record id="action_google_sheet_connector_config" model="ir.actions.act_window">
+        <field name="name">Google Sheet Connector</field>
+        <field name="res_model">cr.google.sheet.connector.config</field>
+        <field name="view_id" ref="view_google_sheet_connector_list"/>
+        <field name="view_mode">list,form</field>
+    </record>
+     <menuitem id="odoo_to_sheet_connector_menu"
+                  name="Odoo To Sheets"
+                  sequence="999"
+                  web_icon="cr_odoo_to_sheets_connector,static/description/icon.png"/>
+    <menuitem id="menu_google_sheet_connector" name="Google Sheet Connector" sequence="1" parent="odoo_to_sheet_connector_menu"  action="action_google_sheet_connector_config"/>
+
+</odoo>

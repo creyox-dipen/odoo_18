@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cr_data_processing_log_tree" model="ir.ui.view">
+        <field name="name">cr.data.processing.log.tree</field>
+        <field name="model">cr.data.processing.log</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="table_name"/>
+                <field name="record_count"/>
+                <field name="status"/>
+                <field name="error_message"/>
+                <field name="timestamp"/>
+                <field name="initiated_at"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cr_data_processing_log_form" model="ir.ui.view">
+        <field name="name">cr.data.processing.log.form</field>
+        <field name="model">cr.data.processing.log</field>
+        <field name="arch" type="xml">
+            <form string="Data Processing Log">
+                <sheet>
+                    <group>
+                        <field name="table_name"/>
+                        <field name="record_count"/>
+                        <field name="status"/>
+                        <field name="error_message"/>
+                        <field name="timestamp"/>
+                        <field name="initiated_at"/>
+
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cr_data_processing_log" model="ir.actions.act_window">
+        <field name="name">Data Processing Logs</field>
+        <field name="res_model">cr.data.processing.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_cr_data_processing_log" name="Data Processing Logs" parent="odoo_to_sheet_connector_menu"
+        action="action_cr_data_processing_log" sequence="2"/>
+</odoo>
