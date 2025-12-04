@@ -1,4 +1,5 @@
-# controllers/main.py
+# -*- coding: utf-8 -*-
+# Part of Creyox Technologies.
 from odoo import http
 from odoo.http import request
 
@@ -40,25 +41,6 @@ class PublicStripeInfo(http.Controller):
         order = request.env['sale.order'].sudo().browse(order_id)
         partner = order.partner_shipping_id  # Use billing partner to match backend transaction logic
         return {'country_id': partner.country_id.id if partner and partner.country_id else None}
-
-    # @http.route(['/custom/stripe/token_method/<int:token_id>'], type='json', auth='public', csrf=False)
-    # def get_token_payment_method(self, token_id):
-    #     token = request.env['payment.token'].sudo().browse(token_id)
-    #     if not token or token.provider_code != 'stripe':
-    #         return {'payment_method_code': 'card'}
-    #     provider = token.provider_id
-    #     if not provider:
-    #         return {'payment_method_code': 'card'}
-    #     try:
-    #         # Retrieve the payment method from Stripe to get the card brand
-    #         stripe_pm = provider._stripe_make_request('GET', f'/v1/payment_methods/{token.acquirer_ref}')
-    #         if stripe_pm and 'card' in stripe_pm:
-    #             brand = stripe_pm['card'].get('brand')
-    #             if brand and brand != 'unknown':
-    #                 return {'payment_method_code': brand.lower()}
-    #     except Exception as e:
-    #         print(f"Could not retrieve token brand for token {token_id} : {e} ")
-    #     return {'payment_method_code': 'card'}
 
     @http.route(['/custom/stripe/token_method/<int:token_id>'], type='json', auth='public', csrf=False)
     def get_token_payment_method(self, token_id):

@@ -16,12 +16,13 @@ paymentForm.include({
             // Fetch token-specific method code (defaults to 'card' for Stripe tokens)
             const tokenId = radio.dataset.paymentOptionId;
             const tokenData = await this._fetchTokenMethod(tokenId);
-            methodCode = tokenData?.payment_method_code || 'card';
-            console.log("Method code : ", methodCode)
+            methodCode = tokenData?.payment_method_code || '';
+            console.log("Token Method code : ", methodCode)
         }
 
         // Fetch provider configuration
         const providerData = await this._fetchProviderConfig();
+        console.log("Provider Data : ",providerData)
         if (!providerData || !providerData.line_ids) return;
         // Fetch country data
         const { companyCountryId, partnerCountryId } = await this._fetchCountryData(providerData);
@@ -136,6 +137,13 @@ paymentForm.include({
         let feeLine = providerData.line_ids.find(
             line => (line.payment_method_code || '').toLowerCase() === mcode
         );
+
+        // Fallback to default method if no specific match
+        if (!feeLine) {
+            feeLine = providerData.line_ids.find(line => line.default_method);
+        }
+
+        console.log("fee line : ",feeLine)
 
         // If nothing found → NO FEES
         if (!feeLine) {

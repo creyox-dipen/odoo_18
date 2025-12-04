@@ -4,17 +4,24 @@ from odoo import models, fields, api
 import json
 from odoo.addons.payment import utils as payment_utils
 
+
 class PaymentProvider(models.Model):
     _inherit = 'payment.provider'
 
-    fees_product = fields.Many2one(string="Product Fees", comodel_name="product.template")
+    fees_product = fields.Many2one(string="Product Fees", comodel_name="product.product", required=True, readonly=True,
+                                   default=lambda self: self.env["product.product"].search(
+                                       [("name", "=", "Payment Fee")], limit=1
+                                   ))
     is_extra_fees = fields.Boolean(string="Add Extra Fees")
     line_ids = fields.One2many(comodel_name="payment.method.fees", inverse_name="payment_provider_id")
 
-    def _stripe_get_inline_form_values(self, amount, currency, partner_id, is_validation, payment_method_sudo=None, sale_order_id=None, **kwargs):
+    def _stripe_get_inline_form_values(self, amount, currency, partner_id, is_validation, payment_method_sudo=None,
+                                       sale_order_id=None, **kwargs):
         """ Extend the standard Stripe inline form values to include fees """
         # Call original method first
-        res = super()._stripe_get_inline_form_values(amount, currency, partner_id, is_validation, payment_method_sudo=payment_method_sudo, sale_order_id=sale_order_id, **kwargs)
+        res = super()._stripe_get_inline_form_values(amount, currency, partner_id, is_validation,
+                                                     payment_method_sudo=payment_method_sudo,
+                                                     sale_order_id=sale_order_id, **kwargs)
         values = json.loads(res)
         fees = 0.0
         if self.is_extra_fees:
@@ -34,7 +41,7 @@ class PaymentProvider(models.Model):
 
             company_country = self.company_id.country_id
             is_international = (
-                partner.country_id and company_country and partner.country_id.id != company_country.id
+                    partner.country_id and company_country and partner.country_id.id != company_country.id
             )
 
             if is_international:
@@ -56,7 +63,7 @@ class PaymentProvider(models.Model):
                 total_fixed_fees = fee_type_fixed
                 total_percent_fees = (fee_type_var * base_amount) / 100
                 fees = total_fixed_fees + total_percent_fees
-        # Inject fees (in major units to match JS)
+
         values['fees'] = fees
         values['currency_symbol'] = currency.symbol
         return json.dumps(values)

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="cart_payment_fee" name="Payment Fee" inherit_id="website_sale.total">
+        <tr id="order_total_untaxed" position="before">
+            <tr id="order_payment_provider_fee" t-if="website_sale_order and website_sale_order.payment_fee > 0">
+                <td colspan="2" class="ps-0 pt-0 pb-2 border-0">
+                    Payment Fees
+                </td>
+                <td class="text-end pe-0 pt-0 pb-2 border-0">
+                    <span t-field="website_sale_order.payment_fee"
+                          class="monetary_field"
+                          style="white-space: nowrap;"
+                          t-options='{"widget": "monetary", "display_currency": website_sale_order.currency_id}'/>
+                </td>
+            </tr>
+        </tr>
+    </template>
+
+</odoo>

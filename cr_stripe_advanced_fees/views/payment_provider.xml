@@ -14,7 +14,7 @@
                             <field name="is_extra_fees"/>
                         </group>
                         <group>
-                            <field name="fees_product"/>
+                            <field name="fees_product" domain="[('type','=','service')]"/>
                         </group>
                         <field name="line_ids">
                             <list>

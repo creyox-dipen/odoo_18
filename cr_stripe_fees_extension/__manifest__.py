@@ -7,7 +7,7 @@
     "support": "support@creyox.com",
     "category": "Accounting",
     "summary": """
-    The Odoo Stripe Domestic & International Fees module allows businesses to automatically manage Stripe payment fees for both local and global transactions. With this extension, you can define separate fee rules for domestic and international payments, ensuring accurate cost calculation and seamless integration with Odoo’s invoicing and sales workflows.
+    The Odoo Stripe Domestic & International Fees module allows businesses to automatically manage Stripe payment fees for both local and global transactions. With this extension, you can define separate fee rules for domestic and international payments for different payment methods, ensuring accurate cost calculation and seamless integration with Odoo’s invoicing and sales workflows.
 
     This module helps streamline payment management by applying precise transaction fees during checkout, reducing manual adjustments, and improving financial reporting.
     
@@ -163,9 +163,9 @@
     How to handle pending or failed ACH payments in Odoo,
     """,
     "license": "OPL-1",
-    "version": "18.0.0.0",
+    "version": "18.0.0.1",
     "description": """
-    The Odoo Stripe Domestic & International Fees module allows businesses to automatically manage Stripe payment fees for both local and global transactions. With this extension, you can define separate fee rules for domestic and international payments, ensuring accurate cost calculation and seamless integration with Odoo’s invoicing and sales workflows.
+    The Odoo Stripe Domestic & International Fees module allows businesses to automatically manage Stripe payment fees for both local and global transactions. With this extension, you can define separate fee rules for domestic and international payments for different payment methods, ensuring accurate cost calculation and seamless integration with Odoo’s invoicing and sales workflows.
 
     This module helps streamline payment management by applying precise transaction fees during checkout, reducing manual adjustments, and improving financial reporting.
     
@@ -320,8 +320,9 @@
     How to reconcile ACH payments with invoices in Odoo automatically,    
     How to handle pending or failed ACH payments in Odoo,
     """,
-    "depends": ["base", "payment_stripe", "account"],
+    "depends": ["base", "payment_stripe", "account", "sale_management", "website_sale"],
     "data": [
+        "data/product_data.xml",
         "security/ir.model.access.csv",
         "views/payment_provider.xml",
         "views/payment_transaction.xml",
@@ -333,10 +334,9 @@
             'cr_stripe_fees_extension/static/src/css/payment_fees_badge.css',
         ],
     },
-
     "images": ["static/description/banner.png"],
     "installable": True,
     "application": True,
-    "price": 70,
+    "price": 285,
     "currency": "USD",
 }

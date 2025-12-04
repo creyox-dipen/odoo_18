@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="payment_provider_fee_view_form_inherited" model="ir.ui.view">
+        <field name="name">payment.provider.view.form.inherited</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='credentials']" position="after">
+                <page name="website_payment_fee" string="Extra Fees">
+                    <group>
+                        <group>
+                            <field name="payment_fee_product_id" domain="[('type','=','service')]"/>
+                            <field name="payment_fee_type"/>
+                            <field name="payment_fee" invisible="payment_fee_type != 'fix'"/>
+                        </group>
+                        <group>
+
+                        </group>
+                        <group>
+                            <group>
+                                <field name="payment_fee_percent" widget="percentage"
+                                       invisible="payment_fee_type != 'percent'"/>
+                                <field name="is_applied_on_condition"/>
+                                <field name="payment_fee_applied_on" invisible="not is_applied_on_condition"/>
+                                <field name="amount_fee" invisible="not is_applied_on_condition"/>
+                            </group>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

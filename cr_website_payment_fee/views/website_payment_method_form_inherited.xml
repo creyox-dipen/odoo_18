@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="payment_method_form_inherit" inherit_id="payment.method_form" name="Custom Payment Method Form">
+        <!-- Inherit the payment method form and add static text for payment_fee -->
+        <xpath expr="//div[hasclass('d-flex')][1]" position="after">
+            <t t-if="provider_sudo.payment_fee_type">
+                <div class="w-100 mb-0 ms-4 small text-600">
+                    <span>Payment Fee:</span>
+                    <t t-if="provider_sudo.payment_fee_type == 'fix'">
+                        <span>
+                            <t t-out="provider_sudo.company_id.currency_id.symbol"/>
+                            <t t-out="provider_sudo.payment_fee"/>
+                        </span>
+                    </t>
+                    <t t-elif="provider_sudo.payment_fee_type == 'percent'">
+                        <span>
+                            <t t-out="provider_sudo.company_id.currency_id.symbol"/>
+                            <t t-out="provider_sudo.calculated_payment_fee_percent"/>
+                        </span>
+                    </t>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+
+</odoo>

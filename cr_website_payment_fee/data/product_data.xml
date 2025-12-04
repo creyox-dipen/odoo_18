@@ -1,0 +1,11 @@
+<!-- custom_module/data/product_data.xml -->
+<odoo>
+    <record id="payment_fee_product" model="product.product">
+        <field name="name">Payment Fee</field>
+        <field name="type">service</field>
+        <field name="list_price">0.0</field>
+        <field name="sale_ok">False</field>
+        <field name="purchase_ok">False</field>
+        <field name="default_code">PAYMENT_FEE</field>
+    </record>
+</odoo>

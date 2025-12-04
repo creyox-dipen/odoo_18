@@ -28,19 +28,15 @@ class PaymentTransaction(models.Model):
                     partner_country and company_country and partner_country.id != company_country.id
             )
 
-            # Find the matching fee line for the payment method used
-            # Assumption: 'payment.method' model exists with a 'code' field matching self.payment_method_type (e.g., 'card', 'ideal')
             used_method = self.env['payment.method'].search([('code', '=', self.payment_method_code)], limit=1)
             fee_line = provider.line_ids.filtered(lambda l: l.payment_method_id == used_method)
-            # Fallback to default method if no specific match
+
             if not fee_line:
                 fee_line = provider.line_ids.filtered('default_method')[:1]
 
-            # If still no fee_line (no config at all), fees = 0 (skip)
             if not fee_line:
                 return res
 
-            # Apply domestic or international logic based on the matched/default fee_line
             if is_international:
                 fee_type_free = fee_line.is_free_international
                 fee_type_fixed = fee_line.fix_international_fees
@@ -52,7 +48,6 @@ class PaymentTransaction(models.Model):
                 fee_type_var = fee_line.var_domestic_fees
                 fee_type_threshold = fee_line.free_domestic_amount
 
-            # Compute fees: always apply unless free above threshold
             apply_fees = True
             if fee_type_free:
                 if base_amount >= fee_type_threshold:
@@ -60,13 +55,48 @@ class PaymentTransaction(models.Model):
 
             if apply_fees:
                 total_fixed_fees = fee_type_fixed
-                logger.info("➡️➡️➡️ Total fixed fees : %s", total_fixed_fees)
                 total_percent_fees = (fee_type_var * base_amount) / 100
-                logger.info("➡️➡️➡️ Total percent fees : %s", total_percent_fees)
 
             self.fees = total_fixed_fees + total_percent_fees
-            logger.info("➡️➡️➡️ Final fees : %s", self.fees)
+
+            if self.sale_order_ids and self.fees > 0:
+                self._add_fee_line_to_sale_order()
+
             fees_minor_currency = payment_utils.to_minor_currency_units(self.fees, self.currency_id)
             res['amount'] += fees_minor_currency
-
+            self.amount += self.fees
         return res
+
+    def _add_fee_line_to_sale_order(self):
+        """
+        Add a fee line to the associated sale order using the provider's fees_product
+        and the calculated fees amount. Ensures only one fee line per transaction.
+        """
+        self.ensure_one()
+        so = self.sale_order_ids
+        provider = self.provider_id
+        fees_product = provider.fees_product
+
+        if not so or not fees_product or not self.fees > 0:
+            return
+
+        # Check if a fee line for this transaction already exists (prevent duplicates)
+        existing_fee_line = so.order_line.filtered(
+            lambda line: line.name == f"Payment Fee - {provider.name} ({self.reference})"
+        )
+        if existing_fee_line:
+            logger.info("Fee line already exists for transaction %s on SO %s", self.id, so.id)
+            return
+
+        fee_line_vals = {
+            'order_id': so.id,
+            'product_id': fees_product.product_variant_id.id,  # Use variant
+            'name': f"Payment Fee - {provider.name} ({self.reference})",
+            'product_uom_qty': 1.0,
+            'price_unit': self.fees,
+            'tax_id': False,  # No taxes by default; can be computed if needed via fiscal position
+        }
+        new_line = self.env['sale.order.line'].create(fee_line_vals)
+        logger.info("Added fee line to SO %s: %s (amount: %.2f)", so.id, new_line.name, self.fees)
+        so._compute_amounts()
+        so._compute_tax_totals()
