@@ -1,328 +1,100 @@
 # -*- coding: utf-8 -*-
 # Part of Creyox Technologies.
 {
-    "name": "Stripe Fees Extension | Stripe Transaction Fees in Odoo | Stripe Charges & Fees Extension Odoo | Stripe Domestic and International Fees",
+    "name": "Advanced Odoo Stripe Fees Extension – Automatic Domestic & International Fee Management",
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "support@creyox.com",
     "category": "Accounting",
     "summary": """
-    The Odoo Stripe Domestic & International Fees module allows businesses to automatically manage Stripe payment fees for both local and global transactions. With this extension, you can define separate fee rules for domestic and international payments for different payment methods, ensuring accurate cost calculation and seamless integration with Odoo’s invoicing and sales workflows.
-
-    This module helps streamline payment management by applying precise transaction fees during checkout, reducing manual adjustments, and improving financial reporting.
-    
-    Stripe fees extension,
-    Collect stripe processing fees,
-    Charge customer Stripe fee,
-    Stripe fees for invoice payment,
-    Odoo module for Stripe extra fees,
-    Stripe Terminal Odoo Integration,
-    Process invoice payments using Stripe Terminal,
-    Odoo Stripe backend payment terminal,
-    Accept Stripe Terminal payments from sale quotations in Odoo,
-    Real time Stripe terminal capture Odoo invoices,
-    Sync Stripe transactions with Odoo accounting,
-    Stripe ACH payment,
-    Stripe ACH payment provider,
-    Invoice payment via Stripe ACH,
-    Odoo ACH provider for invoices,
-    US bank ACH for invoice payments,
-    Stripe Automated Clearing House Odoo module,
-    Stripe refund module Odoo,
-    Refund payments via Stripe in Odoo,
-    Odoo Stripe refunds partial and full,
-    stripe refund invoice payment,
-    Refund Stripe transactions from invoice,
-    Stripe refund button Odoo invoice,
-    Stripe dispute management Odoo,
-    Manage payment disputes from Stripe in Odoo,
-    Stripe dispute workflow in Odoo,
-    Notification for Stripe dispute Odoo,
-    Dispute status update Stripe Odoo,
-    Automatic Stripe dispute webhook sync Odoo,
-    Stripe statements sync Odoo,
-    Import Stripe transactions to Odoo,
-    Stripe statement lines for reconciliation Odoo,
-    Automatically fetch Stripe statements Odoo,
-    Stripe accounting statements import Odoo,
-    Stripe statement journal import Odoo,
-    Sync Stripe payouts with Odoo accounting,
-    Automated Stripe statement import Odoo,
-    Reconcile Stripe payments in Odoo,
-    Odoo module for Stripe bank statements,
-    Stripe transaction import Odoo module,
-    Calculate Stripe fees in Odoo,
-    Odoo Stripe fee configuration,
-    Add Stripe fees to invoice Odoo,
-    Odoo Stripe payment setup,
-    Backend Stripe payment Odoo,
-    Odoo Stripe payment processing module,
-    Stripe MOTO payments Odoo,
-    Odoo mail order payment integration,
-    Stripe telephone order payments Odoo,
-    Odoo MOTO payment integration,
-    Odoo backend card payments,
-    Odoo mail order payment integration,
-    stripe payment configuration,
-    How to add Stripe transaction fees to Odoo invoices?
-    How to configure Stripe payment acquirer to include extra fees?
-    How to set fixed and percentage fees for Stripe payments in Odoo?
-    How to charge customers for Stripe processing fees during checkout?
-    How to display Stripe fees separately on customer invoices?
-    How to view Stripe fee transactions in Odoo backend?
-    How to handle Stripe fee transactions in Stripe account?
-    How to ensure Stripe fee calculations are accurate in Odoo?
-    How to apply Stripe fees for both domestic and international payments?
-    How to automate Stripe fee addition to Odoo invoices?
-    How to accept Stripe payments for invoices in Odoo?
-    How to configure Stripe as a payment method in Odoo?
-    How to enable Stripe payments for eCommerce in Odoo?
-    How to process refunds for Stripe payments in Odoo?
-    How to view Stripe payment transactions in Odoo?
-    How to reconcile Stripe payments with invoices in Odoo?
-    How to handle failed or pending Stripe payments in Odoo?
-    How to set up Stripe for Point of Sale (POS) in Odoo?
-    How to ensure PCI compliance with Stripe in Odoo?
-    How to test Stripe payments in Odoo before going live?
-    How to process refunds for Stripe payments in Odoo?
-    How to configure Stripe refund settings in Odoo?
-    How to enable partial refunds for Stripe payments in Odoo?
-    How to automatically generate credit notes for Stripe refunds in Odoo?
-    How to track Stripe refund transactions in Odoo?
-    How to handle failed or pending Stripe refunds in Odoo?
-    How to reconcile Stripe refunds with invoices in Odoo?
-    How to set up webhook for Stripe refund notifications in Odoo?
-    How to ensure accurate financial records with Stripe refunds in Odoo?
-    How to integrate Stripe refund functionality with Odoo backend?
-    How to manage Stripe payment disputes directly from Odoo?
-    How to configure Stripe webhooks for dispute notifications in Odoo?
-    How to assign dispute cases to team members in Odoo?
-    How to track the status of Stripe disputes in Odoo?
-    How to submit evidence for a Stripe dispute through Odoo?
-    How to handle multiple disputes for a single payment in Odoo?
-    How to receive email notifications for new disputes in Odoo?
-    How to integrate Stripe dispute management with Odoo's accounting system?
-    How to automate dispute case creation from Stripe events in Odoo?
-    How to ensure compliance with Stripe's dispute management guidelines in Od
-    How to automatically import Stripe transactions into Odoo?
-    How to reconcile Stripe payouts with bank statements in Odoo?
-    How to sync Stripe fees and refunds with Odoo accounting?
-    How to fetch Stripe bank statements into Odoo?
-    How to set up Stripe bank feeds in Odoo?
-    How to configure Stripe journal for bank feeds in Odoo?
-    How to view Stripe transaction details in Odoo?
-    How to handle multiple Stripe accounts in Odoo?
-    How to automate bank statement reconciliation with Stripe in Odoo?
-    How to troubleshoot Stripe bank feed issues in Odoo?
-    How to automatically import Stripe transactions into Odoo?
-    How to reconcile Stripe payouts with bank statements in Odoo?
-    How to sync Stripe fees and refunds with Odoo accounting?
-    How to fetch Stripe bank statements into Odoo?
-    How to set up Stripe bank feeds in Odoo?
-    How to configure Stripe journal for bank feeds in Odoo?
-    How to view Stripe transaction details in Odoo?
-    How to handle multiple Stripe accounts in Odoo?
-    How to automate bank statement reconciliation with Stripe in Odoo?
-    How to troubleshoot Stripe bank feed issues in Odoo?
-    How to add Stripe transaction fees to Odoo invoices?
-    How to configure Stripe payment acquirer to include extra fees?
-    How to set fixed and percentage fees for Stripe payments in Odoo?
-    How to charge customers for Stripe processing fees during checkout?
-    How to display Stripe fees separately on customer invoices?
-    How to view Stripe fee transactions in Odoo backend?
-    How to handle Stripe fee transactions in Stripe account?
-    How to ensure Stripe fee calculations are accurate in Odoo?
-    How to apply Stripe fees for both domestic and international payments?
-    How to automate Stripe fee addition to Odoo invoices?
-    How to integrate Stripe payment gateway with Odoo 18?
-    How to configure Stripe as a payment provider in Odoo?
-    How to accept credit card payments via Stripe in Odoo?
-    How to process refunds for Stripe payments in Odoo?
-    How to handle failed or pending Stripe payments in Odoo?
-    How to view Stripe payment transactions in Odoo backend?
-    How to reconcile Stripe payments with invoices in Odoo?
-    How to enable Stripe payments for eCommerce in Odoo?
-    How to ensure PCI compliance with Stripe in Odoo?
-    How to test Stripe payments in Odoo before going live?
-    How to process MOTO payments using Stripe in Odoo?
-    How to configure Stripe for mail and telephone orders in Odoo?
-    How to securely store customer card details for MOTO transactions in Odoo?
-    How to initiate and manage refunds for MOTO payments in Odoo?
-    How to send payment and refund notifications via email and SMS in Odoo?
-    How to ensure PCI compliance for MOTO payments in Odoo?
-    How to view and reconcile MOTO payment transactions in Odoo?
-    How to handle failed or pending MOTO payments in Odoo?
-    How to integrate MOTO payment functionality with Odoo's accounting system?
-    How to test MOTO payment processing in Odoo before going live?
-    How to accept ACH payments for invoices in Odoo,
-    How to configure Stripe ACH as a payment method in Odoo,
-    How to save customer bank accounts securely for ACH payments in Odoo,
-    How to verify bank accounts using micro-deposits in Odoo Stripe ACH,
-    How to automatically mark an invoice as paid after a successful Stripe ACH payment,
-    How to reconcile ACH payments with invoices in Odoo automatically,    
-    How to handle pending or failed ACH payments in Odoo,
+    Automatically apply Stripe payment fees in Odoo for domestic & international transactions with smart rules and fee-free limits.
     """,
     "license": "OPL-1",
-    "version": "18.0.0.1",
+    "version": "18.0.0.0",
     "description": """
-    The Odoo Stripe Domestic & International Fees module allows businesses to automatically manage Stripe payment fees for both local and global transactions. With this extension, you can define separate fee rules for domestic and international payments for different payment methods, ensuring accurate cost calculation and seamless integration with Odoo’s invoicing and sales workflows.
+    <h1>Advanced Stripe Fees Extension for Odoo</h1>
 
-    This module helps streamline payment management by applying precise transaction fees during checkout, reducing manual adjustments, and improving financial reporting.
-    
-    Stripe fees extension,
-    Collect stripe processing fees,
-    Charge customer Stripe fee,
-    Stripe fees for invoice payment,
-    Odoo module for Stripe extra fees,
-    Stripe Terminal Odoo Integration,
-    Process invoice payments using Stripe Terminal,
-    Odoo Stripe backend payment terminal,
-    Accept Stripe Terminal payments from sale quotations in Odoo,
-    Real time Stripe terminal capture Odoo invoices,
-    Sync Stripe transactions with Odoo accounting,
-    Stripe ACH payment,
-    Stripe ACH payment provider,
-    Invoice payment via Stripe ACH,
-    Odoo ACH provider for invoices,
-    US bank ACH for invoice payments,
-    Stripe Automated Clearing House Odoo module,
-    Stripe refund module Odoo,
-    Refund payments via Stripe in Odoo,
-    Odoo Stripe refunds partial and full,
-    stripe refund invoice payment,
-    Refund Stripe transactions from invoice,
-    Stripe refund button Odoo invoice,
-    Stripe dispute management Odoo,
-    Manage payment disputes from Stripe in Odoo,
-    Stripe dispute workflow in Odoo,
-    Notification for Stripe dispute Odoo,
-    Dispute status update Stripe Odoo,
-    Automatic Stripe dispute webhook sync Odoo,
-    Stripe statements sync Odoo,
-    Import Stripe transactions to Odoo,
-    Stripe statement lines for reconciliation Odoo,
-    Automatically fetch Stripe statements Odoo,
-    Stripe accounting statements import Odoo,
-    Stripe statement journal import Odoo,
-    Sync Stripe payouts with Odoo accounting,
-    Automated Stripe statement import Odoo,
-    Reconcile Stripe payments in Odoo,
-    Odoo module for Stripe bank statements,
-    Stripe transaction import Odoo module,
-    Calculate Stripe fees in Odoo,
-    Odoo Stripe fee configuration,
-    Add Stripe fees to invoice Odoo,
-    Odoo Stripe payment setup,
-    Backend Stripe payment Odoo,
-    Odoo Stripe payment processing module,
-    Stripe MOTO payments Odoo,
-    Odoo mail order payment integration,
-    Stripe telephone order payments Odoo,
-    Odoo MOTO payment integration,
-    Odoo backend card payments,
-    Odoo mail order payment integration,
-    stripe payment configuration,
-    How to add Stripe transaction fees to Odoo invoices?
-    How to configure Stripe payment acquirer to include extra fees?
-    How to set fixed and percentage fees for Stripe payments in Odoo?
-    How to charge customers for Stripe processing fees during checkout?
-    How to display Stripe fees separately on customer invoices?
-    How to view Stripe fee transactions in Odoo backend?
-    How to handle Stripe fee transactions in Stripe account?
-    How to ensure Stripe fee calculations are accurate in Odoo?
-    How to apply Stripe fees for both domestic and international payments?
-    How to automate Stripe fee addition to Odoo invoices?
-    How to accept Stripe payments for invoices in Odoo?
-    How to configure Stripe as a payment method in Odoo?
-    How to enable Stripe payments for eCommerce in Odoo?
-    How to process refunds for Stripe payments in Odoo?
-    How to view Stripe payment transactions in Odoo?
-    How to reconcile Stripe payments with invoices in Odoo?
-    How to handle failed or pending Stripe payments in Odoo?
-    How to set up Stripe for Point of Sale (POS) in Odoo?
-    How to ensure PCI compliance with Stripe in Odoo?
-    How to test Stripe payments in Odoo before going live?
-    How to process refunds for Stripe payments in Odoo?
-    How to configure Stripe refund settings in Odoo?
-    How to enable partial refunds for Stripe payments in Odoo?
-    How to automatically generate credit notes for Stripe refunds in Odoo?
-    How to track Stripe refund transactions in Odoo?
-    How to handle failed or pending Stripe refunds in Odoo?
-    How to reconcile Stripe refunds with invoices in Odoo?
-    How to set up webhook for Stripe refund notifications in Odoo?
-    How to ensure accurate financial records with Stripe refunds in Odoo?
-    How to integrate Stripe refund functionality with Odoo backend?
-    How to manage Stripe payment disputes directly from Odoo?
-    How to configure Stripe webhooks for dispute notifications in Odoo?
-    How to assign dispute cases to team members in Odoo?
-    How to track the status of Stripe disputes in Odoo?
-    How to submit evidence for a Stripe dispute through Odoo?
-    How to handle multiple disputes for a single payment in Odoo?
-    How to receive email notifications for new disputes in Odoo?
-    How to integrate Stripe dispute management with Odoo's accounting system?
-    How to automate dispute case creation from Stripe events in Odoo?
-    How to ensure compliance with Stripe's dispute management guidelines in Od
-    How to automatically import Stripe transactions into Odoo?
-    How to reconcile Stripe payouts with bank statements in Odoo?
-    How to sync Stripe fees and refunds with Odoo accounting?
-    How to fetch Stripe bank statements into Odoo?
-    How to set up Stripe bank feeds in Odoo?
-    How to configure Stripe journal for bank feeds in Odoo?
-    How to view Stripe transaction details in Odoo?
-    How to handle multiple Stripe accounts in Odoo?
-    How to automate bank statement reconciliation with Stripe in Odoo?
-    How to troubleshoot Stripe bank feed issues in Odoo?
-    How to automatically import Stripe transactions into Odoo?
-    How to reconcile Stripe payouts with bank statements in Odoo?
-    How to sync Stripe fees and refunds with Odoo accounting?
-    How to fetch Stripe bank statements into Odoo?
-    How to set up Stripe bank feeds in Odoo?
-    How to configure Stripe journal for bank feeds in Odoo?
-    How to view Stripe transaction details in Odoo?
-    How to handle multiple Stripe accounts in Odoo?
-    How to automate bank statement reconciliation with Stripe in Odoo?
-    How to troubleshoot Stripe bank feed issues in Odoo?
-    How to add Stripe transaction fees to Odoo invoices?
-    How to configure Stripe payment acquirer to include extra fees?
-    How to set fixed and percentage fees for Stripe payments in Odoo?
-    How to charge customers for Stripe processing fees during checkout?
-    How to display Stripe fees separately on customer invoices?
-    How to view Stripe fee transactions in Odoo backend?
-    How to handle Stripe fee transactions in Stripe account?
-    How to ensure Stripe fee calculations are accurate in Odoo?
-    How to apply Stripe fees for both domestic and international payments?
-    How to automate Stripe fee addition to Odoo invoices?
-    How to integrate Stripe payment gateway with Odoo 18?
-    How to configure Stripe as a payment provider in Odoo?
-    How to accept credit card payments via Stripe in Odoo?
-    How to process refunds for Stripe payments in Odoo?
-    How to handle failed or pending Stripe payments in Odoo?
-    How to view Stripe payment transactions in Odoo backend?
-    How to reconcile Stripe payments with invoices in Odoo?
-    How to enable Stripe payments for eCommerce in Odoo?
-    How to ensure PCI compliance with Stripe in Odoo?
-    How to test Stripe payments in Odoo before going live?
-    How to process MOTO payments using Stripe in Odoo?
-    How to configure Stripe for mail and telephone orders in Odoo?
-    How to securely store customer card details for MOTO transactions in Odoo?
-    How to initiate and manage refunds for MOTO payments in Odoo?
-    How to send payment and refund notifications via email and SMS in Odoo?
-    How to ensure PCI compliance for MOTO payments in Odoo?
-    How to view and reconcile MOTO payment transactions in Odoo?
-    How to handle failed or pending MOTO payments in Odoo?
-    How to integrate MOTO payment functionality with Odoo's accounting system?
-    How to test MOTO payment processing in Odoo before going live?
-    How to accept ACH payments for invoices in Odoo,
-    How to configure Stripe ACH as a payment method in Odoo,
-    How to save customer bank accounts securely for ACH payments in Odoo,
-    How to verify bank accounts using micro-deposits in Odoo Stripe ACH,
-    How to automatically mark an invoice as paid after a successful Stripe ACH payment,
-    How to reconcile ACH payments with invoices in Odoo automatically,    
-    How to handle pending or failed ACH payments in Odoo,
+        <p class="lead">
+        The <b>#1 Odoo Stripe Fees Extension</b> to automatically calculate, apply, and manage payment processing fees with complete transparency. 
+        Optimize revenue, reduce accounting errors, and automate Stripe fee handling in Odoo — effortlessly.
+        </p>
+
+        <h2>Overview</h2>
+        <p>
+        The <b>Odoo Stripe Fees Extension</b> is an industry-standard solution designed to automate Stripe payment fee calculation inside Odoo. 
+        This advanced module intelligently applies <b>domestic and international Stripe fees</b> during checkout, ensuring accurate invoices and a seamless payment experience.
+        </p>
+        <p>
+        With built-in automation, configurable rules, and smart fee-free limits, this <b>Stripe Fees Extension for Odoo</b> eliminates manual effort and brings enterprise-grade payment transparency to your business.
+        </p>
+
+        <h2>Key Features</h2>
+        <ul>
+        <li><i class="fa fa-check"></i> <b>Domestic & International Fees:</b> Apply different Stripe fees based on customer location.</li>
+        <li><i class="fa fa-check"></i> <b>Automatic Fee Calculation:</b> Fees are computed instantly during checkout.</li>
+        <li><i class="fa fa-check"></i> <b>Free Fee Above Limit:</b> Automatically waive fees for high-value orders.</li>
+        <li><i class="fa fa-check"></i> <b>Transparent Payment Process:</b> Clear fee visibility for customers and accounting teams.</li>
+        <li><i class="fa fa-check"></i> <b>Configurable Fee Settings:</b> Fully customizable rules based on business needs.</li>
+        <li><i class="fa fa-check"></i> <b>Simple Setup & Use:</b> Plug-and-play configuration, no technical complexity.</li>
+        </ul>
+
+        <h2>Detailed Features</h2>
+        <ul>
+        <li><b>Smart Location-Based Fee Logic:</b> Automatically detects domestic or international transactions.</li>
+        <li><b>Threshold-Based Fee Exemption:</b> Set order limits to offer fee-free payments for premium customers.</li>
+        <li><b>Accurate Invoicing:</b> Stripe fees are reflected correctly in Odoo invoices and accounting.</li>
+        <li><b>Zero Manual Intervention:</b> Completely automated fee management saves time and prevents errors.</li>
+        <li><b>Enterprise-Ready:</b> Designed to outperform standard Odoo payment fee handling.</li>
+        </ul>
+
+        <h3>FAQs</h3>
+        <p><b>Q1: Does this module support both domestic and international Stripe fees?</b><br/>
+        Yes. The module automatically applies different fees based on the customer’s country.</p>
+
+        <p><b>Q2: Can I remove Stripe fees for high-value orders?</b><br/>
+        Absolutely. You can define a threshold amount above which no fees are applied.</p>
+
+        <p><b>Q3: Is the Stripe fee calculation automatic?</b><br/>
+        Yes. Fees are calculated in real-time during checkout with zero manual effort.</p>
+
+        <p><b>Q4: Is this compatible with standard Odoo Stripe payments?</b><br/>
+        Yes. It integrates seamlessly with Odoo’s native Stripe payment workflow.</p>
+
+        <h2>Why Choose Us?</h2>
+        <ul>
+        <li><i class="fa fa-star"></i> Enterprise-grade quality trusted by Odoo professionals</li>
+        <li><i class="fa fa-star"></i> Clean, optimized, and future-ready code</li>
+        <li><i class="fa fa-star"></i> Regular updates and long-term compatibility</li>
+        <li><i class="fa fa-star"></i> Expert Odoo support from industry specialists</li>
+        </ul>
+
+        <hr/>
+
+        <p>
+        For custom Odoo integrations and CRM enhancements, visit 
+        <a href="https://creyox.com" target="_blank">Creyox Technologies</a>
+        </p>
+
+        <p>
+        Watch the youtube video, visit 
+        <a href="https://www.youtube.com/@CreyoxTechnologies" target="_blank">Creyox Technologies YouTube Videos</a>
+        </p>
+
+        <p>
+        Read our blog post, visit 
+        <a href="https://creyox.com/blogs" target="_blank">Creyox Technologies Blogs</a>
+        </p>
+
+        <p>
+        Visit Our Linkedin Page 
+        <a href="https://www.linkedin.com/company/creyox-technologies" target="_blank">
+        Creyox Technologies Linkedin Page
+        </a>
+        </p>
+
     """,
-    "depends": ["base", "payment_stripe", "account", "sale_management", "website_sale"],
+    "depends": ["base", "payment_stripe", "account"],
     "data": [
-        "data/product_data.xml",
         "security/ir.model.access.csv",
         "views/payment_provider.xml",
         "views/payment_transaction.xml",
@@ -334,9 +106,10 @@
             'cr_stripe_fees_extension/static/src/css/payment_fees_badge.css',
         ],
     },
+
     "images": ["static/description/banner.png"],
     "installable": True,
     "application": True,
-    "price": 285,
+    "price": 29,
     "currency": "USD",
 }

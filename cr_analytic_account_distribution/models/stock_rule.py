@@ -17,5 +17,7 @@ class StockRule(models.Model):
             vals['analytic_distribution'] = values['analytic_distribution']
         if values.get('analytic_precision'):
             vals['analytic_precision'] = values['analytic_precision']
+        if values.get('analytic_account_id'):
+            vals['analytic_account_id'] = values['analytic_account_id']
 
         return vals

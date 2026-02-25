@@ -7,10 +7,18 @@
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='origin']" position="after">
-                <field name="analytic_account_manage" widget="radio"/>
+                <field name="analytic_mode" invisible="1"/>
+                <field name="analytic_account_manage" widget="radio"
+                       invisible="analytic_mode == False"/>
+                <field name="analytic_distribution" widget="analytic_distribution"
+                       invisible="analytic_account_manage != 'picking'"/>
             </xpath>
+
             <xpath expr="//field[@name='move_ids_without_package']//field[@name='product_id']" position="after">
-                <field name="analytic_distribution" widget="analytic_distribution"/>
+                <field name="analytic_distribution" widget="analytic_distribution"
+                       column_invisible="parent.analytic_mode != 'analytic_distribution'"/>
+                <field name="analytic_account_id"
+                       column_invisible="parent.analytic_mode != 'analytic_account'"/>
             </xpath>
         </field>
     </record>

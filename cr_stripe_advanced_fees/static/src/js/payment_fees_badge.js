@@ -1,5 +1,6 @@
-// payment_fees_badge.js
 import paymentForm from '@payment/js/payment_form';
+import { rpc } from "@web/core/network/rpc";
+
 paymentForm.include({
     async _prepareInlineForm(providerId, providerCode, paymentOptionId, paymentMethodCode, flow) {
         await this._super(...arguments);
@@ -11,18 +12,15 @@ paymentForm.include({
         const paymentOptionType = radio?.dataset.paymentOptionType;
         // Determine method code
         let methodCode = paymentMethodCode;
-        console.log("Method code : ",methodCode)
         if (paymentOptionType === 'token') {
             // Fetch token-specific method code (defaults to 'card' for Stripe tokens)
             const tokenId = radio.dataset.paymentOptionId;
             const tokenData = await this._fetchTokenMethod(tokenId);
             methodCode = tokenData?.payment_method_code || '';
-            console.log("Token Method code : ", methodCode)
         }
 
         // Fetch provider configuration
         const providerData = await this._fetchProviderConfig();
-        console.log("Provider Data : ",providerData)
         if (!providerData || !providerData.line_ids) return;
         // Fetch country data
         const { companyCountryId, partnerCountryId } = await this._fetchCountryData(providerData);
@@ -143,9 +141,6 @@ paymentForm.include({
             feeLine = providerData.line_ids.find(line => line.default_method);
         }
 
-        console.log("fee line : ",feeLine)
-
-        // If nothing found → NO FEES
         if (!feeLine) {
             return 0;
         }
@@ -175,24 +170,36 @@ paymentForm.include({
         const badgeContainer = document.querySelector(
             `.stripe-token-fees-badge[data-token-id="${tokenId}"]`
         );
+
         if (!badgeContainer) {
             console.warn('[Stripe Badge] Token badge container not found');
             return;
         }
-        // Get currency symbol from payment context or provider
-        const currencySymbol = this.paymentContext.currencySymbol || '$';
-        // Clear existing content
-        badgeContainer.innerHTML = '';
-        badgeContainer.classList.remove('d-none');
-        // Add fee badge
-        const badge = document.createElement('span');
-        badge.className = 'badge bg-primary ms-2';
-        badge.style.fontSize = '11px';
-        badge.style.padding = '3px 8px';
-        badge.textContent = `+ ${currencySymbol}${calculatedFees.toFixed(2)} Fees`;
-        badgeContainer.appendChild(badge);
-        console.log('[Stripe Badge] Token fee badge displayed:', calculatedFees);
+
+        const currencyId = parseInt(this.paymentContext.currencyId);
+
+        rpc('/web/dataset/call_kw', {
+            model: 'res.currency',
+            method: 'read',
+            args: [[currencyId], ['symbol']],
+            kwargs: {},
+            context: {},
+        }).then(result => {
+            const currencySymbol = result?.[0]?.symbol || '$';
+
+            badgeContainer.innerHTML = '';
+            badgeContainer.classList.remove('d-none');
+
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary ms-2';
+            badge.style.fontSize = '11px';
+            badge.style.padding = '3px 8px';
+            badge.textContent = `+ ${currencySymbol}${calculatedFees.toFixed(2)} Fees`;
+
+            badgeContainer.appendChild(badge);
+        });
     },
+
     _displayPaymentMethodFeeBadge(radio, calculatedFees) {
         const inlineForm = this._getInlineForm(radio);
         const stripeInlineForm = inlineForm?.querySelector('[name="o_stripe_element_container"]');

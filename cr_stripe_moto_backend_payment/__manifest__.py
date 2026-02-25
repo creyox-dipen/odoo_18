@@ -17,8 +17,8 @@
     "depends": ["base", "payment_stripe", "account"],
     "data": [
         "security/ir.model.access.csv",
-        "views/stripe_payment_fees_badge.xml",
-        "wizards/stripe_payment_fees_badge.xml",
+        "views/account_move.xml",
+        "wizards/moto_payment_wizard.xml",
     ],
     # "images": ["static/description/banner.png"],
     "installable": True,

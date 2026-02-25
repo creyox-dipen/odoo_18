@@ -320,7 +320,7 @@
     How to reconcile ACH payments with invoices in Odoo automatically,    
     How to handle pending or failed ACH payments in Odoo,
     """,
-    "depends": ["base", "payment_stripe", "accountant"],
+    "depends": ["base", "payment_stripe", "accountant", "account_asset"],
     "external_dependencies": {"python": ["stripe"]},
     "data": [
         "security/ir.model.access.csv",

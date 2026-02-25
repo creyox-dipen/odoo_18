@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
 # Part of Creyox Technologies.
 {
-    "name": "Stripe Fees Extension | Stripe Transaction Fees in Odoo | Stripe Charges & Fees Extension Odoo | Stripe Domestic and International Fees",
+    "name": "Stripe Advanced Payment Fees | Stripe Method Wise Fees | Stripe Advanced Fees for Odoo | Stripe Domestic and International Fees",
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "support@creyox.com",
     "category": "Accounting",
     "summary": """
-    The Odoo Stripe Domestic & International Fees module allows businesses to automatically manage Stripe payment fees for both local and global transactions. With this extension, you can define separate fee rules for domestic and international payments for different payment methods, ensuring accurate cost calculation and seamless integration with Odoo’s invoicing and sales workflows.
+    Stripe Advanced Payment Fees helps you apply the correct Stripe payment charges automatically during checkout in Odoo. It allows you to configure separate fee rules for each Stripe payment method, and even set one method as a fallback when an unknown payment method is used. The module also supports domestic and international fee rules—if the customer’s shipping country matches the company’s country, domestic fees apply; otherwise, the international fee is used.
 
-    This module helps streamline payment management by applying precise transaction fees during checkout, reducing manual adjustments, and improving financial reporting.
+    With these automated rules, the correct fee is added directly to the sale order and carried forward to the invoice, reducing manual work and avoiding errors. The module keeps payment charges clear, consistent, and transparent for both the business and the customer, making the Stripe fee process simple, flexible, and reliable.
     
     Stripe fees extension,
     Collect stripe processing fees,
     Charge customer Stripe fee,
     Stripe fees for invoice payment,
+    Stripe advanced payment fees,
+    Different payment fees for different payment methods
     Odoo module for Stripe extra fees,
     Stripe Terminal Odoo Integration,
     Process invoice payments using Stripe Terminal,
@@ -67,6 +69,8 @@
     How to add Stripe transaction fees to Odoo invoices?
     How to configure Stripe payment acquirer to include extra fees?
     How to set fixed and percentage fees for Stripe payments in Odoo?
+    How to set different payment fees for stripe payment methods?
+    How to Configure separate fee rules for each stripe payment methods?
     How to charge customers for Stripe processing fees during checkout?
     How to display Stripe fees separately on customer invoices?
     How to view Stripe fee transactions in Odoo backend?
@@ -163,16 +167,18 @@
     How to handle pending or failed ACH payments in Odoo,
     """,
     "license": "OPL-1",
-    "version": "18.0.0.1",
+    "version": "18.0.0.0",
     "description": """
-    The Odoo Stripe Domestic & International Fees module allows businesses to automatically manage Stripe payment fees for both local and global transactions. With this extension, you can define separate fee rules for domestic and international payments for different payment methods, ensuring accurate cost calculation and seamless integration with Odoo’s invoicing and sales workflows.
+    Stripe Advanced Payment Fees helps you apply the correct Stripe payment charges automatically during checkout in Odoo. It allows you to configure separate fee rules for each Stripe payment method, and even set one method as a fallback when an unknown payment method is used. The module also supports domestic and international fee rules—if the customer’s shipping country matches the company’s country, domestic fees apply; otherwise, the international fee is used.
 
-    This module helps streamline payment management by applying precise transaction fees during checkout, reducing manual adjustments, and improving financial reporting.
+    With these automated rules, the correct fee is added directly to the sale order and carried forward to the invoice, reducing manual work and avoiding errors. The module keeps payment charges clear, consistent, and transparent for both the business and the customer, making the Stripe fee process simple, flexible, and reliable.
     
     Stripe fees extension,
     Collect stripe processing fees,
     Charge customer Stripe fee,
     Stripe fees for invoice payment,
+    Stripe advanced payment fees,
+    Different payment fees for different payment methods
     Odoo module for Stripe extra fees,
     Stripe Terminal Odoo Integration,
     Process invoice payments using Stripe Terminal,
@@ -225,6 +231,8 @@
     How to add Stripe transaction fees to Odoo invoices?
     How to configure Stripe payment acquirer to include extra fees?
     How to set fixed and percentage fees for Stripe payments in Odoo?
+    How to set different payment fees for stripe payment methods?
+    How to Configure separate fee rules for each stripe payment methods?
     How to charge customers for Stripe processing fees during checkout?
     How to display Stripe fees separately on customer invoices?
     How to view Stripe fee transactions in Odoo backend?
@@ -320,7 +328,14 @@
     How to reconcile ACH payments with invoices in Odoo automatically,    
     How to handle pending or failed ACH payments in Odoo,
     """,
-    "depends": ["base", "payment_stripe", "account", "sale_management", "website", "website_sale"],
+    "depends": [
+        "base",
+        "payment_stripe",
+        "account",
+        "sale_management",
+        "website",
+        "website_sale",
+    ],
     "data": [
         "data/product_data.xml",
         "security/ir.model.access.csv",
@@ -328,10 +343,10 @@
         "views/payment_transaction.xml",
         "views/stripe_payment_fees_badge.xml",
     ],
-    'assets': {
-        'web.assets_frontend': [
-            'cr_stripe_advanced_fees/static/src/js/payment_fees_badge.js',
-            'cr_stripe_advanced_fees/static/src/css/payment_fees_badge.css',
+    "assets": {
+        "web.assets_frontend": [
+            "cr_stripe_advanced_fees/static/src/js/payment_fees_badge.js",
+            "cr_stripe_advanced_fees/static/src/css/payment_fees_badge.css",
         ],
     },
     "images": ["static/description/banner.png"],

@@ -14,7 +14,7 @@
     'description': """
     Analytic Account Distribution
     """,
-    'depends': ['base', 'sale_management', 'stock', 'account'],
+    'depends': ['base', 'sale_management', 'stock', 'account', 'purchase'],
     'data': [
         'security/ir.model.access.csv',
         'views/res_config_settings.xml',

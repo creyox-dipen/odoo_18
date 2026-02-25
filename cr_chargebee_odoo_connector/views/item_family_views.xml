@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_sync_Sync_Item_Families_chargebee" model="ir.actions.server">
+        <field name="name">Sync Item Families</field>
+        <field name="model_id" ref="model_chargebee_item_family"/>
+        <field name="binding_model_id" ref="model_chargebee_item_family"/>
+        <field name="state">code</field>
+        <field name="code">action = records.sync_item_families()
+        </field>
+    </record>
+
+    <record id="action_chargebee_item_families" model="ir.actions.act_window">
+        <field name="name">Chargebee Item Families</field>
+        <field name="res_model">chargebee.item.family</field>
+        <field name="view_mode">list,kanban,form</field>
+    </record>
+
+    <record id="view_chargebee_item_family_list" model="ir.ui.view">
+        <field name="name">chargebee.item.family.list</field>
+        <field name="model">chargebee.item.family</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="chargebee_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_item_family_kanban" model="ir.ui.view">
+        <field name="name">item.family.kanban</field>
+        <field name="model">chargebee.item.family</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <strong>
+                                <field name="name"/>
+                            </strong>
+                            <div>
+                                <span>Id:</span>
+                                <field name="chargebee_id"/>
+                            </div>
+                            <div>
+                                <span>Items:</span>
+                                <field name="item_ids"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_chargebee_item_family_form" model="ir.ui.view">
+        <field name="name">chargebee.item.family.form</field>
+        <field name="model">chargebee.item.family</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="chargebee_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Items">
+                            <field name="item_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <menuitem id="chargebee_item_family_menu" name="Chargebee Item Families" parent="chargebee_config_menu"
+              action="action_chargebee_item_families"/>
+</odoo>

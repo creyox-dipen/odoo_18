@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Define the server action for exporting to Chargebee -->
+        <record id="action_export_to_chargebee" model="ir.actions.server">
+            <field name="name">Export to Chargebee</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="binding_model_id" ref="base.model_res_partner"/>
+            <field name="state">code</field>
+            <field name="code">action = env['res.partner'].browse(env.context.get('active_ids')).export_to_chargebee()
+            </field>
+        </record>
+
+
+        <record id="view_partner_form_inherit_chargebee" model="ir.ui.view">
+            <field name="name">res.partner.form.chargebee</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form/sheet" position="before">
+                    <div>
+                        <button name="sync_chargebee_customers" type="object" string="Sync Chargebee Customers"
+                                class="oe_highlight" icon="fa-refresh"/>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

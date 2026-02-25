@@ -6,42 +6,65 @@ from odoo.addons.payment import utils as payment_utils
 
 
 class PaymentProvider(models.Model):
-    _inherit = 'payment.provider'
+    _inherit = "payment.provider"
 
-    fees_product = fields.Many2one(string="Product Fees", comodel_name="product.product", required=True, readonly=True,
-                                   default=lambda self: self.env["product.product"].search(
-                                       [("name", "=", "Payment Fee")], limit=1
-                                   ))
+    fees_product = fields.Many2one(
+        string="Product Fees",
+        comodel_name="product.product",
+        required=True,
+        readonly=True,
+        default=lambda self: self.env["product.product"].search(
+            [("name", "=", "Payment Fee")], limit=1
+        ),
+    )
     is_extra_fees = fields.Boolean(string="Add Extra Fees")
-    line_ids = fields.One2many(comodel_name="payment.method.fees", inverse_name="payment_provider_id")
+    line_ids = fields.One2many(
+        comodel_name="payment.method.fees", inverse_name="payment_provider_id"
+    )
 
-    def _stripe_get_inline_form_values(self, amount, currency, partner_id, is_validation, payment_method_sudo=None,
-                                       sale_order_id=None, **kwargs):
-        """ Extend the standard Stripe inline form values to include fees """
-        # Call original method first
-        res = super()._stripe_get_inline_form_values(amount, currency, partner_id, is_validation,
-                                                     payment_method_sudo=payment_method_sudo,
-                                                     sale_order_id=sale_order_id, **kwargs)
+    def _stripe_get_inline_form_values(
+        self,
+        amount,
+        currency,
+        partner_id,
+        is_validation,
+        payment_method_sudo=None,
+        sale_order_id=None,
+        **kwargs
+    ):
+        """Extend the standard Stripe inline form values to include fees"""
+        res = super()._stripe_get_inline_form_values(
+            amount,
+            currency,
+            partner_id,
+            is_validation,
+            payment_method_sudo=payment_method_sudo,
+            sale_order_id=sale_order_id,
+            **kwargs
+        )
         values = json.loads(res)
         fees = 0.0
         if self.is_extra_fees:
-            partner = self.env['res.partner'].browse(partner_id)
+            partner = self.env["res.partner"].browse(partner_id)
             base_amount = payment_utils.to_major_currency_units(amount, currency)
             used_method_code = payment_method_sudo.code if payment_method_sudo else None
-            fee_line = self.line_ids.filtered(lambda l: l.payment_method_id.code == used_method_code)
-
-            # Fallback to default method if no specific match
-            if not fee_line:
-                fee_line = self.line_ids.filtered('default_method')[:1]
+            fee_line = self.line_ids.filtered(
+                lambda l: l.payment_method_id.code == used_method_code
+            )
 
             if not fee_line:
-                values['fees'] = fees
+                fee_line = self.line_ids.filtered("default_method")[:1]
+
+            if not fee_line:
+                values["fees"] = fees
                 return json.dumps(values)
             fee_line = fee_line[0]
 
             company_country = self.company_id.country_id
             is_international = (
-                    partner.country_id and company_country and partner.country_id.id != company_country.id
+                partner.country_id
+                and company_country
+                and partner.country_id.id != company_country.id
             )
 
             if is_international:
@@ -64,6 +87,6 @@ class PaymentProvider(models.Model):
                 total_percent_fees = (fee_type_var * base_amount) / 100
                 fees = total_fixed_fees + total_percent_fees
 
-        values['fees'] = fees
-        values['currency_symbol'] = currency.symbol
+        values["fees"] = fees
+        values["currency_symbol"] = currency.symbol
         return json.dumps(values)

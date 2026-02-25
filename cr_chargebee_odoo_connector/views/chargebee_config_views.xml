@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_chargebee_config_form" model="ir.ui.view">
+        <field name="name">chargebee.config.form</field>
+        <field name="model">chargebee.configuration</field>
+        <field name="arch" type="xml">
+            <form string="Chargebee Configuration">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="reference"/>
+                        </h1>
+                    </div>
+                    <div class="o_form_field" style="float: right; text-align: right;">
+                        <group>
+                            <field name="create_date" string="Creation Date" readonly="1" widget="datetime"/>
+
+                            <field name="write_date" string="Last Update Date" readonly="1" widget="datetime"/>
+                        </group>
+                    </div>
+                    <group>
+                        <field name="api_key"/>
+                        <field name="site_name"/>
+                        <field name="company_id"/>
+                    </group>
+                    <header>
+                        <div class="btn-group-vertical">
+                            <button name="test_connection" type="object" string="Test Connection" class="btn-success"
+                                    confirm="Are you sure you want to test the connection?" icon="fa-check-circle"/>
+                        </div>
+                        <button name="sync_chargebee_currencies_" type="object" string="Sync Chargebee Currencies"
+                                class="btn-warning"
+                                icon="fa-check-circle"/>
+                    </header>
+                    <!--                        <group>-->
+                    <!--                            <field name="cr_import_shipping_methods"/>-->
+                    <!--                            <field name="cr_export_order" string="Export Order"/>-->
+                    <!--                        </group>-->
+                    <notebook>
+                        <page string="Customers">
+
+                            <div style="border-top: 2px solid #ccc; margin-top: 30px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Customers</h3>
+                            </div>
+                            <div style="margin-top: 5px; padding-top: 10px;">
+                                <h3 style="color: #1f4a00;">Auto Schedule
+                                    <h4>
+                                        <field name="is_active_field_for_customers"/>
+                                    </h4>
+                                </h3>
+                            </div>
+                            <button name="sync_chargebee_customers_" type="object" string="Sync Chargebee Customers"
+                                    class="btn btn-outline-dark" icon="fa-refresh"/>
+                            <div style="border-top: 2px; margin-top: 10px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Customer Logs</h3>
+                            </div>
+                            <field name="customer_logs_ids">
+                                <list>
+                                    <field name="cr_table_name"/>
+                                    <field name="cr_record_count"/>
+                                    <field name="cr_status" string="Status"/>
+                                    <field name="cr_error_message"/>
+                                    <field name="cr_message"/>
+                                    <field name="cr_initiated_at"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Base Import ">
+                            <div style="border-top: 2px solid #ccc; margin-top: 30px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Item Families</h3>
+                            </div>
+                            <button name="action_open_sync_wizard" type="object" string="Sync Item Families"
+                                    class="btn btn-outline-dark" icon="fa-spinner"/>
+                            <div style="border-top: 2px solid #ccc; margin-top: 30px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Items</h3>
+                            </div>
+                            <button name="action_sync_chargebee_items" type="object" string="Sync Items"
+                                    class="btn btn-outline-dark" icon="fa-spinner"/>
+
+                            <div style="border-top: 2px; margin-top: 10px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Currency Logs</h3>
+                            </div>
+                            <field name="currency_logs_ids">
+                                <list>
+                                    <field name="cr_table_name"/>
+                                    <field name="cr_record_count"/>
+                                    <field name="cr_status" string="Status"/>
+                                    <field name="cr_error_message"/>
+                                    <field name="cr_message"/>
+                                    <field name="cr_initiated_at"/>
+                                </list>
+                            </field>
+                            <div style="border-top: 2px; margin-top: 10px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Item Family Logs</h3>
+                            </div>
+                            <field name="item_family_logs_ids">
+                                <list>
+                                    <field name="cr_table_name"/>
+                                    <field name="cr_record_count"/>
+                                    <field name="cr_status" string="Status"/>
+                                    <field name="cr_error_message"/>
+                                    <field name="cr_message"/>
+                                    <field name="cr_initiated_at"/>
+                                </list>
+                            </field>
+                            <div style="border-top: 2px; margin-top: 10px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Item Logs</h3>
+                            </div>
+                            <field name="item_logs_ids">
+                                <list>
+                                    <field name="cr_table_name"/>
+                                    <field name="cr_record_count"/>
+                                    <field name="cr_status" string="Status"/>
+                                    <field name="cr_error_message"/>
+                                    <field name="cr_message"/>
+                                    <field name="cr_initiated_at"/>
+                                </list>
+                            </field>
+
+                        </page>
+
+                        <page string="Taxes">
+                            <div style="border-top: 2px solid #ccc; margin-top: 30px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Tax</h3>
+                            </div>
+                            <button string="Sync Taxes" type="object" name="sync_taxes_from_chargebee_"
+                                    class="btn btn-outline-dark"/>
+                            <div style="border-top: 2px; margin-top: 10px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Tax Logs</h3>
+                            </div>
+                            <field name="tax_logs_ids">
+                                <list>
+                                    <field name="cr_table_name"/>
+                                    <field name="cr_record_count"/>
+                                    <field name="cr_status" string="Status"/>
+                                    <field name="cr_error_message"/>
+                                    <field name="cr_message"/>
+                                    <field name="cr_initiated_at"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Invoice">
+                            <div style="border-top: 2px solid #ccc; margin-top: 30px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Invoices</h3>
+                            </div>
+                            <button name="action_sync_chargebee_invoice_for_account_move" type="object"
+                                    string="Sync Invoice"
+                                    class="btn btn-outline-dark" icon="fa-refresh" style="color: white;"/>
+                            <button name="action_sync_chargebee_credit_note" type="object"
+                                    string="Sync Credit Note"
+                                    class="btn btn-outline-dark" icon="fa-refresh" style="color: white;"/>
+                            <div style="border-top: 2px; margin-top: 10px; padding-top: 10px;">
+                                <h3 style="color: #714b67;">Invoice Logs</h3>
+                            </div>
+                            <field name="invoice_logs_ids">
+                                <list>
+                                    <field name="cr_table_name"/>
+                                    <field name="cr_record_count"/>
+                                    <field name="cr_status" string="Status"/>
+                                    <field name="cr_error_message"/>
+                                    <field name="cr_message"/>
+                                    <field name="cr_initiated_at"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_chargebee_config_list" model="ir.ui.view">
+        <field name="name">chargebee.config.list</field>
+        <field name="model">chargebee.configuration</field>
+        <field name="arch" type="xml">
+            <list string="Chargebee Configurations">
+                <field name="site_name" string="Name"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_chargebee_config" model="ir.actions.act_window">
+        <field name="name">Chargebee Configuration</field>
+        <field name="res_model">chargebee.configuration</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create And Manage Chargebee Settings Here.
+            </p>
+        </field>
+    </record>
+
+    <record id="ir_cron_auto_update_customers" model="ir.cron">
+        <field name="name">Auto Update Chargebee Customers</field>
+        <field name="model_id" ref="model_chargebee_configuration"/>
+        <field name="state">code</field>
+        <field name="code">model.sync_chargebee_customers_()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">False</field> <!-- Initially inactive -->
+    </record>
+
+    <menuitem id="chargebee_config_menu" name="Chargebee Configuration" action="action_chargebee_config"
+              sequence="100"/>
+</odoo>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="payment_wizard_form_view_id" model="ir.ui.view">
+        <field name="name">moto.payment.wizard.form.view</field>
+        <field name="model">moto.payment.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="name_on_card"/>
+                            <field name="address"/>
+                            <field name="postcode"/>
+                        </group>
+                        <group>
+                            <field name="email"/>
+                            <field name="mobile_no"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="amount" wdget="monetary"/>
+                            <field name="description"/>
+                            <field name="is_manual_override"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="card_no"/>
+                            <field name="expiry_date"/>
+                            <field name="cvc"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="is_save_card"/>
+                    </group>
+
+                </group>
+                <footer>
+                    <button class="oe_highlight" type="object" name="process_moto_payment" string="Make Payment"/>
+                    <button class="btn-secondary" special="cancel" string="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

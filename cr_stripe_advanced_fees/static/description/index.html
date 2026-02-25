@@ -97,7 +97,7 @@
                 <div class="row py-4 py-lg-0">
                     <div class="col-md-12">
                         <h1 style="font-family:'system-ui'; font-style:normal; font-weight:bold; font-size:calc(2.06rem + 1vw); line-height:120%; text-align:center; text-transform:capitalize">
-                            <span style="font-family:system-ui; color:#10488A; font-size:calc(2.06rem + 1vw)">Stripe Fees Extension</span>
+                            <span style="font-family:system-ui; color:#10488A; font-size:calc(2.06rem + 1vw)">Stripe Advanced Payment Fees</span>
                         </h1>
                     </div>
                     <div class="col-md-12 py-2 text-center">
@@ -125,20 +125,10 @@
                         <div class="col-12 col-md-12">
                             <div class="col-10 col-md-12" style="padding-left: 30px;">
                                 <p style="font-size: 20px;">
-                                    The Odoo Stripe Fees Extension module helps you manage extra payment charges when
-                                    using Stripe in Odoo. It lets you set up different rules for domestic and
-                                    international payments, so the right fee is added based on the customer’s location.
-                                    The charges are calculated automatically during checkout, which saves time and
-                                    avoids mistakes in invoices. You can also configure different fees for different
-                                    payment methods, and even set one payment method as the default to apply when an
-                                    unknown method is used, ensuring the fallback fee logic always works smoothly.
+                                    Stripe Advanced Payment Fees makes it easy to apply accurate Stripe payment charges during checkout in Odoo. You can configure separate fee rules for each Stripe payment method, ensuring every card type or payment option gets the correct fee. If a customer pays using a method that isn’t configured, the system automatically uses your chosen default payment method as a fallback, so the fee is always calculated without errors. The module also supports domestic and international rules for every payment method when the company’s country matches the customer’s shipping country, domestic fees apply, otherwise international fees are used.
                                 </p>
                                 <p style="font-size: 20px;">
-                                    This module also gives flexibility by allowing charges to be removed when the order
-                                    amount is higher than a limit set by the company. For example, if the base amount is
-                                    more than the limit, no extra fee will be added for the customer. With these simple
-                                    but powerful features, the module makes payment handling easier, more transparent,
-                                    and more reliable for both businesses and customers.
+                                    These smart rules help businesses stay transparent and consistent with their payment charges. Fees are calculated instantly during checkout, added to the order, and seamlessly carried over to invoices, reducing manual work and preventing mistakes. With clear configuration options and automated fee logic, this module makes handling Stripe payment fees simple, flexible, and reliable for both the company and its customers.
                                 </p>
                             </div>
                         </div>
@@ -276,7 +266,7 @@
                                 <span class="fa fa-arrow-right"
                                       style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
                             <span style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                Admin can easily configure fees and rules
+                                User can easily configure fees and rules
                             </span>
                         </div>
                     </div>
@@ -316,7 +306,7 @@
                                 <span class="fa fa-arrow-right"
                                       style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
                             <span style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                User can set a default payment method in fee configuration to apply when the payment is made using an unknown payment method.
+                                Default method Fee applies automatically for unconfigured payment methods.
                             </span>
                         </div>
                     </div>
@@ -347,7 +337,7 @@
                     <!-------------------- portal tab ----------------------------->
                     <div class="row mb-5">
                         <div class="col-12 col-md-12 text-center text-md-left">
-                            <center><h1 style="color: #000099;">Stripe Fees Extension</h1></center>
+                            <center><h1 style="color: #000099;">Stripe Advanced Payment Fees</h1></center>
                         </div>
                     </div>
                     <div class="row align-items-center mb-4" style="margin-top:-25px">
@@ -357,14 +347,14 @@
                                 <li>To do this, go to <b>Invoicing</b> >> <b>Configuration</b> >> <b>Payment
                                     Providers</b>.
                                 </li>
-                                <img src="images/1.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/invoice_configuration_menu.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <img src="images/2.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/invoice_configuration_menu__2.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>There, locate the <b>Stripe Payment Provider</b> and click on it.</li>
-                                <img src="images/3.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/payment_provider.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>
@@ -375,29 +365,29 @@
                                 <li>Click on <b>Generate Webhook</b> to automatically create the webhook endpoint in
                                     Stripe.
                                 </li>
-                                <img src="images/4.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/stripe_provider_credential.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>User can see a dedicated <b>Fees</b> tab to configure rules.</li>
                                 <li>User can check the <b>Add Extra Fees</b> option to enable the fees.</li>
                                 <li>User can set only one Fee line as <b>Default Fee Line</b>.</li>
                                 <li><b>Default Fee Line</b> will be used if payment done by the payment method which is not configured in fees section.</li>
-                                <img src="images/4.5.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/stripe_provider_fees.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>User can configure <b>Domestic</b> and <b>International</b> fees separately for
                                     different Payment Method.
                                 </li>
-                                <img src="images/5.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/fee_line_form.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>If the company's country and the customer's delivery address country match, then <b>Domestic
                                     Fees</b> will be applied. otherwise, <b>International Fees</b> will be applied.
                                 </li>
-                                <img src="images/12.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/company_country_setting.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <img src="images/13.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/delivery_address__country.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>Whenever the user goes to the checkout page, they will see a <b>Fees Badge</b>
@@ -409,7 +399,7 @@
                                 <li>Domestic Fees = <b>3.50%</b> of <b>320</b> + <b>20</b></li>
                                 <li>Domestic Fees = <b>11.20</b> + <b>20</b></li>
                                 <li>Domestic Fees = <b>31.20</b></li>
-                                <img src="images/6.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/fee_badge__visa_payment_method.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>
@@ -417,37 +407,38 @@
                                 <li>After payment, the user can see <b>Fee</b> details in the <b>Payment Transaction</b>
                                     form view.
                                 </li>
-                                <img src="images/7.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/payment_transaction__1.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>A line for <b>Payment Fee</b> will be automatically added to the invoice
                                 </li>
-                                <img src="images/fee_line_for_domestic.png" alt=""
+                                <img src="images/fee_line_for__domestic.png" alt=""
                                      class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>
                             <ul style="font-size: 22px;">
                                 <li>If the Customer's delivery address country does not match with the company's
-                                    country, then <b>International Fees</b> will be applied that configured for <b>VISA
-                                        Payment Method</b></li>
-                                <img src="images/12.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    country, then <b>International Fees</b> will be applied.</li>
+                                <img src="images/company_country_setting.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <img src="images/16.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/delivery_address_country__2.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>Whenever the user goes to the checkout page, they will see a <b>Fees Badge</b>
                                     inside the payment method line.
                                 </li>
+                                <li>Here, both countries are different and payment method is <b>VISA</b>, so <b>International
+                                    Fees</b> will be applied that configured for <b>VISA Payment Method</b></li>
                                 <li>International Fees = <b>5.60%</b> of total amount + <b>Fixed Fees</b></li>
                                 <li>International Fees = <b>5.60%</b> of <b>320</b> + <b>25</b></li>
                                 <li>International Fees = <b>17.92</b> + <b>25</b></li>
                                 <li>International Fees = <b>42.92</b></li>
-                                <img src="images/17.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/fee_badge__international.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <img src="images/18.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/payment_transaction__2.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>A line for <b>Payment Fee</b> will be automatically added to the invoice
@@ -456,21 +447,27 @@
                                      class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <li>Different fees are visible for Different <b>Payment Methods</b>.
+                                </li>
+                                <img src="images/different_fees_for_different_payment_method.png" alt=""
+                                     class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                     loading="lazy"
+                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>
                             <ul style="font-size: 22px;">
                                 <li>The <b>Fees Badge</b> is also visible when the user pays an <b>invoice</b> using the
                                     <b>Stripe</b> payment method.
                                 </li>
-                                <img src="images/9.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/fee_badge__invoice.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>If Stripe sends a successful response, the invoice payment is processed.</li>
-                                <img src="images/10.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/stripe_successful__response.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <li>A <b>Fees</b> field is added in the <b>Payment Transaction</b> form view.</li>
                                 <li>Fees will be automatically added to <b>Invoice Amount</b></li>
-                                <img src="images/11.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <img src="images/invoice_payment__transaction.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>

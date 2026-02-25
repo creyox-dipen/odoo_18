@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_chargebee_configuration,access_chargebee_configuration,model_chargebee_configuration,,1,1,1,1
+access_chargebee_subscription,access_chargebee_subscription,model_chargebee_subscription,,1,1,1,1
+access_chargebee_item_family,access_chargebee_item_family,model_chargebee_item_family,,1,1,1,1
+access_cr_data_processing_log,access_cr_data_processing_log,model_cr_data_processing_log,,1,1,1,1
+access_chargebee_item_family_sync_wizard,access_chargebee_item_family_sync_wizard,model_chargebee_item_family_sync_wizard,,1,1,1,1
