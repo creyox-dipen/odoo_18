@@ -25,17 +25,3 @@ class StockMoveLine(models.Model):
     analytic_distribution = fields.Json(string="Analytic Distribution")
     analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
     analytic_precision = fields.Json(string="Analytic Precision")
-    analytic_mode = fields.Selection(
-        selection=[
-            ('analytic_account', 'Analytic Account'),
-            ('analytic_distribution', 'Analytic Distribution'),
-        ],
-        compute='_compute_analytic_mode',
-    )
-
-    def _compute_analytic_mode(self):
-        mode = self.env['ir.config_parameter'].sudo().get_param(
-            'cr_analytic_account.analytic_account_setting'
-        )
-        for rec in self:
-            rec.analytic_mode = mode or False
