@@ -1,6 +1,6 @@
 # models/sale_order_line.py
 # -*- coding: utf-8 -*-
-# Part of Your Custom Module (extend the existing one).
+
 from odoo import models, fields, api
 
 class SaleOrderLine(models.Model):

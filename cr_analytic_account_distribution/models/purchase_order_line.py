@@ -1,6 +1,6 @@
 # models/purchase_order_line.py
 # -*- coding: utf-8 -*-
-# Part of Your Custom Module.
+
 from odoo import models, api, fields
 
 class PurchaseOrderLine(models.Model):

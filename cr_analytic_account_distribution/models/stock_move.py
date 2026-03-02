@@ -1,6 +1,6 @@
 # models/stock_move.py
 # -*- coding: utf-8 -*-
-# Part of Your Custom Module.
+
 from odoo import models, fields, api
 
 class StockMove(models.Model):
