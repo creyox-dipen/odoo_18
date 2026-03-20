@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_caldav_account_user,caldav.account user,model_caldav_account,base.group_user,1,1,1,1
+access_caldav_account_manager,caldav.account manager,model_caldav_account,base.group_system,1,1,1,1
+access_caldav_event_map_user,caldav.event.map user,model_caldav_event_map,base.group_user,1,1,1,1
+access_caldav_event_map_manager,caldav.event.map manager,model_caldav_event_map,base.group_system,1,1,1,1
+access_caldav_sync_service_user,caldav.sync.service user,model_caldav_sync_service,base.group_user,1,0,0,0
+access_caldav_sync_service_manager,caldav.sync.service manager,model_caldav_sync_service,base.group_system,1,1,1,1

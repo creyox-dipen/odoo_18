@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 # Part of Creyox Technologies.
 {
-    'name': 'Stock Analytic Distribution Manager | Smart Stock Analytic Integration | Stock Picking Analytic Account | Analytic Distribution on Stock Picking',
-    'author': 'Creyox Technologies',
+    "name": "Stock Analytic Distribution Manager | Smart Stock Analytic Integration | Stock Picking Analytic Account | Analytic Distribution on Stock Picking",
+    "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
-    'support': 'support@creyox.com',
-    'category': 'Warehouse',
-    'summary': """
+    "support": "support@creyox.com",
+    "category": "Warehouse",
+    "summary": """
     The Analytic Account & Distribution Manager for Stock automatically transfers analytic accounts or analytic distribution from Sales and Purchase Orders to Delivery and Receipt operations, eliminating manual data entry and ensuring accurate financial tracking. It supports analytic configuration at both Picking and Stock Move levels, maintains a complete audit trail across inventory operations, and enables precise multi-plan, percentage-based cost allocation for better visibility into operational costs and profitability.
     """,
     "license": "OPL-1",
     "version": "18.0.0.0",
-    'description': """
+    "description": """
     <h1>Stock Analytic Account & Distribution Integration for Odoo Inventory</h1>
 
     <p>This module seamlessly integrates Analytic Accounts and Analytic Distribution into Odoo Inventory operations. It automatically propagates analytic information from Sales Orders and Purchase Orders to Delivery and Receipt transfers, ensuring accurate financial tracking and cost allocation across warehouse processes.</p>
@@ -63,15 +63,15 @@
     <p>Watch the youtube video, visit <a href="https://www.youtube.com/@CreyoxTechnologies">Creyox Technologies YouTube Videos</a></p> 
     <p>Read our blog post, visit <a href="https://www.creyox.com/blog">Creyox Technologies Blogs</a></p>
     """,
-    'depends': ['base', 'sale_management', 'stock', 'account', 'purchase'],
-    'data': [
-        'views/res_config_settings.xml',
-        'views/stock_picking.xml',
-        'views/stock_move_line.xml',
+    "depends": ["base", "sale_management", "stock", "account", "purchase"],
+    "data": [
+        "views/res_config_settings.xml",
+        "views/stock_picking.xml",
+        "views/stock_move_line.xml",
     ],
-    'images': ['static/description/banner.png'],
-    'installable': True,
-    'application': True,
+    "images": ["static/description/banner.png"],
+    "installable": True,
+    "application": True,
     "price": 20,
-    'currency': 'USD'
+    "currency": "USD",
 }

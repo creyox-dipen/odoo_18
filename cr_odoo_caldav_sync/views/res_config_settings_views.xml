@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         Inherit res.config.settings — add CalDAV section
+         Uses Odoo 18's <app>/<block>/<setting> structure
+    ============================================================ -->
+    <record id="res_config_settings_view_form_caldav" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.caldav</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="CalDAV Sync"
+                     name="cr_odoo_caldav_sync"
+                     logo="/cr_odoo_caldav_sync/static/description/banner.png">
+
+                    <block title="CalDAV Calendar Synchronisation" name="caldav_sync_block">
+
+                        <setting id="caldav_sync_enabled_setting"
+                                 string="Enable CalDAV Sync"
+                                 help="Automatically sync calendar events with your CalDAV server every 15 minutes.">
+                            <field name="caldav_sync_enabled"/>
+                            <div class="content-group" invisible="not caldav_sync_enabled">
+                                <div class="mt8">
+                                    <button name="action_open_caldav_accounts"
+                                            string="Manage CalDAV Accounts"
+                                            type="object"
+                                            icon="oi-arrow-right"
+                                            class="btn-link"/>
+                                </div>
+                            </div>
+                        </setting>
+
+                    </block>
+
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         Form view: caldav.account
+    ============================================================ -->
+    <record id="view_caldav_account_form" model="ir.ui.view">
+        <field name="name">caldav.account.form</field>
+        <field name="model">caldav.account</field>
+        <field name="arch" type="xml">
+            <form string="CalDAV Account">
+                <header>
+                    <button name="action_test_connection"
+                            string="Test Connection"
+                            type="object"
+                            class="btn-secondary"
+                            help="Verify that Odoo can connect to the CalDAV server with the given credentials."/>
+                    <button name="action_sync_now"
+                            string="Sync Now"
+                            type="object"
+                            class="btn-primary"
+                            help="Run a manual sync for this account immediately."/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="My CalDAV Account"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Connection">
+                            <field name="url"
+                                   placeholder="https://nextcloud.example.com/remote.php/dav/calendars/user/personal/"
+                                   widget="url"/>
+                            <field name="username"/>
+                            <field name="password" password="True"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group string="Sync Options">
+                            <field name="sync_direction"/>
+                            <field name="send_invitation_emails"/>
+                            <field name="auto_create_contacts"/>
+                        </group>
+                    </group>
+                    <group string="Sync Status" name="sync_status">
+                        <field name="last_sync" readonly="1"/>
+                        <field name="last_ctag" readonly="1" string="Last CTag (internal)"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Event Mappings" name="event_mappings">
+                            <field name="event_map_ids" readonly="1">
+                                <list>
+                                    <field name="caldav_uid"/>
+                                    <field name="caldav_href"/>
+                                    <field name="caldav_etag"/>
+                                    <field name="event_id"/>
+                                    <field name="last_odoo_write"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         List view: caldav.account
+    ============================================================ -->
+    <record id="view_caldav_account_list" model="ir.ui.view">
+        <field name="name">caldav.account.list</field>
+        <field name="model">caldav.account</field>
+        <field name="arch" type="xml">
+            <list string="CalDAV Accounts">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="url"/>
+                <field name="sync_direction"/>
+                <field name="last_sync"/>
+                <field name="active" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         Search view: caldav.account
+    ============================================================ -->
+    <record id="view_caldav_account_search" model="ir.ui.view">
+        <field name="name">caldav.account.search</field>
+        <field name="model">caldav.account</field>
+        <field name="arch" type="xml">
+            <search string="CalDAV Accounts">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="url"/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Owner" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Sync Direction" name="group_direction" context="{'group_by': 'sync_direction'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         Window action: caldav.account
+    ============================================================ -->
+    <record id="action_caldav_account" model="ir.actions.act_window">
+        <field name="name">CalDAV Accounts</field>
+        <field name="res_model">caldav.account</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add your first CalDAV account!
+            </p>
+            <p>
+                Connect Odoo to any CalDAV server (Nextcloud, Synology, Radicale…)
+                to keep your calendar events in sync automatically.
+            </p>
+        </field>
+    </record>
+
+</odoo>

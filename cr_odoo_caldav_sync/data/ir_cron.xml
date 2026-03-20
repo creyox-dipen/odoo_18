@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="ir_cron_caldav_sync" model="ir.cron">
+            <field name="name">CalDAV Calendar Sync</field>
+            <field name="model_id" ref="model_caldav_sync_service"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_sync_all()</field>
+            <field name="interval_number">15</field>
+            <field name="interval_type">minutes</field>
+<!--            <field name="numbercall">-1</field>-->
+            <field name="active">True</field>
+<!--            <field name="doall">False</field>-->
+        </record>
+
+    </data>
+</odoo>

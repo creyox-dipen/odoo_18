@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         Add CalDAV Sync button to the calendar list view header.
+         The calendar view itself (attendee_calendar) has no header
+         area we can reliably inject into, so we add the button to
+         the list view's header — visible whenever the user is on
+         the Calendar menu in list mode.
+         We also create a standalone action the button calls.
+    ============================================================ -->
+
+    <!-- Action to trigger CalDAV sync for current user -->
+    <record id="action_caldav_sync_current_user" model="ir.actions.server">
+        <field name="name">CalDAV Sync (Current User)</field>
+        <field name="model_id" ref="model_calendar_event"/>
+        <field name="binding_model_id" ref="model_calendar_event"/>
+        <field name="binding_view_types">list,calendar</field>
+        <field name="state">code</field>
+        <field name="code">
+action = env['caldav.sync.service'].action_sync_current_user()
+        </field>
+    </record>
+
+    <!-- Add CalDAV UID field to calendar event list view -->
+    <record id="view_calendar_event_list_caldav" model="ir.ui.view">
+        <field name="name">calendar.event.list.caldav</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="action">caldav_sync_action</attribute>
+            </xpath>
+            <xpath expr="//list/field[@name='name']" position="before">
+                <!-- CalDAV Sync button in list header -->
+            </xpath>
+            <field name="name" position="before">
+                <header>
+                    <button name="caldav_sync_action"
+                            type="object"
+                            string="CalDAV Sync"
+                            class="btn-primary"
+                            help="Synchronise your calendar with CalDAV accounts now."
+                            icon="fa-refresh"/>
+                </header>
+            </field>
+        </field>
+    </record>
+
+</odoo>
