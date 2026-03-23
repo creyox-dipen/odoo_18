@@ -75,10 +75,10 @@ class CalendarEvent(models.Model):
         for map_rec in maps:
             try:
                 map_rec.account_id._delete_event(map_rec.caldav_href, etag=map_rec.caldav_etag)
-            except Exception as e:
+            except Exception as ex:
                 _logger.warning(
-                    'CalDAV delete failed for event %s on account %s: %s',
-                    map_rec.caldav_uid, map_rec.account_id.name, e,
+                    'CalDAV delete failed for event "%s" (href=%s) on account %s: %s',
+                    map_rec.event_id.name, map_rec.caldav_href, map_rec.account_id.name, ex,
                 )
         return super().unlink()
 

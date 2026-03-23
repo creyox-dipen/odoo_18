@@ -97,23 +97,23 @@ class CalDAVSyncService(models.AbstractModel):
         """
         stats = {'pushed': 0, 'pulled': 0, 'deleted': 0}
 
-        # --- Fast path: CTag check ---
+        # --- Phase 1: Pull from CalDAV ---
+        # Always pull so we don't miss server-side changes.
+        # Per-event ETag comparison inside _pull_caldav_changes skips unchanged events.
+        pulled_event_ids = set()
         current_ctag = account._get_server_ctag()
-        if current_ctag and current_ctag == account.last_ctag:
-            # Server unchanged; still push any local Odoo changes
-            if account.sync_direction in ('bidirectional', 'odoo_to_caldav'):
-                stats['pushed'] = self._push_odoo_changes(account)
-            return stats
-
-        if account.sync_direction in ('bidirectional', 'odoo_to_caldav'):
-            print("pushing data...")
-            stats['pushed'] = self._push_odoo_changes(account)
-
         if account.sync_direction in ('bidirectional', 'caldav_to_odoo'):
-            print("pulling data...")
-            pulled, deleted = self._pull_caldav_changes(account)
+            _logger.debug('Pulling changes from CalDAV for account %s.', account.name)
+            pulled, deleted, pulled_ids = self._pull_caldav_changes(account)
             stats['pulled'] = pulled
             stats['deleted'] = deleted
+            pulled_event_ids = set(pulled_ids)
+
+        # --- Phase 2: Push to CalDAV ---
+        if account.sync_direction in ('bidirectional', 'odoo_to_caldav'):
+            _logger.debug('Pushing changes to CalDAV for account %s.', account.name)
+            # Pass pulled_event_ids to skip re-pushing what we just pulled
+            stats['pushed'] = self._push_odoo_changes(account, skip_ids=pulled_event_ids)
 
         # Update CTag and last_sync timestamp
         new_ctag = account._get_server_ctag() or current_ctag
@@ -128,27 +128,61 @@ class CalDAVSyncService(models.AbstractModel):
     # ------------------------------------------------------------------
 
     @api.model
-    def _push_odoo_changes(self, account):
-        """Push new and modified Odoo events to the CalDAV server.
+    def _push_odoo_changes(self, account, skip_ids=None):
+        """Push new, modified, and deleted Odoo events to the CalDAV server.
 
-        Finds all events belonging to the account owner that either:
-        * have no mapping yet (never pushed), or
-        * have been written in Odoo since the last push (write_date > last_odoo_write).
+        Handles three cases:
+        * **Deleted** events: archived Odoo events that still have a mapping are
+          removed from the server via DELETE, then their mapping is cleaned up.
+        * **New** events: events with no mapping are uploaded via PUT.
+        * **Updated** events: events modified since the last push are re-uploaded.
 
         Recurring event occurrences are skipped — only the base event (with the
-        RRULE) is pushed; the server generates occurrences server-side.
+        RRULE) is pushed.
 
         :param caldav.account account: Target account.
-        :return: Number of events pushed.
+        :param set skip_ids: Optional set of event IDs to skip (recently pulled).
+        :return: Number of events pushed/deleted.
         :rtype: int
         """
         pushed = 0
+        skip_ids = skip_ids or set()
         owner_partner = account.user_id.partner_id
 
+        # --- Phase 2a: Push deletions ---
+        # Find all mappings for this account whose Odoo event is now archived
+        all_maps = self.env['caldav.event.map'].sudo().search([
+            ('account_id', '=', account.id),
+        ])
+        for map_rec in all_maps:
+            event = map_rec.event_id
+            if not event:
+                # Dangling map — clean up
+                map_rec.sudo().unlink()
+                continue
+            if not event.active and event.id not in skip_ids:
+                # Event was archived in Odoo → delete from server
+                try:
+                    _logger.info(
+                        'Deleting CalDAV event for archived Odoo event "%s" (id=%s) at %s',
+                        event.name, event.id, map_rec.caldav_href,
+                    )
+                    account._delete_event(map_rec.caldav_href, etag=map_rec.caldav_etag)
+                    pushed += 1
+                except Exception as e:
+                    _logger.warning(
+                        'Could not delete CalDAV event for "%s" (id=%s): %s',
+                        event.name, event.id, e,
+                    )
+                finally:
+                    # Always remove the local mapping so we don't retry forever
+                    map_rec.sudo().unlink()
+
+        # --- Phase 2b: Push creates and updates ---
         # Fetch base events (non-recurrence occurrences) for this user
         domain = [
             ('partner_ids', 'in', owner_partner.ids),
-            ('active', 'in', [True, False]),
+            ('active', '=', True),  # Only active events — archived handled above
             # Skip occurrence events — only sync the base/recurrence-less ones
             '|',
             ('recurrence_id', '=', False),
@@ -165,6 +199,8 @@ class CalDAVSyncService(models.AbstractModel):
         }
 
         for event in events:
+            if event.id in skip_ids:
+                continue
             existing_map = existing_maps.get(event.id)
             # Determine if event is new to CalDAV or was modified since last push
             if existing_map:
@@ -179,10 +215,26 @@ class CalDAVSyncService(models.AbstractModel):
                     event.name, event.id, account.url, etag,
                 )
             except Exception as e:
-                _logger.error(
-                    'Failed to push event "%s" (id=%s) to account %s: %s',
-                    event.name, event.id, account.name, e, exc_info=True,
-                )
+                # Handle 412 Precondition Failed specifically as a conflict
+                msg = str(e)
+                if '412' in msg and existing_map:
+                    _logger.warning(
+                        'Conflict detected for event "%s" (id=%s): Server has a newer version. '
+                        'Attempting auto-recovery pull.',
+                        event.name, event.id
+                    )
+                    try:
+                        # Self-healing: Pull the latest state of this specific event right now
+                        new_etag, ical_text = account._fetch_ical_with_etag(existing_map.caldav_href)
+                        self._upsert_from_ical(account, existing_map.caldav_href, new_etag, ical_text, existing_map)
+                        _logger.info('Auto-recovery pull successful for event "%s".', event.name)
+                    except Exception as re:
+                        _logger.error('Auto-recovery pull failed for event "%s": %s', event.name, re)
+                else:
+                    _logger.error(
+                        'Failed to push event "%s" (id=%s) to account %s: %s',
+                        event.name, event.id, account.name, e, exc_info=True,
+                    )
         return pushed
 
     @api.model
@@ -205,7 +257,9 @@ class CalDAVSyncService(models.AbstractModel):
         href = existing_map.caldav_href if existing_map else self._build_href(account, uid)
         old_etag = existing_map.caldav_etag if existing_map else None
 
+        _logger.info('Pushing event "%s" (id=%s) to %s; If-Match ETag=%s', event.name, event.id, href, old_etag)
         new_etag = account._put_ical(href, ical_str, etag=old_etag)
+        _logger.debug('Push successful; new ETag=%s', new_etag)
 
         map_vals = {
             'account_id': account.id,
@@ -241,24 +295,17 @@ class CalDAVSyncService(models.AbstractModel):
     def _pull_caldav_changes(self, account):
         """Pull new and changed events from the CalDAV server into Odoo.
 
-        Algorithm:
-        1. Fetch all hrefs + ETags from the server.
-        2. Compare with stored mappings.
-        3. For new/changed hrefs, fetch the .ics and upsert the Odoo event.
-        4. Archive Odoo events whose hrefs are gone from server.
-
         :param caldav.account account: Source account.
-        :return: Tuple (pulled_count, deleted_count).
-        :rtype: tuple[int, int]
+        :return: Tuple (pulled_count, deleted_count, pulled_event_ids).
+        :rtype: tuple[int, int, list]
         """
         pulled = 0
         deleted = 0
+        pulled_ids = []
 
         raw_server_etags = account._get_server_etags()  # {href: etag}
-        if not raw_server_etags:
-            return pulled, deleted
 
-        # Normalize HREFs to absolute URLs for reliable comparison with Odoo mape
+        # Normalize HREFs to absolute URLs for reliable comparison with Odoo maps
         server_etags = {
             account._resolve_href(href): etag
             for href, etag in raw_server_etags.items()
@@ -273,17 +320,26 @@ class CalDAVSyncService(models.AbstractModel):
         }
         _logger.debug('Existing Odoo maps for account %s: %s', account.name, list(existing_maps.keys()))
 
-        # Process new and changed events
+        # Process new and changed events (only if server has events)
         for href, server_etag in server_etags.items():
             existing = existing_maps.get(href)
             if existing:
                 _logger.debug('Comparing HREFs for %s: local_etag=%s, server_etag=%s', href, existing.caldav_etag, server_etag)
+                # If the mapped Odoo event is archived, skip pulling it back.
+                # The push phase will handle the server-side deletion.
+                if existing.event_id and not existing.event_id.active:
+                    _logger.debug(
+                        'Skipping pull for archived Odoo event href %s — will be deleted in push phase.', href
+                    )
+                    continue
             if existing and existing.caldav_etag == server_etag:
                 continue  # unchanged
             try:
                 _logger.info('Pulling CalDAV event from %s (account %s)', href, account.name)
                 ical_text = account._fetch_ical(href)
-                self._upsert_from_ical(account, href, server_etag, ical_text, existing)
+                event = self._upsert_from_ical(account, href, server_etag, ical_text, existing)
+                if event:
+                    pulled_ids.append(event.id)
                 pulled += 1
             except Exception as e:
                 _logger.error(
@@ -293,11 +349,21 @@ class CalDAVSyncService(models.AbstractModel):
 
         # Archive events deleted on server
         server_hrefs = set(server_etags.keys())
-        for href, map_rec in existing_maps.items():
+        _logger.info(
+            'Deletion check for account %s: server_hrefs=%s, map_hrefs=%s',
+            account.name, sorted(server_hrefs), sorted(existing_maps.keys()),
+        )
+        for href, map_rec in list(existing_maps.items()):
             if href not in server_hrefs:
                 try:
                     if map_rec.event_id:
-                        map_rec.event_id.sudo().write({'active': False})
+                        event = map_rec.event_id
+                        _logger.info(
+                            'Archiving Odoo event "%s" (id=%s) — deleted from CalDAV server.',
+                            event.name, event.id,
+                        )
+                        # Use sudo + with_context to bypass potential attendee restrictions
+                        event.with_context(no_sync=True).sudo().write({'active': False})
                     map_rec.sudo().unlink()
                     deleted += 1
                 except Exception as e:
@@ -305,7 +371,7 @@ class CalDAVSyncService(models.AbstractModel):
                         'Could not archive Odoo event for deleted CalDAV href %s: %s', href, e
                     )
 
-        return pulled, deleted
+        return pulled, deleted, pulled_ids
 
     @api.model
     def _upsert_from_ical(self, account, href, server_etag, ical_text, existing_map=None):
@@ -376,6 +442,8 @@ class CalDAVSyncService(models.AbstractModel):
             existing_map.sudo().write(map_vals)
         else:
             self.env['caldav.event.map'].sudo().create(map_vals)
+
+        return event
 
     # ------------------------------------------------------------------
     # iCal generation (Odoo → iCal)

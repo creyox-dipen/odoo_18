@@ -228,41 +228,62 @@ class CalDAVAccount(models.Model):
         :return: Raw iCal text.
         :rtype: str
         """
+        _, data = self._fetch_ical_with_etag(href)
+        return data
+
+    def _fetch_ical_with_etag(self, href):
+        """Fetch a single iCal resource and its ETag from the server.
+
+        :param str href: Absolute or relative URL to the .ics resource.
+        :return: Tuple (etag, ical_text).
+        :rtype: tuple[str, str]
+        """
         self.ensure_one()
         url = self._resolve_href(href)
-        _, _, data = self._do_request(url, 'GET', extra_headers={'Accept': 'text/calendar'})
-        return data.decode('utf-8', errors='replace')
+        _, headers, data = self._do_request(url, 'GET', extra_headers={'Accept': 'text/calendar'})
+        # Extract ETag from headers, stripping quotes if present
+        etag = (headers.get('ETag') or headers.get('etag') or '').strip('"')
+        return etag, data.decode('utf-8', errors='replace')
 
     def _put_ical(self, href, ical_string, etag=None):
         """PUT (create or update) a single .ics resource on the server.
 
         :param str href: Target URL / href for the resource.
         :param str ical_string: Full iCal text to upload.
-        :param str|None etag: If provided, sends an If-Match header (optimistic locking).
-        :return: ETag returned by the server (or empty string).
+        :param str|None etag: If provided, sends an ``If-Match`` header (optimistic locking).
+            The value should be unquoted; this method will wrap it in double quotes
+            as required by RFC 4918.
+        :return: ETag returned by the server (unquoted), or empty string.
         :rtype: str
         """
         self.ensure_one()
         url = self._resolve_href(href)
         extra = {'Content-Type': 'text/calendar; charset=utf-8'}
         if etag:
-            extra['If-Match'] = etag
+            # RFC 4918 requires ETag values in If-Match to be quoted
+            quoted_etag = etag if etag.startswith('"') else f'"{etag}"'
+            extra['If-Match'] = quoted_etag
         _, headers, _ = self._do_request(
             url, 'PUT', body=ical_string.encode('utf-8'), extra_headers=extra
         )
-        return headers.get('ETag', headers.get('etag', ''))
+        raw_etag = headers.get('ETag', headers.get('etag', ''))
+        return raw_etag.strip('"')
 
     def _delete_event(self, href, etag=None):
         """DELETE a CalDAV resource from the server.
 
         :param str href: Absolute or relative URL to the resource.
-        :param str|None etag: If provided, sends an If-Match header.
+        :param str|None etag: If provided, sends an ``If-Match`` header.
+            The value should be unquoted; this method will wrap it in double quotes
+            as required by RFC 4918.
         """
         self.ensure_one()
         url = self._resolve_href(href)
         extra = {}
         if etag:
-            extra['If-Match'] = etag
+            # RFC 4918 requires ETag values in If-Match to be quoted
+            quoted_etag = etag if etag.startswith('"') else f'"{etag}"'
+            extra['If-Match'] = quoted_etag
         try:
             self._do_request(url, 'DELETE', extra_headers=extra, expected_codes=[200, 204, 404])
         except UserError:
