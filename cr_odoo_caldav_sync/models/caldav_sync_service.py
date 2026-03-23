@@ -179,16 +179,30 @@ class CalDAVSyncService(models.AbstractModel):
                     map_rec.sudo().unlink()
 
         # --- Phase 2b: Push creates and updates ---
-        # Fetch base events (non-recurrence occurrences) for this user
-        domain = [
-            ('partner_ids', 'in', owner_partner.ids),
-            ('active', '=', True),  # Only active events — archived handled above
-            # Skip occurrence events — only sync the base/recurrence-less ones
-            '|',
+        # Use sudo() to bypass record rules, then filter by partner in Python.
+        owner_partner_id = owner_partner.id
+
+        # Non-recurring events: recurrence_id is False
+        non_recurring = self.env['calendar.event'].sudo().search([
+            ('active', '=', True),
             ('recurrence_id', '=', False),
-            ('follow_recurrence', '=', False),
-        ]
-        events = self.env['calendar.event'].sudo().search(domain)
+        ]).filtered(lambda e: owner_partner_id in e.partner_ids.ids)
+
+        # Recurring events: each recurrence series has a base_event_id containing
+        # the RRULE. We push ONE .ics per series (the base event).
+        # Access is checked via attendee_ids, which is always populated.
+        recurrences = self.env['calendar.recurrence'].sudo().search([])
+        recurring_base_events = recurrences.mapped('base_event_id').filtered(
+            lambda e: e.active and any(
+                att.partner_id.id == owner_partner_id for att in e.attendee_ids
+            )
+        )
+
+        events = non_recurring | recurring_base_events
+        _logger.info(
+            'Push candidates for account %s: %s event(s) — non-recurring=%s, recurring_base=%s',
+            account.name, len(events), len(non_recurring), len(recurring_base_events),
+        )
 
         existing_maps = {
             m.event_id.id: m
@@ -422,13 +436,79 @@ class CalDAVSyncService(models.AbstractModel):
             event = existing_map.event_id
             # Preserve caldav_uid; don't let sync overwrite it
             vals.pop('caldav_uid', None)
-            # Handle recurrence update
-            if vals.get('rrule') and event.recurrence_id:
+            # For Odoo-owned recurring events, DON'T re-apply the RRULE from the
+            # server. Doing so triggers `recurrence_update='all_events'` which:
+            #   1. Regenerates occurrences (can create extra M4 when COUNT=3 + EXDATE)
+            #   2. Updates write_date → push detects "changed" → push loop
+            # Odoo is the master of the recurrence structure; only EXDATE
+            # changes (individual deletions) are synced via the block below.
+            if event.recurrence_id:
+                vals.pop('rrule', None)
+                vals.pop('recurrence_update', None)
+            elif vals.get('rrule'):
                 vals['recurrence_update'] = 'all_events'
             event.write(vals)
         else:
             vals['caldav_uid'] = uid_value
             event = CalEvent.create(vals)
+
+        # Handle EXDATE — single occurrence deleted on the server side.
+        # Thunderbird/CalDAV clients mark excluded dates with EXDATE instead of
+        # deleting the whole .ics. We remove the matching Odoo occurrences.
+        exdate_comp = getattr(vevent, 'exdate', None)
+        if exdate_comp and event.recurrence_id:
+            # exdate.value can be a list of datetimes or a single datetime
+            raw_exdates = exdate_comp.value
+            if not isinstance(raw_exdates, (list, tuple)):
+                raw_exdates = [raw_exdates]
+            excluded_dates = set()
+            for ex in raw_exdates:
+                try:
+                    if hasattr(ex, 'date'):
+                        excluded_dates.add(ex.date())
+                    else:
+                        from datetime import date as _date
+                        excluded_dates.add(_date(ex.year, ex.month, ex.day))
+                except Exception:
+                    pass
+            if excluded_dates:
+                occurrences_to_delete = event.recurrence_id.calendar_event_ids.filtered(
+                    lambda e: e.active and (
+                        (e.allday and e.start_date in excluded_dates)
+                        or (not e.allday and e.start and e.start.date() in excluded_dates)
+                    )
+                )
+                for occ in occurrences_to_delete:
+                    _logger.info(
+                        'Removing excluded occurrence "%s" (id=%s, date=%s) via EXDATE.',
+                        occ.name, occ.id, occ.start,
+                    )
+                    # Save refs BEFORE unlink (occ fields become invalid after).
+                    occ_is_mapped_base = (
+                        existing_map and existing_map.exists()
+                        and occ.id == existing_map.event_id.id
+                    )
+                    occ_recurrence = occ.recurrence_id
+
+                    # Unlink: Odoo's calendar.event.unlink() will automatically
+                    # call _select_new_base_event, updating recurrence.base_event_id.
+                    # Our ondelete='cascade' on the map's event_id will also
+                    # cascade-delete the map if occ was the mapped base event.
+                    occ.with_context(no_caldav_delete=True).sudo().unlink()
+
+                    # If the map was cascade-deleted, recreate it pointing to the
+                    # new base so the push phase doesn't treat it as a new event.
+                    if occ_is_mapped_base and occ_recurrence.exists():
+                        new_base = occ_recurrence.base_event_id
+                        if new_base and new_base.exists():
+                            _logger.info(
+                                'Map was cascade-deleted; redirecting to new base (id=%s).',
+                                new_base.id,
+                            )
+                            # Force creation of a new map for the new base in
+                            # the map_vals block below.
+                            event = new_base
+                            existing_map = None
 
         map_vals = {
             'account_id': account.id,
@@ -519,12 +599,33 @@ class CalDAVSyncService(models.AbstractModel):
             if plain:
                 vevent.add('description').value = plain
 
-        # RRULE — only for base events; occurrences are not pushed
-        if event.recurrence_id and not event.follow_recurrence and event.rrule:
-            rrule_str = event.rrule
-            if rrule_str.startswith('RRULE:'):
-                rrule_str = rrule_str[len('RRULE:'):]
-            vevent.add('rrule').value = rrule_str
+        # RRULE — include for any event that belongs to a recurring series.
+        # Odoo's recurrence.rrule is stored as str(dateutil.rrule) which is a
+        # multi-line string: "DTSTART:...\nRRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=3"
+        # We must extract just the RRULE line and strip the RRULE: prefix for vobject.
+        rrule_value = None
+        if event.recurrence_id:
+            raw = event.recurrence_id.rrule or ''
+            for line in raw.splitlines():
+                line = line.strip()
+                if line.upper().startswith('RRULE:'):
+                    rrule_value = line[len('RRULE:'):]
+                    break
+            if not rrule_value and raw and not raw.upper().startswith('DTSTART'):
+                # Fallback: raw might already be just the params (no prefix)
+                rrule_value = raw.strip('RRULE:') if raw.startswith('RRULE:') else raw
+        if not rrule_value and hasattr(event, 'rrule') and event.rrule:
+            raw = event.rrule
+            for line in raw.splitlines():
+                line = line.strip()
+                if line.upper().startswith('RRULE:'):
+                    rrule_value = line[len('RRULE:'):]
+                    break
+            if not rrule_value:
+                rrule_value = raw.lstrip('RRULE:') if raw.startswith('RRULE:') else raw
+        if rrule_value:
+            _logger.info('Adding RRULE to iCal for event "%s": %s', event.name, rrule_value)
+            vevent.add('rrule').value = rrule_value
 
         # ORGANIZER + ATTENDEE — only if there are real attendees (not just the owner)
         other_partners = event.partner_ids.filtered(
