@@ -645,6 +645,20 @@ class CalDAVSyncService(models.AbstractModel):
                 att.params['CN'] = [partner.name or partner.email]
                 att.params['PARTSTAT'] = ['ACCEPTED']
 
+        # VALARM — one subcomponent per alarm/reminder
+        for alarm in event.alarm_ids:
+            """Add a VALARM for each reminder configured on the event."""
+            valarm = vevent.add('valarm')
+            # ACTION: EMAIL or DISPLAY (notification)
+            action = 'EMAIL' if alarm.alarm_type == 'email' else 'DISPLAY'
+            valarm.add('action').value = action
+            valarm.add('description').value = alarm.name or 'Reminder'
+            
+            # Use timedelta for TRIGGER; vobject will serialize it to ISO 8601 duration
+            # Negative means "before event start" (default for PTH, PTM etc.)
+            minutes = alarm.duration_minutes or 0
+            valarm.add('trigger').value = timedelta(minutes=-minutes)
+
         return cal.serialize()
 
     # ------------------------------------------------------------------
@@ -779,6 +793,50 @@ class CalDAVSyncService(models.AbstractModel):
                     })
                 if partner:
                     partner_ids.append(partner.id)
+
+            # VALARM — parse reminders from CalDAV and map to Odoo alarm_ids
+            alarm_ids = []
+            try:
+                for component in vevent.components():
+                    if component.name != 'VALARM':
+                        continue
+                    trigger_comp = getattr(component, 'trigger', None)
+                    action_comp = getattr(component, 'action', None)
+                    if not trigger_comp:
+                        continue
+                    trigger_val = trigger_comp.value
+                    # trigger_val is a timedelta (negative = before event)
+                    if hasattr(trigger_val, 'total_seconds'):
+                        total_secs = abs(trigger_val.total_seconds())
+                        trigger_minutes = int(total_secs // 60)
+                    else:
+                        continue
+                    action_str = (action_comp.value if action_comp else 'DISPLAY').upper()
+                    alarm_type = 'email' if action_str == 'EMAIL' else 'notification'
+                    # Find the best matching alarm in Odoo
+                    alarm = self.env['calendar.alarm'].sudo().search([
+                        ('alarm_type', '=', alarm_type),
+                        ('duration_minutes', '=', trigger_minutes),
+                    ], limit=1)
+                    if not alarm:
+                        # Fallback: closest match by duration regardless of type
+                        alarm = self.env['calendar.alarm'].sudo().search(
+                            [('duration_minutes', '=', trigger_minutes)], limit=1
+                        )
+                    if not alarm and trigger_minutes > 0:
+                        # Fallback: find closest alarm by duration
+                        all_alarms = self.env['calendar.alarm'].sudo().search([])
+                        alarm = min(
+                            all_alarms,
+                            key=lambda a: abs(a.duration_minutes - trigger_minutes),
+                            default=None,
+                        )
+                    if alarm:
+                        alarm_ids.append(alarm.id)
+            except Exception as ex:
+                _logger.warning('Could not parse VALARM: %s', ex)
+            if alarm_ids:
+                vals['alarm_ids'] = [(6, 0, list(set(alarm_ids)))]
 
             if partner_ids:
                 vals['partner_ids'] = [(6, 0, list(set(partner_ids)))]
