@@ -592,6 +592,11 @@ class CalDAVSyncService(models.AbstractModel):
         if event.location:
             vevent.add('location').value = event.location
 
+        # CLASS — privacy mapping
+        _privacy_to_class = {'public': 'PUBLIC', 'private': 'PRIVATE', 'confidential': 'CONFIDENTIAL'}
+        class_val = _privacy_to_class.get(event.privacy or 'public', 'PUBLIC')
+        vevent.add('class').value = class_val
+
         # DESCRIPTION (plain text, no Odoo attendee injection)
         if event.description:
             from odoo.tools import html2plaintext
@@ -741,6 +746,13 @@ class CalDAVSyncService(models.AbstractModel):
             if desc_comp and desc_comp.value:
                 # Store as simple HTML paragraph
                 vals['description'] = f'<p>{desc_comp.value.replace(chr(10), "<br/>")}</p>'
+
+            # CLASS — iCal privacy mapping
+            _class_to_privacy = {'PUBLIC': 'public', 'PRIVATE': 'private', 'CONFIDENTIAL': 'confidential'}
+            class_comp = getattr(vevent, 'class', None)
+            if class_comp and class_comp.value:
+                privacy = _class_to_privacy.get(class_comp.value.upper(), 'public')
+                vals['privacy'] = privacy
 
             # RRULE — recurring event
             rrule_comp = getattr(vevent, 'rrule', None)
