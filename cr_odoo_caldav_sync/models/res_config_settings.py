@@ -22,6 +22,16 @@ class ResConfigSettings(models.TransientModel):
         ),
     )
 
+    def set_values(self):
+        """Toggle the visibility of the CalDAV Accounts menu based on the setting.
+
+        If disabled, the menu is deactivated (active=False).
+        """
+        super().set_values()
+        menu = self.env.ref('cr_odoo_caldav_sync.menu_caldav_accounts', raise_if_not_found=False)
+        if menu:
+            menu.sudo().active = self.caldav_sync_enabled
+
     def action_open_caldav_accounts(self):
         """Open the CalDAV Accounts list/form view.
 
