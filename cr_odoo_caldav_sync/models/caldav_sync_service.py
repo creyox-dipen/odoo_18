@@ -447,7 +447,7 @@ class CalDAVSyncService(models.AbstractModel):
                 vals.pop('recurrence_update', None)
             elif vals.get('rrule'):
                 vals['recurrence_update'] = 'all_events'
-            event.write(vals)
+            event.with_context(**ctx_kwargs).write(vals)
         else:
             vals['caldav_uid'] = uid_value
             event = CalEvent.create(vals)
