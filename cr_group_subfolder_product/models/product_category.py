@@ -31,15 +31,15 @@ class ProductCategory(models.Model):
 
     def write(self, vals):
         """
-        Override write to detect deleted folder lines and apply safe-delete logic
-        on documents.document folders for all products in this category.
+        Override write to detect changes in folder structure and propagate
+        them to all products in this category.
 
-        When a Command.DELETE or Command.UNLINK is detected in folder_structure_ids,
-        we collect the affected folder lines, then for each product that uses this
-        category we delete only the folders (and their sub-folders) that contain
-        no documents. Folders with documents are left untouched.
+        - Deletions: If a folder line is removed, we safely delete its
+          matching folders on all products (folder must be empty).
+        - Additions/Updates: Any addition or renaming in the structure
+          is synced to all products.
         """
-        # Collect lines being deleted before the write
+        # 1. Collect lines being deleted to find folders before lines are gone
         deleted_line_ids = []
         if 'folder_structure_ids' in vals:
             for cmd in vals['folder_structure_ids']:
@@ -47,34 +47,29 @@ class ProductCategory(models.Model):
                 if cmd[0] in (2, 3) and cmd[1]:
                     deleted_line_ids.append(cmd[1])
 
-        # Fetch line data before it is deleted
-        deleted_lines = self.env['cr.category.folder.line'].browse(deleted_line_ids)
-        # Map: (category_id, line_sequence_name) for matching folders
-        lines_info = {
-            line.id: (line.category_id.id, line.name, line.sequence)
-            for line in deleted_lines
-        }
+        # 2. Identify all managed folders linked to these specific lines (all products)
+        folders_to_delete = self.env['documents.document']
+        if deleted_line_ids:
+            folders_to_delete = self.env['documents.document'].sudo().search([
+                ('type', '=', 'folder'),
+                ('cr_category_folder_line_id', 'in', deleted_line_ids),
+            ])
 
+        # 3. Perform the write to the database
         result = super().write(vals)
 
-        # Safe-delete folders for affected products
-        if lines_info:
+        # 4. Handle Deletions: Safe-delete folders that lost their configuration line
+        for folder in folders_to_delete:
+            if folder.exists():
+                folder._cr_safe_delete_folder()
+
+        # 5. Handle Additions/Updates: Sync structure for all related products
+        if 'folder_structure_ids' in vals:
             for category in self:
                 products = self.env['product.template'].search([
                     ('categ_id', '=', category.id),
                 ])
                 for product in products:
-                    for line_id, (cat_id, fname, fseq) in lines_info.items():
-                        if cat_id != category.id:
-                            continue
-                        # Find root folder of this product that matches the line
-                        existing_folder = self.env['documents.document'].search([
-                            ('type', '=', 'folder'),
-                            ('res_model', '=', 'product.template'),
-                            ('res_id', '=', product.id),
-                            ('name', '=', fname),
-                        ], limit=1)
-                        if existing_folder:
-                            existing_folder._cr_safe_delete_folder()
+                    product._cr_create_folder_structure(category)
 
         return result

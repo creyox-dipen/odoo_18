@@ -16,6 +16,7 @@
         <field name="inherit_id" ref="product.product_category_form_view"/>
         <field name="arch" type="xml">
             <!-- Target the 'Inventory Valuation' group by looking for its internal fields -->
+            <!-- Target the 'Inventory Valuation' group by looking for its internal fields -->
             <xpath expr="//group[field[@name='property_cost_method']]" position="after">
                 <group string="Folder Structure" name="cr_folder_structure">
                     <field name="folder_structure_ids" nolabel="1" colspan="2">

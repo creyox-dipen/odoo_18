@@ -166,41 +166,62 @@ class ProductTemplate(models.Model):
 
     def _cr_create_folder_structure(self, categ):
         """
-        Create the folder hierarchy (documents.document records with type='folder')
-        for this product based on the given category's folder_structure_ids.
+        Create or update the folder hierarchy for this product based on the
+        category's folder_structure_ids.
 
-        Hierarchy is determined by the sequence field using dot-notation:
-          - 1.0  => top-level
-          - 1.1  => parent is 1.0
-          - 1.1.1 => parent is 1.1
-        
-        Lines are sorted by sequence to ensure parents are created before children.
+        This method is idempotent: it checks for existing folders linked to
+        the same category line and updates them (name/parent) if necessary.
 
         :param product.category categ: the category with folder_structure_ids
         """
         self.ensure_one()
         Document = self.env['documents.document']
-        # Sort naturally to ensure parents are processed first (1.1 before 1.1.1)
+        # Sort naturally to ensure parents are processed first
         lines = categ.folder_structure_ids.sorted(key=lambda l: l.sequence)
 
-        # Map: normalized sequence tuple → created documents.document id
+        # Map: normalized sequence tuple → documents.document (existing or new)
         seq_to_doc = {}
 
         for line in lines:
             normalized_seq = line._get_normalized_sequence()
+            # Find existing folder for this specific line and product
+            existing_doc = Document.sudo().search([
+                ('type', '=', 'folder'),
+                ('res_model', '=', 'product.template'),
+                ('res_id', '=', self.id),
+                ('cr_category_folder_line_id', '=', line.id),
+            ], limit=1)
+
             parent_doc = self._cr_find_parent_document(line, seq_to_doc)
             vals = {
                 'name': line.name,
-                'type': 'folder',
-                'res_model': 'product.template',
-                'res_id': self.id,
                 'folder_id': parent_doc.id if parent_doc else False,
                 'cr_category_folder_line_id': line.id,
-                'access_internal': 'edit',
-                'access_via_link': 'none',
-                'owner_id': self.env.user.id,
             }
-            doc = Document.sudo().create(vals)
+
+            if existing_doc:
+                # Update existing folder if info changed
+                update_vals = {}
+                if existing_doc.name != vals['name']:
+                    update_vals['name'] = vals['name']
+                if existing_doc.folder_id != vals['folder_id']:
+                    update_vals['folder_id'] = vals['folder_id']
+
+                if update_vals:
+                    existing_doc.sudo().write(update_vals)
+                doc = existing_doc
+            else:
+                # Create new folder
+                vals.update({
+                    'type': 'folder',
+                    'res_model': 'product.template',
+                    'res_id': self.id,
+                    'access_internal': 'edit',
+                    'access_via_link': 'none',
+                    'owner_id': self.env.user.id,
+                })
+                doc = Document.sudo().create(vals)
+
             seq_to_doc[normalized_seq] = doc
 
     def _cr_find_parent_document(self, line, seq_to_doc):
