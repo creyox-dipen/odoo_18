@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Inherit Product Template Form to add the "Folders" smart button -->
+    <record id="product_template_form_view_inherit_folders" model="ir.ui.view">
+        <field name="name">product.template.form.inherit.folders</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_product_folders"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-folder-open">
+                    <field name="folder_count" widget="statinfo" string="Folders"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+</odoo>
