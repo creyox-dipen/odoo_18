@@ -1,21 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-
-    <!--
-        Inherits the product.category form view to add the Folder Structure
-        One2many tab BELOW the Inventory Valuation group.
-
-        The position is determined using the 'Inventory Valuation' group
-        (`position="after"` on the node that adds Inventory Valuation).
-        Since Inventory Valuation is added via stock_account module, we
-        target the group string to place our section right after it.
-    -->
     <record id="view_product_category_form_folder_structure" model="ir.ui.view">
         <field name="name">product.category.form.folder.structure</field>
         <field name="model">product.category</field>
         <field name="inherit_id" ref="product.product_category_form_view"/>
         <field name="arch" type="xml">
-            <!-- Target the 'Inventory Valuation' group by looking for its internal fields -->
             <!-- Target the 'Inventory Valuation' group by looking for its internal fields -->
             <xpath expr="//group[field[@name='property_cost_method']]" position="after">
                 <group string="Folder Structure" name="cr_folder_structure">

@@ -36,33 +36,35 @@ class ProductTemplate(models.Model):
     )
 
     def _compute_folder_count(self):
-        """Count all document folders linked to this product (all levels)."""
+        """Count all documents (folders and files) linked to this product."""
         for product in self:
             product.folder_count = self.env['documents.document'].search_count([
-                ('type', '=', 'folder'),
                 ('res_model', '=', 'product.template'),
                 ('res_id', '=', product.id),
             ])
 
     def action_view_product_folders(self):
-        """Return an action to view all document folders linked to this product."""
+        """Return an action to view all documents/folders linked to this product."""
         self.ensure_one()
         return {
-            'name': _('Product Folders'),
+            'name': _('Folders'),
             'type': 'ir.actions.act_window',
             'res_model': 'documents.document',
-            'view_mode': 'list,form',
+            'view_mode': 'kanban,list',
             'domain': [
-                ('type', '=', 'folder'),
                 ('res_model', '=', 'product.template'),
                 ('res_id', '=', self.id),
             ],
             'context': {
-                'default_type': 'folder',
                 'default_res_model': 'product.template',
                 'default_res_id': self.id,
-                'search_default_folder_id': False,  # Show all, not just top-level
+                'search_default_res_model': 'product.template',
+                'search_default_res_id': self.id,
+                'search_default_folder_id': False,
             },
+            'help': _("""<p class="o_view_nocontent_smiling_face">
+                Upload documents to this product.
+            </p>"""),
             'target': 'current',
         }
 
@@ -94,7 +96,7 @@ class ProductTemplate(models.Model):
                 if product._cr_has_any_documents():
                     if not self.env.context.get('cr_skip_folder_check'):
                         # Provide a button to open the warning wizard
-                        action = self.env.ref('cr_group_subfolder_product.action_cr_folder_change_warning')
+                        action = self.env.ref('cr_group_subfolder.action_cr_folder_change_warning')
                         raise RedirectWarning(
                             _("The current folders for product '%s' contain documents. "
                               "Changing the category will cause folder replacement.") % product.name,
