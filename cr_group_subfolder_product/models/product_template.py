@@ -2,6 +2,7 @@
 # Part of Creyox Technologies
 
 from odoo import fields, models, api, Command, _
+from odoo.exceptions import UserError, RedirectWarning
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -78,31 +79,91 @@ class ProductTemplate(models.Model):
 
     def write(self, vals):
         """
-        Override write to detect category changes and trigger folder sync.
+        Override write to enforce folder structure replacement rules.
 
-        When categ_id changes:
-          - Check if any existing folders for this product have documents
-          - If YES: open warning wizard, do not change yet
-          - If NO: delete old folders, create new structure
-
-        :param dict vals: fields being written
-        :return: result of super().write()
+        - If no documents exist in old folders: silent replacement.
+        - If documents exist:
+            - If confirmed via wizard (cr_skip_folder_check): continue.
+            - Otherwise: raise error (fallback if onchange was bypassed).
         """
-        old_categories = {}
         if 'categ_id' in vals:
             for product in self:
-                old_categories[product.id] = product.categ_id
+                if product.categ_id.id == vals['categ_id']:
+                    continue
 
+                if product._cr_has_any_documents():
+                    if not self.env.context.get('cr_skip_folder_check'):
+                        # Provide a button to open the warning wizard
+                        action = self.env.ref('cr_group_subfolder_product.action_cr_folder_change_warning')
+                        raise RedirectWarning(
+                            _("The current folders for product '%s' contain documents. "
+                              "Changing the category will cause folder replacement.") % product.name,
+                            action.id,
+                            _("Continue by replacing older structure"),
+                            additional_context={
+                                'default_product_id': product.id,
+                                'default_new_categ_id': vals['categ_id'],
+                            }
+                        )
+
+        # Proceed with save
         result = super().write(vals)
 
         if 'categ_id' in vals:
             for product in self:
-                old_categ = old_categories.get(product.id)
-                new_categ = product.categ_id
-                if old_categ and old_categ != new_categ:
-                    product._cr_handle_category_change(old_categ, new_categ)
+                # If we reached here, either it was safe or it was confirmed.
+                # Silent replacement for safe ones (no documents)
+                if not product._cr_has_any_documents():
+                    # Delete all managed folders for this product
+                    old_folders = self.env['documents.document'].search([
+                        ('type', '=', 'folder'),
+                        ('res_model', '=', 'product.template'),
+                        ('res_id', '=', product.id),
+                    ])
+                    # We can't easily know the exact "old" category structure here
+                    # as it's already updated, so we delete based on line association
+                    # or product association.
+                    for folder in old_folders:
+                        if folder.exists():
+                            folder._cr_safe_delete_folder()
+                    if product.categ_id.folder_structure_ids:
+                        product._cr_create_folder_structure(product.categ_id)
 
         return result
+
+    @api.onchange('categ_id')
+    def _onchange_categ_id_warning(self):
+        """
+        Trigger the confirmation wizard if the user changes the category
+        of a product that has existing documents in its folders.
+        """
+        if not self.categ_id or not self._origin.id:
+            return
+
+        # Use _origin to check current state in DB
+        if self.categ_id != self._origin.categ_id:
+            if self._origin._cr_has_any_documents():
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'cr.folder.change.warning',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'name': _('Warning: Folder Structure Change'),
+                    'context': {
+                        'default_product_id': self._origin.id,
+                        'default_new_categ_id': self.categ_id.id,
+                    }
+                }
+
+    def _cr_has_any_documents(self):
+        """Helper to check if any managed folder for this product has documents."""
+        self.ensure_one()
+        folders = self.env['documents.document'].search([
+            ('type', '=', 'folder'),
+            ('res_model', '=', 'product.template'),
+            ('res_id', '=', self.id),
+        ])
+        return any(f._cr_has_documents() for f in folders)
 
     @api.model_create_multi
     def create(self, vals_list):

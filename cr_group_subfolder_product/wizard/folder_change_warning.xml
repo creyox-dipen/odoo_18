@@ -23,4 +23,11 @@
         </field>
     </record>
 
+    <record id="action_cr_folder_change_warning" model="ir.actions.act_window">
+        <field name="name">Warning: Folder Structure Change</field>
+        <field name="res_model">cr.folder.change.warning</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
 </odoo>
