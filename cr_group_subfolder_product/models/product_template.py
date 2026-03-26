@@ -96,7 +96,7 @@ class ProductTemplate(models.Model):
                 if product._cr_has_any_documents():
                     if not self.env.context.get('cr_skip_folder_check'):
                         # Provide a button to open the warning wizard
-                        action = self.env.ref('cr_group_subfolder.action_cr_folder_change_warning')
+                        action = self.env.ref('cr_group_subfolder_product.action_cr_folder_change_warning')
                         raise RedirectWarning(
                             _("The current folders for product '%s' contain documents. "
                               "Changing the category will cause folder replacement.") % product.name,

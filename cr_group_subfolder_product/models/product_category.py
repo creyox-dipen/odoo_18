@@ -56,7 +56,7 @@ class ProductCategory(models.Model):
                 # Check if any folder (including subfolders) has documents
                 if any(l._cr_has_any_documents() for l in all_to_delete):
                     if not self.env.context.get('cr_force_delete_lines'):
-                        action = self.env.ref('cr_group_subfolder.action_cr_folder_delete_warning')
+                        action = self.env.ref('cr_group_subfolder_product.action_cr_folder_delete_warning')
                         raise RedirectWarning(
                             _("Some subfolders contain files. Do you want to continue or cancel?"),
                             action.id,
