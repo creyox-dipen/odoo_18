@@ -105,3 +105,27 @@ class CrCategoryFolderLine(models.Model):
             return None
         # Parent = sequence without last segment
         return norm_seq[:-1]
+
+    def _get_descendant_lines(self):
+        """
+        Find all folder lines in the same category that are descendants of this line.
+        Based on the normalized sequence dot-notation.
+        """
+        self.ensure_one()
+        norm_seq = self._get_normalized_sequence()
+        # Find all lines in the same category
+        all_lines = self.search([('category_id', '=', self.category_id.id)])
+        # Descendant if its normalized sequence starts with this line's sequence (and is longer)
+        return all_lines.filtered(
+            lambda l: l.id != self.id and l._get_normalized_sequence()[:len(norm_seq)] == norm_seq
+        )
+
+    def _cr_has_any_documents(self):
+        """
+        Check if this folder line has any documents on any product.
+        """
+        self.ensure_one()
+        folders = self.env['documents.document'].sudo().search([
+            ('cr_category_folder_line_id', '=', self.id),
+        ])
+        return any(f._cr_has_documents() for f in folders)

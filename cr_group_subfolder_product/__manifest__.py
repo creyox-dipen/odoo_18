@@ -5,7 +5,7 @@
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "support@creyox.com",
-    "category": "Sales",
+    "category": "Inventory",
     "summary": """
     Group Subfolder Per Product
     """,
@@ -18,12 +18,11 @@
     "data": [
         "security/ir.model.access.csv",
         "wizard/folder_change_warning.xml",
+        "wizard/folder_delete_warning_views.xml",
         "views/product_category_views.xml",
         "views/product_template_views.xml",
     ],
     "installable": True,
     "auto_install": False,
     "application": True,
-    "price": 425,
-    "currency": "USD",
 }

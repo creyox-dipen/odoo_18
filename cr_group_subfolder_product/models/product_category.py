@@ -2,7 +2,7 @@
 # Part of Creyox Technologies
 
 from odoo import fields, models, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, RedirectWarning
 
 
 class ProductCategory(models.Model):
@@ -39,13 +39,43 @@ class ProductCategory(models.Model):
         - Additions/Updates: Any addition or renaming in the structure
           is synced to all products.
         """
-        # 1. Collect lines being deleted to find folders before lines are gone
-        deleted_line_ids = []
+        # 1. Identify deleted lines and handle cascading deletions
         if 'folder_structure_ids' in vals:
+            deleted_line_ids = []
             for cmd in vals['folder_structure_ids']:
                 # Command.DELETE (2) or Command.UNLINK (3)
                 if cmd[0] in (2, 3) and cmd[1]:
                     deleted_line_ids.append(cmd[1])
+
+            if deleted_line_ids:
+                lines = self.env['cr.category.folder.line'].browse(deleted_line_ids)
+                all_to_delete = lines
+                for line in lines:
+                    all_to_delete |= line._get_descendant_lines()
+
+                # Check if any folder (including subfolders) has documents
+                if any(l._cr_has_any_documents() for l in all_to_delete):
+                    if not self.env.context.get('cr_force_delete_lines'):
+                        action = self.env.ref('cr_group_subfolder.action_cr_folder_delete_warning')
+                        raise RedirectWarning(
+                            _("Some subfolders contain files. Do you want to continue or cancel?"),
+                            action.id,
+                            _("Continue with Deletion"),
+                            additional_context={
+                                'default_line_ids': [fields.Command.set(all_to_delete.ids)],
+                                'default_category_id': self.id,
+                            }
+                        )
+
+                # Ensure all descendant lines are also marked for deletion in vals
+                # so the One2many is cleaned up logically
+                final_deleted_ids = all_to_delete.ids
+                existing_cmds_ids = [c[1] for c in vals['folder_structure_ids'] if c[0] in (2, 3)]
+                for line_id in final_deleted_ids:
+                    if line_id not in existing_cmds_ids:
+                        vals['folder_structure_ids'].append((2, line_id, 0))
+
+                deleted_line_ids = final_deleted_ids  # For step 2
 
         # 2. Identify all managed folders linked to these specific lines (all products)
         folders_to_delete = self.env['documents.document']
@@ -59,9 +89,14 @@ class ProductCategory(models.Model):
         result = super().write(vals)
 
         # 4. Handle Deletions: Safe-delete folders that lost their configuration line
+        # If cr_force_delete_lines is in context, we skip safety checks
+        force_delete = self.env.context.get('cr_force_delete_lines')
         for folder in folders_to_delete:
             if folder.exists():
-                folder._cr_safe_delete_folder()
+                if force_delete:
+                    folder.sudo().unlink()
+                else:
+                    folder._cr_safe_delete_folder()
 
         # 5. Handle Additions/Updates: Sync structure for all related products
         if 'folder_structure_ids' in vals:

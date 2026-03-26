@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="view_cr_folder_delete_warning_form" model="ir.ui.view">
+        <field name="name">cr.folder.delete.warning.form</field>
+        <field name="model">cr.folder.delete.warning</field>
+        <field name="arch" type="xml">
+            <form string="Warning: Subfolders with Files">
+                <sheet>
+                    <group>
+                        <field name="message" widget="char" nolabel="1" colspan="2"
+                               style="font-weight: bold; color: #e74c3c;"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" string="Continue" type="object" class="btn-primary"/>
+                    <button name="action_cancel" string="Cancel" type="object" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cr_folder_delete_warning" model="ir.actions.act_window">
+        <field name="name">Confirm Folder Deletion</field>
+        <field name="res_model">cr.folder.delete.warning</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

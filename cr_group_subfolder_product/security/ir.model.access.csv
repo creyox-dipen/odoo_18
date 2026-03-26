@@ -2,3 +2,4 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_cr_category_folder_line_manager,cr.category.folder.line manager,model_cr_category_folder_line,base.group_system,1,1,1,1
 access_cr_category_folder_line_user,cr.category.folder.line user,model_cr_category_folder_line,base.group_user,1,1,1,1
 access_cr_folder_change_warning_user,cr.folder.change.warning user,model_cr_folder_change_warning,base.group_user,1,1,1,1
+access_cr_folder_delete_warning_user,cr.folder.delete.warning user,model_cr_folder_delete_warning,base.group_user,1,1,1,1
