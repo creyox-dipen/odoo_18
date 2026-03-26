@@ -10,8 +10,8 @@
                 <group string="Folder Structure" name="cr_folder_structure">
                     <field name="folder_structure_ids" nolabel="1" colspan="2">
                         <list string="Folder Structure" editable="bottom">
-                            <field name="sequence" string="Sequence"
-                                   help="Use dot notation: 1.0 = top-level, 1.1 = child of 1.0"/>
+                            <field name="sequence" string="Sequence" widget="char"
+                                   help="Use dot notation: 1.0 = top-level, 1.1 = child of 1.0, 1.1.1 = child of 1.1"/>
                             <field name="name" string="Folder Name"/>
                         </list>
                     </field>
@@ -19,5 +19,4 @@
             </xpath>
         </field>
     </record>
-
 </odoo>

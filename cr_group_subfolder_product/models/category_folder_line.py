@@ -44,6 +44,19 @@ class CrCategoryFolderLine(models.Model):
     )
 
     @api.constrains('sequence')
+    def _check_sequence_format(self):
+        """Ensure sequence only contains digits and dots, and follows dot notation."""
+        import re
+        for line in self:
+            if not line.sequence:
+                continue
+            if not re.match(r'^\d+(\.\d+)*$', line.sequence):
+                raise ValidationError(
+                    f"Invalid sequence format: '{line.sequence}'. "
+                    "Only digits and dots are allowed (e.g., 1.0, 1.1.1)."
+                )
+
+    @api.constrains('sequence')
     def _check_sequence_unique_per_category(self):
         """Ensure sequence values are unique within the same category (normalized)."""
         for line in self:
