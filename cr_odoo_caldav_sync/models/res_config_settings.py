@@ -15,11 +15,21 @@ class ResConfigSettings(models.TransientModel):
 
     caldav_sync_enabled = fields.Boolean(
         string='Enable CalDAV Sync',
-        config_parameter='caldav_sync.enabled',
+        config_parameter='cr_odoo_caldav_sync.enabled',
         help=(
             'When enabled, Odoo will automatically sync calendar events with '
             'configured CalDAV servers every 15 minutes.'
         ),
+    )
+    caldav_google_client_id = fields.Char(
+        string='Google Client ID',
+        config_parameter='cr_odoo_caldav_sync.google_client_id',
+        help='Client ID from Google Cloud Console for OAuth 2.0.',
+    )
+    caldav_google_client_secret = fields.Char(
+        string='Google Client Secret',
+        config_parameter='cr_odoo_caldav_sync.google_client_secret',
+        help='Client Secret from Google Cloud Console for OAuth 2.0.',
     )
 
     def set_values(self):

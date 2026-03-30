@@ -1,0 +1,15 @@
+{
+    "name": "Practice Module DB",
+    "version": "18.0.0.0",
+    "summary": "A practice module that covers all the concepts of Odoo 18.",
+    "description": "This module is created for practice purposes in Odoo 18.",
+    "author": "Dipen Vaja",
+    "category": "Inventory",
+    "data": ["base", "sale_management", "inventory"],
+    "installable": True,
+    "application": True,
+    "auto_install": False,
+    "license": "LGPL-3",
+    "price": 0.00,
+    "currency": "USD",
+}

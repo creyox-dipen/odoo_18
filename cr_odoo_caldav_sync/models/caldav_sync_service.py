@@ -163,12 +163,13 @@ class CalDAVSyncService(models.AbstractModel):
             if not event.active and event.id not in skip_ids:
                 # Event was archived in Odoo → delete from server
                 try:
-                    _logger.info(
-                        'Deleting CalDAV event for archived Odoo event "%s" (id=%s) at %s',
-                        event.name, event.id, map_rec.caldav_href,
-                    )
-                    account._delete_event(map_rec.caldav_href, etag=map_rec.caldav_etag)
-                    pushed += 1
+                    with self.env.cr.savepoint():
+                        _logger.info(
+                            'Deleting CalDAV event for archived Odoo event "%s" (id=%s) at %s',
+                            event.name, event.id, map_rec.caldav_href,
+                        )
+                        account._delete_event(map_rec.caldav_href, etag=map_rec.caldav_etag)
+                        pushed += 1
                 except Exception as e:
                     _logger.warning(
                         'Could not delete CalDAV event for "%s" (id=%s): %s',
@@ -176,7 +177,11 @@ class CalDAVSyncService(models.AbstractModel):
                     )
                 finally:
                     # Always remove the local mapping so we don't retry forever
-                    map_rec.sudo().unlink()
+                    try:
+                        with self.env.cr.savepoint():
+                            map_rec.sudo().unlink()
+                    except Exception as ue:
+                        _logger.warning('Could not unlink map for "%s": %s', event.name, ue)
 
         # --- Phase 2b: Push creates and updates ---
         # Use sudo() to bypass record rules, then filter by partner in Python.
@@ -222,12 +227,13 @@ class CalDAVSyncService(models.AbstractModel):
                 if last_push and event.write_date and event.write_date <= last_push:
                     continue  # unchanged since last push
             try:
-                etag = self._push_single_event(account, event, existing_map)
-                pushed += 1
-                _logger.debug(
-                    'Pushed event "%s" (id=%s) to %s; etag=%s',
-                    event.name, event.id, account.url, etag,
-                )
+                with self.env.cr.savepoint():
+                    etag = self._push_single_event(account, event, existing_map)
+                    pushed += 1
+                    _logger.debug(
+                        'Pushed event "%s" (id=%s) to %s; etag=%s',
+                        event.name, event.id, account.url, etag,
+                    )
             except Exception as e:
                 # Handle 412 Precondition Failed specifically as a conflict
                 msg = str(e)
@@ -238,10 +244,10 @@ class CalDAVSyncService(models.AbstractModel):
                         event.name, event.id
                     )
                     try:
-                        # Self-healing: Pull the latest state of this specific event right now
-                        new_etag, ical_text = account._fetch_ical_with_etag(existing_map.caldav_href)
-                        self._upsert_from_ical(account, existing_map.caldav_href, new_etag, ical_text, existing_map)
-                        _logger.info('Auto-recovery pull successful for event "%s".', event.name)
+                        with self.env.cr.savepoint():
+                            new_etag, ical_text = account._fetch_ical_with_etag(existing_map.caldav_href)
+                            self._upsert_from_ical(account, existing_map.caldav_href, new_etag, ical_text, existing_map)
+                            _logger.info('Auto-recovery pull successful for event "%s".', event.name)
                     except Exception as re:
                         _logger.error('Auto-recovery pull failed for event "%s": %s', event.name, re)
                 else:
@@ -319,15 +325,16 @@ class CalDAVSyncService(models.AbstractModel):
 
         raw_server_etags = account._get_server_etags()  # {href: etag}
 
-        # Normalize HREFs to absolute URLs for reliable comparison with Odoo maps
+        # Normalize HREFs from server to unquoted absolute URLs
         server_etags = {
             account._resolve_href(href): etag
             for href, etag in raw_server_etags.items()
         }
         _logger.debug('Normalized server HREFs for account %s: %s', account.name, list(server_etags.keys()))
 
+        from urllib.parse import unquote
         existing_maps = {
-            m.caldav_href: m
+            unquote(m.caldav_href): m
             for m in self.env['caldav.event.map'].sudo().search([
                 ('account_id', '=', account.id),
             ])
@@ -350,11 +357,12 @@ class CalDAVSyncService(models.AbstractModel):
                 continue  # unchanged
             try:
                 _logger.info('Pulling CalDAV event from %s (account %s)', href, account.name)
-                ical_text = account._fetch_ical(href)
-                event = self._upsert_from_ical(account, href, server_etag, ical_text, existing)
-                if event:
-                    pulled_ids.append(event.id)
-                pulled += 1
+                with self.env.cr.savepoint():
+                    ical_text = account._fetch_ical(href)
+                    event = self._upsert_from_ical(account, href, server_etag, ical_text, existing)
+                    if event:
+                        pulled_ids.append(event.id)
+                    pulled += 1
             except Exception as e:
                 _logger.error(
                     'Failed to pull CalDAV event from %s (account %s): %s',
@@ -370,16 +378,16 @@ class CalDAVSyncService(models.AbstractModel):
         for href, map_rec in list(existing_maps.items()):
             if href not in server_hrefs:
                 try:
-                    if map_rec.event_id:
-                        event = map_rec.event_id
-                        _logger.info(
-                            'Archiving Odoo event "%s" (id=%s) — deleted from CalDAV server.',
-                            event.name, event.id,
-                        )
-                        # Use sudo + with_context to bypass potential attendee restrictions
-                        event.with_context(no_sync=True).sudo().write({'active': False})
-                    map_rec.sudo().unlink()
-                    deleted += 1
+                    with self.env.cr.savepoint():
+                        if map_rec.event_id:
+                            event = map_rec.event_id
+                            _logger.info(
+                                'Archiving Odoo event "%s" (id=%s) — deleted from CalDAV server.',
+                                event.name, event.id,
+                            )
+                            event.with_context(no_sync=True).sudo().write({'active': False})
+                        map_rec.sudo().unlink()
+                        deleted += 1
                 except Exception as e:
                     _logger.warning(
                         'Could not archive Odoo event for deleted CalDAV href %s: %s', href, e
@@ -509,6 +517,14 @@ class CalDAVSyncService(models.AbstractModel):
                             # the map_vals block below.
                             event = new_base
                             existing_map = None
+
+        # Fallback: Detect mapping by UID if HREF normalization was insufficient.
+        # This prevents UniqueViolation on (account_id, caldav_uid) when server HREFs change format.
+        if not existing_map:
+            existing_map = self.env['caldav.event.map'].sudo().search([
+                ('account_id', '=', account.id),
+                ('caldav_uid', '=', uid_value),
+            ], limit=1)
 
         map_vals = {
             'account_id': account.id,

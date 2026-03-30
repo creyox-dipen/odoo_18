@@ -23,6 +23,11 @@ class DocumentsDocument(models.Model):
         index=True,
         help='References the category folder line that created this folder.',
     )
+    cr_is_product_root = fields.Boolean(
+        string='Is Product Root Folder',
+        default=False,
+        help='True for the auto-created root folder that wraps all line folders for a product.',
+    )
 
     def _cr_has_documents(self):
         """

@@ -14,12 +14,20 @@
                             string="Test Connection"
                             type="object"
                             class="btn-secondary"
+                            invisible="server_type == 'google' and not google_refresh_token"
                             help="Verify that Odoo can connect to the CalDAV server with the given credentials."/>
                     <button name="action_sync_now"
                             string="Sync Now"
                             type="object"
                             class="btn-primary"
+                            invisible="server_type == 'google' and not google_refresh_token"
                             help="Run a manual sync for this account immediately."/>
+                    <button name="action_google_authorize"
+                            string="Authorize with Google"
+                            type="object"
+                            class="btn-primary"
+                            invisible="server_type != 'google'"
+                            help="Click to sign in with your Google Account and authorize calendar sync."/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -28,13 +36,40 @@
                             <field name="name" placeholder="My CalDAV Account"/>
                         </h1>
                     </div>
+
+                    <!-- Google OAuth Status Banner -->
+                    <div class="alert alert-success d-flex align-items-center mb-3"
+                         invisible="server_type != 'google' or not google_refresh_token">
+                        <i class="fa fa-check-circle me-2"/>
+                        <span>Google Calendar is authorized. </span>
+                        <field name="google_auth_status" readonly="1" class="ms-1 fw-bold"/>
+                    </div>
+                    <div class="alert alert-warning d-flex align-items-center mb-3"
+                         invisible="server_type != 'google' or google_refresh_token">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <span>Google Calendar is <b>not yet authorized</b>. Click <b>Authorize with Google</b> to connect.</span>
+                    </div>
+
                     <group>
                         <group string="Connection">
+                            <field name="server_type"
+                                   widget="selection"
+                                   options="{'horizontal': true}"/>
+                            <!-- Basic Auth fields — shown for all non-Google types -->
                             <field name="url"
                                    placeholder="https://nextcloud.example.com/remote.php/dav/calendars/user/personal/"
-                                   widget="url"/>
-                            <field name="username"/>
-                            <field name="password" password="True"/>
+                                   widget="url"
+                                   invisible="server_type == 'google'"/>
+                            <field name="username"
+                                   invisible="server_type == 'google'"/>
+                            <field name="password"
+                                   password="True"
+                                   invisible="server_type == 'google'"/>
+                            <!-- Google fields — shown only for Google type -->
+                            <field name="url"
+                                   placeholder="https://apidata.googleusercontent.com/caldav/v2/you@gmail.com/events/"
+                                   widget="url"
+                                   invisible="server_type != 'google'"/>
                             <field name="user_id"/>
                         </group>
                         <group string="Sync Options">
@@ -63,6 +98,7 @@
                     </notebook>
                 </sheet>
             </form>
+
         </field>
     </record>
 
@@ -75,6 +111,7 @@
         <field name="arch" type="xml">
             <list string="CalDAV Accounts">
                 <field name="name"/>
+                <field name="server_type"/>
                 <field name="user_id"/>
                 <field name="url"/>
                 <field name="sync_direction"/>
@@ -118,8 +155,8 @@
                 Add your first CalDAV account!
             </p>
             <p>
-                Connect Odoo to any CalDAV server (Nextcloud, Synology, Radicale…)
-                to keep your calendar events in sync automatically.
+                Connect Odoo to Google Calendar, Nextcloud, Synology, Radicale and more.
+                Events sync automatically — no manual effort needed.
             </p>
         </field>
     </record>

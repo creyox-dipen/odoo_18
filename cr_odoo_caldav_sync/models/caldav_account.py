@@ -2,10 +2,13 @@
 # Part of Creyox Technologies.
 
 import base64
+import json
 import logging
 import ssl
 import urllib.error
+import urllib.parse
 import urllib.request
+from datetime import datetime, timedelta, timezone
 from xml.etree import ElementTree as ET
 
 from odoo import api, fields, models, _
@@ -56,13 +59,46 @@ class CalDAVAccount(models.Model):
     )
     username = fields.Char(
         string='Username',
-        required=True,
+        required=False,
         help='Login username for the CalDAV server.',
     )
     password = fields.Char(
         string='Password',
-        required=True,
+        required=False,
         help='Login password for the CalDAV server.',
+    )
+    server_type = fields.Selection(
+        selection=[
+            ('generic', 'Generic CalDAV'),
+            ('google', 'Google Calendar'),
+            ('icloud', 'Apple iCloud'),
+            ('nextcloud', 'Nextcloud'),
+            ('synology', 'Synology'),
+            ('other', 'Other'),
+        ],
+        string='Server Type',
+        default='generic',
+        required=True,
+    )
+    google_refresh_token = fields.Char(
+        string='Google Refresh Token',
+        copy=False,
+        help='Long-lived OAuth 2.0 refresh token from Google.',
+    )
+    google_access_token = fields.Char(
+        string='Google Access Token',
+        copy=False,
+        help='Short-lived OAuth 2.0 access token (auto-refreshed).',
+    )
+    google_access_token_expiry = fields.Datetime(
+        string='Token Expiry',
+        copy=False,
+        help='UTC expiry time of the current access token.',
+    )
+    google_auth_status = fields.Char(
+        string='Google Auth Status',
+        compute='_compute_google_auth_status',
+        store=False,
     )
     sync_direction = fields.Selection(
         selection=[
@@ -116,16 +152,150 @@ class CalDAVAccount(models.Model):
     # HTTP helpers
     # ------------------------------------------------------------------
 
-    def _get_auth_header(self):
-        """Build the HTTP Basic Authentication header value.
+    @api.depends('google_refresh_token', 'google_access_token_expiry')
+    def _compute_google_auth_status(self):
+        """Compute a human-readable authorization status for the Google OAuth connection.
 
-        :return: Base64-encoded 'username:password' string prefixed with 'Basic '.
+        Possible values: 'Not Authorized', 'Authorized (Token Valid)', 'Authorized (Needs Refresh)'.
+        """
+        for rec in self:
+            if rec.server_type != 'google':
+                rec.google_auth_status = ''
+            elif not rec.google_refresh_token:
+                rec.google_auth_status = 'Not Authorized'
+            elif rec.google_access_token and rec.google_access_token_expiry and rec.google_access_token_expiry > fields.Datetime.now():
+                rec.google_auth_status = '✓ Authorized (Token Valid)'
+            else:
+                rec.google_auth_status = '⚠ Authorized (Token will refresh on next sync)'
+
+    def _get_auth_header(self):
+        """Build the HTTP Authentication header value.
+
+        For Google Calendar accounts (server_type == 'google'), returns a
+        'Bearer <access_token>' header after ensuring the token is fresh.
+        For all other server types, falls back to HTTP Basic Authentication
+        using the configured username and password.
+
+        :return: 'Basic ...' or 'Bearer ...' authorization header string.
         :rtype: str
         """
         self.ensure_one()
-        credentials = f'{self.username}:{self.password}'
+        if self.server_type == 'google':
+            self._refresh_google_token()
+            return f'Bearer {self.google_access_token or ""}'
+        credentials = f'{self.username or ""}:{self.password or ""}'
         encoded = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
         return f'Basic {encoded}'
+
+    def _refresh_google_token(self):
+        """Refresh the Google OAuth 2.0 Access Token using the stored Refresh Token.
+
+        This method is a no-op if:
+        - The account is not of type 'google'.
+        - No refresh token is stored (user has not authorized yet).
+        - The current access token is still valid.
+
+        It calls Google's token endpoint to exchange the refresh token for a
+        new short-lived access token (valid ~1 hour), then persists the new
+        token and its expiry time on the account record.
+
+        :raises UserError: If Google credentials are missing from Settings or
+            if the token refresh request fails.
+        """
+        self.ensure_one()
+        if self.server_type != 'google' or not self.google_refresh_token:
+            return
+
+        now = fields.Datetime.now()
+        if (
+            self.google_access_token
+            and self.google_access_token_expiry
+            and self.google_access_token_expiry > now
+        ):
+            return  # Token is still valid
+
+        icp = self.env['ir.config_parameter'].sudo()
+        client_id = icp.get_param('cr_odoo_caldav_sync.google_client_id')
+        client_secret = icp.get_param('cr_odoo_caldav_sync.google_client_secret')
+
+        if not client_id or not client_secret:
+            raise UserError(_(
+                'Google Client ID or Secret is not configured. '
+                'Please go to Settings → CalDAV Sync and fill in the credentials.'
+            ))
+
+        data = urllib.parse.urlencode({
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'refresh_token': self.google_refresh_token,
+            'grant_type': 'refresh_token',
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            'https://oauth2.googleapis.com/token',
+            data=data,
+            method='POST',
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                result = json.loads(resp.read().decode('utf-8'))
+        except urllib.error.HTTPError as e:
+            body = e.read().decode('utf-8', errors='replace')
+            _logger.error('Google token refresh failed for %s: %s', self.name, body)
+            raise UserError(_(
+                'Failed to refresh Google token. Please re-authorize the account.'
+            ))
+        except Exception as e:
+            _logger.error('Google token refresh error for %s: %s', self.name, e)
+            raise UserError(_('Failed to refresh Google authentication token: %s', str(e)))
+
+        expiry = fields.Datetime.now() + timedelta(seconds=int(result.get('expires_in', 3600)))
+        self.sudo().write({
+            'google_access_token': result.get('access_token'),
+            'google_access_token_expiry': expiry,
+        })
+        _logger.info('Google access token refreshed for account "%s", expires %s.', self.name, expiry)
+
+    def action_google_authorize(self):
+        """Redirect the user to Google's OAuth 2.0 consent screen.
+
+        Builds the authorization URL with the required scopes and redirect URI,
+        then returns an act_url action so Odoo opens the Google sign-in page.
+        The 'state' parameter carries the account ID so the callback controller
+        can associate the returned code with this account.
+
+        :raises UserError: If the Google Client ID is not configured in Settings.
+        :return: Client action to open the Google authorization URL.
+        :rtype: dict
+        """
+        self.ensure_one()
+        icp = self.env['ir.config_parameter'].sudo()
+        client_id = icp.get_param('cr_odoo_caldav_sync.google_client_id')
+        if not client_id:
+            raise UserError(_(
+                'Google Client ID is not configured. '
+                'Please go to Settings → CalDAV Sync to add your credentials.'
+            ))
+
+        base_url = icp.get_param('web.base.url', '').rstrip('/')
+        redirect_uri = f'{base_url}/caldav/google/callback'
+
+        auth_params = {
+            'client_id': client_id,
+            'redirect_uri': redirect_uri,
+            'response_type': 'code',
+            'scope': 'https://www.googleapis.com/auth/calendar',
+            'access_type': 'offline',
+            'prompt': 'consent',
+            'state': str(self.id),
+        }
+        auth_url = 'https://accounts.google.com/o/oauth2/v2/auth?' + urllib.parse.urlencode(auth_params)
+        _logger.info('Redirecting account "%s" to Google authorization URL.', self.name)
+        return {
+            'type': 'ir.actions.act_url',
+            'url': auth_url,
+            'target': 'self',
+        }
 
     def _build_request(self, url, method, body=None, extra_headers=None):
         """Construct a urllib Request object with proper auth and headers.
@@ -293,14 +463,20 @@ class CalDAVAccount(models.Model):
     def _resolve_href(self, href):
         """Convert a relative href from the CalDAV server to an absolute URL.
 
+        Normalizes the href by unquoting URL entities (e.g., %40 -> @) to
+        ensure stable comparisons even if server quoting styles change.
+
         :param str href: Relative or absolute href.
         :return: Absolute URL string.
         :rtype: str
         """
+        from urllib.parse import urlparse, urlunparse, unquote
+        href = unquote(href)
         if href.startswith('http://') or href.startswith('https://'):
             return href
-        from urllib.parse import urlparse, urlunparse
         parsed = urlparse(self.url)
+        # Also unquote the path of our base URL for symmetry
+        base_path = unquote(parsed.path)
         return urlunparse((parsed.scheme, parsed.netloc, href, '', '', ''))
 
     # ------------------------------------------------------------------
@@ -383,20 +559,38 @@ class CalDAVAccount(models.Model):
     def action_test_connection(self):
         """Test the CalDAV connection and credentials.
 
-        Sends an OPTIONS request to the configured URL, then attempts a
-        PROPFIND to verify that the URL is a valid CalDAV collection.
+        For **Basic Auth** accounts (non-Google): sends an OPTIONS request to
+        verify connectivity, then a PROPFIND to verify the collection URL and
+        credentials.
+
+        For **Google OAuth** accounts: skips OPTIONS (Google returns 403 for it)
+        and goes directly to PROPFIND with the Bearer token. Also validates that
+        the account has been authorized before attempting the connection.
 
         :raises UserError: If the connection fails or credentials are rejected.
         :return: Client action showing a success notification.
         :rtype: dict
         """
         self.ensure_one()
+
+        # Google OAuth pre-flight check
+        if self.server_type == 'google':
+            if not self.google_refresh_token:
+                raise UserError(_(
+                    'This Google Calendar account has not been authorized yet. '
+                    'Please click "Authorize with Google" first.'
+                ))
+            # Ensure we have a fresh access token before testing
+            self._refresh_google_token()
+
         try:
-            # OPTIONS to test basic connectivity
-            self._do_request(
-                self.url, 'OPTIONS',
-                expected_codes=[200, 201, 204, 207, 405],
-            )
+            # OPTIONS is not supported by Google CalDAV — skip it for Google accounts
+            if self.server_type != 'google':
+                self._do_request(
+                    self.url, 'OPTIONS',
+                    expected_codes=[200, 201, 204, 207, 405],
+                )
+
             # PROPFIND depth 0 to verify collection & credentials
             body = b'''<?xml version="1.0" encoding="utf-8" ?>
 <D:propfind xmlns:D="DAV:">
@@ -406,7 +600,7 @@ class CalDAVAccount(models.Model):
   </D:prop>
 </D:propfind>'''
             self._propfind(self.url, depth='0', body=body)
-        except UserError as e:
+        except UserError:
             raise
         except Exception as e:
             raise UserError(_('Connection test failed: %s', str(e)))
@@ -421,6 +615,7 @@ class CalDAVAccount(models.Model):
                 'sticky': False,
             },
         }
+
 
     def action_sync_now(self):
         """Trigger an immediate sync for this CalDAV account.

@@ -43,30 +43,68 @@ class ProductTemplate(models.Model):
                 ('res_id', '=', product.id),
             ])
 
+
     def action_view_product_folders(self):
-        """Return an action to view all documents/folders linked to this product."""
         self.ensure_one()
-        return {
-            'name': _('Folders'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'documents.document',
-            'view_mode': 'kanban,list',
-            'domain': [
-                ('res_model', '=', 'product.template'),
-                ('res_id', '=', self.id),
-            ],
+
+        root_folder = self.env['documents.document'].sudo().search([
+            ('type', '=', 'folder'),
+            ('res_model', '=', 'product.template'),
+            ('res_id', '=', self.id),
+            ('cr_is_product_root', '=', True),
+        ], limit=1)
+    
+        action = self.env.ref('documents.document_action').sudo().read()[0]
+        action.update({
+            'name': _('Documents – %s') % self.name,
+            'target': 'current',
             'context': {
+                'searchpanel_default_folder_id': root_folder.id if root_folder else False,
                 'default_res_model': 'product.template',
                 'default_res_id': self.id,
-                'search_default_res_model': 'product.template',
-                'search_default_res_id': self.id,
-                'search_default_folder_id': False,
             },
-            'help': _("""<p class="o_view_nocontent_smiling_face">
-                Upload documents to this product.
-            </p>"""),
-            'target': 'current',
-        }
+        })
+        return action
+
+    # def action_view_product_folders(self):
+    #     """
+    #     Open the native Documents module UI pre-navigated to this product's root folder.
+
+    #     Uses the main ``documents.document_action`` action (which includes the proper
+    #     kanban/list views with the search-panel sidebar) and sets
+    #     ``searchpanel_default_folder_id`` so the sidebar automatically navigates
+    #     into the product's root folder.  This allows users to browse sub-folders
+    #     and open individual files the same way as the native Documents app.
+
+    #     If no root folder exists yet (e.g. category has no structure), the action
+    #     still opens the Documents app without pre-selecting a folder.
+
+    #     :return: ir.actions.act_window dict
+    #     """
+    #     self.ensure_one()
+
+    #     # Find the product's root (top-level) folder – the one without a parent folder
+    #     # that is linked to this product.
+    #     root_folder = self.env['documents.document'].search([
+    #         ('type', '=', 'folder'),
+    #         ('res_model', '=', 'product.template'),
+    #         ('res_id', '=', self.id),
+    #         ('folder_id', '=', False),
+    #     ], limit=1)
+
+    #     # Load the main Documents action and override its context so the search
+    #     # panel sidebar pre-selects the product's root folder.
+    #     action = self.env.ref('documents.document_action').sudo().read()[0]
+    #     action.update({
+    #         'name': _('Documents – %s') % self.name,
+    #         'target': 'current',
+    #         'context': {
+    #             'searchpanel_default_folder_id': root_folder.id if root_folder else False,
+    #             'default_res_model': 'product.template',
+    #             'default_res_id': self.id,
+    #         },
+    #     })
+    #     return action
 
     def _compute_cr_document_folder_ids(self):
         """Compute the top-level document folders linked to this product."""
@@ -228,53 +266,62 @@ class ProductTemplate(models.Model):
                 self._cr_create_folder_structure(new_categ)
 
     def _cr_create_folder_structure(self, categ):
-        """
-        Create or update the folder hierarchy for this product based on the
-        category's folder_structure_ids.
-
-        This method is idempotent: it checks for existing folders linked to
-        the same category line and updates them (name/parent) if necessary.
-
-        :param product.category categ: the category with folder_structure_ids
-        """
         self.ensure_one()
         Document = self.env['documents.document']
-        # Sort naturally to ensure parents are processed first
+    
+        # Find or create the single product root folder
+        root_folder = Document.sudo().search([
+            ('type', '=', 'folder'),
+            ('res_model', '=', 'product.template'),
+            ('res_id', '=', self.id),
+            ('cr_is_product_root', '=', True),
+        ], limit=1)
+    
+        if not root_folder:
+            root_folder = Document.sudo().create({
+                'name': self.name,
+                'type': 'folder',
+                'res_model': 'product.template',
+                'res_id': self.id,
+                'folder_id': False,
+                'cr_is_product_root': True,
+                'access_internal': 'edit',
+                'access_via_link': 'none',
+                'owner_id': self.env.user.id,
+            })
+    
         lines = categ.folder_structure_ids.sorted(key=lambda l: l.sequence)
-
-        # Map: normalized sequence tuple → documents.document (existing or new)
         seq_to_doc = {}
-
+    
         for line in lines:
             normalized_seq = line._get_normalized_sequence()
-            # Find existing folder for this specific line and product
             existing_doc = Document.sudo().search([
                 ('type', '=', 'folder'),
                 ('res_model', '=', 'product.template'),
                 ('res_id', '=', self.id),
                 ('cr_category_folder_line_id', '=', line.id),
             ], limit=1)
-
+    
             parent_doc = self._cr_find_parent_document(line, seq_to_doc)
+            # Top-level lines (no parent) go under root_folder instead of False
+            parent_folder_id = parent_doc.id if parent_doc else root_folder.id
+    
             vals = {
                 'name': line.name,
-                'folder_id': parent_doc.id if parent_doc else False,
+                'folder_id': parent_folder_id,
                 'cr_category_folder_line_id': line.id,
             }
-
+    
             if existing_doc:
-                # Update existing folder if info changed
                 update_vals = {}
                 if existing_doc.name != vals['name']:
                     update_vals['name'] = vals['name']
-                if existing_doc.folder_id != vals['folder_id']:
-                    update_vals['folder_id'] = vals['folder_id']
-
+                if existing_doc.folder_id.id != parent_folder_id:
+                    update_vals['folder_id'] = parent_folder_id
                 if update_vals:
                     existing_doc.sudo().write(update_vals)
                 doc = existing_doc
             else:
-                # Create new folder
                 vals.update({
                     'type': 'folder',
                     'res_model': 'product.template',
@@ -284,7 +331,7 @@ class ProductTemplate(models.Model):
                     'owner_id': self.env.user.id,
                 })
                 doc = Document.sudo().create(vals)
-
+    
             seq_to_doc[normalized_seq] = doc
 
     def _cr_find_parent_document(self, line, seq_to_doc):
