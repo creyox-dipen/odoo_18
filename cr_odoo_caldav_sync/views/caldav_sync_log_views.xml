@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- List View -->
+    <record id="view_caldav_sync_log_list" model="ir.ui.view">
+        <field name="name">caldav.sync.log.list</field>
+        <field name="model">caldav.sync.log</field>
+        <field name="arch" type="xml">
+            <list string="Sync Logs" create="false" edit="false" decoration-danger="status == 'failed'" decoration-warning="status == 'partial'" decoration-success="status == 'success'">
+                <field name="sync_date"/>
+                <field name="account_id"/>
+                <field name="pushed"/>
+                <field name="pulled"/>
+                <field name="deleted"/>
+                <field name="failed" sum="Total Failures"/>
+                <field name="status" widget="badge" decoration-danger="status == 'failed'" decoration-warning="status == 'partial'" decoration-success="status == 'success'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_caldav_sync_log_form" model="ir.ui.view">
+        <field name="name">caldav.sync.log.form</field>
+        <field name="model">caldav.sync.log</field>
+        <field name="arch" type="xml">
+            <form string="Sync Log" create="false" edit="false">
+                <header>
+                    <field name="status" widget="statusbar" statusbar_visible="success,partial,failed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="account_id"/>
+                            <field name="sync_date"/>
+                        </group>
+                        <group string="Statistics">
+                            <field name="pushed"/>
+                            <field name="pulled"/>
+                            <field name="deleted"/>
+                            <field name="failed"/>
+                        </group>
+                    </group>
+                    <group string="Details" invisible="not details">
+                        <field name="details" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_caldav_sync_log_search" model="ir.ui.view">
+        <field name="name">caldav.sync.log.search</field>
+        <field name="model">caldav.sync.log</field>
+        <field name="arch" type="xml">
+            <search string="Search Logs">
+                <field name="account_id"/>
+                <field name="status"/>
+                <filter string="Failures" name="failures" domain="[('status', '!=', 'success')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Account" name="group_account" context="{'group_by': 'account_id'}"/>
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Date" name="group_date" context="{'group_by': 'sync_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>

@@ -30,6 +30,20 @@
                             help="Click to sign in with your Google Account and authorize calendar sync."/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_scheduled_action"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-arrow-right"
+                                string="Sync Schedule"
+                                help="Configure the interval for background synchronisation."/>
+                        <button name="action_view_sync_logs"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-list">
+                            <field name="log_count" widget="statinfo" string="Sync Logs"/>
+                        </button>
+                    </div>
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only"/>
                         <h1>

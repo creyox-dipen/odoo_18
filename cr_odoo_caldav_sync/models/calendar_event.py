@@ -71,11 +71,21 @@ class CalendarEvent(models.Model):
         For all other scenarios (single Google events and all non-Google servers):
           - Perform a standard direct-map CalDAV DELETE.
         """
-        _logger.info('CalDAV unlink() triggered for event ids: %s', self.ids)
+        event_ids = self.ids
+        _logger.info('[UNLINK] Triggered for event ids: %s', event_ids)
         
+        # 1. Collect all map records for these events BEFORE the loop.
+        # This prevents Odoo's ondelete='cascade' from unlinking the maps
+        # before we can read their href/etag for the CalDAV DELETE request.
+        all_maps = self.env['caldav.event.map'].sudo().search([
+            ('event_id', 'in', event_ids),
+        ])
+        _logger.debug('[UNLINK] Found %s mapping records for these events.', len(all_maps))
+        
+        sync_svc = self.env['caldav.sync.service']
+
         for event in self:
-            # Step 1: Handle Google Recurring Logic
-            # Map attached to the base_event controls the whole series.
+            # --- GOOGLE RECURRING SERIES LOGIC ---
             if event.recurrence_id:
                 recurrence = event.recurrence_id
                 base_event = recurrence.base_event_id
@@ -85,16 +95,15 @@ class CalendarEvent(models.Model):
                         ('account_id.server_type', '=', 'google'),
                     ])
                     start_iso = event.start.strftime('%Y%m%dT%H%M%SZ') if event.start else None
-                    sync_svc = self.env['caldav.sync.service']
 
                     for g_map in google_base_maps:
                         if event.id == base_event.id:
                             # CASE B: Delete Base -> Promote next occurrence to base
-                            _logger.info('[UNLINK] CASE B: Google Base Delete (id=%s)', event.id)
+                            _logger.info('[UNLINK] Scenario B: Google Base Delete (id=%s)', event.id)
                             next_occ = self.env['calendar.event'].sudo().search([
                                 ('recurrence_id', '=', recurrence.id),
                                 ('active', '=', True),
-                                ('id', 'not in', self.ids),
+                                ('id', 'not in', event_ids),
                             ], order='start asc', limit=1)
 
                             if next_occ:
@@ -121,15 +130,11 @@ class CalendarEvent(models.Model):
                                     'google_exdates': new_exdates,
                                 })
                             else:
-                                # CASE C: Last occurrence in series deleted -> standard DELETE
-                                try:
-                                    g_map.account_id._delete_event(g_map.caldav_href, etag=g_map.caldav_etag)
-                                except Exception:
-                                    pass
-                                g_map.unlink()
+                                # CASE C: Last occurrence in series deleted -> handle via direct map DELETE below
+                                pass 
                         else:
                             # CASE A: Delete occurrence -> Add EXDATE to base map
-                            _logger.info('[UNLINK] CASE A: Google Occurrence Delete (id=%s)', event.id)
+                            _logger.info('[UNLINK] Scenario A: Google Occurrence Delete (id=%s)', event.id)
                             ex_list = set(d for d in (g_map.google_exdates or '').split(',') if d)
                             if start_iso:
                                 ex_list.add(start_iso)
@@ -142,21 +147,24 @@ class CalendarEvent(models.Model):
                                 _logger.warning('[UNLINK] Scenario A push failed: %s', e)
                                 g_map.sudo().write({'last_odoo_write': False})
 
-            # Step 2: Universal Direct DELETE
-            # Handles non-recurring Google events and all events on other CalDAV servers.
-            all_direct_maps = self.env['caldav.event.map'].sudo().search([
-                ('event_id', '=', event.id),
-            ])
-            for map_rec in all_direct_maps.exists():
-                try:
-                    _logger.info(
-                        '[UNLINK] Direct CalDAV DELETE for event "%s" (id=%s) via account %s',
-                        map_rec.event_id.name, map_rec.event_id.id, map_rec.account_id.name
-                    )
-                    map_rec.account_id._delete_event(map_rec.caldav_href, etag=map_rec.caldav_etag)
-                except Exception as ex:
-                    _logger.warning('[UNLINK] Direct CalDAV DELETE failed: %s', ex)
-                map_rec.unlink()
+        # --- UNIVERSAL DIRECT DELETE (Single events and series cleanup) ---
+        for map_rec in all_maps:
+            if not map_rec.exists():
+                continue
+            # If map was already moved to a new base (Scenario B), keep it.
+            if map_rec.event_id and map_rec.event_id.id not in event_ids:
+                _logger.debug('[UNLINK] Map id=%s was promoted to next occurrence, skipping DELETE.', map_rec.id)
+                continue
+
+            try:
+                _logger.info(
+                    '[UNLINK] CalDAV DELETE: event "%s" (id=%s) via account %s at %s',
+                    map_rec.event_id.name, map_rec.event_id.id, map_rec.account_id.name, map_rec.caldav_href
+                )
+                map_rec.account_id._delete_event(map_rec.caldav_href, etag=map_rec.caldav_etag)
+            except Exception as ex:
+                _logger.warning('[UNLINK] Direct CalDAV DELETE failed: %s', ex)
+            map_rec.unlink()
 
         return super().unlink()
 

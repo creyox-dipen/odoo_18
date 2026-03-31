@@ -5,3 +5,5 @@ access_caldav_event_map_user,caldav.event.map user,model_caldav_event_map,base.g
 access_caldav_event_map_manager,caldav.event.map manager,model_caldav_event_map,base.group_system,1,1,1,1
 access_caldav_sync_service_user,caldav.sync.service user,model_caldav_sync_service,base.group_user,1,0,0,0
 access_caldav_sync_service_manager,caldav.sync.service manager,model_caldav_sync_service,base.group_system,1,1,1,1
+access_caldav_sync_log_user,caldav.sync.log user,model_caldav_sync_log,base.group_user,1,0,0,0
+access_caldav_sync_log_manager,caldav.sync.log manager,model_caldav_sync_log,base.group_system,1,1,1,1

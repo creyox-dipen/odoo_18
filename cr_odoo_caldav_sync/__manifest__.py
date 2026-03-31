@@ -62,6 +62,7 @@
         'security/ir.model.access.csv',
         'data/ir_cron.xml',
         'views/caldav_account_views.xml',
+        'views/caldav_sync_log_views.xml',
         'views/res_config_settings_views.xml',
         'views/calendar_views.xml',
         'views/menu.xml',

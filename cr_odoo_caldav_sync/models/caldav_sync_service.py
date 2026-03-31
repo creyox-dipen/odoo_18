@@ -93,36 +93,67 @@ class CalDAVSyncService(models.AbstractModel):
         """Perform a full incremental sync for one CalDAV account.
 
         :param caldav.account account: The account to sync.
-        :return: Dict with counters: {'pushed': N, 'pulled': N, 'deleted': N}.
+        :return: Dict with counters: {'pushed': N, 'pulled': N, 'deleted': N, 'failed': N}.
         :rtype: dict
         """
-        stats = {'pushed': 0, 'pulled': 0, 'deleted': 0}
+        stats_log = {
+            'account_id': account.id,
+            'sync_date': fields.Datetime.now(),
+            'pulled': 0,
+            'pushed': 0,
+            'deleted': 0,
+            'failed': 0,
+            'details': '',
+            'status': 'success',
+        }
 
-        # --- Phase 1: Pull from CalDAV ---
-        # Always pull so we don't miss server-side changes.
-        # Per-event ETag comparison inside _pull_caldav_changes skips unchanged events.
-        pulled_event_ids = set()
-        current_ctag = account._get_server_ctag()
-        if account.sync_direction in ('bidirectional', 'caldav_to_odoo'):
-            _logger.debug('Pulling changes from CalDAV for account %s.', account.name)
-            pulled, deleted, pulled_ids = self._pull_caldav_changes(account)
-            stats['pulled'] = pulled
-            stats['deleted'] = deleted
-            pulled_event_ids = set(pulled_ids)
+        try:
+            # --- Phase 1: Pull from CalDAV ---
+            pulled_event_ids = set()
+            current_ctag = account._get_server_ctag()
+            if account.sync_direction in ('bidirectional', 'caldav_to_odoo'):
+                _logger.debug('Pulling changes from CalDAV for account %s.', account.name)
+                pulled, deleted, pulled_ids, pull_failed, pull_details = self._pull_caldav_changes(account)
+                stats_log['pulled'] = pulled
+                stats_log['deleted'] = deleted
+                stats_log['failed'] += pull_failed
+                if pull_details:
+                    stats_log['details'] += f"--- PULL ERRORS ---\n{pull_details}\n"
+                pulled_event_ids = set(pulled_ids)
 
-        # --- Phase 2: Push to CalDAV ---
-        if account.sync_direction in ('bidirectional', 'odoo_to_caldav'):
-            _logger.debug('Pushing changes to CalDAV for account %s.', account.name)
-            # Pass pulled_event_ids to skip re-pushing what we just pulled
-            stats['pushed'] = self._push_odoo_changes(account, skip_ids=pulled_event_ids)
+            # --- Phase 2: Push to CalDAV ---
+            if account.sync_direction in ('bidirectional', 'odoo_to_caldav'):
+                _logger.debug('Pushing changes to CalDAV for account %s.', account.name)
+                pushed, push_failed, push_details = self._push_odoo_changes(account, skip_ids=pulled_event_ids)
+                stats_log['pushed'] = pushed
+                stats_log['failed'] += push_failed
+                if push_details:
+                    stats_log['details'] += f"--- PUSH ERRORS ---\n{push_details}\n"
 
-        # Update CTag and last_sync timestamp
-        new_ctag = account._get_server_ctag() or current_ctag
-        account.sudo().write({
-            'last_ctag': new_ctag,
-            'last_sync': fields.Datetime.now(),
-        })
-        return stats
+            # Update CTag and last_sync timestamp
+            new_ctag = account._get_server_ctag() or current_ctag
+            account.sudo().write({
+                'last_ctag': new_ctag,
+                'last_sync': fields.Datetime.now(),
+            })
+            
+            if stats_log['failed'] > 0:
+                stats_log['status'] = 'partial'
+
+        except Exception as e:
+            _logger.error('Critical sync failure for account %s: %s', account.name, e, exc_info=True)
+            stats_log['status'] = 'failed'
+            stats_log['details'] += f"CRITICAL FAILURE: {str(e)}\n"
+        finally:
+            # Always create a log record to track progress/failures
+            self.env['caldav.sync.log'].sudo().create(stats_log)
+
+        return {
+            'pushed': stats_log['pushed'],
+            'pulled': stats_log['pulled'],
+            'deleted': stats_log['deleted'],
+            'failed': stats_log['failed'],
+        }
 
     # ------------------------------------------------------------------
     # Push: Odoo → CalDAV
@@ -147,10 +178,12 @@ class CalDAVSyncService(models.AbstractModel):
 
         :param caldav.account account: Target account.
         :param set skip_ids: Optional set of event IDs to skip (recently pulled).
-        :return: Number of events pushed/deleted.
-        :rtype: int
+        :return: Tuple (pushed_count, failed_count, error_details).
+        :rtype: tuple[int, int, str]
         """
         pushed = 0
+        failed = 0
+        details = []
         skip_ids = skip_ids or set()
         owner_partner = account.user_id.partner_id
 
@@ -205,10 +238,10 @@ class CalDAVSyncService(models.AbstractModel):
                         account._delete_event(map_rec.caldav_href, etag=map_rec.caldav_etag)
                         pushed += 1
                 except Exception as e:
-                    _logger.warning(
-                        'Could not delete CalDAV event for "%s" (id=%s): %s',
-                        event.name, event.id, e,
-                    )
+                    failed += 1
+                    error_msg = f'Delete failed for "{event.name}" (id={event.id}): {str(e)}'
+                    _logger.warning(error_msg)
+                    details.append(error_msg)
                 finally:
                     try:
                         with self.env.cr.savepoint():
@@ -300,11 +333,11 @@ class CalDAVSyncService(models.AbstractModel):
                     except Exception as re:
                         _logger.error('Auto-recovery pull failed for event "%s": %s', event.name, re)
                 else:
-                    _logger.error(
-                        'Failed to push event "%s" (id=%s) to account %s: %s',
-                        event.name, event.id, account.name, e, exc_info=True,
-                    )
-        return pushed
+                    failed += 1
+                    error_msg = f'Push failed for "{event.name}" (id={event.id}): {str(e)}'
+                    _logger.error(error_msg, exc_info=True)
+                    details.append(error_msg)
+        return pushed, failed, "\n".join(details)
 
     @api.model
     def _detect_google_archived_occurrences(self, account):
@@ -517,11 +550,13 @@ class CalDAVSyncService(models.AbstractModel):
         """Pull new and changed events from the CalDAV server into Odoo.
 
         :param caldav.account account: Source account.
-        :return: Tuple (pulled_count, deleted_count, pulled_event_ids).
-        :rtype: tuple[int, int, list]
+        :return: Tuple (pulled_count, deleted_count, pulled_event_ids, failed_count, error_details).
+        :rtype: tuple[int, int, list, int, str]
         """
         pulled = 0
         deleted = 0
+        failed = 0
+        details = []
         pulled_ids = []
 
         raw_server_etags = account._get_server_etags()  # {href: etag}
@@ -583,10 +618,10 @@ class CalDAVSyncService(models.AbstractModel):
                         pulled_ids.append(event.id)
                     pulled += 1
             except Exception as e:
-                _logger.error(
-                    'Failed to pull CalDAV event from %s (account %s): %s',
-                    href, account.name, e, exc_info=True,
-                )
+                failed += 1
+                error_msg = f'Pull failed for href {href}: {str(e)}'
+                _logger.error(error_msg, exc_info=True)
+                details.append(error_msg)
 
         # Archive events deleted on server
         server_hrefs = set(server_etags.keys())
@@ -608,11 +643,12 @@ class CalDAVSyncService(models.AbstractModel):
                         map_rec.sudo().unlink()
                         deleted += 1
                 except Exception as e:
-                    _logger.warning(
-                        'Could not archive Odoo event for deleted CalDAV href %s: %s', href, e
-                    )
+                    failed += 1
+                    error_msg = f'Archival failed for {href}: {str(e)}'
+                    _logger.warning(error_msg)
+                    details.append(error_msg)
 
-        return pulled, deleted, pulled_ids
+        return pulled, deleted, pulled_ids, failed, "\n".join(details)
 
     @api.model
     def _upsert_from_ical(self, account, href, server_etag, ical_text, existing_map=None):
@@ -857,18 +893,6 @@ class CalDAVSyncService(models.AbstractModel):
         # LOCATION
         if event.location:
             vevent.add('location').value = event.location
-        
-        # OFFICIAL VIDEO CALL FIELD (Google Meet / Zoom Button)
-        # We use the 'CONFERENCE' property (RFC 7986) which Google recognizes 
-        # to populate the native meeting button field.
-        videocall_url = getattr(event, 'videocall_location', False)
-        if videocall_url:
-            conf = vevent.add('conference')
-            conf.value = videocall_url
-            conf.params['VALUE'] = ['URI']
-            conf.params['FEATURE'] = ['VIDEO']
-            # Some clients also prefer the standard URL property
-            vevent.add('url').value = videocall_url
         
         # CLASS — privacy mapping
         _privacy_to_class = {'public': 'PUBLIC', 'private': 'PRIVATE', 'confidential': 'CONFIDENTIAL'}

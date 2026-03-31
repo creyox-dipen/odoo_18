@@ -147,6 +147,37 @@ class CalDAVAccount(models.Model):
         string='Event Mappings',
         readonly=True,
     )
+    log_ids = fields.One2many(
+        'caldav.sync.log',
+        'account_id',
+        string='Sync Logs',
+    )
+    log_count = fields.Integer(
+        string='Log Count',
+        compute='_compute_log_count',
+    )
+
+    def _compute_log_count(self):
+        """Count the number of sync logs associated with this account."""
+        for rec in self:
+            rec.log_count = len(rec.log_ids)
+
+    def action_view_sync_logs(self):
+        """Open the list of synchronisation logs for this account.
+        
+        :return: Act window action.
+        :rtype: dict
+        """
+        self.ensure_one()
+        return {
+            'name': _('Sync Logs'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'caldav.sync.log',
+            'view_mode': 'list,form',
+            'domain': [('account_id', '=', self.id)],
+            'context': {'default_account_id': self.id},
+            'target': 'current',
+        }
 
     # ------------------------------------------------------------------
     # HTTP helpers
@@ -644,4 +675,26 @@ class CalDAVAccount(models.Model):
                 'type': 'success',
                 'sticky': False,
             },
+        }
+
+    def action_view_scheduled_action(self):
+        """Redirect the user to the CalDAV Sync scheduled action configuration.
+
+        Provides a quick shortcut to the background sync frequency settings
+        from the account form view.
+
+        :return: Act window action to open the ir.cron record.
+        :rtype: dict
+        """
+        cron = self.env.ref('cr_odoo_caldav_sync.ir_cron_caldav_sync', raise_if_not_found=False)
+        if not cron:
+            raise UserError(_('The CalDAV Sync scheduled action could not be found.'))
+            
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Scheduled Action'),
+            'res_model': 'ir.cron',
+            'res_id': cron.id,
+            'view_mode': 'form',
+            'target': 'current',
         }
