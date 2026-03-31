@@ -53,6 +53,13 @@ class CalDAVEventMap(models.Model):
              'push to the CalDAV server. Used to detect events modified in Odoo '
              'since the previous sync.',
     )
+    google_exdates = fields.Text(
+        string='Google EXDATEs',
+        help='Comma-separated ISO 8601 UTC datetimes of deleted occurrences '
+             '(Google only). These are injected as EXDATE lines in the next '
+             'iCal push so Google hides only those specific occurrences '
+             'without deleting the entire series.',
+    )
 
     _sql_constraints = [
         (

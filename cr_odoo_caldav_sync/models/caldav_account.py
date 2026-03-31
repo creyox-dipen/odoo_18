@@ -284,7 +284,7 @@ class CalDAVAccount(models.Model):
             'client_id': client_id,
             'redirect_uri': redirect_uri,
             'response_type': 'code',
-            'scope': 'https://www.googleapis.com/auth/calendar',
+            'scope': 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email openid',
             'access_type': 'offline',
             'prompt': 'consent',
             'state': str(self.id),

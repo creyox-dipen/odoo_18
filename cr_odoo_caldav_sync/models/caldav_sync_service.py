@@ -2,6 +2,7 @@
 # Part of Creyox Technologies.
 
 import logging
+import re
 import uuid
 import pytz
 from datetime import datetime, timedelta, timezone, date
@@ -140,6 +141,10 @@ class CalDAVSyncService(models.AbstractModel):
         Recurring event occurrences are skipped — only the base event (with the
         RRULE) is pushed.
 
+        Special handling for Google: when a single occurrence is archived
+        ("Only this event" deletion), its start date is recorded as an EXDATE
+        on the base series map and the series is queued for re-push.
+
         :param caldav.account account: Target account.
         :param set skip_ids: Optional set of event IDs to skip (recently pulled).
         :return: Number of events pushed/deleted.
@@ -148,6 +153,15 @@ class CalDAVSyncService(models.AbstractModel):
         pushed = 0
         skip_ids = skip_ids or set()
         owner_partner = account.user_id.partner_id
+
+        # --- GOOGLE ONLY: Phase 2a-pre: detect archived occurrences ---
+        # When the user deletes "Only this event" in Odoo, the occurrence is
+        # ARCHIVED (active=False), not deleted. Our unlink() hook never fires.
+        # We must detect these archived occurrences here and record their start
+        # dates as EXDATEs on the base series map so the next push hides them.
+        google_force_push_ids = set()  # Base event IDs that must be re-pushed regardless of write_date
+        if account.server_type == 'google':
+            google_force_push_ids = self._detect_google_archived_occurrences(account)
 
         # --- Phase 2a: Push deletions ---
         # Find all mappings for this account whose Odoo event is now archived
@@ -161,7 +175,27 @@ class CalDAVSyncService(models.AbstractModel):
                 map_rec.sudo().unlink()
                 continue
             if not event.active and event.id not in skip_ids:
-                # Event was archived in Odoo → delete from server
+                # Event was archived in Odoo → delete from server (non-Google/non-recurring).
+                # For Google recurring series: only DELETE if the ENTIRE series is gone
+                # (no active occurrences remain). Otherwise, handle via EXDATE re-push.
+                if account.server_type == 'google' and event.recurrence_id:
+                    active_remaining = self.env['calendar.event'].sudo().search_count([
+                        ('recurrence_id', '=', event.recurrence_id.id),
+                        ('active', '=', True),
+                    ])
+                    if active_remaining > 0:
+                        # Series still has active occurrences — EXDATE handles the exclusion.
+                        # IMPORTANT: Do NOT unlink the map here. The map's event_id was
+                        # already transferred to the new base by _detect_google_archived_occurrences.
+                        # Unlinking would cause Phase 2b to push as a brand-new event
+                        # (new href/UID) while the old Google resource stays orphaned.
+                        _logger.info(
+                            'Google: Archived event "%s" (id=%s) still has %s active occurrences. '
+                            'Skipping CalDAV DELETE (map kept for EXDATE re-push).',
+                            event.name, event.id, active_remaining,
+                        )
+                        continue  # Keep the map — Phase 2b will re-push with EXDATE
+                    # else: 0 active occurrences remain → fall through and DELETE the series
                 try:
                     with self.env.cr.savepoint():
                         _logger.info(
@@ -176,12 +210,12 @@ class CalDAVSyncService(models.AbstractModel):
                         event.name, event.id, e,
                     )
                 finally:
-                    # Always remove the local mapping so we don't retry forever
                     try:
                         with self.env.cr.savepoint():
                             map_rec.sudo().unlink()
                     except Exception as ue:
                         _logger.warning('Could not unlink map for "%s": %s', event.name, ue)
+                    continue
 
         # --- Phase 2b: Push creates and updates ---
         # Use sudo() to bypass record rules, then filter by partner in Python.
@@ -204,6 +238,10 @@ class CalDAVSyncService(models.AbstractModel):
         )
 
         events = non_recurring | recurring_base_events
+
+        # GOOGLE ONLY: Handle migration of sync mappings if a recurrence base event changed.
+        if account.server_type == 'google':
+            self._migrate_recurrence_mappings(account)
         _logger.info(
             'Push candidates for account %s: %s event(s) — non-recurring=%s, recurring_base=%s',
             account.name, len(events), len(non_recurring), len(recurring_base_events),
@@ -219,13 +257,24 @@ class CalDAVSyncService(models.AbstractModel):
 
         for event in events:
             if event.id in skip_ids:
+                _logger.debug('[PUSH] SKIP event id=%s "%s": in skip_ids (just pulled).', event.id, event.name)
                 continue
             existing_map = existing_maps.get(event.id)
-            # Determine if event is new to CalDAV or was modified since last push
-            if existing_map:
+            # Determine if event is new to CalDAV or was modified since last push.
+            # For Google: force-push if _detect_google_archived_occurrences flagged this
+            # event (ORM cache may hold stale last_odoo_write).
+            # NOTE: google_exdates is no longer used as a force-push signal — EXDATEs are
+            # pushed immediately in unlink(), so the sync loop only needs to re-push when
+            # the event itself has changed (write_date > last_odoo_write).
+            if existing_map and event.id not in google_force_push_ids:
                 last_push = existing_map.last_odoo_write
                 if last_push and event.write_date and event.write_date <= last_push:
+                    _logger.debug(
+                        '[PUSH] SKIP event id=%s "%s": unchanged (write_date=%s <= last_push=%s).',
+                        event.id, event.name, event.write_date, last_push,
+                    )
                     continue  # unchanged since last push
+            _logger.info('[PUSH] WILL PUSH event id=%s "%s".', event.id, event.name)
             try:
                 with self.env.cr.savepoint():
                     etag = self._push_single_event(account, event, existing_map)
@@ -258,6 +307,147 @@ class CalDAVSyncService(models.AbstractModel):
         return pushed
 
     @api.model
+    def _detect_google_archived_occurrences(self, account):
+        """Detect archived recurring occurrences and record them as EXDATEs.
+
+        Returns the set of **base event IDs** whose maps were updated so that
+        the push loop can force-push them regardless of ``last_odoo_write``
+        staleness in the ORM cache.
+
+        :param caldav.account account: The Google CalDAV account being synced.
+        :return: Set of base event IDs to force-push.
+        :rtype: set
+        """
+        owner_partner_id = account.user_id.partner_id.id
+        force_push_ids = set()  # Base event IDs whose google_exdates were updated
+
+        # Find all recurrence series where the account owner is an attendee
+        all_recurrences = self.env['calendar.recurrence'].sudo().search([])
+        relevant_recurrences = all_recurrences.filtered(
+            lambda r: r.base_event_id and r.base_event_id.active and any(
+                att.partner_id.id == owner_partner_id
+                for att in r.base_event_id.attendee_ids
+            )
+        )
+
+        for recurrence in relevant_recurrences:
+            base_event = recurrence.base_event_id  # Current active base (may be promoted)
+
+            # Find the map for the current base event
+            base_map = self.env['caldav.event.map'].sudo().search([
+                ('account_id', '=', account.id),
+                ('event_id', '=', base_event.id),
+            ], limit=1)
+
+            if not base_map:
+                # --- Case B: Base was just promoted. Look for an orphaned map on an
+                # archived event in this recurrence (the old base's map).
+                all_recurrence_event_ids = self.env['calendar.event'].sudo().with_context(
+                    active_test=False
+                ).search([
+                    ('recurrence_id', '=', recurrence.id),
+                    ('active', '=', False),
+                ]).ids
+
+                if not all_recurrence_event_ids:
+                    continue  # No archived events, series not yet synced or no issue
+
+                orphaned_map = self.env['caldav.event.map'].sudo().search([
+                    ('account_id', '=', account.id),
+                    ('event_id', 'in', all_recurrence_event_ids),
+                ], limit=1)
+
+                if not orphaned_map:
+                    continue  # Series not synced to Google yet
+
+                old_base = orphaned_map.event_id
+                old_base_start_iso = old_base.start.strftime('%Y%m%dT%H%M%SZ') if old_base.start else None
+
+                # CRITICAL: Make the new base event use the SAME caldav_uid as the old
+                # map. The CalDAV resource href contains the old UID in its path
+                # (e.g. /events/OLD_UUID.ics). If the iCal inside uses a DIFFERENT UID
+                # (Occ2's UUID), Google may reject the PUT or delete the old series.
+                # By writing the old UID onto the new base event, _push_single_event
+                # will generate the correct iCal UID that matches the href.
+                if base_event.caldav_uid != orphaned_map.caldav_uid:
+                    base_event.sudo().write({'caldav_uid': orphaned_map.caldav_uid})
+                    _logger.info(
+                        'Google Case B: Updated caldav_uid on new base (id=%s) to match '
+                        'old map UID "%s" so href and iCal UID stay consistent.',
+                        base_event.id, orphaned_map.caldav_uid,
+                    )
+
+                # Transfer the orphaned map to the new (current) base event
+                existing_ex = orphaned_map.google_exdates or ''
+                ex_list = set(d for d in existing_ex.split(',') if d)
+                if old_base_start_iso:
+                    ex_list.add(old_base_start_iso)
+
+                orphaned_map.sudo().write({
+                    'event_id': base_event.id,
+                    'google_exdates': ','.join(sorted(ex_list)),
+                    'last_odoo_write': False,  # Force re-push with EXDATE
+                    # Clear stale ETag so PUT is unconditional (avoids 412 errors).
+                    # The old ETag may be stale if Google updated its representation.
+                    'caldav_etag': False,
+                })
+                _logger.info(
+                    'Google Case B: Transferred map (id=%s, href=%s) from archived base '
+                    '(id=%s, start=%s) to new base (id=%s) with EXDATE %s.',
+                    orphaned_map.id, orphaned_map.caldav_href,
+                    old_base.id, old_base_start_iso, base_event.id, old_base_start_iso,
+                )
+                force_push_ids.add(base_event.id)
+                # base_map is now the transferred map; continue to Case A check below
+                base_map = orphaned_map
+
+            # --- Case A: Find archived non-base occurrences and record EXDATEs ---
+            archived_occurrences = self.env['calendar.event'].sudo().with_context(
+                active_test=False
+            ).search([
+                ('recurrence_id', '=', recurrence.id),
+                ('active', '=', False),
+                ('id', '!=', base_event.id),
+            ])
+
+            if not archived_occurrences:
+                continue
+
+            # Build the set of already-recorded EXDATEs to avoid duplicates
+            existing_exdates = set(
+                d.strip()
+                for d in (base_map.google_exdates or '').split(',')
+                if d.strip()
+            )
+
+            new_exdates = set()
+            for occ in archived_occurrences:
+                if not occ.start:
+                    continue
+                start_iso = occ.start.strftime('%Y%m%dT%H%M%SZ')
+                if start_iso not in existing_exdates:
+                    new_exdates.add(start_iso)
+                    _logger.info(
+                        'Google EXDATE detected: archived occurrence (id=%s, start=%s) '
+                        'in series "%s" — will push EXDATE to Google.',
+                        occ.id, start_iso, base_event.name,
+                    )
+
+            if new_exdates:
+                all_exdates = existing_exdates | new_exdates
+                base_map.sudo().write({
+                    'google_exdates': ','.join(sorted(all_exdates)),
+                    'last_odoo_write': False,
+                })
+                force_push_ids.add(base_event.id)
+                _logger.info(
+                    'Updated google_exdates on map (id=%s) for series "%s": %s',
+                    base_map.id, base_event.name, ','.join(sorted(all_exdates)),
+                )
+
+        return force_push_ids
+
+    @api.model
     def _push_single_event(self, account, event, existing_map=None):
         """Build the iCal string and PUT it to the CalDAV server.
 
@@ -273,11 +463,17 @@ class CalDAVSyncService(models.AbstractModel):
         if not event.caldav_uid:
             event.sudo().write({'caldav_uid': uid})
 
-        ical_str = self._odoo_event_to_ical(event, account)
+        ical_str = self._odoo_event_to_ical(event, account, existing_map=existing_map)
         href = existing_map.caldav_href if existing_map else self._build_href(account, uid)
         old_etag = existing_map.caldav_etag if existing_map else None
 
         _logger.info('Pushing event "%s" (id=%s) to %s; If-Match ETag=%s', event.name, event.id, href, old_etag)
+        # Log the full iCal for Google — critical for debugging EXDATE issues
+        if account.server_type == 'google':
+            _logger.info(
+                'Google iCal payload for event "%s" (id=%s):\n%s',
+                event.name, event.id, ical_str,
+            )
         new_etag = account._put_ical(href, ical_str, etag=old_etag)
         _logger.debug('Push successful; new ETag=%s', new_etag)
 
@@ -290,6 +486,11 @@ class CalDAVSyncService(models.AbstractModel):
             'last_odoo_write': event.write_date,
         }
         if existing_map:
+            # NOTE: google_exdates is intentionally NOT cleared here.
+            # It is a permanent accumulator of all excluded occurrence dates for
+            # this Google series. Clearing it would cause previously-excluded
+            # occurrences to reappear on Google when any subsequent push happens.
+            # The field is managed exclusively by calendar_event.unlink().
             existing_map.sudo().write(map_vals)
         else:
             self.env['caldav.event.map'].sudo().create(map_vals)
@@ -346,6 +547,9 @@ class CalDAVSyncService(models.AbstractModel):
             existing = existing_maps.get(href)
             if existing:
                 _logger.debug('Comparing HREFs for %s: local_etag=%s, server_etag=%s', href, existing.caldav_etag, server_etag)
+                if existing.caldav_etag == server_etag:
+                    continue  # unchanged on server
+
                 # If the mapped Odoo event is archived, skip pulling it back.
                 # The push phase will handle the server-side deletion.
                 if existing.event_id and not existing.event_id.active:
@@ -353,8 +557,23 @@ class CalDAVSyncService(models.AbstractModel):
                         'Skipping pull for archived Odoo event href %s — will be deleted in push phase.', href
                     )
                     continue
-            if existing and existing.caldav_etag == server_etag:
-                continue  # unchanged
+
+                # Prioritize Odoo's local changes.
+                # If Odoo has a local change that hasn't been pushed yet, skip pulling to avoid
+                # overwriting the local change. The push phase will handle the push (and
+                # auto-recovery if there's a real conflict on the server side).
+                if existing.event_id:
+                    last_push = existing.last_odoo_write
+                    if last_push and existing.event_id.write_date and \
+                       existing.event_id.write_date > last_push:
+                        _logger.info(
+                            'Skipping pull for %s because Odoo has a pending local change (write_date=%s, last_push=%s).',
+                            href, existing.event_id.write_date, last_push
+                        )
+                        # We MUST update the ETag even if we skip the data pull,
+                        # so that the subsequent push uses the latest server ETag for If-Match.
+                        existing.sudo().write({'caldav_etag': server_etag})
+                        continue
             try:
                 _logger.info('Pulling CalDAV event from %s (account %s)', href, account.name)
                 with self.env.cr.savepoint():
@@ -546,7 +765,7 @@ class CalDAVSyncService(models.AbstractModel):
     # ------------------------------------------------------------------
 
     @api.model
-    def _odoo_event_to_ical(self, event, account):
+    def _odoo_event_to_ical(self, event, account, existing_map=None):
         """Convert an Odoo ``calendar.event`` to an iCal VCALENDAR string.
 
         Handles:
@@ -554,9 +773,12 @@ class CalDAVSyncService(models.AbstractModel):
         * All-day events (DATE vs DATE-TIME)
         * Location, description (without injecting Odoo attendee details)
         * Attendees (ORGANIZER + ATTENDEE) — only when the event has real attendees
+        * Google only: EXDATE injection for deleted occurrences (from existing_map.google_exdates)
 
         :param calendar.event event: The Odoo event to serialise.
         :param caldav.account account: The CalDAV account (provides owner context).
+        :param caldav.event.map|None existing_map: The existing map record, used to
+            read persisted EXDATE data for Google recurring events.
         :return: Full VCALENDAR iCal string.
         :rtype: str
         """
@@ -580,17 +802,45 @@ class CalDAVSyncService(models.AbstractModel):
         vevent.add('summary').value = event.name or ''
 
         # DTSTART / DTEND
+        # GOOGLE RECURRENCE FIX: When the first occurrence is deleted, Odoo promotes
+        # the next one to "base". If we push that new date as DTSTART, Google's 
+        # COUNT-based RRULEs shift forward, adding phantom events at the end.
+        # We must find the ORIGINAL series start date from our stored EXDATEs.
+        original_start = event.start
+        if account.server_type == 'google' and existing_map and existing_map.google_exdates:
+            try:
+                exdates = [
+                    datetime.strptime(d.strip(), '%Y%m%dT%H%M%SZ')
+                    for d in existing_map.google_exdates.split(',')
+                    if d.strip()
+                ]
+                if exdates:
+                    min_ex = min(exdates)
+                    if min_ex < original_start:
+                        _logger.debug(
+                            'Google Sync: Shifting iCal DTSTART back to original series '
+                            'start %s (current base is %s) to preserve recurrence count.',
+                            min_ex, original_start
+                        )
+                        original_start = min_ex
+            except Exception as e:
+                _logger.warning('Could not calculate original DTSTART from EXDATEs: %s', e)
+
+        # Calculate duration based on the actual occurrence being pushed
+        duration = event.stop - event.start
+        original_stop = original_start + duration
+
         if event.allday:
-            start_date = event.start_date or event.start.date()
-            stop_date = event.stop_date or event.stop.date()
+            # For all-day events, use dates
             dtstart = vevent.add('dtstart')
-            dtstart.value = start_date
+            dtstart.value = original_start.date()
             dtend = vevent.add('dtend')
-            # iCal convention: all-day end date is exclusive
-            dtend.value = stop_date + timedelta(days=1)
+            dtend.value = original_stop.date() + timedelta(days=1)
         else:
-            start_utc = _to_utc_naive(event.start) or datetime.utcnow()
-            stop_utc = _to_utc_naive(event.stop) or (start_utc + timedelta(hours=1))
+            # For timed events, use UTC datetimes
+            start_utc = _to_utc_naive(original_start) or datetime.utcnow()
+            stop_utc = _to_utc_naive(original_stop) or (start_utc + timedelta(hours=1))
+            
             dtstart = vevent.add('dtstart')
             dtstart.value = datetime(
                 start_utc.year, start_utc.month, start_utc.day,
@@ -607,7 +857,19 @@ class CalDAVSyncService(models.AbstractModel):
         # LOCATION
         if event.location:
             vevent.add('location').value = event.location
-
+        
+        # OFFICIAL VIDEO CALL FIELD (Google Meet / Zoom Button)
+        # We use the 'CONFERENCE' property (RFC 7986) which Google recognizes 
+        # to populate the native meeting button field.
+        videocall_url = getattr(event, 'videocall_location', False)
+        if videocall_url:
+            conf = vevent.add('conference')
+            conf.value = videocall_url
+            conf.params['VALUE'] = ['URI']
+            conf.params['FEATURE'] = ['VIDEO']
+            # Some clients also prefer the standard URL property
+            vevent.add('url').value = videocall_url
+        
         # CLASS — privacy mapping
         _privacy_to_class = {'public': 'PUBLIC', 'private': 'PRIVATE', 'confidential': 'CONFIDENTIAL'}
         class_val = _privacy_to_class.get(event.privacy or 'public', 'PUBLIC')
@@ -631,7 +893,38 @@ class CalDAVSyncService(models.AbstractModel):
                 line = line.strip()
                 if line.upper().startswith('RRULE:'):
                     rrule_value = line[len('RRULE:'):]
-                    break
+                # Include EXDATE properties from Odoo's native rrule field
+                elif line.upper().startswith('EXDATE:'):
+                    exdate_value = line[len('EXDATE:'):]
+                    # If Google + All-Day, we must convert the ISO string to a date format
+                    if account.server_type == 'google' and event.allday:
+                        # Odoo stores EXDATEs as UTC datetimes like 20260330T000000Z
+                        try:
+                            ex_dt = datetime.strptime(exdate_value.strip(), '%Y%m%dT%H%M%SZ').date()
+                            vevent.add('exdate').value = [ex_dt]
+                        except ValueError:
+                            # Fallback if Odoo already gave us a date or different format
+                            vevent.add('exdate').value = exdate_value
+                    else:
+                        # For other servers or timed events, push as-is
+                        vevent.add('exdate').value = exdate_value
+
+            # GOOGLE ONLY: Read persisted EXDATEs stored on the event map (from unlink fallback).
+            if account.server_type == 'google' and existing_map and existing_map.google_exdates:
+                for iso_dt in existing_map.google_exdates.split(','):
+                    iso_dt = iso_dt.strip()
+                    if not iso_dt or iso_dt in raw:
+                        continue # Already in RRULE or empty
+                    try:
+                        ex_dt = datetime.strptime(iso_dt, '%Y%m%dT%H%M%SZ').replace(tzinfo=pytz.utc)
+                        ex = vevent.add('exdate')
+                        if event.allday:
+                            ex.value = [ex_dt.date()]
+                        else:
+                            ex.value = [ex_dt]
+                    except ValueError:
+                        _logger.warning('Could not parse stored EXDATE: %s', iso_dt)
+
             if not rrule_value and raw and not raw.upper().startswith('DTSTART'):
                 # Fallback: raw might already be just the params (no prefix)
                 rrule_value = raw.strip('RRULE:') if raw.startswith('RRULE:') else raw
@@ -655,8 +948,23 @@ class CalDAVSyncService(models.AbstractModel):
         if other_partners:
             owner = account.user_id.partner_id
             org = vevent.add('organizer')
-            org.value = f'mailto:{owner.email or account.username}'
-            org.params['CN'] = [owner.name or account.username]
+
+            # Force the Organizer email for Google accounts to match the authorized account.
+            # Google rejects updates (403) if the ORGANIZER property doesn't match the account.
+            google_email = None
+            if account.server_type == 'google':
+                from urllib.parse import urlparse
+                try:
+                    path_parts = urlparse(account.url).path.strip('/').split('/')
+                    # URL is /caldav/v2/USER_ID/events/
+                    if len(path_parts) >= 3:
+                        google_email = path_parts[2]
+                except Exception:
+                    pass
+
+            org_email = google_email or owner.email or account.username
+            org.value = f'mailto:{org_email}'
+            org.params['CN'] = [owner.name or org_email]
 
             for partner in event.partner_ids:
                 if not partner.email:
@@ -687,6 +995,31 @@ class CalDAVSyncService(models.AbstractModel):
     # ------------------------------------------------------------------
 
     @api.model
+    def _migrate_recurrence_mappings(self, account):
+        """Finds sync mappings for archived base events and transfers them to new active bases.
+
+        In Odoo, if a base event of a recurrence is deleted, Odoo might assign a new
+        base event to the recurrence record. We must ensure our CalDAV mapping follows
+        the recurrence to the new base event instead of being lost.
+
+        :param account: The caldav.account record being synced.
+        """
+        inactive_maps = self.env['caldav.event.map'].sudo().search([
+            ('account_id', '=', account.id),
+            ('event_id.active', '=', False),
+        ])
+        for map_rec in inactive_maps:
+            old_event = map_rec.event_id
+            # If the old event was part of a recurrence that still exists
+            if old_event.recurrence_id:
+                new_base = old_event.recurrence_id.base_event_id
+                if new_base and new_base.active and new_base.id != old_event.id:
+                    _logger.info(
+                        'Migrating CalDAV mapping for recurrence %s: %s -> %s',
+                        old_event.recurrence_id.id, old_event.id, new_base.id
+                    )
+                    map_rec.sudo().write({'event_id': new_base.id})
+
     def _ical_to_odoo_vals(self, vevent, account):
         """Parse a vobject VEVENT component into Odoo calendar.event field values.
 
@@ -757,11 +1090,46 @@ class CalDAVSyncService(models.AbstractModel):
             if location_comp and location_comp.value:
                 vals['location'] = location_comp.value
 
-            # DESCRIPTION
+            # DESCRIPTION (Strip Google Meet metadata and extract link)
             desc_comp = getattr(vevent, 'description', None)
             if desc_comp and desc_comp.value:
+                description = desc_comp.value
+                
+                # Check if it's a Google account to apply specific stripping.
+                # This ensures zero impact on other servers like Radicale or Nextcloud.
+                if account.server_type == 'google':
+                    # 1. Extract the Meet URL if it exists anywhere in the description.
+                    url_search = re.search(r'https://meet\.google\.com/[a-z0-9\-]+', description)
+                    if url_search:
+                        vals['videocall_location'] = url_search.group(0)
+                        _logger.debug('Extracted Google Meet URL: %s', vals['videocall_location'])
+                    
+                    # 2. Look for the start of the Google-injected metadata block.
+                    # It usually starts with "Join with Google Meet" or the separator "-::~".
+                    # We remove everything from the first marker found to the end of the string.
+                    markers = ['Join with Google Meet', '-::~']
+                    first_idx = len(description)
+                    found = False
+                    for marker in markers:
+                        idx = description.find(marker)
+                        if idx != -1:
+                            first_idx = min(first_idx, idx)
+                            found = True
+                    
+                    if found:
+                        description = description[:first_idx].strip()
+                
                 # Store as simple HTML paragraph
-                vals['description'] = f'<p>{desc_comp.value.replace(chr(10), "<br/>")}</p>'
+                if description:
+                    vals['description'] = f'<p>{description.replace(chr(10), "<br/>")}</p>'
+                else:
+                    vals['description'] = False
+                
+                # Store as simple HTML paragraph
+                if description:
+                    vals['description'] = f'<p>{description.replace(chr(10), "<br/>")}</p>'
+                else:
+                    vals['description'] = False
 
             # CLASS — iCal privacy mapping
             _class_to_privacy = {'PUBLIC': 'public', 'PRIVATE': 'private', 'CONFIDENTIAL': 'confidential'}

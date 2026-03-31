@@ -101,11 +101,25 @@ class CalDAVGoogleOAuthController(http.Controller):
         if refresh_token:
             write_vals['google_refresh_token'] = refresh_token
 
-        # Always set the correct Google Calendar v2 CalDAV URL for OAuth accounts
-        # The legacy www.google.com/calendar/dav/... URL does NOT work with OAuth Bearer tokens
-        owner_email = account.user_id.email or account.user_id.login or ''
-        if owner_email:
-            correct_url = f'{GOOGLE_CALENDAR_CALDAV_BASE}{owner_email}/events/'
+        # Fetch the actual Google email address to construct the correct CalDAV URL.
+        # This is more reliable than using the Odoo user's email or login.
+        google_email = ''
+        userinfo_req = urllib.request.Request(
+            'https://www.googleapis.com/oauth2/v3/userinfo',
+            headers={'Authorization': f'Bearer {access_token}'}
+        )
+        try:
+            with urllib.request.urlopen(userinfo_req, timeout=10) as resp:
+                user_info = json.loads(resp.read().decode('utf-8'))
+                google_email = user_info.get('email')
+        except Exception as e:
+            _logger.warning('Failed to fetch userinfo from Google for account %s: %s', account.name, e)
+
+        # Always set the correct Google Calendar v2 CalDAV URL for OAuth accounts using the actual Google email.
+        # The legacy www.google.com/calendar/dav/... URL does NOT work with OAuth Bearer tokens.
+        target_email = google_email or account.user_id.email or account.user_id.login or ''
+        if target_email:
+            correct_url = f'{GOOGLE_CALENDAR_CALDAV_BASE}{target_email}/events/'
             if account.url != correct_url:
                 write_vals['url'] = correct_url
                 _logger.info('Auto-set Google CalDAV URL to %s for account "%s".', correct_url, account.name)
