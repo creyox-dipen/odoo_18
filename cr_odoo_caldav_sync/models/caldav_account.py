@@ -51,7 +51,7 @@ class CalDAVAccount(models.Model):
     )
     url = fields.Char(
         string='CalDAV Calendar URL',
-        required=True,
+        required=False,
         help=(
             'Full URL to the CalDAV calendar collection. '
             'Example: https://nextcloud.example.com/remote.php/dav/calendars/user/personal/'

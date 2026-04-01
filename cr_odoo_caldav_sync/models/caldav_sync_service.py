@@ -692,6 +692,13 @@ class CalDAVSyncService(models.AbstractModel):
         if not account.send_invitation_emails:
             ctx_kwargs['dont_notify'] = True
             ctx_kwargs['no_mail_to_attendees'] = True
+        else:
+            # To ensure Odoo handles invitations for ALL attendees (new and existing)
+            # as if they were created manually, we must avoid passing ANY suppression
+            # keys in the context. Even setting them to False can sometimes trigger
+            # an "is present" check in internal Odoo logic.
+            ctx_kwargs['mail_notify_force_send'] = True
+            ctx_kwargs['force_send'] = True
 
         CalEvent = self.env['calendar.event'].with_context(**ctx_kwargs).sudo()
 
@@ -769,7 +776,7 @@ class CalDAVSyncService(models.AbstractModel):
                                 new_base.id,
                             )
                             # Force creation of a new map for the new base in
-                            # the map_vals block below.
+                            # the map_vals block below. 
                             event = new_base
                             existing_map = None
 

@@ -10,6 +10,7 @@
         parent="base.menu_administration"
         action="action_caldav_account"
         groups="base.group_system"
+        active="0"
         sequence="120"
     />
 
