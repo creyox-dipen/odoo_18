@@ -208,26 +208,27 @@ class CalDAVSyncService(models.AbstractModel):
                 map_rec.sudo().unlink()
                 continue
             if not event.active and event.id not in skip_ids:
-                # Event was archived in Odoo → delete from server (non-Google/non-recurring).
-                # For Google recurring series: only DELETE if the ENTIRE series is gone
-                # (no active occurrences remain). Otherwise, handle via EXDATE re-push.
-                if account.server_type == 'google' and event.recurrence_id:
+                # Event was archived in Odoo → delete from server.
+                # For ANY recurring series: only DELETE if the ENTIRE series is gone
+                # (no active occurrences remain). Otherwise the unlink() hook already
+                # re-pushed a EXDATE-updated .ics, so we must NOT delete the file.
+                if event.recurrence_id:
                     active_remaining = self.env['calendar.event'].sudo().search_count([
                         ('recurrence_id', '=', event.recurrence_id.id),
                         ('active', '=', True),
                     ])
                     if active_remaining > 0:
-                        # Series still has active occurrences — EXDATE handles the exclusion.
-                        # IMPORTANT: Do NOT unlink the map here. The map's event_id was
-                        # already transferred to the new base by _detect_google_archived_occurrences.
+                        # Series still has active occurrences — EXDATE re-push handles it.
+                        # Do NOT unlink the map here. The map's event_id was already
+                        # transferred to the new base by the unlink() hook.
                         # Unlinking would cause Phase 2b to push as a brand-new event
-                        # (new href/UID) while the old Google resource stays orphaned.
+                        # (new href/UID) leaving the old CalDAV resource orphaned.
                         _logger.info(
-                            'Google: Archived event "%s" (id=%s) still has %s active occurrences. '
-                            'Skipping CalDAV DELETE (map kept for EXDATE re-push).',
+                            'Archived event "%s" (id=%s) still has %s active occurrences. '
+                            'Skipping CalDAV DELETE (EXDATE re-push already handled in unlink).',
                             event.name, event.id, active_remaining,
                         )
-                        continue  # Keep the map — Phase 2b will re-push with EXDATE
+                        continue  # Keep the map — unlink() re-push already handled this
                     # else: 0 active occurrences remain → fall through and DELETE the series
                 try:
                     with self.env.cr.savepoint():
@@ -845,12 +846,13 @@ class CalDAVSyncService(models.AbstractModel):
         vevent.add('summary').value = event.name or ''
 
         # DTSTART / DTEND
-        # GOOGLE RECURRENCE FIX: When the first occurrence is deleted, Odoo promotes
-        # the next one to "base". If we push that new date as DTSTART, Google's 
-        # COUNT-based RRULEs shift forward, adding phantom events at the end.
-        # We must find the ORIGINAL series start date from our stored EXDATEs.
+        # When the first occurrence (base) is deleted, Odoo promotes the next one to "base".
+        # If we push that new date as DTSTART, COUNT-based RRULEs shift forward, adding
+        # phantom events at the end (applies to Google AND Radicale/Baïkal/Nextcloud).
+        # We find the ORIGINAL series start date from stored EXDATEs and use it as DTSTART,
+        # keeping the RRULE anchored to the original start while EXDATE hides occurrence 1.
         original_start = event.start
-        if account.server_type == 'google' and existing_map and existing_map.google_exdates:
+        if existing_map and existing_map.google_exdates:
             try:
                 exdates = [
                     datetime.strptime(d.strip(), '%Y%m%dT%H%M%SZ')
@@ -860,10 +862,11 @@ class CalDAVSyncService(models.AbstractModel):
                 if exdates:
                     min_ex = min(exdates)
                     if min_ex < original_start:
-                        _logger.debug(
-                            'Google Sync: Shifting iCal DTSTART back to original series '
-                            'start %s (current base is %s) to preserve recurrence count.',
-                            min_ex, original_start
+                        _logger.info(
+                            '[ICAL] Shifting DTSTART back to original series start %s '
+                            '(current base start is %s) to preserve recurrence count. '
+                            'Account: %s.',
+                            min_ex, original_start, account.name,
                         )
                         original_start = min_ex
             except Exception as e:
@@ -924,28 +927,44 @@ class CalDAVSyncService(models.AbstractModel):
                 line = line.strip()
                 if line.upper().startswith('RRULE:'):
                     rrule_value = line[len('RRULE:'):]
-                # Include EXDATE properties from Odoo's native rrule field
+                # Include EXDATE properties from Odoo's native rrule field.
+                # vobject requires .value to be a list of date/datetime objects,
+                # NOT a raw string. Parse accordingly for all server types.
                 elif line.upper().startswith('EXDATE:'):
-                    exdate_value = line[len('EXDATE:'):]
-                    # If Google + All-Day, we must convert the ISO string to a date format
-                    if account.server_type == 'google' and event.allday:
-                        # Odoo stores EXDATEs as UTC datetimes like 20260330T000000Z
+                    exdate_value = line[len('EXDATE:'):].strip()
+                    if event.allday:
+                        # All-day events: EXDATE must be a plain date object
                         try:
-                            ex_dt = datetime.strptime(exdate_value.strip(), '%Y%m%dT%H%M%SZ').date()
+                            ex_dt = datetime.strptime(exdate_value, '%Y%m%dT%H%M%SZ').date()
                             vevent.add('exdate').value = [ex_dt]
                         except ValueError:
-                            # Fallback if Odoo already gave us a date or different format
-                            vevent.add('exdate').value = exdate_value
+                            try:
+                                ex_dt = datetime.strptime(exdate_value, '%Y%m%d').date()
+                                vevent.add('exdate').value = [ex_dt]
+                            except ValueError:
+                                _logger.warning('Could not parse EXDATE (all-day) "%s".', exdate_value)
                     else:
-                        # For other servers or timed events, push as-is
-                        vevent.add('exdate').value = exdate_value
+                        # Timed events: EXDATE must be a UTC-aware datetime object
+                        try:
+                            ex_dt = datetime.strptime(exdate_value, '%Y%m%dT%H%M%SZ').replace(tzinfo=pytz.utc)
+                            vevent.add('exdate').value = [ex_dt]
+                        except ValueError:
+                            _logger.warning('Could not parse EXDATE (timed) "%s".', exdate_value)
 
-            # GOOGLE ONLY: Read persisted EXDATEs stored on the event map (from unlink fallback).
-            if account.server_type == 'google' and existing_map and existing_map.google_exdates:
+            # Read persisted EXDATEs stored on the event map for ALL server types.
+            # For Google: written by unlink()/detect_archived() into google_exdates.
+            # For Basic Auth (Radicale/Baïkal): written by unlink() Case A/B above.
+            # The field name 'google_exdates' is reused for all server types to avoid
+            # a database migration — it now tracks per-server pending EXDATEs.
+            if existing_map and existing_map.google_exdates:
+                _logger.debug(
+                    '[ICAL] Injecting stored EXDATEs for "%s" (account: %s): %s',
+                    event.name, account.name, existing_map.google_exdates,
+                )
                 for iso_dt in existing_map.google_exdates.split(','):
                     iso_dt = iso_dt.strip()
                     if not iso_dt or iso_dt in raw:
-                        continue # Already in RRULE or empty
+                        continue  # Already in RRULE or empty
                     try:
                         ex_dt = datetime.strptime(iso_dt, '%Y%m%dT%H%M%SZ').replace(tzinfo=pytz.utc)
                         ex = vevent.add('exdate')
