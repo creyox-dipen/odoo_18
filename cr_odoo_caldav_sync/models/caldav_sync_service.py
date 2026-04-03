@@ -598,6 +598,13 @@ class CalDAVSyncService(models.AbstractModel):
                 if norm_href == base_url:
                     continue
 
+            if account.server_type == 'icloud':
+                # iCloud REPORT returns the collection folder itself as a response entry.
+                # GETting a collection URL returns 400 — skip it.
+                norm_href = href.rstrip('/')
+                if norm_href == base_url or not href.endswith('.ics'):
+                    continue
+
             existing = existing_maps.get(href)
             if existing:
                 _logger.debug('Comparing HREFs for %s: local_etag=%s, server_etag=%s', href, existing.caldav_etag, server_etag)
@@ -1069,9 +1076,9 @@ class CalDAVSyncService(models.AbstractModel):
                 except Exception:
                     pass
                 org_email = google_email or owner.email or account.username
-            elif account.server_type == 'zoho':
-                # Zoho URL is an opaque token — use account.username (Zoho email)
-                # as ORGANIZER, otherwise Zoho rejects the PUT with 409.
+            elif account.server_type in ('zoho', 'icloud'):
+                # Both Zoho and iCloud require ORGANIZER to match the authenticated
+                # account email exactly. Use account.username (the Apple ID / Zoho email).
                 org_email = account.username or owner.email
             else:
                 org_email = owner.email or account.username
