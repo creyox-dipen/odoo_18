@@ -71,15 +71,36 @@ class CalDAVAccount(models.Model):
         selection=[
             ('generic', 'Generic CalDAV'),
             ('google', 'Google Calendar'),
+            ('outlook', 'Microsoft Outlook'),
             ('icloud', 'Apple iCloud'),
             ('nextcloud', 'Nextcloud'),
             ('synology', 'Synology'),
+            ('zoho', 'Zoho Calendar'),
+            ('radicale', 'Radicale'),
             ('other', 'Other'),
         ],
         string='Server Type',
         default='generic',
         required=True,
     )
+
+    @api.onchange('server_type')
+    def _onchange_server_type(self):
+        """Automatically populate common CalDAV URLs based on server type to assist users."""
+        if not self.server_type:
+            return
+        
+        urls = {
+            'google': 'https://apidata.googleusercontent.com/caldav/v2/<EMAIL_ID>/events/',
+            'outlook': 'https://outlook.office365.com/dav/',
+            'icloud': 'https://caldav.icloud.com/',
+            'zoho': 'https://calendar.zoho.in/caldav/<CALENDAR_ID>/events/',
+            'nextcloud': 'https://<DOMAIN>/remote.php/dav/calendars/<USER>/personal/',
+            'radicale': 'http://<URL>:5232/<USER>/<CALENDAR>/',
+        }
+        if self.server_type in urls:
+            self.url = urls[self.server_type]
+
     google_refresh_token = fields.Char(
         string='Google Refresh Token',
         copy=False,
@@ -374,7 +395,7 @@ class CalDAVAccount(models.Model):
         try:
             with urllib.request.urlopen(req, context=ctx, timeout=30) as resp:
                 status = resp.status
-                headers = dict(resp.headers)
+                headers = resp.headers
                 data = resp.read()
                 return status, headers, data
         except urllib.error.HTTPError as e:
@@ -443,7 +464,15 @@ class CalDAVAccount(models.Model):
         url = self._resolve_href(href)
         _, headers, data = self._do_request(url, 'GET', extra_headers={'Accept': 'text/calendar'})
         # Extract ETag from headers, stripping quotes if present
+        # In Zoho, we've seen it sometimes coming from a different header or being absent.
         etag = (headers.get('ETag') or headers.get('etag') or '').strip('"')
+        
+        if self.server_type == 'zoho':
+            _logger.debug('[ZOHO] Fetch %s headers: %s', href, headers)
+            if not etag:
+                 # Fallback for Zoho if ETag is not in standard headers
+                 _logger.warning('[ZOHO] ETag empty in standard headers for %s. Headers: %s', href, headers)
+        
         return etag, data.decode('utf-8', errors='replace')
 
     def _put_ical(self, href, ical_string, etag=None):
@@ -459,16 +488,58 @@ class CalDAVAccount(models.Model):
         """
         self.ensure_one()
         url = self._resolve_href(href)
-        extra = {'Content-Type': 'text/calendar; charset=utf-8'}
-        if etag:
-            # RFC 4918 requires ETag values in If-Match to be quoted
-            quoted_etag = etag if etag.startswith('"') else f'"{etag}"'
-            extra['If-Match'] = quoted_etag
-        _, headers, _ = self._do_request(
-            url, 'PUT', body=ical_string.encode('utf-8'), extra_headers=extra
-        )
-        raw_etag = headers.get('ETag', headers.get('etag', ''))
-        return raw_etag.strip('"')
+
+        def _attempt(attempt_etag):
+            """Inner helper to perform one PUT attempt with the given ETag."""
+            extra = {'Content-Type': 'text/calendar; charset=utf-8'}
+            if attempt_etag:
+                quoted_etag = attempt_etag if attempt_etag.startswith('"') else f'"{attempt_etag}"'
+                extra['If-Match'] = quoted_etag
+            status, headers, data = self._do_request(
+                url, 'PUT', body=ical_string.encode('utf-8'), extra_headers=extra
+            )
+            raw_etag = headers.get('ETag', headers.get('etag', ''))
+            
+            if self.server_type == 'zoho':
+                 body_str = data.decode('utf-8', errors='replace') if data else '<empty>'
+                 _logger.info(
+                     '[ZOHO] PUT attempt results: Status=%s, ETag=%s, Body=%s',
+                     status, raw_etag, body_str[:500]
+                 )
+                 if not raw_etag:
+                     # If Zoho doesn't return an ETag on PUT, fetch it now to avoid conflict on next sync
+                     _logger.warning('[ZOHO] No ETag returned on PUT. Fetching fresh ETag now.')
+                     raw_etag, _ = self._fetch_ical_with_etag(url) or ('', None)
+
+            return raw_etag.strip('"')
+
+        try:
+            return _attempt(etag)
+        except UserError as exc:
+            # 409 Conflict or 412 Precondition Failed means the ETag we have is stale.
+            # Zoho (and some other servers) bump the ETag silently when the event is
+            # viewed or touched via the web UI, making our cached value outdated.
+            # Recovery: fetch the current ETag from the server and retry once without
+            # optimistic locking (no If-Match), so the PUT is accepted unconditionally.
+            error_str = str(exc)
+            if self.server_type == 'zoho' and ('409' in error_str or '412' in error_str) and etag:
+                _logger.warning(
+                    'PUT %s returned ETag conflict (%s). Fetching fresh ETag and retrying.',
+                    href,
+                    '409' if '409' in error_str else '412',
+                )
+                try:
+                    # GET the resource to find the current server ETag
+                    fresh_etag, _ = self._fetch_ical_with_etag(href)
+                    _logger.info('Retrying PUT %s with fresh ETag=%r', href, fresh_etag)
+                    return _attempt(fresh_etag)
+                except Exception as retry_exc:
+                    _logger.error('Retry PUT %s failed: %s', href, retry_exc)
+                    raise UserError(
+                        f'CalDAV sync conflict could not be resolved for {href}. '
+                        f'Original error: {exc}. Retry error: {retry_exc}'
+                    ) from retry_exc
+            raise
 
     def _delete_event(self, href, etag=None):
         """DELETE a CalDAV resource from the server.
@@ -480,16 +551,37 @@ class CalDAVAccount(models.Model):
         """
         self.ensure_one()
         url = self._resolve_href(href)
-        extra = {}
-        if etag:
-            # RFC 4918 requires ETag values in If-Match to be quoted
-            quoted_etag = etag if etag.startswith('"') else f'"{etag}"'
-            extra['If-Match'] = quoted_etag
-        try:
+
+        def _attempt(attempt_etag):
+            """Inner helper to perform one DELETE attempt with the given ETag."""
+            extra = {}
+            if attempt_etag:
+                quoted_etag = attempt_etag if attempt_etag.startswith('"') else f'"{attempt_etag}"'
+                extra['If-Match'] = quoted_etag
             self._do_request(url, 'DELETE', extra_headers=extra, expected_codes=[200, 204, 404])
-        except UserError:
-            # Already deleted on server — not an error
-            pass
+
+        try:
+            _attempt(etag)
+        except UserError as exc:
+            error_str = str(exc)
+            # Zoho specific: 409/412 recovery for deletions
+            if self.server_type == 'zoho' and ('409' in error_str or '412' in error_str) and etag:
+                _logger.warning('DELETE %s returned conflict. Fetching fresh ETag and retrying.', href)
+                try:
+                    fresh_etag, _ = self._fetch_ical_with_etag(href)
+                    _attempt(fresh_etag)
+                except Exception:
+                    # Treat retry failure or 404 after conflict as success
+                    pass
+            elif self.server_type == 'zoho' and '404' not in error_str:
+                # For Zoho, only swallow 404s in normal circumstances (handled by retry above)
+                # But if we aren't retrying 409/412, we should raise other errors to be explicit.
+                raise
+            else:
+                # --- ALL OTHER SERVERS OR ZOHO 404 ---
+                # Revert to original behavior: swap any deletion error for a silent pass.
+                # Many servers (Nextcloud, Baïkal) are fine with 404 or other errors on delete.
+                pass
 
     def _resolve_href(self, href):
         """Convert a relative href from the CalDAV server to an absolute URL.

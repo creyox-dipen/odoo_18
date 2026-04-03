@@ -502,7 +502,7 @@ class CalDAVSyncService(models.AbstractModel):
         old_etag = existing_map.caldav_etag if existing_map else None
 
         _logger.info('Pushing event "%s" (id=%s) to %s; If-Match ETag=%s', event.name, event.id, href, old_etag)
-        # Log the full iCal for Google — critical for debugging EXDATE issues
+        # Log the full iCal for Google — critical for debugging EXDATE/recurrence issues
         if account.server_type == 'google':
             _logger.info(
                 'Google iCal payload for event "%s" (id=%s):\n%s',
@@ -527,7 +527,18 @@ class CalDAVSyncService(models.AbstractModel):
             # The field is managed exclusively by calendar_event.unlink().
             existing_map.sudo().write(map_vals)
         else:
-            self.env['caldav.event.map'].sudo().create(map_vals)
+            # Guard against a race condition (e.g. cron + manual sync running
+            # simultaneously) where another transaction already created a map
+            # record for this (account_id, caldav_uid) pair, which would
+            # trigger a UniqueViolation on the DB constraint.
+            existing = self.env['caldav.event.map'].sudo().search([
+                ('account_id', '=', account.id),
+                ('caldav_uid', '=', uid),
+            ], limit=1)
+            if existing:
+                existing.write(map_vals)
+            else:
+                self.env['caldav.event.map'].sudo().create(map_vals)
         return new_etag
 
     @api.model
@@ -579,7 +590,14 @@ class CalDAVSyncService(models.AbstractModel):
         _logger.debug('Existing Odoo maps for account %s: %s', account.name, list(existing_maps.keys()))
 
         # Process new and changed events (only if server has events)
+        base_url = account.url.rstrip('/')
         for href, server_etag in server_etags.items():
+            if account.server_type == 'zoho':
+                # Skip the collection folder itself if it appeared in the server candidate list
+                norm_href = href.rstrip('/')
+                if norm_href == base_url:
+                    continue
+
             existing = existing_maps.get(href)
             if existing:
                 _logger.debug('Comparing HREFs for %s: local_etag=%s, server_etag=%s', href, existing.caldav_etag, server_etag)
@@ -702,14 +720,39 @@ class CalDAVSyncService(models.AbstractModel):
             ctx_kwargs['force_send'] = True
 
         CalEvent = self.env['calendar.event'].with_context(**ctx_kwargs).sudo()
+        event = None
 
-        if existing_map and existing_map.event_id:
-            event = existing_map.event_id
+        if not existing_map and account.server_type == 'zoho':
+            # Zoho specific: Fallback if we don't have a map for this HREF.
+            # Check if an Odoo event already has this UID (handles renamed HREFs).
+            existing_event = CalEvent.search([('caldav_uid', '=', uid_value)], limit=1)
+            if existing_event:
+                event = existing_event
+                # Find and update the existing mapping for this event to the current HREF
+                map_rec = self.env['caldav.event.map'].sudo().search([
+                    ('account_id', '=', account.id),
+                    ('event_id', '=', event.id),
+                ], limit=1)
+                if map_rec:
+                    map_rec.write({'caldav_href': href, 'caldav_etag': server_etag})
+                    existing_map = map_rec
+                else:
+                    # Create missing map record for existing event
+                    existing_map = self.env['caldav.event.map'].sudo().create({
+                        'account_id': account.id,
+                        'event_id': event.id,
+                        'caldav_href': href,
+                        'caldav_etag': server_etag,
+                        'caldav_uid': uid_value,
+                    })
+
+        if existing_map and (existing_map.event_id or event):
+            event = event or existing_map.event_id
             # Preserve caldav_uid; don't let sync overwrite it
             vals.pop('caldav_uid', None)
             # For Odoo-owned recurring events, DON'T re-apply the RRULE from the
             # server. Doing so triggers `recurrence_update='all_events'` which:
-            #   1. Regenerates occurrences (can create extra M4 when COUNT=3 + EXDATE)
+            #   1. Regenerates occurrences (can create extra MX when COUNT=3 + EXDATE)
             #   2. Updates write_date → push detects "changed" → push loop
             # Odoo is the master of the recurrence structure; only EXDATE
             # changes (individual deletions) are synced via the block below.
@@ -722,6 +765,14 @@ class CalDAVSyncService(models.AbstractModel):
         else:
             vals['caldav_uid'] = uid_value
             event = CalEvent.create(vals)
+            # Create the map record if it didn't exist (new server event)
+            self.env['caldav.event.map'].sudo().create({
+                'account_id': account.id,
+                'event_id': event.id,
+                'caldav_href': href,
+                'caldav_etag': server_etag,
+                'caldav_uid': uid_value,
+            })
 
         # Handle EXDATE — single occurrence deleted on the server side.
         # Thunderbird/CalDAV clients mark excluded dates with EXDATE instead of
@@ -844,6 +895,14 @@ class CalDAVSyncService(models.AbstractModel):
 
         # SUMMARY
         vevent.add('summary').value = event.name or ''
+
+        # SEQUENCE + LAST-MODIFIED (Zoho specific: signals a fresh modification to the server)
+        if account.server_type == 'zoho':
+            # Use Odoo's write_date as a monotonically increasing sequence
+            # This ensures Zoho treats the update as a new revision and refreshes its UI.
+            write_dt = event.write_date or datetime.utcnow()
+            vevent.add('sequence').value = str(int(write_dt.timestamp()))
+            vevent.add('last-modified').value = write_dt.replace(tzinfo=pytz.utc) if write_dt.tzinfo is None else write_dt
 
         # DTSTART / DTEND
         # When the first occurrence (base) is deleted, Odoo promotes the next one to "base".
@@ -995,24 +1054,28 @@ class CalDAVSyncService(models.AbstractModel):
         other_partners = event.partner_ids.filtered(
             lambda p: p != account.user_id.partner_id
         )
+
         if other_partners:
             owner = account.user_id.partner_id
             org = vevent.add('organizer')
 
-            # Force the Organizer email for Google accounts to match the authorized account.
-            # Google rejects updates (403) if the ORGANIZER property doesn't match the account.
-            google_email = None
             if account.server_type == 'google':
                 from urllib.parse import urlparse
+                google_email = None
                 try:
                     path_parts = urlparse(account.url).path.strip('/').split('/')
-                    # URL is /caldav/v2/USER_ID/events/
                     if len(path_parts) >= 3:
                         google_email = path_parts[2]
                 except Exception:
                     pass
+                org_email = google_email or owner.email or account.username
+            elif account.server_type == 'zoho':
+                # Zoho URL is an opaque token — use account.username (Zoho email)
+                # as ORGANIZER, otherwise Zoho rejects the PUT with 409.
+                org_email = account.username or owner.email
+            else:
+                org_email = owner.email or account.username
 
-            org_email = google_email or owner.email or account.username
             org.value = f'mailto:{org_email}'
             org.params['CN'] = [owner.name or org_email]
 
@@ -1028,11 +1091,17 @@ class CalDAVSyncService(models.AbstractModel):
         for alarm in event.alarm_ids:
             """Add a VALARM for each reminder configured on the event."""
             valarm = vevent.add('valarm')
-            # ACTION: EMAIL or DISPLAY (notification)
-            action = 'EMAIL' if alarm.alarm_type == 'email' else 'DISPLAY'
-            valarm.add('action').value = action
+            # Zoho: RFC 5545 has no distinct "notification" ACTION (only EMAIL/DISPLAY/AUDIO).
+            # Zoho maps DISPLAY → popup. Add X-ACTION:NOTIFICATION so Zoho shows it
+            # as a notification instead. Other servers are unaffected.
+            if account.server_type == 'zoho' and alarm.alarm_type == 'notification':
+                valarm.add('action').value = 'DISPLAY'
+                valarm.add('x-action').value = 'NOTIFICATION'
+            else:
+                action = 'EMAIL' if alarm.alarm_type == 'email' else 'DISPLAY'
+                valarm.add('action').value = action
             valarm.add('description').value = alarm.name or 'Reminder'
-            
+
             # Use timedelta for TRIGGER; vobject will serialize it to ISO 8601 duration
             # Negative means "before event start" (default for PTH, PTM etc.)
             minutes = alarm.duration_minutes or 0
