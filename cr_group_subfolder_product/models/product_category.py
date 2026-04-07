@@ -40,8 +40,8 @@ class ProductCategory(models.Model):
           is synced to all products.
         """
         # 1. Identify deleted lines and handle cascading deletions
+        deleted_line_ids = []
         if 'folder_structure_ids' in vals:
-            deleted_line_ids = []
             for cmd in vals['folder_structure_ids']:
                 # Command.DELETE (2) or Command.UNLINK (3)
                 if cmd[0] in (2, 3) and cmd[1]:

@@ -181,6 +181,7 @@ class CalDAVSyncService(models.AbstractModel):
         :return: Tuple (pushed_count, failed_count, error_details).
         :rtype: tuple[int, int, str]
         """
+        print("push_odoo_changes called")
         pushed = 0
         failed = 0
         details = []
@@ -276,6 +277,18 @@ class CalDAVSyncService(models.AbstractModel):
         # GOOGLE ONLY: Handle migration of sync mappings if a recurrence base event changed.
         if account.server_type == 'google':
             self._migrate_recurrence_mappings(account)
+
+        # iCLOUD ONLY: Detect modified individual occurrences and push them as
+        # RECURRENCE-ID overrides instead of re-pushing the whole series .ics.
+        # For other servers this is handled differently (EXDATE / base re-push).
+        print("checking for iCloud occurrence overrides")
+        if account.server_type == 'icloud':
+            try:
+                with self.env.cr.savepoint():
+                    self._push_icloud_occurrence_overrides(account, skip_ids=skip_ids)
+            except Exception as e:
+                _logger.warning('[iCLOUD] Occurrence override push failed: %s', e, exc_info=True)
+
         _logger.info(
             'Push candidates for account %s: %s event(s) — non-recurring=%s, recurring_base=%s',
             account.name, len(events), len(non_recurring), len(recurring_base_events),
@@ -294,6 +307,12 @@ class CalDAVSyncService(models.AbstractModel):
                 _logger.debug('[PUSH] SKIP event id=%s "%s": in skip_ids (just pulled).', event.id, event.name)
                 continue
             existing_map = existing_maps.get(event.id)
+
+            # iCloud: skip re-pushing the base RRULE .ics for already-synced recurring
+            # series. Occurrence-level edits are handled via RECURRENCE-ID overrides.
+            # Only allow initial push (no existing_map) to create the series on iCloud.
+            if account.server_type == 'icloud' and event.recurrence_id and existing_map:
+                continue
             # Determine if event is new to CalDAV or was modified since last push.
             # For Google: force-push if _detect_google_archived_occurrences flagged this
             # event (ORM cache may hold stale last_odoo_write).
@@ -542,6 +561,291 @@ class CalDAVSyncService(models.AbstractModel):
         return new_etag
 
     @api.model
+    def _apply_icloud_occurrence_overrides(self, recurrence_id_vevents, uid_value, account, href, server_etag):
+        """Apply RECURRENCE-ID overrides from iCloud into the corresponding Odoo occurrences.
+
+        When a single occurrence is edited in Apple Calendar, iCloud sends back the
+        full .ics with the base VEVENT (RRULE) plus one or more RECURRENCE-ID VEVENTs
+        representing the overridden occurrences. This method finds the matching Odoo
+        occurrence by its start date and updates its fields.
+
+        :param list recurrence_id_vevents: List of vobject VEVENT components with RECURRENCE-ID.
+        :param str uid_value: The UID shared by all VEVENTs in this .ics.
+        :param caldav.account account: The iCloud account.
+        :param str href: The CalDAV href of the .ics resource.
+        :param str server_etag: The current server ETag.
+        """
+        print("apply_icloud_occurrence_overrides called")
+        # Find the base map by UID to get the recurrence
+        base_map = self.env['caldav.event.map'].sudo().search([
+            ('account_id', '=', account.id),
+            ('caldav_uid', '=', uid_value),
+        ], limit=1)
+        if not base_map or not base_map.event_id:
+            return
+        base_event = base_map.event_id
+        if not base_event.recurrence_id:
+            return
+
+        ctx_kwargs = {'dont_notify': True, 'no_mail_to_attendees': True}
+        if account.send_invitation_emails:
+            ctx_kwargs = {'mail_notify_force_send': True, 'force_send': True}
+
+        for override_vevent in recurrence_id_vevents:
+            rid_comp = getattr(override_vevent, 'recurrence_id', None)
+            if not rid_comp:
+                continue
+            rid_val = rid_comp.value
+
+            # Normalize RECURRENCE-ID to a naive UTC datetime for comparison
+            if isinstance(rid_val, datetime):
+                if rid_val.tzinfo is not None:
+                    rid_dt = rid_val.astimezone(timezone.utc).replace(tzinfo=None)
+                else:
+                    rid_dt = rid_val
+            else:
+                # date-only
+                rid_dt = datetime(rid_val.year, rid_val.month, rid_val.day, 0, 0, 0)
+
+            # Find the Odoo occurrence matching this RECURRENCE-ID date
+            # Match within a 1-minute window to handle minor timezone rounding
+            from datetime import timedelta as _td
+            window_start = rid_dt - _td(minutes=1)
+            window_end = rid_dt + _td(minutes=1)
+            occurrence = self.env['calendar.event'].sudo().search([
+                ('recurrence_id', '=', base_event.recurrence_id.id),
+                ('active', '=', True),
+                ('start', '>=', window_start),
+                ('start', '<=', window_end),
+            ], limit=1)
+
+            if not occurrence:
+                _logger.warning(
+                    '[iCLOUD] No Odoo occurrence found for RECURRENCE-ID %s in series "%s".',
+                    rid_dt, base_event.name,
+                )
+                continue
+
+            # Parse the override VEVENT fields and apply to the occurrence
+            vals = self._ical_to_odoo_vals(override_vevent, account)
+            if not vals:
+                continue
+            # Never overwrite the recurrence structure from an override
+            vals.pop('rrule', None)
+            vals.pop('recurrence_update', None)
+            vals.pop('caldav_uid', None)
+
+            occurrence.with_context(**ctx_kwargs).sudo().write(vals)
+            _logger.info(
+                '[iCLOUD] Applied RECURRENCE-ID override to occurrence "%s" (id=%s, start=%s).',
+                occurrence.name, occurrence.id, occurrence.start,
+            )
+        print("finished applying iCloud occurrence overrides")
+        # Update the base map ETag so pull doesn't re-process this .ics next sync
+        base_map.sudo().write({
+            'caldav_etag': server_etag,
+            'last_odoo_write': base_event.write_date,
+        })
+
+    @api.model
+    def _push_icloud_occurrence_overrides(self, account, skip_ids=None):
+        """Push modified individual occurrences to iCloud as RECURRENCE-ID overrides.
+
+        iCloud supports RFC 5545 RECURRENCE-ID which allows a single occurrence
+        of a recurring series to be overridden without affecting other occurrences.
+        This is done by adding a separate VEVENT with RECURRENCE-ID to the same
+        .ics file that already contains the base VEVENT with RRULE.
+
+        :param caldav.account account: Target iCloud account.
+        :param set skip_ids: Event IDs to skip (recently pulled).
+        """
+        print("push_icloud_occurrence_overrides called")
+        skip_ids = skip_ids or set()
+        owner_partner_id = account.user_id.partner_id.id
+
+        # Find all active occurrences (non-base) that belong to a synced series
+        all_recurrences = self.env['calendar.recurrence'].sudo().search([])
+        for recurrence in all_recurrences:
+            base_event = recurrence.base_event_id
+            if not base_event or not base_event.active:
+                continue
+            print("recurrence")
+            # Check owner is attendee
+            if not any(att.partner_id.id == owner_partner_id for att in base_event.attendee_ids):
+                print("continue because owner is not attendee")
+                continue
+
+            # Find the map for the base event
+            base_map = self.env['caldav.event.map'].sudo().search([
+                ('account_id', '=', account.id),
+                ('event_id', '=', base_event.id),
+            ], limit=1)
+            if not base_map:
+                print("continue because no map for base event")
+                continue  # Series not synced yet
+
+            # Find all non-base occurrences modified since last push
+            occurrences = self.env['calendar.event'].sudo().search([
+                ('recurrence_id', '=', recurrence.id),
+                ('active', '=', True),
+                ('id', '!=', base_event.id),
+            ])
+
+            modified_occs = []
+            for occ in occurrences:
+                if occ.id in skip_ids:
+                    print("continue because occurrence id=%s in skip_ids (just pulled)", occ.id)
+                    continue
+                # Check if this occurrence has its own map (already pushed as override)
+                occ_map = self.env['caldav.event.map'].sudo().search([
+                    ('account_id', '=', account.id),
+                    ('event_id', '=', occ.id),
+                ], limit=1)
+                if occ_map:
+                    # Already has its own map — check if modified
+                    if occ_map.last_odoo_write and occ.write_date and occ.write_date <= occ_map.last_odoo_write:
+                        continue
+                else:
+                    # No map — check if it was modified vs base write_date
+                    if base_map.last_odoo_write and occ.write_date and occ.write_date <= base_map.last_odoo_write:
+                        continue
+                modified_occs.append((occ, occ_map))
+
+            # Also handle the case where the base occurrence itself was modified.
+            # The main push loop skips already-synced iCloud recurring bases,
+            # so base occurrence edits must be handled here via RECURRENCE-ID.
+            if base_map.last_odoo_write and base_event.write_date and \
+                    base_event.write_date > base_map.last_odoo_write:
+                modified_occs.append((base_event, base_map))
+
+            if not modified_occs:
+                continue
+            print("mid of occurrence override detection")
+            try:
+                with self.env.cr.savepoint():
+                    # Fetch the current .ics from iCloud to get the base VEVENT
+                    current_etag, current_ical = account._fetch_ical_with_etag(base_map.caldav_href)
+
+                    # Build updated .ics: base VEVENT + RECURRENCE-ID VEVENTs
+                    updated_ical = self._build_icloud_ical_with_overrides(
+                        current_ical, base_event, modified_occs, account
+                    )
+
+                    # PUT the updated .ics back
+                    new_etag = account._put_ical(base_map.caldav_href, updated_ical, etag=current_etag)
+                    base_map.sudo().write({'caldav_etag': new_etag or current_etag})
+                    _logger.info('[iCLOUD] Pushed RECURRENCE-ID overrides for series "%s".', base_event.name)
+                    # NOTE: No per-occurrence map records — occurrences share caldav_uid
+                    # with the base, which would violate UNIQUE(account_id, caldav_uid).
+            except Exception as e:
+                _logger.warning('[iCLOUD] Override push failed for series "%s": %s', base_event.name, e, exc_info=True)
+
+    @api.model
+    def _build_icloud_ical_with_overrides(self, current_ical, base_event, modified_occs, account):
+        """Build an iCal string containing the base VEVENT plus RECURRENCE-ID overrides.
+
+        :param str current_ical: The current .ics text from iCloud (contains base VEVENT).
+        :param calendar.event base_event: The base Odoo recurring event.
+        :param list modified_occs: List of (occurrence, map_or_None) tuples.
+        :param caldav.account account: The iCloud account.
+        :return: Updated iCal string.
+        :rtype: str
+        """
+        print("build_icloud_ical_with_overrides called")
+        if vobject is None:
+            raise RuntimeError('vobject is required.')
+
+        # Parse existing .ics to get the base VEVENT (preserves RRULE, EXDATEs etc.)
+        cal = vobject.readOne(current_ical)
+
+        # Remove any existing RECURRENCE-ID VEVENTs — we will re-add fresh ones
+        # Build a set of DTSTART datetimes for the occurrences being updated now.
+        # We will replace RECURRENCE-ID VEVENTs for these, and KEEP existing ones
+        # for occurrences that are NOT in the current modified batch.
+        updating_starts = set()
+        for occ, _ in modified_occs:
+            if occ.allday:
+                updating_starts.add(occ.start.date())
+            else:
+                s = _to_utc_naive(occ.start)
+                updating_starts.add(s.replace(tzinfo=None))
+
+        components_to_keep = []
+        for component in cal.components():
+            if component.name == 'VEVENT' and hasattr(component, 'recurrence_id'):
+                # Keep existing RECURRENCE-ID VEVENTs for occurrences NOT being updated.
+                rid_val = component.recurrence_id.value
+                if hasattr(rid_val, 'tzinfo') and rid_val.tzinfo is not None:
+                    rid_val = rid_val.astimezone(timezone.utc).replace(tzinfo=None)
+                elif hasattr(rid_val, 'date') and not isinstance(rid_val, date):
+                    rid_val = rid_val.replace(tzinfo=None)
+                if rid_val in updating_starts:
+                    continue  # Will be replaced with fresh override below
+            components_to_keep.append(component)
+
+        # Rebuild calendar with only non-override components
+        new_cal = vobject.iCalendar()
+        new_cal.add('prodid').value = '-//Creyox Technologies//CalDAV Sync//EN'
+        new_cal.add('version').value = '2.0'
+        for comp in components_to_keep:
+            new_cal.add(comp)
+        print("mid of build")
+        # Add a RECURRENCE-ID VEVENT for each modified occurrence
+        uid = base_event.caldav_uid
+        for occ, _ in modified_occs:
+            vevent = vobject.newFromBehavior('vevent')
+
+            vevent.add('uid').value = uid
+            vevent.add('dtstamp').value = datetime.now(pytz.utc)
+            vevent.add('summary').value = occ.name or ''
+
+            # RECURRENCE-ID — must match the ORIGINAL start of this occurrence
+            # Use the occurrence's current start as the recurrence-id
+            if occ.allday:
+                rid = vevent.add('recurrence-id')
+                rid.value = occ.start.date()
+            else:
+                start_utc = _to_utc_naive(occ.start)
+                rid = vevent.add('recurrence-id')
+                rid.value = datetime(
+                    start_utc.year, start_utc.month, start_utc.day,
+                    start_utc.hour, start_utc.minute, start_utc.second,
+                    tzinfo=pytz.utc,
+                )
+            print("after recurrence-id")
+            # DTSTART / DTEND
+            if occ.allday:
+                vevent.add('dtstart').value = occ.start.date()
+                vevent.add('dtend').value = occ.stop.date() + timedelta(days=1)
+            else:
+                start_utc = _to_utc_naive(occ.start)
+                stop_utc = _to_utc_naive(occ.stop)
+                vevent.add('dtstart').value = datetime(
+                    start_utc.year, start_utc.month, start_utc.day,
+                    start_utc.hour, start_utc.minute, start_utc.second,
+                    tzinfo=pytz.utc,
+                )
+                vevent.add('dtend').value = datetime(
+                    stop_utc.year, stop_utc.month, stop_utc.day,
+                    stop_utc.hour, stop_utc.minute, stop_utc.second,
+                    tzinfo=pytz.utc,
+                )
+
+            if occ.location:
+                vevent.add('location').value = occ.location
+            print("after location")
+            if occ.description:
+                from odoo.tools import html2plaintext
+                plain = html2plaintext(occ.description).strip()
+                if plain:
+                    vevent.add('description').value = plain
+            print("after description")
+            new_cal.add(vevent)
+        print("new update")
+
+        return new_cal.serialize()
+
+    @api.model
     def _build_href(self, account, uid):
         """Build the CalDAV resource URL for a new event.
 
@@ -689,6 +993,7 @@ class CalDAVSyncService(models.AbstractModel):
         :param str ical_text: Raw iCal text.
         :param caldav.event.map|None existing_map: Existing map record if any.
         """
+        print("_upsert_from_ical called for href %s", href)
         if vobject is None:
             _logger.warning('vobject not available; skipping iCal import.')
             return
@@ -700,15 +1005,25 @@ class CalDAVSyncService(models.AbstractModel):
             return
 
         vevent = None
+        recurrence_id_vevents = []  # RECURRENCE-ID override VEVENTs
         for component in cal.components():
             if component.name == 'VEVENT':
-                vevent = component
-                break
+                if hasattr(component, 'recurrence_id'):
+                    recurrence_id_vevents.append(component)
+                elif vevent is None:
+                    vevent = component  # base VEVENT (no RECURRENCE-ID)
         if vevent is None:
             return
 
         uid = getattr(vevent, 'uid', None)
         uid_value = uid.value if uid else str(uuid.uuid4())
+
+        # iCloud only: handle RECURRENCE-ID overrides (single occurrence edits from Apple Calendar)
+        if account.server_type == 'icloud' and recurrence_id_vevents:
+            print("applying icloud occurrence")
+            self._apply_icloud_occurrence_overrides(
+                recurrence_id_vevents, uid_value, account, href, server_etag
+            )
 
         vals = self._ical_to_odoo_vals(vevent, account)
         if not vals:
@@ -970,6 +1285,12 @@ class CalDAVSyncService(models.AbstractModel):
         if event.location:
             vevent.add('location').value = event.location
         
+        if account.server_type == 'zoho' and event.videocall_location:
+            vevent.add('url').value = event.videocall_location
+
+        if account.server_type == 'icloud' and event.videocall_location:
+            vevent.add('url').value = event.videocall_location
+        
         # CLASS — privacy mapping
         _privacy_to_class = {'public': 'PUBLIC', 'private': 'PRIVATE', 'confidential': 'CONFIDENTIAL'}
         class_val = _privacy_to_class.get(event.privacy or 'public', 'PUBLIC')
@@ -1215,6 +1536,16 @@ class CalDAVSyncService(models.AbstractModel):
             location_comp = getattr(vevent, 'location', None)
             if location_comp and location_comp.value:
                 vals['location'] = location_comp.value
+
+            if account.server_type == 'zoho':
+                url_comp = getattr(vevent, 'url', None)
+                if url_comp and url_comp.value:
+                    vals['videocall_location'] = url_comp.value
+
+            if account.server_type == 'icloud':
+                url_comp = getattr(vevent, 'url', None)
+                if url_comp and url_comp.value:
+                    vals['videocall_location'] = url_comp.value
 
             # DESCRIPTION (Strip Google Meet metadata and extract link)
             desc_comp = getattr(vevent, 'description', None)

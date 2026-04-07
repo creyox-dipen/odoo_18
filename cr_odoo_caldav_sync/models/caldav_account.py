@@ -69,9 +69,9 @@ class CalDAVAccount(models.Model):
     )
     server_type = fields.Selection(
         selection=[
-            ('generic', 'Generic CalDAV'),
+            # ('generic', 'Generic CalDAV'),
             ('google', 'Google Calendar'),
-            ('outlook', 'Microsoft Outlook'),
+            # ('outlook', 'Microsoft Outlook'),
             ('icloud', 'Apple iCloud'),
             ('nextcloud', 'Nextcloud'),
             ('synology', 'Synology'),
@@ -80,7 +80,7 @@ class CalDAVAccount(models.Model):
             ('other', 'Other'),
         ],
         string='Server Type',
-        default='generic',
+        default='other',
         required=True,
     )
 
@@ -92,8 +92,8 @@ class CalDAVAccount(models.Model):
         
         urls = {
             'google': 'https://apidata.googleusercontent.com/caldav/v2/<EMAIL_ID>/events/',
-            'outlook': 'https://outlook.office365.com/dav/',
-            'icloud': 'https://caldav.icloud.com/',
+            # 'outlook': 'https://outlook.office365.com/dav/',
+            'icloud': 'https://caldav.icloud.com/<YOUR_ACCOUNT_ID>/calendars/<CALENDAR_UUID>/',
             'zoho': 'https://calendar.zoho.in/caldav/<CALENDAR_ID>/events/',
             'nextcloud': 'https://<DOMAIN>/remote.php/dav/calendars/<USER>/personal/',
             'radicale': 'http://<URL>:5232/<USER>/<CALENDAR>/',
