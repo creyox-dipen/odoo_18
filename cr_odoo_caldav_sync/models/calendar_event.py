@@ -80,7 +80,6 @@ class CalendarEvent(models.Model):
         For single (non-recurring) events on any server type:
           - Perform a standard CalDAV DELETE via the Universal Direct Delete section.
         """
-        print("unlink called")
         event_ids = self.ids
         _logger.info('[UNLINK] Triggered for event ids: %s', event_ids)
 
