@@ -2,16 +2,26 @@
 <odoo>
 
     <!-- ============================================================
-         CalDAV Accounts menu under Settings Technical
+         Root Menu Visibility: Controlled by resConfigSettings
+    ============================================================ -->
+    <menuitem
+        id="menu_caldav_root"
+        name="CalDAV Sync"
+        groups="base.group_user"
+        web_icon="cr_odoo_caldav_sync,static/description/icon.png"
+        active="0"
+        sequence="100"
+    />
+
+    <!-- ============================================================
+         CalDAV Accounts sub-menu
     ============================================================ -->
     <menuitem
         id="menu_caldav_accounts"
         name="CalDAV Accounts"
-        parent="base.menu_administration"
+        parent="menu_caldav_root"
         action="action_caldav_account"
-        groups="base.group_system"
-        active="0"
-        sequence="120"
+        sequence="10"
     />
 
 </odoo>

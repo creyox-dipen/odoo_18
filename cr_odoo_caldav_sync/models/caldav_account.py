@@ -84,6 +84,15 @@ class CalDAVAccount(models.Model):
         required=True,
     )
 
+    google_client_id = fields.Char(
+        string='Google Client ID',
+        help='Client ID from Google Cloud Console for OAuth 2.0.',
+    )
+    google_client_secret = fields.Char(
+        string='Google Client Secret',
+        help='Client Secret from Google Cloud Console for OAuth 2.0.',
+    )
+
     @api.onchange('server_type')
     def _onchange_server_type(self):
         """Automatically populate common CalDAV URLs based on server type to assist users."""
@@ -100,6 +109,7 @@ class CalDAVAccount(models.Model):
         }
         if self.server_type in urls:
             self.url = urls[self.server_type]
+
 
     google_refresh_token = fields.Char(
         string='Google Refresh Token',
@@ -266,14 +276,13 @@ class CalDAVAccount(models.Model):
         ):
             return  # Token is still valid
 
-        icp = self.env['ir.config_parameter'].sudo()
-        client_id = icp.get_param('cr_odoo_caldav_sync.google_client_id')
-        client_secret = icp.get_param('cr_odoo_caldav_sync.google_client_secret')
+        client_id = self.google_client_id
+        client_secret = self.google_client_secret
 
         if not client_id or not client_secret:
             raise UserError(_(
-                'Google Client ID or Secret is not configured. '
-                'Please go to Settings → CalDAV Sync and fill in the credentials.'
+                'Google Client ID or Secret is not configured for this account. '
+                'Please fill in the OAuth credentials in the account form.'
             ))
 
         data = urllib.parse.urlencode({
@@ -321,14 +330,14 @@ class CalDAVAccount(models.Model):
         :rtype: dict
         """
         self.ensure_one()
-        icp = self.env['ir.config_parameter'].sudo()
-        client_id = icp.get_param('cr_odoo_caldav_sync.google_client_id')
+        client_id = self.google_client_id
         if not client_id:
             raise UserError(_(
-                'Google Client ID is not configured. '
-                'Please go to Settings → CalDAV Sync to add your credentials.'
+                'Google Client ID is not configured for this account. '
+                'Please fill in the OAuth credentials in the account form.'
             ))
 
+        icp = self.env['ir.config_parameter'].sudo()
         base_url = icp.get_param('web.base.url', '').rstrip('/')
         redirect_uri = f'{base_url}/caldav/google/callback'
 
@@ -336,7 +345,7 @@ class CalDAVAccount(models.Model):
             'client_id': client_id,
             'redirect_uri': redirect_uri,
             'response_type': 'code',
-            'scope': 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email openid',
+            'scope': 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email openid',
             'access_type': 'offline',
             'prompt': 'consent',
             'state': str(self.id),

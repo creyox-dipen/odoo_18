@@ -56,8 +56,8 @@ class CalDAVGoogleOAuthController(http.Controller):
             return request.redirect('/odoo/action-cr_odoo_caldav_sync.action_caldav_account')
 
         icp = request.env['ir.config_parameter'].sudo()
-        client_id = icp.get_param('cr_odoo_caldav_sync.google_client_id')
-        client_secret = icp.get_param('cr_odoo_caldav_sync.google_client_secret')
+        client_id = account.google_client_id
+        client_secret = account.google_client_secret
         base_url = icp.get_param('web.base.url', '').rstrip('/')
         redirect_uri = f'{base_url}/caldav/google/callback'
 

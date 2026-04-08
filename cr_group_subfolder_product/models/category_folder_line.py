@@ -42,6 +42,11 @@ class CrCategoryFolderLine(models.Model):
         string='Folder Name',
         required=True,
     )
+    is_selected = fields.Boolean(
+        string='Select',
+        default=False,
+        help='Check to select this line for bulk operations.',
+    )
 
     @api.constrains('sequence')
     def _check_sequence_format(self):
@@ -142,3 +147,45 @@ class CrCategoryFolderLine(models.Model):
             ('cr_category_folder_line_id', '=', self.id),
         ])
         return any(f._cr_has_documents() for f in folders)
+
+    def _cr_get_parent_line(self):
+        """
+        Find the record representing the parent of this line in the same category.
+        """
+        self.ensure_one()
+        parent_seq = self._get_parent_sequence()
+        if not parent_seq:
+            return self.env['cr.category.folder.line']
+        # Find the line with the matching normalized sequence
+        all_lines = self.search([('category_id', '=', self.category_id.id)])
+        for line in all_lines:
+            if line._get_normalized_sequence() == parent_seq:
+                return line
+        return self.env['cr.category.folder.line']
+
+    def _cr_get_all_parent_lines(self):
+        """
+        Recursively find all parent lines in the hierarchy.
+        """
+        self.ensure_one()
+        parents = self.env['cr.category.folder.line']
+        current = self._cr_get_parent_line()
+        while current:
+            parents |= current
+            current = current._cr_get_parent_line()
+        return parents
+
+    def _cr_has_direct_documents(self):
+        """
+        Check if any associated folder for this line has direct non-folder documents.
+        This does not recurse into sub-folders.
+        """
+        self.ensure_one()
+        folders = self.env['documents.document'].sudo().search([
+            ('cr_category_folder_line_id', '=', self.id),
+        ])
+        for folder in folders:
+            # Check for direct children that are not folders
+            if folder.children_ids.filtered(lambda d: d.type != 'folder' and not d.shortcut_document_id):
+                return True
+        return False

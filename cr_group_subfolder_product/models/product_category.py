@@ -108,3 +108,80 @@ class ProductCategory(models.Model):
                     product._cr_create_folder_structure(category)
 
         return result
+
+    def action_delete_checked_lines(self):
+        """
+        Action to delete folder lines that are marked as 'is_selected',
+        skipping any folders that contain files or are parents of folders with files.
+        """
+        self.ensure_one()
+        selected_lines = self.folder_structure_ids.filtered('is_selected')
+        if not selected_lines:
+            raise UserError(_("Please select at least one line to delete."))
+
+        # 1. Expand selection to include all descendants (candidates for deletion)
+        candidates = selected_lines
+        for line in selected_lines:
+            candidates |= line._get_descendant_lines()
+
+        # 2. Identify untouchable lines (those with files or parents of those with files)
+        all_lines = self.folder_structure_ids
+        lines_with_files = all_lines.filtered(lambda l: l._cr_has_any_documents())
+        untouchable = lines_with_files
+        for line in lines_with_files:
+            untouchable |= line._cr_get_all_parent_lines()
+
+        # 3. Calculate safe set for deletion
+        final_to_delete = candidates - untouchable
+
+        # 4. Handle skips and redirection
+        if candidates & untouchable:
+            folders_with_files = candidates.filtered(lambda l: l._cr_has_direct_documents())
+            skipped_parents = (candidates & untouchable) - folders_with_files
+            
+            msg_parts = []
+            if folders_with_files:
+                names_files = ", ".join([f"{l.name} ({l.sequence})" for l in folders_with_files])
+                msg_parts.append(_("The following folders specifically contain files: %s.") % names_files)
+            
+            if skipped_parents:
+                names_parents = ", ".join([f"{l.name} ({l.sequence})" for l in skipped_parents])
+                msg_parts.append(_("Additionally, the following folders will be skipped to preserve the hierarchy: %s.") % names_parents)
+            
+            message = "\n".join(msg_parts)
+
+            if not final_to_delete:
+                # If everything selected was untouchable, just show info and stop
+                return {
+                    'name': _("Deletion Information"),
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'cr.folder.delete.warning',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': {
+                        'default_category_id': self.id,
+                        'default_message': message + _("\nNo other folder lines are available for deletion."),
+                        'default_line_ids': [],
+                    }
+                }
+
+            # Show warning wizard to confirm deletion of safe folders
+            return {
+                'name': _("Deletion Warning"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'cr.folder.delete.warning',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_category_id': self.id,
+                    'default_line_ids': [fields.Command.set(final_to_delete.ids)],
+                    'default_message': message + _("\nDo you want to proceed with deleting the empty folders?"),
+                }
+            }
+
+        # No untouchable folders in selection, delete everything selected
+        if final_to_delete:
+            self.write({
+                'folder_structure_ids': [fields.Command.unlink(line.id) for line in final_to_delete]
+            })
+        return {'type': 'ir.actions.client', 'tag': 'reload'}

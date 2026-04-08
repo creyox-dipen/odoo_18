@@ -32,25 +32,6 @@
                             </div>
                         </setting>
 
-                        <setting id="caldav_google_oauth_setting"
-                                 string="Google OAuth 2.0 Credentials"
-                                 help="Client ID and Secret for Google Calendar API."
-                                 invisible="not caldav_sync_enabled">
-                            <div class="content-group">
-                                <div class="row mt16">
-                                    <label for="caldav_google_client_id" class="col-lg-3 o_light_label"/>
-                                    <field name="caldav_google_client_id" class="col-lg-9"/>
-                                </div>
-                                <div class="row">
-                                    <label for="caldav_google_client_secret" class="col-lg-3 o_light_label"/>
-                                    <field name="caldav_google_client_secret" password="True" class="col-lg-9"/>
-                                </div>
-                                <div class="text-muted mt8">
-                                    Authorized Redirect URI: <code class="bg-light">/caldav/google/callback</code>
-                                </div>
-                            </div>
-                        </setting>
-
                     </block>
 
                 </app>

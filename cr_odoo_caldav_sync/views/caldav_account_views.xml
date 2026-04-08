@@ -84,6 +84,14 @@
                                    placeholder="https://apidata.googleusercontent.com/caldav/v2/you@gmail.com/events/"
                                    widget="url"
                                    invisible="server_type != 'google'"/>
+                            <field name="google_client_id"
+                                   invisible="server_type != 'google'"/>
+                            <field name="google_client_secret"
+                                   password="True"
+                                   invisible="server_type != 'google'"/>
+                            <div class="text-muted mt8" invisible="server_type != 'google'">
+                                Authorized Redirect URI: <code class="bg-light">/caldav/google/callback</code>
+                            </div>
                             <field name="user_id"/>
                         </group>
                         <group string="Sync Options">

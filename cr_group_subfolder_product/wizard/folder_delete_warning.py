@@ -13,31 +13,30 @@ class CrFolderDeleteWarning(models.TransientModel):
 
     category_id = fields.Many2one('product.category', string='Category', required=True)
     line_ids = fields.Many2many('cr.category.folder.line', string='Lines to Delete')
-    message = fields.Char(
+    message = fields.Text(
         string='Warning Message',
-        default=lambda self: _(
-            'Some subfolders contain files. Do you want to continue or cancel?'
-        ),
         readonly=True,
     )
 
     def action_confirm(self):
         """
-        Perform the force deletion of the folder lines and their related folders.
+        Perform the deletion of the folder lines that were identified as empty.
         """
         self.ensure_one()
+        if not self.line_ids:
+            return {'type': 'ir.actions.act_window_close'}
+            
         category = self.category_id
         # Prepare deletion commands for the category
-        commands = [(2, line.id, 0) for line in self.line_ids]
+        commands = [fields.Command.unlink(line.id) for line in self.line_ids]
         
         # Perform write on category with force context
-        # This will trigger the ProductCategory.write logic which handles
-        # the documents.document deletion safely (or forcefully since we skip the check)
+        # We use cr_force_delete_lines=True because we already identified these as safe 
+        # to delete or we intend to delete them regardless of sub-logic.
         category.with_context(cr_force_delete_lines=True).write({
             'folder_structure_ids': commands
         })
 
-        # Return action to reload the category page
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',

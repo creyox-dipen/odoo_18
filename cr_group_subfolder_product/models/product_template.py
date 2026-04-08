@@ -36,13 +36,14 @@ class ProductTemplate(models.Model):
     )
 
     def _compute_folder_count(self):
-        """Count all documents (folders and files) linked to this product."""
+        """Count only the folder records linked to this product."""
         for product in self:
             product.folder_count = self.env['documents.document'].search_count([
                 ('res_model', '=', 'product.template'),
                 ('res_id', '=', product.id),
+                ('type', '=', 'folder'),
             ])
-
+    
 
     def action_view_product_folders(self):
         self.ensure_one()
