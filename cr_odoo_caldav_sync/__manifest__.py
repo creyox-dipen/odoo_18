@@ -60,6 +60,7 @@
     'depends': ['base', 'calendar'],
     'data': [
         'security/ir.model.access.csv',
+        'views/groups.xml',
         'data/ir_cron.xml',
         'views/caldav_account_views.xml',
         'views/caldav_sync_log_views.xml',

@@ -102,17 +102,14 @@
                     </group>
                     <group string="Sync Status" name="sync_status">
                         <field name="last_sync" readonly="1"/>
-                        <field name="last_ctag" readonly="1" string="Last CTag (internal)"/>
+                        <field name="last_ctag" readonly="1" string="Last CTag (internal)" invisible="1"/>
                         <field name="active"/>
                     </group>
                     <notebook>
                         <page string="Event Mappings" name="event_mappings">
                             <field name="event_map_ids" readonly="1">
                                 <list>
-                                    <field name="caldav_uid"/>
-                                    <field name="caldav_href"/>
-                                    <field name="caldav_etag"/>
-                                    <field name="event_id"/>
+                                    <field name="event_id" string="Event Name"/>
                                     <field name="last_odoo_write"/>
                                 </list>
                             </field>
