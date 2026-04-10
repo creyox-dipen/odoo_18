@@ -528,22 +528,43 @@ class CalDAVAccount(models.Model):
             # 409 Conflict or 412 Precondition Failed means the ETag we have is stale.
             # Zoho (and some other servers) bump the ETag silently when the event is
             # viewed or touched via the web UI, making our cached value outdated.
-            # Recovery: fetch the current ETag from the server and retry once without
-            # optimistic locking (no If-Match), so the PUT is accepted unconditionally.
+            # Google uses 412 for ETag mismatches and 409 for resource-state conflicts
+            # (e.g. stale ETag from our side). Both require a retry.
             error_str = str(exc)
-            if self.server_type == 'zoho' and ('409' in error_str or '412' in error_str) and etag:
+            is_etag_conflict = '409' in error_str or '412' in error_str
+
+            # --- GOOGLE: unconditional retry on 409/412 ---
+            # For Google, retrying with a fresh ETag can still fail if Google's
+            # internal state has changed. The safest approach is an unconditional
+            # PUT (no If-Match header), which removes the ETag constraint entirely.
+            if self.server_type == 'google' and is_etag_conflict and etag:
                 _logger.warning(
-                    'PUT %s returned ETag conflict (%s). Fetching fresh ETag and retrying.',
+                    '[GOOGLE] PUT %s returned %s — retrying with unconditional PUT (no If-Match).',
                     href,
                     '409' if '409' in error_str else '412',
                 )
                 try:
-                    # GET the resource to find the current server ETag
+                    return _attempt(None)  # None = no If-Match header = unconditional PUT
+                except Exception as retry_exc:
+                    _logger.error('[GOOGLE] Unconditional retry PUT %s also failed: %s', href, retry_exc)
+                    raise UserError(
+                        f'Google Calendar conflict could not be resolved for {href}. '
+                        f'Original error: {exc}. Retry error: {retry_exc}'
+                    ) from retry_exc
+
+            # --- ZOHO: retry with a freshly fetched ETag ---
+            if self.server_type == 'zoho' and is_etag_conflict and etag:
+                _logger.warning(
+                    '[ZOHO] PUT %s returned ETag conflict (%s). Fetching fresh ETag and retrying.',
+                    href,
+                    '409' if '409' in error_str else '412',
+                )
+                try:
                     fresh_etag, _ = self._fetch_ical_with_etag(href)
-                    _logger.info('Retrying PUT %s with fresh ETag=%r', href, fresh_etag)
+                    _logger.info('[ZOHO] Retrying PUT %s with fresh ETag=%r', href, fresh_etag)
                     return _attempt(fresh_etag)
                 except Exception as retry_exc:
-                    _logger.error('Retry PUT %s failed: %s', href, retry_exc)
+                    _logger.error('[ZOHO] Retry PUT %s failed: %s', href, retry_exc)
                     raise UserError(
                         f'CalDAV sync conflict could not be resolved for {href}. '
                         f'Original error: {exc}. Retry error: {retry_exc}'

@@ -126,7 +126,7 @@ class CalDAVSyncService(models.AbstractModel):
             if account.sync_direction in ('bidirectional', 'odoo_to_caldav'):
                 _logger.debug('Pushing changes to CalDAV for account %s.', account.name)
                 pushed, push_failed, push_details = self._push_odoo_changes(account, skip_ids=pulled_event_ids)
-                stats_log['pushed'] = pushed
+                stats_log['pushed'] += pushed
                 stats_log['failed'] += push_failed
                 if push_details:
                     stats_log['details'] += f"--- PUSH ERRORS ---\n{push_details}\n"
@@ -294,9 +294,23 @@ class CalDAVSyncService(models.AbstractModel):
         if account.server_type == 'zoho':
             try:
                 with self.env.cr.savepoint():
-                    self._push_zoho_occurrence_overrides(account, skip_ids=skip_ids)
+                    zoho_pushed = self._push_zoho_occurrence_overrides(account, skip_ids=skip_ids)
+                    pushed += (zoho_pushed or 0)
             except Exception as e:
                 _logger.warning('[ZOHO] Occurrence override push failed: %s', e, exc_info=True)
+
+        # GOOGLE ONLY: Detect modified individual occurrences and push them as
+        # RECURRENCE-ID overrides embedded in the base .ics.
+        # Without this, editing any occurrence in Odoo either pushes the full RRULE
+        # (causing all Google occurrences to be overwritten) or does nothing at all
+        # (for non-base occurrences that are never in the main push candidates list).
+        if account.server_type == 'google':
+            try:
+                with self.env.cr.savepoint():
+                    google_pushed = self._push_google_occurrence_overrides(account, skip_ids=skip_ids)
+                    pushed += (google_pushed or 0)
+            except Exception as e:
+                _logger.warning('[GOOGLE] Occurrence override push failed: %s', e, exc_info=True)
 
         _logger.info(
             'Push candidates for account %s: %s event(s) — non-recurring=%s, recurring_base=%s',
@@ -323,6 +337,16 @@ class CalDAVSyncService(models.AbstractModel):
             # Only allow initial push (no existing_map) to create the series.
             if account.server_type in ('icloud', 'zoho') and event.recurrence_id and existing_map:
                 continue
+
+            # GOOGLE ONLY: Skip re-pushing the base RRULE .ics for already-synced
+            # recurring series. Occurrence edits are pushed as RECURRENCE-ID overrides
+            # by _push_google_occurrence_overrides (called above).
+            # EXCEPTION: if this event is in google_force_push_ids (an EXDATE was added
+            # because an occurrence was deleted), allow the base RRULE push so Google
+            # hides the deleted occurrence.
+            if account.server_type == 'google' and event.recurrence_id and existing_map:
+                if event.id not in google_force_push_ids:
+                    continue
             # Determine if event is new to CalDAV or was modified since last push.
             # For Google: force-push if _detect_google_archived_occurrences flagged this
             # event (ORM cache may hold stale last_odoo_write).
@@ -440,7 +464,16 @@ class CalDAVSyncService(models.AbstractModel):
                         base_event.id, orphaned_map.caldav_uid,
                     )
 
-                # Transfer the orphaned map to the new (current) base event
+                # Transfer the orphaned map to the new (current) base event.
+                # If the new base already has an override map, unlink it first to avoid conflicts.
+                existing_occ_map = self.env['caldav.event.map'].sudo().search([
+                    ('account_id', '=', account.id),
+                    ('event_id', '=', base_event.id),
+                    ('id', '!=', orphaned_map.id),
+                ])
+                if existing_occ_map:
+                    existing_occ_map.sudo().unlink()
+
                 existing_ex = orphaned_map.google_exdates or ''
                 ex_list = set(d for d in existing_ex.split(',') if d)
                 if old_base_start_iso:
@@ -451,7 +484,6 @@ class CalDAVSyncService(models.AbstractModel):
                     'google_exdates': ','.join(sorted(ex_list)),
                     'last_odoo_write': False,  # Force re-push with EXDATE
                     # Clear stale ETag so PUT is unconditional (avoids 412 errors).
-                    # The old ETag may be stale if Google updated its representation.
                     'caldav_etag': False,
                 })
                 _logger.info(
@@ -539,6 +571,27 @@ class CalDAVSyncService(models.AbstractModel):
             )
         new_etag = account._put_ical(href, ical_str, etag=old_etag)
         _logger.debug('Push successful; new ETag=%s', new_etag)
+
+        # GOOGLE ONLY: The ETag returned by PUT differs from what Google's REPORT
+        # returns on the next sync cycle (Google re-processes RECURRENCE-ID VEVENTs
+        # and bumps the resource ETag internally). Fetching the actual server ETag
+        # here ensures the stored value matches what REPORT will return, preventing
+        # a spurious "1 pulled" on every re-sync with no changes.
+        if account.server_type == 'google':
+            try:
+                fresh_etag, _ = account._fetch_ical_with_etag(href)
+                if fresh_etag:
+                    _logger.debug(
+                        '[GOOGLE] Reconciling ETag after push for "%s": PUT returned %r, '
+                        'server REPORT will return %r — storing fresh ETag.',
+                        event.name, new_etag, fresh_etag,
+                    )
+                    new_etag = fresh_etag
+            except Exception as _fe:
+                _logger.debug(
+                    '[GOOGLE] Could not fetch fresh ETag after push for "%s": %s',
+                    event.name, _fe,
+                )
 
         # ZOHO ONLY: Store a normalized content hash instead of the raw Zoho ETag.
         # Root cause: Zoho's PROPFIND returns a different (unstable) ETag on every
@@ -1020,6 +1073,147 @@ class CalDAVSyncService(models.AbstractModel):
                 )
 
     @api.model
+    def _push_google_occurrence_overrides(self, account, skip_ids=None):
+        """Push modified individual occurrences to Google as RECURRENCE-ID overrides.
+
+        Google Calendar supports RFC 5545 RECURRENCE-ID which allows a single occurrence
+        of a recurring series to be overridden without affecting other occurrences. This
+        is done by embedding a separate VEVENT with RECURRENCE-ID in the same .ics file
+        that already contains the base VEVENT with RRULE.
+
+        Without this mechanism:
+        - Editing the base occurrence pushed the full RRULE, causing Google to regenerate
+          ALL occurrences (overwriting any individual differences).
+        - Editing any other occurrence had no effect in Google at all (non-base occurrences
+          are not in the main push candidate list).
+
+        Only called for Google accounts (account.server_type == 'google'). Has no effect
+        on Zoho, iCloud, or other server types.
+
+        :param caldav.account account: Target Google CalDAV account.
+        :param set skip_ids: Event IDs to skip (recently pulled from Google).
+        :return: Number of series successfully updated.
+        :rtype: int
+        """
+        skip_ids = skip_ids or set()
+        owner_partner_id = account.user_id.partner_id.id
+        pushed_count = 0
+
+        all_recurrences = self.env['calendar.recurrence'].sudo().search([])
+        for recurrence in all_recurrences:
+            base_event = recurrence.base_event_id
+            if not base_event or not base_event.active:
+                continue
+
+            # Only process series where the account owner is an attendee
+            if not any(att.partner_id.id == owner_partner_id for att in base_event.attendee_ids):
+                continue
+
+            # Find the map for the base event of this series
+            base_map = self.env['caldav.event.map'].sudo().search([
+                ('account_id', '=', account.id),
+                ('event_id', '=', base_event.id),
+            ], limit=1)
+            if not base_map:
+                continue  # Series not yet synced to Google
+
+            # Find non-base occurrences that were modified since last push
+            occurrences = self.env['calendar.event'].sudo().search([
+                ('recurrence_id', '=', recurrence.id),
+                ('active', '=', True),
+                ('id', '!=', base_event.id),
+            ])
+
+            modified_occs = []
+            for occ in occurrences:
+                if occ.id in skip_ids:
+                    continue
+                # Check if this occurrence has its own override map
+                occ_map = self.env['caldav.event.map'].sudo().search([
+                    ('account_id', '=', account.id),
+                    ('event_id', '=', occ.id),
+                ], limit=1)
+                if occ_map:
+                    if occ_map.last_odoo_write and occ.write_date \
+                            and occ.write_date <= occ_map.last_odoo_write:
+                        continue  # No change since last override push
+                else:
+                    if base_map.last_odoo_write and occ.write_date \
+                            and occ.write_date <= base_map.last_odoo_write:
+                        continue  # No change since base was last pushed
+                modified_occs.append((occ, occ_map))
+
+            # Also handle the case where the BASE event (first occurrence) itself was
+            # modified. The main push loop skips already-synced Google recurring bases,
+            # so base occurrence edits must be handled here via RECURRENCE-ID override
+            # — exactly like iCloud and Zoho do.
+            if base_event.id not in skip_ids:
+                if base_map.last_odoo_write and base_event.write_date and \
+                        base_event.write_date > base_map.last_odoo_write:
+                    _logger.info(
+                        '[GOOGLE] Base event "%s" (id=%s) modified since last push '
+                        '(write_date=%s > last_push=%s) — queuing as RECURRENCE-ID override.',
+                        base_event.name, base_event.id,
+                        base_event.write_date, base_map.last_odoo_write,
+                    )
+                    modified_occs.append((base_event, base_map))
+
+            if not modified_occs:
+                continue
+
+            try:
+                with self.env.cr.savepoint():
+                    # Fetch the current .ics from Google (contains base VEVENT + any existing overrides)
+                    current_etag, current_ical = account._fetch_ical_with_etag(base_map.caldav_href)
+
+                    # Build updated .ics: base VEVENT + RECURRENCE-ID VEVENTs for each modified occ
+                    updated_ical = self._build_google_ical_with_overrides(
+                        current_ical, base_event, modified_occs, account
+                    )
+
+                    _logger.info(
+                        '[GOOGLE][PUSH-OVERRIDE] iCal for series "%s":\n%s',
+                        base_event.name, updated_ical,
+                    )
+
+                    # PUT the updated .ics back to Google
+                    new_etag = account._put_ical(base_map.caldav_href, updated_ical, etag=current_etag)
+
+                    base_map.sudo().write({
+                        'caldav_etag': new_etag or current_etag,
+                        'last_odoo_write': base_event.write_date,
+                    })
+                    pushed_count += 1
+                    _logger.info('[GOOGLE] Pushed RECURRENCE-ID overrides for series "%s".', base_event.name)
+
+                    # Update last_odoo_write for each modified occurrence to prevent re-push.
+                    for occ, occ_map in modified_occs:
+                        if occ_map:
+                            occ_map.sudo().write({'last_odoo_write': occ.write_date})
+                        else:
+                            existing_occ_map = self.env['caldav.event.map'].sudo().search([
+                                ('account_id', '=', account.id),
+                                ('event_id', '=', occ.id),
+                            ], limit=1)
+                            if existing_occ_map:
+                                existing_occ_map.sudo().write({'last_odoo_write': occ.write_date})
+                            else:
+                                # Create a lightweight tracking map for this occurrence.
+                                self.env['caldav.event.map'].sudo().create({
+                                    'account_id': account.id,
+                                    'event_id': occ.id,
+                                    'caldav_uid': f"{base_event.caldav_uid}__occ_{occ.id}",
+                                    'caldav_href': base_map.caldav_href,
+                                    'caldav_etag': new_etag or current_etag,
+                                    'last_odoo_write': occ.write_date,
+                                })
+            except Exception as e:
+                _logger.warning(
+                    '[GOOGLE] Override push failed for series "%s": %s', base_event.name, e, exc_info=True
+                )
+        return pushed_count
+
+    @api.model
     def _build_zoho_ical_with_overrides(self, current_ical, base_event, modified_occs, account):
         """Build an iCal string containing the base VEVENT plus Zoho RECURRENCE-ID overrides.
 
@@ -1130,6 +1324,117 @@ class CalDAVSyncService(models.AbstractModel):
             new_cal.add(vevent)
             _logger.info(
                 '[ZOHO] Built RECURRENCE-ID override for occurrence "%s" (id=%s, start=%s).',
+                occ.name, occ.id, occ.start,
+            )
+
+        return new_cal.serialize()
+
+    @api.model
+    def _build_google_ical_with_overrides(self, current_ical, base_event, modified_occs, account):
+        """Build an iCal string containing the base VEVENT plus Google RECURRENCE-ID overrides.
+
+        Fetches the current .ics from Google, preserves the base VEVENT (with its RRULE,
+        EXDATEs, etc.) and any existing RECURRENCE-ID VEVENTs not being updated, then
+        appends fresh RECURRENCE-ID VEVENTs for each modified occurrence.
+
+        Only called for Google accounts (account.server_type == 'google'). Has no effect
+        on Zoho, iCloud, or other server types.
+
+        :param str current_ical: The current .ics text from Google (contains base VEVENT).
+        :param calendar.event base_event: The base Odoo recurring event.
+        :param list modified_occs: List of (occurrence, map_or_None) tuples.
+        :param caldav.account account: The Google CalDAV account.
+        :return: Updated iCal string.
+        :rtype: str
+        """
+        if vobject is None:
+            raise RuntimeError('vobject is required for Google iCal override generation.')
+
+        # Parse the current .ics to preserve the base VEVENT with RRULE, EXDATEs, etc.
+        cal = vobject.readOne(current_ical)
+
+        # Collect the current start datetimes for occurrences being updated in this batch.
+        # Existing RECURRENCE-ID overrides for these slots will be replaced.
+        updating_starts = set()
+        for occ, _ in modified_occs:
+            if occ.allday:
+                updating_starts.add(occ.start.date())
+            else:
+                s = _to_utc_naive(occ.start)
+                updating_starts.add(s.replace(tzinfo=None))
+
+        # Rebuild calendar: keep VTIMEZONE + base VEVENT + non-updated RECURRENCE-ID VEVENTs
+        components_to_keep = []
+        for component in cal.components():
+            if component.name == 'VEVENT' and hasattr(component, 'recurrence_id'):
+                rid_val = component.recurrence_id.value
+                if hasattr(rid_val, 'tzinfo') and rid_val.tzinfo is not None:
+                    rid_val = rid_val.astimezone(timezone.utc).replace(tzinfo=None)
+                elif hasattr(rid_val, 'date') and not isinstance(rid_val, date):
+                    rid_val = rid_val.replace(tzinfo=None)
+                if rid_val in updating_starts:
+                    continue  # Will be replaced with a fresh override below
+            components_to_keep.append(component)
+
+        # Rebuild the VCALENDAR with only the non-replaced components
+        new_cal = vobject.iCalendar()
+        new_cal.add('prodid').value = '-//Creyox Technologies//CalDAV Sync//EN'
+        new_cal.add('version').value = '2.0'
+        for comp in components_to_keep:
+            new_cal.add(comp)
+
+        # Append a RECURRENCE-ID VEVENT for each modified occurrence
+        uid = base_event.caldav_uid
+        for occ, _ in modified_occs:
+            vevent = vobject.newFromBehavior('vevent')
+            vevent.add('uid').value = uid
+            vevent.add('dtstamp').value = datetime.now(pytz.utc)
+            vevent.add('summary').value = occ.name or ''
+
+            # RECURRENCE-ID — identifies which occurrence this override applies to.
+            # Must match the ORIGINAL scheduled start of this occurrence slot in the RRULE.
+            if occ.allday:
+                rid = vevent.add('recurrence-id')
+                rid.value = occ.start.date()
+            else:
+                start_utc = _to_utc_naive(occ.start)
+                rid = vevent.add('recurrence-id')
+                rid.value = datetime(
+                    start_utc.year, start_utc.month, start_utc.day,
+                    start_utc.hour, start_utc.minute, start_utc.second,
+                    tzinfo=pytz.utc,
+                )
+
+            # DTSTART / DTEND for the override occurrence
+            if occ.allday:
+                vevent.add('dtstart').value = occ.start.date()
+                vevent.add('dtend').value = occ.stop.date() + timedelta(days=1)
+            else:
+                start_utc = _to_utc_naive(occ.start)
+                stop_utc = _to_utc_naive(occ.stop)
+                vevent.add('dtstart').value = datetime(
+                    start_utc.year, start_utc.month, start_utc.day,
+                    start_utc.hour, start_utc.minute, start_utc.second,
+                    tzinfo=pytz.utc,
+                )
+                vevent.add('dtend').value = datetime(
+                    stop_utc.year, stop_utc.month, stop_utc.day,
+                    stop_utc.hour, stop_utc.minute, stop_utc.second,
+                    tzinfo=pytz.utc,
+                )
+
+            if occ.location:
+                vevent.add('location').value = occ.location
+
+            if occ.description:
+                from odoo.tools import html2plaintext
+                plain = html2plaintext(occ.description).strip()
+                if plain:
+                    vevent.add('description').value = plain
+
+            new_cal.add(vevent)
+            _logger.info(
+                '[GOOGLE] Built RECURRENCE-ID override for occurrence "%s" (id=%s, start=%s).',
                 occ.name, occ.id, occ.start,
             )
 
@@ -1282,15 +1587,15 @@ class CalDAVSyncService(models.AbstractModel):
         existing_maps = {}
         for m in all_maps:
             href_key = unquote(m.caldav_href)
-            # ZOHO ONLY: Synthetic per-occurrence maps (created by _push_zoho_occurrence_overrides
-            # to track individual occurrence push state) share the same caldav_href as the base
-            # map. If they appear in existing_maps they overwrite the correct base_map entry,
-            # causing the pull to use the wrong event_id, overwrite occurrence edits with base
-            # VEVENT data, and archive the wrong events during deletion checks.
-            # Fix: for Zoho accounts, exclude maps whose caldav_uid contains '__occ_'.
-            # Other servers (Google, iCloud, Radicale, etc.) never create such maps, so this
-            # check is completely bypassed for them — zero impact on non-Zoho servers.
-            if account.server_type == 'zoho' and '__occ_' in (m.caldav_uid or ''):
+            # ZOHO / GOOGLE ONLY: Synthetic per-occurrence maps (created by
+            # _push_zoho_occurrence_overrides / _push_google_occurrence_overrides
+            # to track individual occurrence push state) share the same caldav_href
+            # as the base map. If they appear in existing_maps they overwrite the
+            # correct base_map entry, causing the pull to use the wrong event_id,
+            # overwrite occurrence edits with base VEVENT data, and archive the
+            # wrong events during deletion checks.
+            # Fix: exclude maps whose caldav_uid contains '__occ_'.
+            if account.server_type in ('zoho', 'google') and '__occ_' in (m.caldav_uid or ''):
                 continue
             # If multiple maps share a href, keep the first (defensive guard).
             if href_key not in existing_maps:
@@ -1433,6 +1738,24 @@ class CalDAVSyncService(models.AbstractModel):
                 if existing.caldav_etag == server_etag:
                     continue  # ETag unchanged on server
 
+                # GOOGLE ONLY: Google's REPORT ETag is unstable — it can differ from both
+                # the PUT response ETag and the GET ETag for the same unchanged resource.
+                # If the Odoo event has not been modified since the last push
+                # (write_date <= last_odoo_write), the ETag mismatch is a Google-side
+                # artefact. Update the stored ETag to the current REPORT value and skip
+                # the pull entirely, preventing a spurious "1 pulled" on every re-sync.
+                if account.server_type == 'google' and existing and existing.event_id:
+                    last_push = existing.last_odoo_write
+                    if last_push and existing.event_id.write_date and \
+                            existing.event_id.write_date <= last_push:
+                        _logger.debug(
+                            '[GOOGLE] ETag mismatch but no local changes for %s '
+                            '(write_date=%s <= last_push=%s) — updating stored ETag, skipping pull.',
+                            href, existing.event_id.write_date, last_push,
+                        )
+                        existing.sudo().write({'caldav_etag': server_etag})
+                        continue
+
                 # Skip archived events (push phase will handle server-side deletion).
                 if existing.event_id and not existing.event_id.active:
                     _logger.debug(
@@ -1444,12 +1767,22 @@ class CalDAVSyncService(models.AbstractModel):
                 # Prioritize Odoo's local changes to avoid overwriting unsaved edits.
                 if existing.event_id:
                     last_push = existing.last_odoo_write
-                    if last_push and existing.event_id.write_date and \
-                            existing.event_id.write_date > last_push:
+                    # GOOGLE: use strict > (same as other servers).
+                    # By the time we reach here, existing.caldav_etag != server_etag
+                    # (checked above at line 1717), meaning Google truly has new content.
+                    # We must pull that content — e.g. when a single event is upgraded to
+                    # a recurring series on Google, the ETag changes and we MUST pull it.
+                    # We only skip if Odoo itself has NEWER pending edits (write_date > last_push),
+                    # meaning the user edited something locally that hasn't been pushed yet.
+                    # Using >= here was wrong: immediately after a push write_date == last_push,
+                    # so >= would always skip, permanently blocking pulls for that event.
+                    _write_date = existing.event_id.write_date
+                    _pending_local = _write_date > last_push
+                    if last_push and _write_date and _pending_local:
                         _logger.info(
                             'Skipping pull for %s because Odoo has a pending local '
                             'change (write_date=%s, last_push=%s).',
-                            href, existing.event_id.write_date, last_push,
+                            href, _write_date, last_push,
                         )
                         # Update ETag so the subsequent push uses the correct If-Match.
                         existing.sudo().write({'caldav_etag': server_etag})
@@ -1682,26 +2015,53 @@ class CalDAVSyncService(models.AbstractModel):
                         vals.pop('rrule', None)
                         vals.pop('recurrence_update', None)
                         event.with_context(**ctx_kwargs).write(vals)
+
+                elif account.server_type == 'google' and vals.get('rrule'):
+                    # GOOGLE ONLY: Detect RRULE changes (e.g. Daily → Weekly)
+                    incoming_rrule = (vals.get('rrule') or '').strip().upper()
+                    current_rrule = (event.recurrence_id.rrule or '').strip().upper()
+                    if incoming_rrule and incoming_rrule != current_rrule:
+                        _logger.info(
+                            '[GOOGLE][PULL] RRULE changed for event "%s" (id=%s): '
+                            '"%s" → "%s". Re-applying.',
+                            event.name, event.id, current_rrule, incoming_rrule,
+                        )
+                        # Remap mo -> mon etc for Odoo 18
+                        _remap = {'mo': 'mon', 'tu': 'tue', 'we': 'wed', 'th': 'thu', 'fr': 'fri', 'sa': 'sat', 'su': 'sun'}
+                        update_vals = {}
+                        for _k, _v in vals.items():
+                            if _k == 'rrule': continue
+                            update_vals[_remap.get(_k, _k)] = _v
+                        
+                        # Reset weekdays
+                        for _d in _remap.values(): update_vals[_d] = False
+                        
+                        # Fallback BYDAY parsing
+                        import re as _re
+                        _bdm = _re.search(r'BYDAY=([^;]+)', incoming_rrule, _re.IGNORECASE)
+                        if _bdm:
+                            for _dt in _bdm.group(1).split(','):
+                                _dc = _dt.strip().upper()[-2:]
+                                if _dc in {'MO':'mon','TU':'tue','WE':'wed','TH':'thu','FR':'fri','SA':'sat','SU':'sun'}:
+                                    update_vals[{'MO':'mon','TU':'tue','WE':'wed','TH':'thu','FR':'fri','SA':'sat','SU':'sun'}[_dc]] = True
+
+                        update_vals['recurrence_update'] = 'all_events'
+                        event.with_context(**ctx_kwargs).write(update_vals)
+                    else:
+                        vals.pop('rrule', None)
+                        vals.pop('recurrence_update', None)
+                        event.with_context(**ctx_kwargs).write(vals)
+
                 else:
-                    # Non-Zoho servers: Odoo is master; discard any incoming RRULE.
+                    # Other servers: Odoo is master; discard any incoming RRULE.
                     vals.pop('rrule', None)
                     vals.pop('recurrence_update', None)
                     # Write non-RRULE field changes (name, start, stop, description, etc.)
                     event.with_context(**ctx_kwargs).write(vals)
+
             elif vals.get('rrule') and account.server_type == 'zoho':
                 # ZOHO ONLY: Non-recurring event gaining an RRULE from the server
                 # (the user converted a single Zoho event to recurring).
-                #
-                # The recurrence fields from calendar.recurrence._rrule_parse
-                # (rrule_type, count, end_type, interval, etc.) belong to the
-                # calendar.recurrence model — they are NOT writable on calendar.event.
-                # Passing them through event.write() silently drops them, leaving the
-                # recurrence with default values (e.g. count=1, end_type='forever').
-                #
-                # Two-step approach:
-                #   1. Write non-recurrence fields + recurrency=True to the event.
-                #   2. Odoo auto-creates calendar.recurrence; write parsed fields onto it.
-                #   3. Call _apply_recurrence() to generate all occurrences correctly.
                 _recurrence_field_names = {
                     'rrule_type', 'interval', 'count', 'end_type', 'until',
                     'mo', 'tu', 'we', 'th', 'fr', 'sa', 'su',
@@ -1710,8 +2070,6 @@ class CalDAVSyncService(models.AbstractModel):
                 recurrence_create_vals = {
                     k: v for k, v in vals.items() if k in _recurrence_field_names
                 }
-                # Strip recurrence-specific fields and the raw rrule string.
-                # rrule is a computed field on calendar.event and cannot be written directly.
                 non_recurrence_vals = {
                     k: v for k, v in vals.items()
                     if k not in _recurrence_field_names and k != 'rrule'
@@ -1749,6 +2107,60 @@ class CalDAVSyncService(models.AbstractModel):
                         'write(recurrency=True) — Odoo did not create the recurrence.',
                         event.name, event.id,
                     )
+
+            elif vals.get('rrule') and account.server_type == 'google':
+                # GOOGLE ONLY: Single event gaining an RRULE from Google Calendar
+                # (user converted a single event to a recurring series).
+                #
+                # WHY NOT two-step (write recurrency=True, then write to recurrence_id)?
+                # ─────────────────────────────────────────────────────────────────────
+                # Step 1 writes only basic fields + recurrency=True.  Odoo calls
+                # _apply_recurrence_values({}) with an EMPTY dict → no-op → no
+                # recurrence record is created.  So event.recurrence_id is still None,
+                # the guard blocks the second write, and count stays at default (1).
+                #
+                # WHY NOT recurrence_update='all_events'?
+                # ─────────────────────────────────────────────────────────────────────
+                # Odoo's write(): update_recurrence = ('all_events' in setting)
+                #                                     AND self.recurrence_id
+                # For a single event (no recurrence_id yet), self.recurrence_id is
+                # False → update_recurrence=False → _apply_recurrence_values() is
+                # ALSO skipped → count stays 1.
+                #
+                # CORRECT FIX: Write ALL vals in a SINGLE call WITHOUT recurrence_update.
+                # Odoo's write() then:
+                #   1. Pops recurrence fields (count, rrule_type, mon, …) into
+                #      recurrence_values.
+                #   2. recurrence_update_setting is None (not in 'self_only'/'all_events')
+                #      → _apply_recurrence_values(recurrence_values) IS called.
+                #   3. Recurrence record created; _apply_recurrence() generates all
+                #      occurrences with the correct count.
+                #
+                # Field-name remapping: _rrule_parse returns RFC 5545 abbreviations
+                # ('mo','tu','we'…) but Odoo 18 calendar.event stores them as
+                # 'mon','tue','wed'…  Remap before writing.
+                _weekday_remap = {
+                    'mo': 'mon', 'tu': 'tue', 'we': 'wed',
+                    'th': 'thu', 'fr': 'fri', 'sa': 'sat', 'su': 'sun',
+                }
+                write_vals = {}
+                for _k, _v in vals.items():
+                    if _k == 'rrule':
+                        continue  # computed/read-only field on calendar.event
+                    write_vals[_weekday_remap.get(_k, _k)] = _v
+
+                _logger.info(
+                    '[GOOGLE][PULL] Converting event "%s" (id=%s) to recurring '
+                    '(single call, no recurrence_update). '
+                    'recurrency=%s count=%s rrule_type=%s',
+                    event.name, event.id,
+                    write_vals.get('recurrency'),
+                    write_vals.get('count'),
+                    write_vals.get('rrule_type'),
+                )
+                event.with_context(**ctx_kwargs).write(write_vals)
+
+
             elif vals.get('rrule'):
                 # All other servers (Google, iCloud, Radicale, Baïkal, Nextcloud, etc.):
                 # original behaviour — set recurrence_update so Odoo applies the RRULE.
@@ -2060,6 +2472,101 @@ class CalDAVSyncService(models.AbstractModel):
         if rrule_value:
             _logger.info('Adding RRULE to iCal for event "%s": %s', event.name, rrule_value)
             vevent.add('rrule').value = rrule_value
+
+        # GOOGLE ONLY: Handle occurrence overrides (Inheritance Bug Fix).
+        # Ensures that every active occurrence in Odoo has its own explicit RECURRENCE-ID
+        # override block on Google. This prevents occurrences from "inheriting" values
+        # from the (possibly deleted/placeholder) master series VEVENT.
+        if account.server_type == 'google' and event.recurrence_id:
+            uid = event.caldav_uid or str(uuid.uuid4())
+
+            # Build set of EXDATE datetimes (naive UTC) — occurrences marked for deletion.
+            # These must NOT get a RECURRENCE-ID override block, otherwise Google
+            # keeps the override and ignores the EXDATE, causing remaining
+            # occurrences to inherit the deleted occurrence's field values.
+            excluded_starts = set()
+            if existing_map and existing_map.google_exdates:
+                for iso_dt in existing_map.google_exdates.split(','):
+                    iso_dt = iso_dt.strip()
+                    if iso_dt:
+                        try:
+                            excluded_starts.add(
+                                datetime.strptime(iso_dt, '%Y%m%dT%H%M%SZ')
+                            )
+                        except ValueError:
+                            pass
+
+            # Search for ALL active occurrences of this recurrence
+            all_occurrences = self.env['calendar.event'].sudo().search([
+                ('recurrence_id', '=', event.recurrence_id.id),
+                ('active', '=', True),
+            ])
+            for occ in all_occurrences:
+                # Skip occurrences being excluded via EXDATE — adding both
+                # EXDATE and RECURRENCE-ID for the same datetime causes Google
+                # to keep the override and ignore the EXDATE entirely.
+                occ_start_naive = _to_utc_naive(occ.start)
+                if occ_start_naive in excluded_starts:
+                    continue
+
+                # The occurrence whose start matches original_start is already
+                # represented by the main VEVENT DTSTART block — BUT only when
+                # original_start was NOT shifted back to a deleted occurrence's date.
+                # If original_start WAS shifted (min_ex < event.start), then
+                # event.start (the current Odoo base) differs from original_start,
+                # meaning the main VEVENT represents the DELETED slot, not this
+                # occurrence. In that case we MUST emit a RECURRENCE-ID override
+                # for the current base occurrence too, otherwise Google has no
+                # explicit data for it and falls back to the master VEVENT values.
+                original_start_naive = _to_utc_naive(original_start)
+                event_start_naive = _to_utc_naive(event.start)
+                original_was_shifted = (original_start_naive != event_start_naive)
+
+                if not original_was_shifted and occ_start_naive == original_start_naive:
+                    # Normal case: main VEVENT already covers this slot.
+                    continue
+
+                # Build the RECURRENCE-ID VEVENT block for this occurrence.
+                ovr = cal.add('vevent')
+                ovr.add('uid').value = uid
+                ovr.add('dtstamp').value = datetime.now(pytz.utc)
+                ovr.add('summary').value = occ.name or ''
+
+                if occ.allday:
+                    rid = ovr.add('recurrence-id')
+                    rid.value = occ.start.date()
+                else:
+                    rid = ovr.add('recurrence-id')
+                    rid.value = datetime(
+                        occ_start_naive.year, occ_start_naive.month, occ_start_naive.day,
+                        occ_start_naive.hour, occ_start_naive.minute, occ_start_naive.second,
+                        tzinfo=pytz.utc,
+                    )
+
+                # DTSTART / DTEND for this specific occurrence
+                if occ.allday:
+                    ovr.add('dtstart').value = occ.start.date()
+                    ovr.add('dtend').value = occ.stop.date() + timedelta(days=1)
+                else:
+                    stop_naive = _to_utc_naive(occ.stop)
+                    ovr.add('dtstart').value = datetime(
+                        occ_start_naive.year, occ_start_naive.month, occ_start_naive.day,
+                        occ_start_naive.hour, occ_start_naive.minute, occ_start_naive.second,
+                        tzinfo=pytz.utc,
+                    )
+                    ovr.add('dtend').value = datetime(
+                        stop_naive.year, stop_naive.month, stop_naive.day,
+                        stop_naive.hour, stop_naive.minute, stop_naive.second,
+                        tzinfo=pytz.utc,
+                    )
+
+                if occ.location:
+                    ovr.add('location').value = occ.location
+                if occ.description:
+                    from odoo.tools import html2plaintext
+                    plain = html2plaintext(occ.description or '').strip()
+                    if plain:
+                        ovr.add('description').value = plain
 
         # ORGANIZER + ATTENDEE — only if there are real attendees (not just the owner)
         other_partners = event.partner_ids.filtered(
