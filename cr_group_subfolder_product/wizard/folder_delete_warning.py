@@ -20,22 +20,61 @@ class CrFolderDeleteWarning(models.TransientModel):
 
     def action_confirm(self):
         """
-        Perform the deletion of the folder lines that were identified as empty.
+        Perform selective deletion:
+        - Delete empty folders from individual products.
+        - Preserve folders that contain documents.
+        - Only delete the template line if ALL its folders were deleted across all products.
         """
         self.ensure_one()
-        if not self.line_ids:
+        if not self.line_ids or self.message and "skipped" in self.message:
             return {'type': 'ir.actions.act_window_close'}
             
         category = self.category_id
-        # Prepare deletion commands for the category
-        commands = [fields.Command.unlink(line.id) for line in self.line_ids]
+        lines_skipped = []
         
-        # Perform write on category with force context
-        # We use cr_force_delete_lines=True because we already identified these as safe 
-        # to delete or we intend to delete them regardless of sub-logic.
-        category.with_context(cr_force_delete_lines=True).write({
-            'folder_structure_ids': commands
-        })
+        # We process lines to check contents across all products
+        # Sorting by sequence length (depth) descending ensures children are handled before parents
+        sorted_lines = self.line_ids.sorted(key=lambda l: len(l.sequence.split('.')), reverse=True)
+        
+        Document = self.env['documents.document'].sudo()
+        
+        for line in sorted_lines:
+            # Find all product folders linked to this template line
+            folders = Document.search([
+                ('cr_category_folder_line_id', '=', line.id),
+            ])
+            
+            for folder in folders:
+                if not folder._cr_has_documents():
+                    # Folder is empty, safe to delete for this product
+                    folder.unlink()
+            
+            # After processing all products, check if the line can be removed from template
+            remaining_count = Document.search_count([
+                ('cr_category_folder_line_id', '=', line.id),
+            ])
+            
+            if remaining_count == 0:
+                # No product is using this folder anymore, delete from category structure
+                line.unlink()
+            else:
+                # Some products still have files here
+                lines_skipped.append(f"{line.name} ({line.sequence})")
+
+        if lines_skipped:
+            # Update message and clear line_ids to show 'Close' button only
+            self.write({
+                'message': _("There are items inside of the %s folder(s) in some products so it will be skipped.") % ", ".join(lines_skipped),
+                'line_ids': [fields.Command.clear()],
+            })
+            return {
+                'name': _("Deletion Information"),
+                'type': 'ir.actions.act_window',
+                'res_model': self._name,
+                'res_id': self.id,
+                'view_mode': 'form',
+                'target': 'new',
+            }
 
         return {
             'type': 'ir.actions.client',

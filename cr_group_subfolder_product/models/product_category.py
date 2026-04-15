@@ -134,8 +134,8 @@ class ProductCategory(models.Model):
         # 3. Calculate safe set for deletion
         final_to_delete = candidates - untouchable
 
-        # 4. Handle skips and redirection
-        if candidates & untouchable:
+        # 3. Handle skips and redirection
+        if candidates:
             folders_with_files = candidates.filtered(lambda l: l._cr_has_direct_documents())
             skipped_parents = (candidates & untouchable) - folders_with_files
             
@@ -150,32 +150,17 @@ class ProductCategory(models.Model):
             
             message = "\n".join(msg_parts)
 
-            if not final_to_delete:
-                # If everything selected was untouchable, just show info and stop
-                return {
-                    'name': _("Deletion Information"),
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'cr.folder.delete.warning',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'context': {
-                        'default_category_id': self.id,
-                        'default_message': message + _("\nNo other folder lines are available for deletion."),
-                        'default_line_ids': [],
-                    }
-                }
-
-            # Show warning wizard to confirm deletion of safe folders
+            # Show warning wizard to confirm selective deletion
             return {
-                'name': _("Deletion Warning"),
+                'name': _("Deletion Information"),
                 'type': 'ir.actions.act_window',
                 'res_model': 'cr.folder.delete.warning',
                 'view_mode': 'form',
                 'target': 'new',
                 'context': {
                     'default_category_id': self.id,
-                    'default_line_ids': [fields.Command.set(final_to_delete.ids)],
-                    'default_message': message + _("\nDo you want to proceed with deleting the empty folders?"),
+                    'default_line_ids': [fields.Command.set(candidates.ids)],
+                    'default_message': (message + _("\nDo you want to proceed? Empty folders will be deleted, while folders with items will be kept.")) if message else _("Are you sure you want to delete the selected empty folders?"),
                 }
             }
 
