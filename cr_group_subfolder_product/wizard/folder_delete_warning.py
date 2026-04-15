@@ -64,7 +64,7 @@ class CrFolderDeleteWarning(models.TransientModel):
         if lines_skipped:
             # Update message and clear line_ids to show 'Close' button only
             self.write({
-                'message': _("There are items inside of the %s folder(s) in some products so it will be skipped.") % ", ".join(lines_skipped),
+                'message': _("not all folder/sub folders were deleted."),
                 'line_ids': [fields.Command.clear()],
             })
             return {

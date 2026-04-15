@@ -141,12 +141,8 @@ class ProductCategory(models.Model):
             
             msg_parts = []
             if folders_with_files:
-                names_files = ", ".join([f"{l.name} ({l.sequence})" for l in folders_with_files])
-                msg_parts.append(_("The following folders specifically contain files: %s.") % names_files)
-            
-            if skipped_parents:
-                names_parents = ", ".join([f"{l.name} ({l.sequence})" for l in skipped_parents])
-                msg_parts.append(_("Additionally, the following folders will be skipped to preserve the hierarchy: %s.") % names_parents)
+                names_files = ", ".join([f"{l.name}" for l in folders_with_files])
+                msg_parts.append(_("there are items inside of the %s folder in some products") % names_files)
             
             message = "\n".join(msg_parts)
 
