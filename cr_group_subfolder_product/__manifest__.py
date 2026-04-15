@@ -22,6 +22,11 @@
         "views/product_category_views.xml",
         "views/product_template_views.xml",
     ],
+    "assets": {
+        "web.assets_frontend": [
+            "cr_group_subfolder_product/static/src/js/document_remove_filter.js",
+        ],
+    },
     "installable": True,
     "auto_install": False,
     "application": True,

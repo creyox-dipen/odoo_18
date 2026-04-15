@@ -266,6 +266,38 @@ class ProductTemplate(models.Model):
             if new_categ.folder_structure_ids:
                 self._cr_create_folder_structure(new_categ)
 
+    def _cr_get_base_folder(self):
+        """
+        Find the 'Products' folder inside the 'Company' folder (Workspace).
+        Prioritizes folders with no owner (owner_id=False) to ensure we target
+        the shared 'Company' section rather than a private folder in 'My Drive'.
+        """
+        Document = self.env['documents.document'].sudo()
+        
+        # 1. Search for 'Company' Workspace (top-level)
+        # We order by ID asc to find the oldest one, which is usually the system-created folder
+        company_workspace = Document.search([
+            ('type', '=', 'folder'),
+            ('name', '=', 'Company'),
+            ('folder_id', '=', False),
+        ], order='id asc', limit=1)
+        
+        if company_workspace:
+            # 2. Find 'Products' folder inside the Company workspace
+            products_folder = Document.search([
+                ('type', '=', 'folder'),
+                ('name', '=', 'Products'),
+                ('folder_id', '=', company_workspace.id)
+            ], order='id asc', limit=1)
+            return products_folder
+        
+        # 3. Final fallback: search for 'Products' as a top-level folder
+        return Document.search([
+            ('type', '=', 'folder'),
+            ('name', '=', 'Products'),
+            ('folder_id', '=', False),
+        ], order='id asc', limit=1)
+
     def _cr_create_folder_structure(self, categ):
         self.ensure_one()
         Document = self.env['documents.document']
@@ -279,16 +311,17 @@ class ProductTemplate(models.Model):
         ], limit=1)
     
         if not root_folder:
+            base_folder = self._cr_get_base_folder()
             root_folder = Document.sudo().create({
-                'name': self.name,
+                'name': self.default_code,
                 'type': 'folder',
                 'res_model': 'product.template',
                 'res_id': self.id,
-                'folder_id': False,
+                'folder_id': base_folder.id if base_folder else False,
                 'cr_is_product_root': True,
                 'access_internal': 'edit',
                 'access_via_link': 'none',
-                'owner_id': self.env.user.id,
+                'owner_id': self.env.user.id,  # Use current user instead of False (required field)
             })
     
         lines = categ.folder_structure_ids.sorted(key=lambda l: l.sequence)

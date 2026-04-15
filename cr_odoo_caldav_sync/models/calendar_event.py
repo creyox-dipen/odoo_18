@@ -30,6 +30,14 @@ class CalendarEvent(models.Model):
         help='UUID used as the iCal UID for this event. Generated automatically.',
     )
 
+    caldav_original_start = fields.Datetime(
+        string='CalDAV Original Start',
+        copy=False,
+        help='The original start datetime of this occurrence before it was modified. '
+             'Used as the RECURRENCE-ID in CalDAV sync to identify which occurrence '
+             'is being overridden.',
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         """Override create to auto-assign a CalDAV UID to every new event.
@@ -44,10 +52,12 @@ class CalendarEvent(models.Model):
         return super().create(vals_list)
 
     def write(self, values):
-        """Override write to auto-assign CalDAV UID if missing.
+        """Override write to auto-assign CalDAV UID if missing and track original start.
 
         Ensures events created before module installation also receive a UID
-        on their next write operation.
+        on their next write operation. Also captures the original start date
+        for recurring occurrences before they are moved, ensuring RECURRENCE-ID
+        consistency during sync.
 
         :param dict values: Field-value pairs to update.
         :return: True on success.
@@ -56,7 +66,12 @@ class CalendarEvent(models.Model):
         for record in self:
             if not record.caldav_uid:
                 values.setdefault('caldav_uid', str(uuid.uuid4()))
-                break
+            
+            # If start is changing and this is a recurring occurrence that doesn't 
+            # have an original start yet, record the CURRENT start as original.
+            if 'start' in values and record.recurrence_id and not record.caldav_original_start:
+                values['caldav_original_start'] = record.start
+
         return super().write(values)
 
     def unlink(self):
@@ -106,7 +121,8 @@ class CalendarEvent(models.Model):
             if not base_event:
                 continue
 
-            start_iso = event.start.strftime('%Y%m%dT%H%M%SZ') if event.start else None
+            original_start = event.caldav_original_start or event.start
+            start_iso = original_start.strftime('%Y%m%dT%H%M%SZ') if original_start else None
 
             # --- GOOGLE RECURRING SERIES LOGIC ---
             google_base_maps = self.env['caldav.event.map'].sudo().search([

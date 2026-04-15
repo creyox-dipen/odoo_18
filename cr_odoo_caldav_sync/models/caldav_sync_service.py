@@ -97,6 +97,7 @@ class CalDAVSyncService(models.AbstractModel):
         :return: Dict with counters: {'pushed': N, 'pulled': N, 'deleted': N, 'failed': N}.
         :rtype: dict
         """
+        print("account : ", account, account.name)
         stats_log = {
             'account_id': account.id,
             'sync_date': fields.Datetime.now(),
@@ -112,6 +113,7 @@ class CalDAVSyncService(models.AbstractModel):
             # --- Phase 1: Pull from CalDAV ---
             pulled_event_ids = set()
             current_ctag = account._get_server_ctag()
+            print("ctag : ", current_ctag)
             if account.sync_direction in ('bidirectional', 'caldav_to_odoo'):
                 _logger.debug('Pulling changes from CalDAV for account %s.', account.name)
                 pulled, deleted, pulled_ids, pull_failed, pull_details = self._pull_caldav_changes(account)
@@ -519,7 +521,8 @@ class CalDAVSyncService(models.AbstractModel):
             for occ in archived_occurrences:
                 if not occ.start:
                     continue
-                start_iso = occ.start.strftime('%Y%m%dT%H%M%SZ')
+                original_start = occ.caldav_original_start or occ.start
+                start_iso = original_start.strftime('%Y%m%dT%H%M%SZ')
                 if start_iso not in existing_exdates:
                     new_exdates.add(start_iso)
                     _logger.info(
@@ -703,13 +706,14 @@ class CalDAVSyncService(models.AbstractModel):
             occurrence = self.env['calendar.event'].sudo().search([
                 ('recurrence_id', '=', base_event.recurrence_id.id),
                 ('active', '=', True),
-                ('start', '>=', window_start),
-                ('start', '<=', window_end),
+                '|',
+                    '&', ('caldav_original_start', '>=', window_start), ('caldav_original_start', '<=', window_end),
+                    '&', ('caldav_original_start', '=', False), '&', ('start', '>=', window_start), ('start', '<=', window_end),
             ], limit=1)
 
             if not occurrence:
                 _logger.warning(
-                    '[iCLOUD] No Odoo occurrence found for RECURRENCE-ID %s in series "%s".',
+                    '[iCLOUD] No Odoo occurrence found for RECURRENCE-ID %s (original or current) in series "%s".',
                     rid_dt, base_event.name,
                 )
                 continue
@@ -722,6 +726,10 @@ class CalDAVSyncService(models.AbstractModel):
             vals.pop('rrule', None)
             vals.pop('recurrence_update', None)
             vals.pop('caldav_uid', None)
+
+            # Ensure caldav_original_start is set if we matched by current start
+            if not occurrence.caldav_original_start:
+                vals['caldav_original_start'] = rid_dt
 
             occurrence.with_context(**ctx_kwargs).sudo().write(vals)
             _logger.info(
@@ -796,13 +804,14 @@ class CalDAVSyncService(models.AbstractModel):
             occurrence = self.env['calendar.event'].sudo().search([
                 ('recurrence_id', '=', base_event.recurrence_id.id),
                 ('active', '=', True),
-                ('start', '>=', window_start),
-                ('start', '<=', window_end),
+                '|',
+                    '&', ('caldav_original_start', '>=', window_start), ('caldav_original_start', '<=', window_end),
+                    '&', ('caldav_original_start', '=', False), '&', ('start', '>=', window_start), ('start', '<=', window_end),
             ], limit=1)
 
             if not occurrence:
                 _logger.warning(
-                    '[ZOHO] No Odoo occurrence found for RECURRENCE-ID %s in series "%s" (uid=%s).',
+                    '[ZOHO] No Odoo occurrence found for RECURRENCE-ID %s (original or current) in series "%s" (uid=%s).',
                     rid_dt, base_event.name, uid_value,
                 )
                 continue
@@ -815,6 +824,10 @@ class CalDAVSyncService(models.AbstractModel):
             vals.pop('rrule', None)
             vals.pop('recurrence_update', None)
             vals.pop('caldav_uid', None)
+
+            # Ensure caldav_original_start is set if we matched by current start
+            if not occurrence.caldav_original_start:
+                vals['caldav_original_start'] = rid_dt
 
             occurrence.with_context(**ctx_kwargs).sudo().write(vals)
             _logger.info(
@@ -1073,6 +1086,82 @@ class CalDAVSyncService(models.AbstractModel):
                 )
 
     @api.model
+    def _apply_google_occurrence_overrides(self, recurrence_id_vevents, uid_value, account, href, server_etag):
+        """Apply RECURRENCE-ID overrides from Google Calendar into Odoo occurrences.
+
+        When a single occurrence is edited in Google, it sends back the full .ics
+        with the base VEVENT plus RECURRENCE-ID VEVENTs for overrides. This method
+        finds the matching Odoo occurrence and synchronizes it.
+
+        :param list recurrence_id_vevents: vobject VEVENTs with RECURRENCE-ID.
+        :param str uid_value: The UID shared by the series.
+        :param caldav.account account: The Google account.
+        :param str href: Resource href.
+        :param str server_etag: Current server ETag.
+        """
+        base_map = self.env['caldav.event.map'].sudo().search([
+            ('account_id', '=', account.id),
+            ('caldav_uid', '=', uid_value),
+        ], limit=1)
+        if not base_map or not base_map.event_id:
+            return
+        base_event = base_map.event_id
+        if not base_event.recurrence_id:
+            return
+
+        ctx_kwargs = {'dont_notify': True, 'no_mail_to_attendees': True}
+        if account.send_invitation_emails:
+            ctx_kwargs = {'mail_notify_force_send': True, 'force_send': True}
+
+        for override_vevent in recurrence_id_vevents:
+            rid_comp = getattr(override_vevent, 'recurrence_id', None)
+            if not rid_comp:
+                continue
+            rid_val = rid_comp.value
+
+            if isinstance(rid_val, datetime):
+                rid_dt = rid_val.astimezone(timezone.utc).replace(tzinfo=None) if rid_val.tzinfo else rid_val
+            else:
+                rid_dt = datetime(rid_val.year, rid_val.month, rid_val.day, 0, 0, 0)
+
+            # Match criteria: either caldav_original_start matches rid_dt OR
+            # (no original start set and current start matches rid_dt).
+            window_start = rid_dt - timedelta(minutes=1)
+            window_end = rid_dt + timedelta(minutes=1)
+
+            occurrence = self.env['calendar.event'].sudo().search([
+                ('recurrence_id', '=', base_event.recurrence_id.id),
+                ('active', '=', True),
+                '|',
+                    '&', ('caldav_original_start', '>=', window_start), ('caldav_original_start', '<=', window_end),
+                    '&', ('caldav_original_start', '=', False), '&', ('start', '>=', window_start), ('start', '<=', window_end),
+            ], limit=1)
+
+            if not occurrence:
+                _logger.warning('[GOOGLE] No occurrence found for RECURRENCE-ID %s in series "%s"', rid_dt, base_event.name)
+                continue
+
+            # Parse and apply
+            vals = self._ical_to_odoo_vals(override_vevent, account)
+            if not vals:
+                continue
+            vals.pop('rrule', None)
+            vals.pop('recurrence_update', None)
+            vals.pop('caldav_uid', None)
+            
+            # Ensure caldav_original_start is set if we matched by current start
+            if not occurrence.caldav_original_start:
+                vals['caldav_original_start'] = rid_dt
+
+            occurrence.with_context(**ctx_kwargs).sudo().write(vals)
+            _logger.info('[GOOGLE] Applied RECURRENCE-ID override to "%s" (id=%s, rid=%s)', occurrence.name, occurrence.id, rid_dt)
+
+        base_map.sudo().write({
+            'caldav_etag': server_etag,
+            'last_odoo_write': base_event.write_date,
+        })
+
+    @api.model
     def _push_google_occurrence_overrides(self, account, skip_ids=None):
         """Push modified individual occurrences to Google as RECURRENCE-ID overrides.
 
@@ -1147,24 +1236,41 @@ class CalDAVSyncService(models.AbstractModel):
             # modified. The main push loop skips already-synced Google recurring bases,
             # so base occurrence edits must be handled here via RECURRENCE-ID override
             # — exactly like iCloud and Zoho do.
+            base_needs_direct_push = False
             if base_event.id not in skip_ids:
                 if base_map.last_odoo_write and base_event.write_date and \
                         base_event.write_date > base_map.last_odoo_write:
                     _logger.info(
-                        '[GOOGLE] Base event "%s" (id=%s) modified since last push '
-                        '(write_date=%s > last_push=%s) — queuing as RECURRENCE-ID override.',
+                        '[GOOGLE] Base event "%s" (id=%s) modified — will push directly.',
                         base_event.name, base_event.id,
-                        base_event.write_date, base_map.last_odoo_write,
                     )
-                    modified_occs.append((base_event, base_map))
+                    base_needs_direct_push = True
 
-            if not modified_occs:
+            if not modified_occs and not base_needs_direct_push:
                 continue
 
             try:
                 with self.env.cr.savepoint():
+                    # Base occurrence edited — push full RRULE .ics directly (no RECURRENCE-ID)
+                    if base_needs_direct_push and not modified_occs:
+                        current_etag, current_ical = account._fetch_ical_with_etag(base_map.caldav_href)
+                        updated_ical = self._build_google_base_edit(current_ical, base_event, account)
+                        new_etag = account._put_ical(base_map.caldav_href, updated_ical, etag=None)
+                        base_map.sudo().write({
+                            'caldav_etag': new_etag or current_etag,
+                            'last_odoo_write': base_event.write_date,
+                        })
+                        pushed_count += 1
+                        _logger.info('[GOOGLE] Pushed base VEVENT edit for series "%s".', base_event.name)
+                        continue
+
                     # Fetch the current .ics from Google (contains base VEVENT + any existing overrides)
                     current_etag, current_ical = account._fetch_ical_with_etag(base_map.caldav_href)
+
+                    # If the base event itself was modified, update its metadata/time in the .ics first.
+                    # This preserves series-level changes when also pushing individual occurrence overrides.
+                    if base_needs_direct_push:
+                        current_ical = self._build_google_base_edit(current_ical, base_event, account)
 
                     # Build updated .ics: base VEVENT + RECURRENCE-ID VEVENTs for each modified occ
                     updated_ical = self._build_google_ical_with_overrides(
@@ -1177,7 +1283,7 @@ class CalDAVSyncService(models.AbstractModel):
                     )
 
                     # PUT the updated .ics back to Google
-                    new_etag = account._put_ical(base_map.caldav_href, updated_ical, etag=current_etag)
+                    new_etag = account._put_ical(base_map.caldav_href, updated_ical, etag=None)
 
                     base_map.sudo().write({
                         'caldav_etag': new_etag or current_etag,
@@ -1239,9 +1345,9 @@ class CalDAVSyncService(models.AbstractModel):
         updating_starts = set()
         for occ, _ in modified_occs:
             if occ.allday:
-                updating_starts.add(occ.start.date())
+                updating_starts.add((occ.caldav_original_start or occ.start).date())
             else:
-                s = _to_utc_naive(occ.start)
+                s = _to_utc_naive(occ.caldav_original_start or occ.start)
                 updating_starts.add(s.replace(tzinfo=None))
 
         # Rebuild calendar: keep VTIMEZONE + base VEVENT + non-updated RECURRENCE-ID VEVENTs
@@ -1284,9 +1390,9 @@ class CalDAVSyncService(models.AbstractModel):
             # The value must match the ORIGINAL scheduled start of this occurrence slot.
             if occ.allday:
                 rid = vevent.add('recurrence-id')
-                rid.value = occ.start.date()
+                rid.value = (occ.caldav_original_start or occ.start).date()
             else:
-                start_utc = _to_utc_naive(occ.start)
+                start_utc = _to_utc_naive(occ.caldav_original_start or occ.start)
                 rid = vevent.add('recurrence-id')
                 rid.value = datetime(
                     start_utc.year, start_utc.month, start_utc.day,
@@ -1330,115 +1436,200 @@ class CalDAVSyncService(models.AbstractModel):
         return new_cal.serialize()
 
     @api.model
-    def _build_google_ical_with_overrides(self, current_ical, base_event, modified_occs, account):
-        """Build an iCal string containing the base VEVENT plus Google RECURRENCE-ID overrides.
+    def _build_google_base_edit(self, current_ical, base_event, account):
+        """Edit base VEVENT of Google recurring series in-place.
 
-        Fetches the current .ics from Google, preserves the base VEVENT (with its RRULE,
-        EXDATEs, etc.) and any existing RECURRENCE-ID VEVENTs not being updated, then
-        appends fresh RECURRENCE-ID VEVENTs for each modified occurrence.
-
-        Only called for Google accounts (account.server_type == 'google'). Has no effect
-        on Zoho, iCloud, or other server types.
-
-        :param str current_ical: The current .ics text from Google (contains base VEVENT).
-        :param calendar.event base_event: The base Odoo recurring event.
-        :param list modified_occs: List of (occurrence, map_or_None) tuples.
-        :param caldav.account account: The Google CalDAV account.
-        :return: Updated iCal string.
-        :rtype: str
+        For time changes: updates DTSTART/DTEND directly (shifting the RRULE anchor)
+        and removes stale RECURRENCE-ID overrides. This prevents pull-phase reversion
+        since the stored base VEVENT DTSTART will match event.start after round-trip.
+        For metadata-only changes: updates fields in-place, preserving all overrides.
         """
         if vobject is None:
-            raise RuntimeError('vobject is required for Google iCal override generation.')
+            raise RuntimeError('vobject required.')
 
-        # Parse the current .ics to preserve the base VEVENT with RRULE, EXDATEs, etc.
         cal = vobject.readOne(current_ical)
 
-        # Collect the current start datetimes for occurrences being updated in this batch.
-        # Existing RECURRENCE-ID overrides for these slots will be replaced.
-        updating_starts = set()
+        server_base = None
+        for comp in cal.components():
+            if comp.name == 'VEVENT' and not hasattr(comp, 'recurrence_id'):
+                server_base = comp
+                break
+
+        if not server_base:
+            raise RuntimeError('No base VEVENT found in Google iCal.')
+
+        orig_dtstart = server_base.dtstart.value
+        orig_naive = (datetime(orig_dtstart.year, orig_dtstart.month, orig_dtstart.day)
+                      if _is_date_only(orig_dtstart) else _to_utc_naive(orig_dtstart))
+        base_start_naive = _to_utc_naive(base_event.start)
+        base_stop_naive = _to_utc_naive(base_event.stop)
+
+        # Determine server timezone for DTSTART representation
+        server_tz = pytz.utc
+        if not _is_date_only(orig_dtstart) and hasattr(orig_dtstart, 'tzinfo') and orig_dtstart.tzinfo:
+            try:
+                server_tz = orig_dtstart.tzinfo
+            except Exception:
+                pass
+
+        # Update metadata on base VEVENT in-place
+        if hasattr(server_base, 'summary'):
+            server_base.summary.value = base_event.name or ''
+        else:
+            server_base.add('summary').value = base_event.name or ''
+
+        if base_event.location:
+            if hasattr(server_base, 'location'):
+                server_base.location.value = base_event.location
+            else:
+                server_base.add('location').value = base_event.location
+
+        if base_event.description:
+            from odoo.tools import html2plaintext
+            plain = html2plaintext(base_event.description).strip()
+            if plain:
+                if hasattr(server_base, 'description'):
+                    server_base.description.value = plain
+                else:
+                    server_base.add('description').value = plain
+
+        if orig_naive != base_start_naive:
+            # Time changed: update DTSTART/DTEND on base VEVENT so RRULE anchor shifts.
+            # This avoids pull-phase reversion (pull reads DTSTART → sets event.start).
+            if _is_date_only(orig_dtstart):
+                server_base.dtstart.value = base_event.start.date()
+                if hasattr(server_base, 'dtend'):
+                    server_base.dtend.value = base_event.stop.date() + timedelta(days=1)
+            else:
+                try:
+                    new_dtstart = pytz.utc.localize(base_start_naive).astimezone(server_tz)
+                    new_dtend = pytz.utc.localize(base_stop_naive).astimezone(server_tz)
+                except Exception:
+                    new_dtstart = datetime(base_start_naive.year, base_start_naive.month, base_start_naive.day,
+                                           base_start_naive.hour, base_start_naive.minute, base_start_naive.second,
+                                           tzinfo=pytz.utc)
+                    new_dtend = datetime(base_stop_naive.year, base_stop_naive.month, base_stop_naive.day,
+                                         base_stop_naive.hour, base_stop_naive.minute, base_stop_naive.second,
+                                         tzinfo=pytz.utc)
+                server_base.dtstart.value = new_dtstart
+                if hasattr(server_base, 'dtend'):
+                    server_base.dtend.value = new_dtend
+                elif hasattr(server_base, 'duration'):
+                    server_base.duration.value = base_event.stop - base_event.start
+
+            # Remove stale RECURRENCE-ID overrides — all occurrences shift with DTSTART
+            if 'vevent' in cal.contents:
+                cal.contents['vevent'] = [
+                    ve for ve in cal.contents['vevent']
+                    if not hasattr(ve, 'recurrence_id')
+                ]
+
+        return cal.serialize()
+
+    @api.model
+    def _build_google_ical_with_overrides(self, current_ical, base_event, modified_occs, account):
+        if vobject is None:
+            raise RuntimeError('vobject required.')
+
+        cal = vobject.readOne(current_ical)
+
+        # Get base VEVENT for timezone and SEQUENCE reference
+        server_base = None
+        for comp in cal.components():
+            if comp.name == 'VEVENT' and not hasattr(comp, 'recurrence_id'):
+                server_base = comp
+                break
+
+        # Determine server DTSTART timezone — RECURRENCE-ID must match this format
+        server_tz = pytz.utc
+        if server_base:
+            dts_val = server_base.dtstart.value
+            if not _is_date_only(dts_val) and hasattr(dts_val, 'tzinfo') and dts_val.tzinfo:
+                try:
+                    server_tz = dts_val.tzinfo
+                except Exception:
+                    server_tz = pytz.utc
+
+        seq = 0
+        if server_base and hasattr(server_base, 'sequence'):
+            try:
+                seq = int(server_base.sequence.value)
+            except Exception:
+                pass
+
+        # Collect UTC start datetimes for occurrences being updated
+        updating_starts_utc = set()
         for occ, _ in modified_occs:
             if occ.allday:
-                updating_starts.add(occ.start.date())
+                updating_starts_utc.add(occ.start.date())
             else:
-                s = _to_utc_naive(occ.start)
-                updating_starts.add(s.replace(tzinfo=None))
+                updating_starts_utc.add(_to_utc_naive(occ.caldav_original_start or occ.start))
 
-        # Rebuild calendar: keep VTIMEZONE + base VEVENT + non-updated RECURRENCE-ID VEVENTs
-        components_to_keep = []
-        for component in cal.components():
-            if component.name == 'VEVENT' and hasattr(component, 'recurrence_id'):
-                rid_val = component.recurrence_id.value
-                if hasattr(rid_val, 'tzinfo') and rid_val.tzinfo is not None:
-                    rid_val = rid_val.astimezone(timezone.utc).replace(tzinfo=None)
-                elif hasattr(rid_val, 'date') and not isinstance(rid_val, date):
-                    rid_val = rid_val.replace(tzinfo=None)
-                if rid_val in updating_starts:
-                    continue  # Will be replaced with a fresh override below
-            components_to_keep.append(component)
+        # Remove existing RECURRENCE-ID VEVENTs for occurrences being updated (in-place)
+        if 'vevent' in cal.contents:
+            new_vevents = []
+            for ve in cal.contents['vevent']:
+                if hasattr(ve, 'recurrence_id'):
+                    rid_val = ve.recurrence_id.value
+                    if _is_date_only(rid_val):
+                        rid_key = rid_val
+                    elif hasattr(rid_val, 'tzinfo') and rid_val.tzinfo:
+                        rid_key = rid_val.astimezone(timezone.utc).replace(tzinfo=None)
+                    else:
+                        rid_key = rid_val.replace(tzinfo=None) if hasattr(rid_val, 'replace') else rid_val
+                    if rid_key in updating_starts_utc:
+                        continue
+                new_vevents.append(ve)
+            cal.contents['vevent'] = new_vevents
 
-        # Rebuild the VCALENDAR with only the non-replaced components
-        new_cal = vobject.iCalendar()
-        new_cal.add('prodid').value = '-//Creyox Technologies//CalDAV Sync//EN'
-        new_cal.add('version').value = '2.0'
-        for comp in components_to_keep:
-            new_cal.add(comp)
-
-        # Append a RECURRENCE-ID VEVENT for each modified occurrence
+        # Add fresh RECURRENCE-ID VEVENT for each modified occurrence
         uid = base_event.caldav_uid
         for occ, _ in modified_occs:
-            vevent = vobject.newFromBehavior('vevent')
-            vevent.add('uid').value = uid
-            vevent.add('dtstamp').value = datetime.now(pytz.utc)
-            vevent.add('summary').value = occ.name or ''
+            ovr = vobject.newFromBehavior('vevent')
+            ovr.add('uid').value = uid
+            ovr.add('dtstamp').value = datetime.now(pytz.utc)
+            ovr.add('sequence').value = str(seq)
+            ovr.add('summary').value = occ.name or ''
 
-            # RECURRENCE-ID — identifies which occurrence this override applies to.
-            # Must match the ORIGINAL scheduled start of this occurrence slot in the RRULE.
             if occ.allday:
-                rid = vevent.add('recurrence-id')
-                rid.value = occ.start.date()
+                ovr.add('recurrence-id').value = (occ.caldav_original_start or occ.start).date()
+                ovr.add('dtstart').value = occ.start.date()
+                ovr.add('dtend').value = occ.stop.date() + timedelta(days=1)
             else:
-                start_utc = _to_utc_naive(occ.start)
-                rid = vevent.add('recurrence-id')
-                rid.value = datetime(
-                    start_utc.year, start_utc.month, start_utc.day,
-                    start_utc.hour, start_utc.minute, start_utc.second,
-                    tzinfo=pytz.utc,
-                )
-
-            # DTSTART / DTEND for the override occurrence
-            if occ.allday:
-                vevent.add('dtstart').value = occ.start.date()
-                vevent.add('dtend').value = occ.stop.date() + timedelta(days=1)
-            else:
-                start_utc = _to_utc_naive(occ.start)
-                stop_utc = _to_utc_naive(occ.stop)
-                vevent.add('dtstart').value = datetime(
-                    start_utc.year, start_utc.month, start_utc.day,
-                    start_utc.hour, start_utc.minute, start_utc.second,
-                    tzinfo=pytz.utc,
-                )
-                vevent.add('dtend').value = datetime(
-                    stop_utc.year, stop_utc.month, stop_utc.day,
-                    stop_utc.hour, stop_utc.minute, stop_utc.second,
-                    tzinfo=pytz.utc,
-                )
+                occ_start_orig = _to_utc_naive(occ.caldav_original_start or occ.start)
+                occ_start_utc = _to_utc_naive(occ.start)
+                occ_stop_utc = _to_utc_naive(occ.stop)
+                try:
+                    occ_start_srv = pytz.utc.localize(occ_start_utc).astimezone(server_tz)
+                    occ_stop_srv = pytz.utc.localize(occ_stop_utc).astimezone(server_tz)
+                    occ_rid_srv = pytz.utc.localize(occ_start_orig).astimezone(server_tz)
+                except Exception:
+                    occ_start_srv = datetime(occ_start_utc.year, occ_start_utc.month, occ_start_utc.day,
+                                             occ_start_utc.hour, occ_start_utc.minute, occ_start_utc.second,
+                                             tzinfo=pytz.utc)
+                    occ_stop_srv = datetime(occ_stop_utc.year, occ_stop_utc.month, occ_stop_utc.day,
+                                            occ_stop_utc.hour, occ_stop_utc.minute, occ_stop_utc.second,
+                                            tzinfo=pytz.utc)
+                    occ_rid_srv = datetime(occ_start_orig.year, occ_start_orig.month, occ_start_orig.day,
+                                           occ_start_orig.hour, occ_start_orig.minute, occ_start_orig.second,
+                                           tzinfo=pytz.utc)
+                ovr.add('recurrence-id').value = occ_rid_srv
+                ovr.add('dtstart').value = occ_start_srv
+                ovr.add('dtend').value = occ_stop_srv
 
             if occ.location:
-                vevent.add('location').value = occ.location
-
+                ovr.add('location').value = occ.location
             if occ.description:
                 from odoo.tools import html2plaintext
                 plain = html2plaintext(occ.description).strip()
                 if plain:
-                    vevent.add('description').value = plain
+                    ovr.add('description').value = plain
 
-            new_cal.add(vevent)
-            _logger.info(
-                '[GOOGLE] Built RECURRENCE-ID override for occurrence "%s" (id=%s, start=%s).',
-                occ.name, occ.id, occ.start,
-            )
+            cal.add(ovr)
+            _logger.info('[GOOGLE] Built RECURRENCE-ID override for occ "%s" (id=%s, start=%s)',
+                         occ.name, occ.id, occ.start)
 
-        return new_cal.serialize()
+        return cal.serialize()
 
     @api.model
     def _build_icloud_ical_with_overrides(self, current_ical, base_event, modified_occs, account):
@@ -1465,9 +1656,9 @@ class CalDAVSyncService(models.AbstractModel):
         updating_starts = set()
         for occ, _ in modified_occs:
             if occ.allday:
-                updating_starts.add(occ.start.date())
+                updating_starts.add((occ.caldav_original_start or occ.start).date())
             else:
-                s = _to_utc_naive(occ.start)
+                s = _to_utc_naive(occ.caldav_original_start or occ.start)
                 updating_starts.add(s.replace(tzinfo=None))
 
         components_to_keep = []
@@ -1500,12 +1691,11 @@ class CalDAVSyncService(models.AbstractModel):
             vevent.add('summary').value = occ.name or ''
 
             # RECURRENCE-ID — must match the ORIGINAL start of this occurrence
-            # Use the occurrence's current start as the recurrence-id
             if occ.allday:
                 rid = vevent.add('recurrence-id')
-                rid.value = occ.start.date()
+                rid.value = (occ.caldav_original_start or occ.start).date()
             else:
-                start_utc = _to_utc_naive(occ.start)
+                start_utc = _to_utc_naive(occ.caldav_original_start or occ.start)
                 rid = vevent.add('recurrence-id')
                 rid.value = datetime(
                     start_utc.year, start_utc.month, start_utc.day,
@@ -1572,18 +1762,20 @@ class CalDAVSyncService(models.AbstractModel):
         pulled_ids = []
 
         raw_server_etags = account._get_server_etags()  # {href: etag}
-
+        print(f"Raw server ETags for account {account.name}: {raw_server_etags}")
         # Normalize HREFs from server to unquoted absolute URLs
         server_etags = {
             account._resolve_href(href): etag
             for href, etag in raw_server_etags.items()
         }
+        print("server_etags after normalization:", server_etags)
         _logger.debug('Normalized server HREFs for account %s: %s', account.name, list(server_etags.keys()))
 
         from urllib.parse import unquote
         all_maps = self.env['caldav.event.map'].sudo().search([
             ('account_id', '=', account.id),
         ])
+        print("all maps:", all_maps)
         existing_maps = {}
         for m in all_maps:
             href_key = unquote(m.caldav_href)
@@ -1744,17 +1936,17 @@ class CalDAVSyncService(models.AbstractModel):
                 # (write_date <= last_odoo_write), the ETag mismatch is a Google-side
                 # artefact. Update the stored ETag to the current REPORT value and skip
                 # the pull entirely, preventing a spurious "1 pulled" on every re-sync.
-                if account.server_type == 'google' and existing and existing.event_id:
-                    last_push = existing.last_odoo_write
-                    if last_push and existing.event_id.write_date and \
-                            existing.event_id.write_date <= last_push:
-                        _logger.debug(
-                            '[GOOGLE] ETag mismatch but no local changes for %s '
-                            '(write_date=%s <= last_push=%s) — updating stored ETag, skipping pull.',
-                            href, existing.event_id.write_date, last_push,
-                        )
-                        existing.sudo().write({'caldav_etag': server_etag})
-                        continue
+                # if account.server_type == 'google' and existing and existing.event_id:
+                #     last_push = existing.last_odoo_write
+                #     if last_push and existing.event_id.write_date and \
+                #             existing.event_id.write_date <= last_push:
+                #         _logger.debug(
+                #             '[GOOGLE] ETag mismatch but no local changes for %s '
+                #             '(write_date=%s <= last_push=%s) — updating stored ETag, skipping pull.',
+                #             href, existing.event_id.write_date, last_push,
+                #         )
+                #         existing.sudo().write({'caldav_etag': server_etag})
+                #         continue
 
                 # Skip archived events (push phase will handle server-side deletion).
                 if existing.event_id and not existing.event_id.active:
@@ -1876,6 +2068,12 @@ class CalDAVSyncService(models.AbstractModel):
         # Zoho only: handle RECURRENCE-ID overrides (single occurrence edits from Zoho)
         if account.server_type == 'zoho' and recurrence_id_vevents:
             self._apply_zoho_occurrence_overrides(
+                recurrence_id_vevents, uid_value, account, href, server_etag
+            )
+
+        # Google only: handle RECURRENCE-ID overrides (single occurrence edits from Google)
+        if account.server_type == 'google' and recurrence_id_vevents:
+            self._apply_google_occurrence_overrides(
                 recurrence_id_vevents, uid_value, account, href, server_etag
             )
 
