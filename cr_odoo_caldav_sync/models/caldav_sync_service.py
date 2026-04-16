@@ -758,6 +758,55 @@ class CalDAVSyncService(models.AbstractModel):
             except Exception as e:
                 _logger.warning('[GOOGLE] Occurrence override push failed: %s', e, exc_info=True)
 
+        # --- Radicale / Generic CalDAV: detect modified non-base occurrences ---
+        # For iCloud/Zoho/Google there are dedicated occurrence override push methods.
+        # For Radicale, modified non-base occurrences don't change the base event's
+        # write_date, so the normal `write_date <= last_push` check skips the push.
+        # Fix: scan all occurrences; if any was written after the base map's
+        # last_odoo_write, add the base event ID to a radicale_force_push set so
+        # the base event gets re-pushed (which will include RECURRENCE-ID overrides
+        # for any occurrence that differs from the base, via _odoo_event_to_ical).
+        radicale_force_push_ids = set()
+        if account.server_type not in ('google', 'zoho', 'icloud'):
+            try:
+                all_recurrences = self.env['calendar.recurrence'].sudo().search([])
+                for recurrence in all_recurrences:
+                    base_event = recurrence.base_event_id
+                    if not base_event or not base_event.active:
+                        continue
+                    if not any(att.partner_id.id == owner_partner_id for att in base_event.attendee_ids):
+                        continue
+                    base_map = self.env['caldav.event.map'].sudo().search([
+                        ('account_id', '=', account.id),
+                        ('event_id', '=', base_event.id),
+                    ], limit=1)
+                    if not base_map:
+                        continue   # new series not yet pushed — normal push will handle it
+                    last_sync = base_map.last_odoo_write
+                    if not last_sync:
+                        continue   # already flagged for push
+                    # Check all non-base occurrences for modifications
+                    other_occs = self.env['calendar.event'].sudo().search([
+                        ('recurrence_id', '=', recurrence.id),
+                        ('active', '=', True),
+                        ('id', '!=', base_event.id),
+                    ])
+                    for occ in other_occs:
+                        if occ.id in skip_ids:
+                            continue
+                        if occ.write_date and occ.write_date > last_sync:
+                            _logger.info(
+                                '[RADICALE][PUSH] Occurrence "%s" (id=%s, write=%s) of '
+                                'series "%s" was modified after last sync (%s). '
+                                'Force-pushing base event id=%s to re-build RECURRENCE-ID overrides.',
+                                occ.name, occ.id, occ.write_date,
+                                base_event.name, last_sync, base_event.id,
+                            )
+                            radicale_force_push_ids.add(base_event.id)
+                            break  # one modified occurrence is enough to trigger push
+            except Exception as _re:
+                _logger.warning('[RADICALE] Occurrence change detection failed: %s', _re, exc_info=True)
+
         _logger.info(
             'Push candidates for account %s: %s event(s) — non-recurring=%s, recurring_base=%s',
             account.name, len(events), len(non_recurring), len(recurring_base_events),
@@ -781,7 +830,7 @@ class CalDAVSyncService(models.AbstractModel):
             if account.server_type == 'google' and event.recurrence_id and existing_map:
                 if event.id not in google_force_push_ids:
                     continue 
-            if existing_map and event.id not in google_force_push_ids:
+            if existing_map and event.id not in google_force_push_ids and event.id not in radicale_force_push_ids:
                 last_push = existing_map.last_odoo_write
                 if last_push and event.write_date and event.write_date <= last_push:
                     _logger.debug(
@@ -2309,6 +2358,94 @@ class CalDAVSyncService(models.AbstractModel):
                     plain = html2plaintext(occ.description or '').strip()
                     if plain:
                         ovr.add('description').value = plain
+
+        # --- Radicale / Generic CalDAV: RECURRENCE-ID occurrence overrides ---
+        # When pushing a recurring series base to a generic CalDAV server, other
+        # occurrences that differ from the base would be silently overwritten by the
+        # base RRULE template. We must inject RECURRENCE-ID VEVENTs for any occurrence
+        # whose name, time, location or description differs from the base event.
+        #
+        # Example: base="1st" (user changed first occ), occ2/3/4="test"
+        #   → push base VEVENT (RRULE, SUMMARY=1st) alone → Radicale sets ALL to "1st"
+        #   → with this fix  → occ2/3/4 each get a RECURRENCE-ID VEVENT (SUMMARY=test)
+        #
+        # STRICTLY guarded: only runs for generic/Radicale (not google/zoho/icloud).
+        if (
+            account.server_type not in ('google', 'zoho', 'icloud')
+            and event.recurrence_id
+        ):
+            uid_for_overrides = event.caldav_uid or str(uuid.uuid4())
+            base_start_naive = _to_utc_naive(event.start)
+
+            all_occs = self.env['calendar.event'].sudo().search([
+                ('recurrence_id', '=', event.recurrence_id.id),
+                ('active', '=', True),
+                ('id', '!=', event.id),          # exclude base event itself
+            ])
+
+            for occ in all_occs:
+                # Determine if this occurrence meaningfully differs from the base.
+                # We compare: name, location, description, start/stop time.
+                name_differs    = (occ.name or '') != (event.name or '')
+                loc_differs     = (occ.location or '') != (event.location or '')
+                desc_differs    = (occ.description or '') != (event.description or '')
+                occ_start_naive = _to_utc_naive(occ.start)
+                # Duration may be the same even if absolute times differ (RRULE shift);
+                # only flag if the TIME-OF-DAY itself differs (not just the date).
+                time_differs = (
+                    occ.start and event.start and
+                    occ.start.hour != event.start.hour or
+                    occ.start.minute != event.start.minute
+                ) if occ.start and event.start else False
+
+                if not (name_differs or loc_differs or desc_differs or time_differs):
+                    continue   # occurrence matches base template — no override needed
+
+                # Build RECURRENCE-ID VEVENT
+                ovr = cal.add('vevent')
+                ovr.add('uid').value = uid_for_overrides
+                ovr.add('dtstamp').value = datetime.now(pytz.utc)
+                ovr.add('summary').value = occ.name or ''
+
+                # RECURRENCE-ID: use the ORIGINAL scheduled start of this occurrence
+                # (caldav_original_start if available, else the current start)
+                rid_start = _to_utc_naive(occ.caldav_original_start or occ.start)
+
+                if occ.allday:
+                    ovr.add('recurrence-id').value = (occ.caldav_original_start or occ.start).date() if occ.caldav_original_start else occ.start.date()
+                    ovr.add('dtstart').value = occ.start.date()
+                    ovr.add('dtend').value = occ.stop.date() + timedelta(days=1)
+                else:
+                    ovr.add('recurrence-id').value = datetime(
+                        rid_start.year, rid_start.month, rid_start.day,
+                        rid_start.hour, rid_start.minute, rid_start.second,
+                        tzinfo=pytz.utc,
+                    )
+                    ovr.add('dtstart').value = datetime(
+                        occ_start_naive.year, occ_start_naive.month, occ_start_naive.day,
+                        occ_start_naive.hour, occ_start_naive.minute, occ_start_naive.second,
+                        tzinfo=pytz.utc,
+                    )
+                    stop_naive = _to_utc_naive(occ.stop)
+                    ovr.add('dtend').value = datetime(
+                        stop_naive.year, stop_naive.month, stop_naive.day,
+                        stop_naive.hour, stop_naive.minute, stop_naive.second,
+                        tzinfo=pytz.utc,
+                    )
+
+                if occ.location:
+                    ovr.add('location').value = occ.location
+                if occ.description:
+                    from odoo.tools import html2plaintext as _h2p
+                    _plain = _h2p(occ.description or '').strip()
+                    if _plain:
+                        ovr.add('description').value = _plain
+
+                _logger.info(
+                    '[RADICALE][PUSH] Added RECURRENCE-ID override for occurrence '
+                    '"%s" (id=%s, start=%s) in series "%s".',
+                    occ.name, occ.id, occ.start, event.name,
+                )
 
         other_partners = event.partner_ids.filtered(
             lambda p: p != account.user_id.partner_id
