@@ -1138,7 +1138,10 @@ class CalDAVSyncService(models.AbstractModel):
             'caldav_uid': uid,
             'caldav_href': href,
             'caldav_etag': etag_to_store,
-            'last_odoo_write': event.write_date,
+            # Store the push timestamp (now) instead of event.write_date so that
+            # non-base occurrence write_dates (which may be newer than the base event's
+            # write_date) don't trigger a false-positive re-push on every subsequent sync.
+            'last_odoo_write': fields.Datetime.now(),
         }
 
         if existing_map: 
@@ -1994,7 +1997,21 @@ class CalDAVSyncService(models.AbstractModel):
                 else:
                     vals.pop('rrule', None)
                     vals.pop('recurrence_update', None)
-                    event.with_context(**ctx_kwargs).write(vals)
+                    # For Radicale/generic: if RECURRENCE-ID overrides are present,
+                    # do NOT write occurrence-level fields (name, start, stop, location,
+                    # description) from the base VEVENT here — that would propagate to
+                    # all occurrences and overwrite individual overrides before
+                    # _apply_icloud_occurrence_overrides runs below.
+                    # Only write fields safe to apply globally (privacy, alarms, etc.).
+                    if recurrence_id_vevents and account.server_type not in ('google', 'zoho', 'icloud'):
+                        safe_vals = {
+                            k: v for k, v in vals.items()
+                            if k not in ('name', 'start', 'stop', 'allday', 'location', 'description')
+                        }
+                        if safe_vals:
+                            event.with_context(**ctx_kwargs).write(safe_vals)
+                    else:
+                        event.with_context(**ctx_kwargs).write(vals)
 
             elif vals.get('rrule') and account.server_type == 'zoho':
                 _logger.info('[ZOHO][PULL] Promoting single event "%s" (id=%s) to recurring series.', event.name, event.id)
@@ -2123,18 +2140,25 @@ class CalDAVSyncService(models.AbstractModel):
 
         if not existing_map:
             existing_map = self.env['caldav.event.map'].sudo().search([('account_id', '=', account.id), ('caldav_uid', '=', uid_value)], limit=1)
- 
+
         if recurrence_id_vevents:
             if account.server_type == 'icloud':
                 self._apply_icloud_occurrence_overrides(recurrence_id_vevents, uid_value, account, href, server_etag)
             elif account.server_type == 'zoho':
                 self._apply_zoho_occurrence_overrides(recurrence_id_vevents, uid_value, account, href, server_etag)
             elif account.server_type == 'google':
-                 _logger.info(
+                _logger.info(
                     '[GOOGLE][PULL] Applying %s RECURRENCE-ID override(s) to series "%s" (UID: %s).',
                     len(recurrence_id_vevents), event.name, uid_value
                 )
-                 self._apply_google_occurrence_overrides(recurrence_id_vevents, uid_value, account, href, server_etag)
+                self._apply_google_occurrence_overrides(recurrence_id_vevents, uid_value, account, href, server_etag)
+            else:
+                # Generic / Radicale
+                _logger.info(
+                    '[RADICALE][PULL] Applying %s RECURRENCE-ID override(s) to series "%s" (UID: %s).',
+                    len(recurrence_id_vevents), event.name, uid_value,
+                )
+                self._apply_icloud_occurrence_overrides(recurrence_id_vevents, uid_value, account, href, server_etag)
  
         map_vals = {'account_id': account.id, 'event_id': event.id, 'caldav_uid': uid_value, 'caldav_href': href, 'caldav_etag': server_etag, 'last_odoo_write': fields.Datetime.now()}
         if existing_map: existing_map.sudo().write(map_vals)
