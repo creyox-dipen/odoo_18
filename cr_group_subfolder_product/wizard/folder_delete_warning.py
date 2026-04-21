@@ -23,7 +23,7 @@ class CrFolderDeleteWarning(models.TransientModel):
         Perform selective deletion:
         - Delete empty folders from individual products.
         - Preserve folders that contain documents.
-        - Only delete the template line if ALL its folders were deleted across all products.
+        - Always delete the template line from the product category.
         """
         self.ensure_one()
         if not self.line_ids or self.message and "skipped" in self.message:
@@ -49,17 +49,16 @@ class CrFolderDeleteWarning(models.TransientModel):
                     # Folder is empty, safe to delete for this product
                     folder.unlink()
             
-            # After processing all products, check if the line can be removed from template
+            # After processing all products, track if any folders were preserved for the message
             remaining_count = Document.search_count([
                 ('cr_category_folder_line_id', '=', line.id),
             ])
-            
-            if remaining_count == 0:
-                # No product is using this folder anymore, delete from category structure
-                line.unlink()
-            else:
-                # Some products still have files here
+            if remaining_count > 0:
+                # Some products still have files here, so folders were skipped
                 lines_skipped.append(f"{line.name} ({line.sequence})")
+            
+            # Always delete the line from the category structure
+            line.unlink()
 
         if lines_skipped:
             # Update message and clear line_ids to show 'Close' button only

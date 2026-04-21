@@ -1185,12 +1185,18 @@ class CalDAVSyncService(models.AbstractModel):
                     rid_dt = rid_val.astimezone(timezone.utc).replace(tzinfo=None)
                 else:
                     rid_dt = rid_val
-            else: 
+            else:
                 rid_dt = datetime(rid_val.year, rid_val.month, rid_val.day, 0, 0, 0)
- 
+
             from datetime import timedelta as _td
-            window_start = rid_dt - _td(minutes=1)
-            window_end = rid_dt + _td(minutes=1)
+            # For all-day RID (date-only), widen window to full day so Odoo's
+            # 08:00 all-day start time is captured.
+            if not isinstance(rid_val, datetime):
+                window_start = rid_dt
+                window_end = datetime(rid_val.year, rid_val.month, rid_val.day, 23, 59, 59)
+            else:
+                window_start = rid_dt - _td(minutes=1)
+                window_end = rid_dt + _td(minutes=1)
             occurrence = self.env['calendar.event'].sudo().search([
                 ('recurrence_id', '=', base_event.recurrence_id.id),
                 ('active', '=', True),
@@ -2197,14 +2203,10 @@ class CalDAVSyncService(models.AbstractModel):
                 if exdates:
                     min_ex = min(exdates) 
                     current_start_naive = _to_utc_naive(original_start)
-                    start_is_exdated = any(
-                        abs((current_start_naive - ex).total_seconds()) < 86400
-                        for ex in exdates
-                    )
-                    if start_is_exdated and min_ex < original_start:
+                    if min_ex < current_start_naive:
                         _logger.info(
                             '[ICAL] Shifting DTSTART back to %s '
-                            '(current base %s is itself exdated). Account: %s.',
+                            '(earliest exdate precedes current base start %s). Account: %s.',
                             min_ex, original_start, account.name,
                         )
                         original_start = min_ex
@@ -2238,13 +2240,15 @@ class CalDAVSyncService(models.AbstractModel):
 
         if event.location:
             vevent.add('location').value = event.location
-        
-        if account.server_type == 'zoho' and event.videocall_location:
-            vevent.add('url').value = event.videocall_location
 
-        if account.server_type == 'icloud' and event.videocall_location:
-            vevent.add('url').value = event.videocall_location
-         
+        # --- Apple (iCloud) & Zoho: map videocall_location → URL field on push ---
+        # Only iCloud/Zoho use the iCal URL property for video call links.
+        # We check both server_type and the URL string itself for 'icloud' to be extra safe.
+        is_apple = account.server_type == 'icloud' or (account.url and 'icloud.com' in account.url)
+        if (is_apple or account.server_type == 'zoho') and event.videocall_location:
+            _logger.info('[PUSH] Setting iCal URL for %s: %s', account.name, event.videocall_location)
+            vevent.add('URL').value = event.videocall_location
+
         _privacy_to_class = {'public': 'PUBLIC', 'private': 'PRIVATE', 'confidential': 'CONFIDENTIAL'}
         class_val = _privacy_to_class.get(event.privacy or 'public', 'PUBLIC')
         vevent.add('class').value = class_val
@@ -2288,9 +2292,17 @@ class CalDAVSyncService(models.AbstractModel):
                 for iso_dt in existing_map.google_exdates.split(','):
                     iso_dt = iso_dt.strip()
                     if not iso_dt or iso_dt in raw:
-                        continue  
+                        continue
                     try:
                         ex_dt = datetime.strptime(iso_dt, '%Y%m%dT%H%M%SZ').replace(tzinfo=pytz.utc)
+                        # Skip EXDATEs that fall before DTSTART — already excluded by
+                        # the shifted base start (adding them causes COUNT to expand extra occurrences on iCloud).
+                        ex_dt_naive = ex_dt.replace(tzinfo=None)
+                        orig_start_naive = _to_utc_naive(original_start)
+                        if orig_start_naive and ex_dt_naive.date() < orig_start_naive.date():
+                            _logger.debug('[ICAL] Skipping EXDATE %s: before DTSTART %s (already excluded by shift).',
+                                          iso_dt, orig_start_naive.date())
+                            continue
                         ex = vevent.add('exdate')
                         if event.allday:
                             ex.value = [ex_dt.date()]
@@ -2594,15 +2606,12 @@ class CalDAVSyncService(models.AbstractModel):
             if location_comp and location_comp.value:
                 vals['location'] = location_comp.value
 
-            if account.server_type == 'zoho':
+            # --- Apple (iCloud) & Zoho: map URL field → videocall_location on pull ---
+            # Only iCloud/Zoho use the iCal URL property for video call links.
+            # Google and other servers are intentionally NOT touched here.
+            if account.server_type in ('icloud', 'zoho'):
                 url_comp = getattr(vevent, 'url', None)
-                if url_comp and url_comp.value:
-                    vals['videocall_location'] = url_comp.value
-
-            if account.server_type == 'icloud':
-                url_comp = getattr(vevent, 'url', None)
-                if url_comp and url_comp.value:
-                    vals['videocall_location'] = url_comp.value
+                vals['videocall_location'] = url_comp.value if (url_comp and url_comp.value) else False
 
             desc_comp = getattr(vevent, 'description', None)
             if desc_comp and desc_comp.value:
