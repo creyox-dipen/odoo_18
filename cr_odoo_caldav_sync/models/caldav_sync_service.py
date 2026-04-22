@@ -2170,6 +2170,35 @@ class CalDAVSyncService(models.AbstractModel):
         if existing_map: existing_map.sudo().write(map_vals)
         else: self.env['caldav.event.map'].sudo().create(map_vals)
 
+        # --- Nextcloud / Generic CalDAV: send invitation emails to attendees ---
+        # Google/Zoho/iCloud handle their own notification flows.
+        # For generic CalDAV (Nextcloud/Radicale), Odoo's ORM does not automatically
+        # trigger _send_mail_to_attendees() on pulled events, so we do it explicitly.
+        if account.send_invitation_emails and account.server_type not in ('google', 'zoho', 'icloud'):
+            try:
+                attendees_to_notify = event.attendee_ids.filtered(
+                    lambda a: a.state == 'needsAction'
+                    and a.partner_id
+                    and a.partner_id.email
+                    and a.partner_id.id != account.user_id.partner_id.id
+                )
+                if attendees_to_notify:
+                    template = self.env.ref(
+                        'calendar.calendar_template_meeting_invitation',
+                        raise_if_not_found=False,
+                    )
+                    if template:
+                        attendees_to_notify.sudo()._send_mail_to_attendees(template)
+                        _logger.info(
+                            '[NEXTCLOUD] Sent invitation emails to %s attendee(s) for event "%s".',
+                            len(attendees_to_notify), event.name,
+                        )
+            except Exception as _mail_err:
+                _logger.warning(
+                    '[NEXTCLOUD] Could not send invitation emails for event "%s": %s',
+                    event.name, _mail_err,
+                )
+
         return event 
 
     @api.model
