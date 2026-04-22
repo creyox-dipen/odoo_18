@@ -632,6 +632,19 @@ class CalDAVSyncService(models.AbstractModel):
                         pulled_ids.append(event.id)
                     pulled += 1
             except Exception as e:
+                error_str = str(e)
+                if account.server_type == 'google' and '404' in error_str:
+                    _logger.info(
+                        '[GOOGLE] Skipping 404 for href %s — stale/inaccessible entry in REPORT. Cleaning up map.',
+                        href,
+                    )
+                    if existing and existing.exists():
+                        try:
+                            with self.env.cr.savepoint():
+                                existing.sudo().unlink()
+                        except Exception as _ce:
+                            _logger.debug('[GOOGLE] Could not clean up stale map for %s: %s', href, _ce)
+                    continue
                 failed += 1
                 error_msg = f'Pull failed for href {href}: {str(e)}'
                 _logger.error(error_msg, exc_info=True)
@@ -1996,9 +2009,27 @@ class CalDAVSyncService(models.AbstractModel):
                                     'caldav_original_start': occ.start,
                                 })
                                 locked_count += 1
-                        
+
                         if locked_count:
-                            _logger.info('[GOOGLE][PULL] Locked %s occurrence(s) after promotion to series "%s".', locked_count, event.name)
+                            _logger.info('[GOOGLE][PULL] Locked %s occurrence(s) after promotion to series "%s".',
+                                         locked_count, event.name)
+
+                        # Clean up stale __occ_ maps from previous pinned pushes.
+                        # recurrence_update='all_events' replaces all occurrence IDs;
+                        # old maps now point to archived events and trigger spurious
+                        # CalDAV DELETEs in the push phase.
+                        stale_occ_maps = self.env['caldav.event.map'].sudo().search([
+                            ('account_id', '=', account.id),
+                            ('caldav_href', '=', href),
+                            ('caldav_uid', 'like', '%__occ_%'),
+                        ])
+                        if stale_occ_maps:
+                            _logger.info(
+                                '[GOOGLE][PULL] Cleaning up %s stale occurrence map(s) '
+                                'after series re-apply for "%s".',
+                                len(stale_occ_maps), event.name,
+                            )
+                            stale_occ_maps.sudo().unlink()
 
                 else:
                     vals.pop('rrule', None)
@@ -2061,6 +2092,21 @@ class CalDAVSyncService(models.AbstractModel):
                             'first-time promotion of "%s" to a recurring series.',
                             locked_count, event.name,
                         )
+
+                    # Same stale map cleanup as Location 1 — guards against
+                    # spurious DELETEs if pinned occ maps existed before promotion.
+                    stale_occ_maps = self.env['caldav.event.map'].sudo().search([
+                        ('account_id', '=', account.id),
+                        ('caldav_href', '=', href),
+                        ('caldav_uid', 'like', '%__occ_%'),
+                    ])
+                    if stale_occ_maps:
+                        _logger.info(
+                            '[GOOGLE][PULL] CASE-C Cleaning up %s stale occurrence map(s) '
+                            'after first-time promotion of "%s".',
+                            len(stale_occ_maps), event.name,
+                        )
+                        stale_occ_maps.sudo().unlink()
 
             elif vals.get('rrule'):
                     # --- Generic / Radicale: promote non-recurring event to recurring ---
@@ -2174,7 +2220,7 @@ class CalDAVSyncService(models.AbstractModel):
         # Google/Zoho/iCloud handle their own notification flows.
         # For generic CalDAV (Nextcloud/Radicale), Odoo's ORM does not automatically
         # trigger _send_mail_to_attendees() on pulled events, so we do it explicitly.
-        if account.send_invitation_emails and account.server_type not in ('google', 'zoho', 'icloud'):
+        if account.send_invitation_emails and account.server_type not in ('zoho', 'icloud'):
             try:
                 attendees_to_notify = event.attendee_ids.filtered(
                     lambda a: a.state == 'needsAction'
@@ -2383,6 +2429,12 @@ class CalDAVSyncService(models.AbstractModel):
                 original_was_shifted = (original_start_naive != event_start_naive)
 
                 if not original_was_shifted and occ_start_naive == original_start_naive:
+                    continue
+
+                    # Only emit a RECURRENCE-ID override if this occurrence actually
+                    # differs from the base. Unmodified occurrences are derived from
+                    # the RRULE automatically by Google; no override needed.
+                if not original_was_shifted and not self._occurrence_differs_from_base(occ, event):
                     continue
 
                 ovr = cal.add('vevent')
