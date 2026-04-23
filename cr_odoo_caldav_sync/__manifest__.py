@@ -7,7 +7,7 @@
     'support': 'support@creyox.com',
     'category': 'Extra Tools',
     'summary': """
-    Odoo CalDAV Calendar Synchronization enables seamless two-way syncing between Odoo and popular CalDAV services like iCloud, Nextcloud, Synology, and Zoho. It automatically keeps your calendar events updated across all platforms, ensuring consistency without any manual effort.
+    Odoo CalDAV Calendar Synchronization enables seamless two-way syncing between Odoo and popular CalDAV services like Radicale, Google Calendar, iCloud, Nextcloud, and Zoho. It automatically keeps your calendar events updated across all platforms, ensuring consistency without any manual effort.
 
     The module supports recurring events, reminders, and privacy settings, along with secure per-user account configuration. With efficient change detection, only updated data is synced, providing a fast, reliable, and user-friendly calendar integration experience within Odoo.
     """,
@@ -20,7 +20,7 @@
     <h2>Key Features</h2>
     <ul>
         <li>Full Bidirectional Sync between Odoo and CalDAV servers</li>
-        <li>Support for iCloud, Synology, Nextcloud, Zoho, and more</li>
+        <li>Support for iCloud, Google Calendar, Nextcloud, Zoho, and Radicale</li>
         <li>Sync complex Recurring Events (RRULE) and Allday events</li>
         <li>Manage Reminders and Alarms (VALARM) across platforms</li>
         <li>Respect Privacy settings (Public, Private, Confidential)</li>

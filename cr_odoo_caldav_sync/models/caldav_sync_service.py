@@ -27,7 +27,7 @@ def _to_utc_naive(dt_obj):
     if isinstance(dt_obj, datetime):
         if dt_obj.tzinfo is not None:
             return dt_obj.astimezone(timezone.utc).replace(tzinfo=None)
-        return dt_obj 
+        return dt_obj
     return datetime(dt_obj.year, dt_obj.month, dt_obj.day)
 
 
@@ -51,13 +51,13 @@ class CalDAVSyncService(models.AbstractModel):
             raise RuntimeError('vobject required.')
 
         cal = vobject.readOne(current_ical)
- 
+
         server_base = None
         for comp in cal.components():
             if comp.name == 'VEVENT' and not hasattr(comp, 'recurrence_id'):
                 server_base = comp
                 break
- 
+
         server_tz = pytz.utc
         if server_base:
             dts_val = server_base.dtstart.value
@@ -66,7 +66,7 @@ class CalDAVSyncService(models.AbstractModel):
                     server_tz = dts_val.tzinfo
                 except Exception:
                     server_tz = pytz.utc
- 
+
         seq = 1
         if server_base:
             if hasattr(server_base, 'sequence'):
@@ -79,7 +79,7 @@ class CalDAVSyncService(models.AbstractModel):
             else:
                 server_base.add('sequence').value = "1"
                 seq = 1
- 
+
         push_dtstamp = datetime.now(pytz.utc)
         if server_base:
             if hasattr(server_base, 'dtstamp'):
@@ -98,13 +98,13 @@ class CalDAVSyncService(models.AbstractModel):
                     break
             if not rrule_val and raw_rrule:
                 rrule_val = raw_rrule.lstrip('RRULE:').strip()
-            
+
             if rrule_val:
                 if hasattr(server_base, 'rrule'):
                     server_base.rrule.value = rrule_val
                 else:
                     server_base.add('rrule').value = rrule_val
- 
+
         # Build set of starts being replaced so we can drop stale server overrides
         updating_starts_utc = set()
         for occ, _ in all_occs:
@@ -113,7 +113,7 @@ class CalDAVSyncService(models.AbstractModel):
                 updating_starts_utc.add(orig_dt.date())
             else:
                 updating_starts_utc.add(_to_utc_naive(occ.caldav_original_start or occ.start))
- 
+
         # Inject EXDATEs from the map if any
         base_map = self.env['caldav.event.map'].sudo().search([
             ('account_id', '=', account.id),
@@ -131,18 +131,18 @@ class CalDAVSyncService(models.AbstractModel):
                         ex_val = ex_dt.date()
                     else:
                         ex_val = ex_dt
-                    
+
                     if ex_val in updating_starts_utc:
                          # If we are pushing an override for this date, do NOT also exdate it!
                          continue
-                    
+
                     if hasattr(server_base, 'exdate'):
                         if ex_val not in server_base.exdate.value:
                             server_base.exdate.value.append(ex_val)
                     else:
                         server_base.add('exdate').value = [ex_val]
                 except Exception: pass
- 
+
         if 'vevent' in cal.contents:
             new_vevents = []
             for ve in cal.contents['vevent']:
@@ -154,12 +154,12 @@ class CalDAVSyncService(models.AbstractModel):
                         rid_key = rid_val.astimezone(timezone.utc).replace(tzinfo=None)
                     else:
                         rid_key = rid_val.replace(tzinfo=None) if hasattr(rid_val, 'replace') else rid_val
-                    
+
                     if rid_key in updating_starts_utc:
                         continue
                 new_vevents.append(ve)
             cal.contents['vevent'] = new_vevents
- 
+
         uid = base_event.caldav_uid
         for occ, _ in all_occs:
             ovr = vobject.newFromBehavior('vevent')
@@ -172,16 +172,16 @@ class CalDAVSyncService(models.AbstractModel):
                 ovr.add('recurrence-id').value = (occ.caldav_original_start or occ.start).date()
                 ovr.add('dtstart').value = occ.start.date()
                 ovr.add('dtend').value = occ.stop.date() + timedelta(days=1)
-            else: 
+            else:
                 occ_start_orig = _to_utc_naive(occ.caldav_original_start or occ.start)
                 occ_start_utc = _to_utc_naive(occ.start)
                 occ_stop_utc = _to_utc_naive(occ.stop)
-                
+
                 try:
                     occ_start_srv = pytz.utc.localize(occ_start_utc).astimezone(server_tz)
                     occ_stop_srv = pytz.utc.localize(occ_stop_utc).astimezone(server_tz)
                     occ_rid_srv = pytz.utc.localize(occ_start_orig).astimezone(server_tz)
-                except Exception: 
+                except Exception:
                     occ_start_srv = occ_start_utc.replace(tzinfo=pytz.utc)
                     occ_stop_srv = occ_stop_utc.replace(tzinfo=pytz.utc)
                     occ_rid_srv = occ_start_orig.replace(tzinfo=pytz.utc)
@@ -197,8 +197,8 @@ class CalDAVSyncService(models.AbstractModel):
 
             if occ.location:
                 ovr.add('location').value = occ.location
-            
-            if occ.description: 
+
+            if occ.description:
                 plain = html2plaintext(occ.description).strip()
                 if plain:
                     ovr.add('description').value = plain
@@ -222,7 +222,7 @@ class CalDAVSyncService(models.AbstractModel):
             if comp.name == 'VEVENT' and not hasattr(comp, 'recurrence_id'):
                 server_base = comp
                 break
-        
+
         # Ensure RRULE exists for Zoho series validation
         if server_base and base_event.recurrence_id:
             raw_rrule = base_event.recurrence_id.rrule or ''
@@ -233,7 +233,7 @@ class CalDAVSyncService(models.AbstractModel):
                     break
             if not rrule_val and raw_rrule:
                 rrule_val = raw_rrule.lstrip('RRULE:').strip()
-            
+
             if rrule_val:
                 if hasattr(server_base, 'rrule'):
                     server_base.rrule.value = rrule_val
@@ -242,18 +242,38 @@ class CalDAVSyncService(models.AbstractModel):
 
         # Use a high sequence number (timestamp) to ensure it's always increasing
         seq = int(datetime.utcnow().timestamp())
-        
+
         if server_base:
             if hasattr(server_base, 'sequence'):
                 server_base.sequence.value = str(seq)
             else:
                 server_base.add('sequence').value = str(seq)
-            
+
             # Zoho specific last-modified timestamp
             if hasattr(server_base, 'last_modified'):
                 server_base.last_modified.value = datetime.now(pytz.utc)
             else:
                 server_base.add('last-modified').value = datetime.now(pytz.utc)
+
+            # Update base VEVENT content fields from Odoo base event
+            if hasattr(server_base, 'summary'):
+                server_base.summary.value = base_event.name or ''
+            else:
+                server_base.add('summary').value = base_event.name or ''
+
+            if base_event.location:
+                if hasattr(server_base, 'location'):
+                    server_base.location.value = base_event.location
+                else:
+                    server_base.add('location').value = base_event.location
+
+            if base_event.description:
+                plain = html2plaintext(base_event.description).strip()
+                if plain:
+                    if hasattr(server_base, 'description'):
+                        server_base.description.value = plain
+                    else:
+                        server_base.add('description').value = plain
 
         updating_starts_utc = set()
         for occ, _ in all_occs:
@@ -279,11 +299,11 @@ class CalDAVSyncService(models.AbstractModel):
                         ex_val = ex_dt.date()
                     else:
                         ex_val = ex_dt
-                    
+
                     if ex_val in updating_starts_utc:
                          # If we are pushing an override for this date, do NOT also exdate it!
                          continue
-                    
+
                     if hasattr(server_base, 'exdate'):
                         if ex_val not in server_base.exdate.value:
                             server_base.exdate.value.append(ex_val)
@@ -291,13 +311,58 @@ class CalDAVSyncService(models.AbstractModel):
                         server_base.add('exdate').value = [ex_val]
                 except Exception: pass
 
+        # Build set of EXDATEd dates to also purge stale server-side overrides
+        exdated_dates = set()
+        if server_base and hasattr(server_base, 'rrule'):
+            raw_rrule = base_event.recurrence_id.rrule if base_event.recurrence_id else ''
+            for line in (raw_rrule or '').splitlines():
+                if line.strip().upper().startswith('EXDATE:'):
+                    exdate_val = line.strip()[len('EXDATE:'):]
+                    try:
+                        from datetime import date as _date
+                        ex_d = datetime.strptime(exdate_val.strip(), '%Y%m%dT%H%M%SZ').date()
+                        exdated_dates.add(ex_d)
+                    except Exception:
+                        try:
+                            ex_d = datetime.strptime(exdate_val.strip(), '%Y%m%d').date()
+                            exdated_dates.add(ex_d)
+                        except Exception:
+                            pass
+
+        # Also collect from Odoo archived occurrences directly
+        if base_event.recurrence_id:
+            archived_occs = self.env['calendar.event'].sudo().with_context(active_test=False).search([
+                ('recurrence_id', '=', base_event.recurrence_id.id),
+                ('active', '=', False),
+                ('id', '!=', base_event.id),
+            ])
+            for arch_occ in archived_occs:
+                orig = arch_occ.caldav_original_start or arch_occ.start
+                if orig:
+                    exdated_dates.add(orig.date() if hasattr(orig, 'date') else orig)
+
         if 'vevent' in cal.contents:
             new_vevents = []
             for ve in cal.contents['vevent']:
                 if hasattr(ve, 'recurrence_id'):
                     rid_val = ve.recurrence_id.value
-                    rid_key = rid_val.astimezone(timezone.utc).replace(tzinfo=None) if hasattr(rid_val, 'astimezone') else rid_val
+                    # Normalize rid_key for date comparison
+                    if _is_date_only(rid_val):
+                        rid_key = rid_val
+                        rid_date = rid_val
+                    else:
+                        rid_key = rid_val.astimezone(timezone.utc).replace(tzinfo=None) if hasattr(rid_val,
+                                                                                                   'astimezone') else rid_val
+                        rid_date = rid_key.date() if hasattr(rid_key, 'date') else None
+                    # Drop if we're replacing it with a new override
                     if rid_key in updating_starts_utc:
+                        continue
+                    # Drop if this date is now EXDATEd (occurrence was deleted)
+                    if rid_date and rid_date in exdated_dates:
+                        _logger.info(
+                            '[ZOHO] Removing stale server RECURRENCE-ID override for EXDATEd date %s',
+                            rid_date,
+                        )
                         continue
                 new_vevents.append(ve)
             cal.contents['vevent'] = new_vevents
@@ -315,7 +380,7 @@ class CalDAVSyncService(models.AbstractModel):
             ovr.add('summary').value = occ.name or ''
             ovr.add('class').value = 'PUBLIC'
             ovr.add('status').value = 'CONFIRMED'
-            ovr.add('transp').value = 'OPAQUE'            
+            ovr.add('transp').value = 'OPAQUE'
             if occ.allday:
                 ovr.add('recurrence-id').value = (occ.caldav_original_start or occ.start).date()
                 ovr.add('dtstart').value = occ.start.date()
@@ -332,12 +397,12 @@ class CalDAVSyncService(models.AbstractModel):
                 plain = html2plaintext(occ.description).strip()
                 if plain:
                     ovr.add('description').value = plain
-            
+
             cal.add(ovr)
 
         return cal.serialize()
 
-        
+
     @api.model
     def _build_google_base_edit(self, current_ical, base_event, account):
         """Edit base VEVENT of Google recurring series in-place. .
@@ -370,7 +435,7 @@ class CalDAVSyncService(models.AbstractModel):
                     ex_dt_naive = datetime.strptime(iso_dt, '%Y%m%dT%H%M%SZ')
                     ex_dt = pytz.utc.localize(ex_dt_naive)
                     ex_val = ex_dt.date() if base_event.allday else ex_dt
-                    
+
                     if hasattr(server_base, 'exdate'):
                         if ex_val not in server_base.exdate.value:
                             server_base.exdate.value.append(ex_val)
@@ -383,20 +448,20 @@ class CalDAVSyncService(models.AbstractModel):
                       if _is_date_only(orig_dtstart) else _to_utc_naive(orig_dtstart))
         base_start_naive = _to_utc_naive(base_event.start)
         base_stop_naive = _to_utc_naive(base_event.stop)
- 
+
         server_tz = pytz.utc
         if not _is_date_only(orig_dtstart) and hasattr(orig_dtstart, 'tzinfo') and orig_dtstart.tzinfo:
             try:
                 server_tz = orig_dtstart.tzinfo
             except Exception:
-                pass 
+                pass
         if hasattr(server_base, 'sequence'):
             try:
                 server_base.sequence.value = str(int(server_base.sequence.value) + 1)
             except:
                 server_base.sequence.value = "1"
         else:
-            server_base.add('sequence').value = "1" 
+            server_base.add('sequence').value = "1"
         if hasattr(server_base, 'summary'):
             server_base.summary.value = base_event.name or ''
         else:
@@ -408,14 +473,14 @@ class CalDAVSyncService(models.AbstractModel):
             else:
                 server_base.add('location').value = base_event.location
 
-        if base_event.description: 
+        if base_event.description:
             plain = html2plaintext(base_event.description).strip()
             if plain:
                 if hasattr(server_base, 'description'):
                     server_base.description.value = plain
                 else:
                     server_base.add('description').value = plain
- 
+
         if orig_naive != base_start_naive:
             if _is_date_only(orig_dtstart):
                 server_base.dtstart.value = base_event.start.date()
@@ -447,7 +512,7 @@ class CalDAVSyncService(models.AbstractModel):
         return cal.serialize()
     @api.model
     def _cron_sync_all(self):
-        """Cron entry point: sync every active CalDAV account. 
+        """Cron entry point: sync every active CalDAV account.
         """
         accounts = self.env['caldav.account'].search([('active', '=', True)])
         for account in accounts:
@@ -457,11 +522,11 @@ class CalDAVSyncService(models.AbstractModel):
                 _logger.error(
                     'CalDAV auto-sync failed for account %s (id=%s): %s',
                     account.name, account.id, e, exc_info=True,
-                ) 
+                )
 
     @api.model
     def sync_account(self, account):
-        """Perform a full incremental sync for one CalDAV account. 
+        """Perform a full incremental sync for one CalDAV account.
         """
         _logger.info('Starting sync for account: %s (id=%s)', account.name, account.id)
         stats_log = {
@@ -475,7 +540,7 @@ class CalDAVSyncService(models.AbstractModel):
             'status': 'success',
         }
 
-        try: 
+        try:
             pulled_event_ids = set()
             current_ctag = account._get_server_ctag()
             _logger.debug('Current server CTag: %s', current_ctag)
@@ -488,7 +553,7 @@ class CalDAVSyncService(models.AbstractModel):
                 if pull_details:
                     stats_log['details'] += f"--- PULL ERRORS ---\n{pull_details}\n"
                 pulled_event_ids = set(pulled_ids)
- 
+
             if account.sync_direction in ('bidirectional', 'odoo_to_caldav'):
                 _logger.debug('Pushing changes to CalDAV for account %s.', account.name)
                 pushed, push_failed, push_details = self._push_odoo_changes(account, skip_ids=pulled_event_ids)
@@ -496,13 +561,13 @@ class CalDAVSyncService(models.AbstractModel):
                 stats_log['failed'] += push_failed
                 if push_details:
                     stats_log['details'] += f"--- PUSH ERRORS ---\n{push_details}\n"
- 
+
             new_ctag = account._get_server_ctag() or current_ctag
             account.sudo().write({
                 'last_ctag': new_ctag,
                 'last_sync': fields.Datetime.now(),
             })
-            
+
             if stats_log['failed'] > 0:
                 stats_log['status'] = 'partial'
 
@@ -518,7 +583,7 @@ class CalDAVSyncService(models.AbstractModel):
             'pulled': stats_log['pulled'],
             'deleted': stats_log['deleted'],
             'failed': stats_log['failed'],
-        } 
+        }
     @api.model
     def _pull_caldav_changes(self, account):
         """Pull new and changed events from the CalDAV server into Odoo."""
@@ -528,7 +593,7 @@ class CalDAVSyncService(models.AbstractModel):
         details = []
         pulled_ids = []
 
-        raw_server_etags = account._get_server_etags()   
+        raw_server_etags = account._get_server_etags()
         server_etags = {
             account._resolve_href(href): etag
             for href, etag in raw_server_etags.items()
@@ -537,7 +602,7 @@ class CalDAVSyncService(models.AbstractModel):
         from urllib.parse import unquote
         all_maps = self.env['caldav.event.map'].sudo().search([
             ('account_id', '=', account.id),
-        ]) 
+        ])
         existing_maps = {}
         for m in all_maps:
             href_key = unquote(m.caldav_href)
@@ -545,40 +610,63 @@ class CalDAVSyncService(models.AbstractModel):
                 continue
             if href_key not in existing_maps:
                 existing_maps[href_key] = m
- 
+
         base_url = account.url.rstrip('/')
-        for href, server_etag in server_etags.items(): 
+        for href, server_etag in server_etags.items():
             norm_href = href.rstrip('/')
             if norm_href == base_url:
                 continue
-            
+
             if account.server_type == 'icloud' and not href.endswith('.ics'):
                 continue
 
             existing = existing_maps.get(href)
- 
+
             if account.server_type == 'zoho':
                 try:
                     zoho_ical_text = account._fetch_ical(href)
                     _prefixes = ('SUMMARY', 'DTSTART', 'DTEND', 'RRULE', 'RECURRENCE-ID', 'EXDATE', 'LOCATION', 'DESCRIPTION', 'STATUS')
                     normalized = '\n'.join(line.strip() for line in zoho_ical_text.splitlines() if any(line.strip().startswith(p) for p in _prefixes))
                     content_hash = 'zoho_hash:' + hashlib.sha256(normalized.encode()).hexdigest()
-                    
+
                     if existing and existing.caldav_etag == content_hash:
                         continue
-                     
+
                     if existing and existing.event_id:
-                        # Check for structural changes: if Zoho is now recurring but Odoo is not, 
+                        # Check for structural changes: if Zoho is now recurring but Odoo is not,
                         # we MUST pull regardless of write_date to avoid overwriting the series.
                         is_zoho_recurring = 'RRULE' in (zoho_ical_text or '')
                         odoo_is_recurring = existing.event_id.recurrency
-                        
+
                         force_pull = is_zoho_recurring and not odoo_is_recurring
-                        
-                        if not force_pull and (not existing.last_odoo_write or (existing.event_id.write_date > existing.last_odoo_write)):
-                            existing.sudo().write({'caldav_etag': content_hash})
-                            continue
-                            
+
+                        if not force_pull:
+                            has_pending = not existing.last_odoo_write or (
+                                    existing.event_id.write_date and
+                                    existing.event_id.write_date > existing.last_odoo_write
+                            )
+                            if not has_pending and existing.event_id.recurrence_id:
+                                self.env.cr.execute("""
+                                    SELECT 1 FROM calendar_event occ
+                                    LEFT JOIN caldav_event_map map ON map.event_id = occ.id AND map.account_id = %s
+                                    WHERE occ.recurrence_id = %s AND occ.active = true
+                                      AND (
+                                          (map.id IS NOT NULL AND occ.write_date > map.last_odoo_write + interval '2 seconds')
+                                          OR
+                                          (map.id IS NULL AND occ.write_date > %s + interval '2 seconds')
+                                      )
+                                    LIMIT 1
+                                """, (account.id, existing.event_id.recurrence_id.id, existing.last_odoo_write))
+                                if self.env.cr.fetchone():
+                                    has_pending = True
+                            if has_pending:
+                                _logger.info(
+                                    '[ZOHO] Skipping pull for %s: Pending Odoo change detected (Base or Occurrence).',
+                                    href,
+                                )
+                                existing.sudo().write({'caldav_etag': content_hash})
+                                continue
+
                     with self.env.cr.savepoint():
                         event = self._upsert_from_ical(account, href, content_hash, zoho_ical_text, existing)
                         if event: pulled_ids.append(event.id)
@@ -587,13 +675,13 @@ class CalDAVSyncService(models.AbstractModel):
                 except Exception as e:
                     _logger.error('[ZOHO] Pull failed for %s: %s', href, e)
                     failed += 1
-                    continue 
+                    continue
             if existing:
                 if existing.caldav_etag == server_etag:
                     continue
-                 
+
                 if existing.event_id and not existing.event_id.active:
-                    continue 
+                    continue
                 if existing.event_id:
                     if not existing.last_odoo_write:
                         has_pending = True
@@ -649,7 +737,7 @@ class CalDAVSyncService(models.AbstractModel):
                 error_msg = f'Pull failed for href {href}: {str(e)}'
                 _logger.error(error_msg, exc_info=True)
                 details.append(error_msg)
- 
+
         server_hrefs = set(server_etags.keys())
         for href, map_rec in list(existing_maps.items()):
             if href not in server_hrefs:
@@ -666,15 +754,15 @@ class CalDAVSyncService(models.AbstractModel):
         return pulled, deleted, pulled_ids, failed, "\n".join(details)
     @api.model
     def _push_odoo_changes(self, account, skip_ids=None):
-        """Push new, modified, and deleted Odoo events to the CalDAV server. 
+        """Push new, modified, and deleted Odoo events to the CalDAV server.
         """
         pushed = 0
         failed = 0
         details = []
         skip_ids = skip_ids or set()
         owner_partner = account.user_id.partner_id
- 
-        google_force_push_ids = set()  
+
+        google_force_push_ids = set()
         if account.server_type == 'google':
             google_force_push_ids = self._detect_google_archived_occurrences(account)
             pending_exdate_maps = self.env['caldav.event.map'].sudo().search([
@@ -695,22 +783,36 @@ class CalDAVSyncService(models.AbstractModel):
         ])
         for map_rec in all_maps:
             event = map_rec.event_id
-            if not event: 
+            if not event:
                 map_rec.sudo().unlink()
                 continue
-            if not event.active and event.id not in skip_ids: 
+            if not event.active and event.id not in skip_ids:
+                # ← INSERT HERE (Zoho only)
+                if account.server_type == 'zoho' and '__occ_' in (map_rec.caldav_uid or ''):
+                    _logger.info(
+                        '[ZOHO] Skipping CalDAV DELETE for archived occurrence-override map '
+                        '(event_id=%s, uid=%s) — cleaning up local map only.',
+                        event.id, map_rec.caldav_uid,
+                    )
+                    try:
+                        with self.env.cr.savepoint():
+                            map_rec.sudo().unlink()
+                    except Exception as _ue:
+                        _logger.warning('[ZOHO] Could not unlink occurrence-override map: %s', _ue)
+                    continue
+                # ← existing code continues below
                 if event.recurrence_id:
                     active_remaining = self.env['calendar.event'].sudo().search_count([
                         ('recurrence_id', '=', event.recurrence_id.id),
                         ('active', '=', True),
                     ])
-                    if active_remaining > 0: 
+                    if active_remaining > 0:
                         _logger.info(
                             'Archived event "%s" (id=%s) still has %s active occurrences. '
                             'Skipping CalDAV DELETE (EXDATE re-push already handled in unlink).',
                             event.name, event.id, active_remaining,
                         )
-                        continue   
+                        continue
                 try:
                     with self.env.cr.savepoint():
                         _logger.info(
@@ -730,13 +832,13 @@ class CalDAVSyncService(models.AbstractModel):
                             map_rec.sudo().unlink()
                     except Exception as ue:
                         _logger.warning('Could not unlink map for "%s": %s', event.name, ue)
-                    continue 
+                    continue
         owner_partner_id = owner_partner.id
- 
+
         non_recurring = self.env['calendar.event'].sudo().search([
             ('active', '=', True),
             ('recurrence_id', '=', False),
-        ]).filtered(lambda e: owner_partner_id in e.partner_ids.ids) 
+        ]).filtered(lambda e: owner_partner_id in e.partner_ids.ids)
         recurrences = self.env['calendar.recurrence'].sudo().search([])
         recurring_base_events = recurrences.mapped('base_event_id').filtered(
             lambda e: e.active and any(
@@ -745,16 +847,16 @@ class CalDAVSyncService(models.AbstractModel):
         )
 
         events = non_recurring | recurring_base_events
- 
+
         if account.server_type == 'google':
-            self._migrate_recurrence_mappings(account) 
+            self._migrate_recurrence_mappings(account)
         if account.server_type == 'icloud':
             try:
                 with self.env.cr.savepoint():
                     self._push_icloud_occurrence_overrides(account, skip_ids=skip_ids)
             except Exception as e:
                 _logger.warning('[iCLOUD] Occurrence override push failed: %s', e, exc_info=True)
- 
+
         if account.server_type == 'zoho':
             try:
                 with self.env.cr.savepoint():
@@ -762,7 +864,7 @@ class CalDAVSyncService(models.AbstractModel):
                     pushed += (zoho_pushed or 0)
             except Exception as e:
                 _logger.warning('[ZOHO] Occurrence override push failed: %s', e, exc_info=True)
- 
+
         if account.server_type == 'google':
             try:
                 with self.env.cr.savepoint():
@@ -837,12 +939,12 @@ class CalDAVSyncService(models.AbstractModel):
             if event.id in skip_ids:
                 _logger.debug('[PUSH] SKIP event id=%s "%s": in skip_ids (just pulled).', event.id, event.name)
                 continue
-            existing_map = existing_maps.get(event.id) 
+            existing_map = existing_maps.get(event.id)
             if account.server_type in ('icloud', 'zoho') and event.recurrence_id and existing_map:
-                continue 
+                continue
             if account.server_type == 'google' and event.recurrence_id and existing_map:
                 if event.id not in google_force_push_ids:
-                    continue 
+                    continue
             if existing_map and event.id not in google_force_push_ids and event.id not in radicale_force_push_ids:
                 last_push = existing_map.last_odoo_write
                 if last_push and event.write_date and event.write_date <= last_push:
@@ -850,7 +952,7 @@ class CalDAVSyncService(models.AbstractModel):
                         '[PUSH] SKIP event id=%s "%s": unchanged (write_date=%s <= last_push=%s).',
                         event.id, event.name, event.write_date, last_push,
                     )
-                    continue  
+                    continue
             _logger.info('[PUSH] WILL PUSH event id=%s "%s".', event.id, event.name)
             try:
                 with self.env.cr.savepoint():
@@ -876,7 +978,7 @@ class CalDAVSyncService(models.AbstractModel):
                             _logger.info('Auto-recovery pull successful for event "%s".', event.name)
                     except Exception as re:
                         _logger.error('Auto-recovery pull failed for event "%s": %s', event.name, re)
-            
+
                 elif '409' in msg and existing_map and account.server_type == 'google':
                     _logger.warning(
                         '[GOOGLE] 409 Conflict for event "%s" (id=%s) at %s — '
@@ -886,13 +988,13 @@ class CalDAVSyncService(models.AbstractModel):
                     try:
                         with self.env.cr.savepoint():
                             new_etag, ical_text = account._fetch_ical_with_etag(existing_map.caldav_href)
-                
+
                             # Before pulling, snapshot the user's intended values
                             intended_start = event.start
                             intended_stop = event.stop
                             intended_allday = event.allday
                             intended_name = event.name
-                
+
                             # Pull server state into Odoo to re-align the map
                             self._upsert_from_ical(
                                 account, existing_map.caldav_href, new_etag, ical_text, existing_map
@@ -902,7 +1004,7 @@ class CalDAVSyncService(models.AbstractModel):
                                 'Re-applying user intended values and retrying push.',
                                 event.name,
                             )
-                
+
                             # Re-apply the user's intended change on top of the pulled state
                             event.with_context(no_sync=True).sudo().write({
                                 'name': intended_name,
@@ -910,7 +1012,7 @@ class CalDAVSyncService(models.AbstractModel):
                                 'stop': intended_stop,
                                 'allday': intended_allday,
                             })
-                
+
                             # Invalidate the map's last_odoo_write so next sync pushes
                             existing_map_refreshed = self.env['caldav.event.map'].sudo().search([
                                 ('account_id', '=', account.id),
@@ -918,7 +1020,7 @@ class CalDAVSyncService(models.AbstractModel):
                             ], limit=1)
                             if existing_map_refreshed:
                                 existing_map_refreshed.sudo().write({'last_odoo_write': False})
-                
+
                             _logger.info(
                                 '[GOOGLE] 409 recovery: re-applied user change for "%s". '
                                 'Will be pushed on next sync.',
@@ -952,19 +1054,19 @@ class CalDAVSyncService(models.AbstractModel):
 
 
 
- 
+
         return pushed, failed, "\n".join(details)
 
     @api.model
     def _detect_google_archived_occurrences(self, account):
-        """Detect archived recurring occurrences and record them as EXDATEs. 
+        """Detect archived recurring occurrences and record them as EXDATEs.
         """
         owner_partner_id = account.user_id.partner_id.id
-        force_push_ids = set()  
+        force_push_ids = set()
 
         _logger.debug('[GOOGLE][PUSH] Detecting archived occurrences for account %s...', account.name)
 
-         
+
         all_recurrences = self.env['calendar.recurrence'].sudo().search([])
         relevant_recurrences = all_recurrences.filtered(
             lambda r: r.base_event_id and r.base_event_id.active and any(
@@ -974,16 +1076,16 @@ class CalDAVSyncService(models.AbstractModel):
         )
 
         for recurrence in relevant_recurrences:
-            base_event = recurrence.base_event_id   
+            base_event = recurrence.base_event_id
 
-            
+
             base_map = self.env['caldav.event.map'].sudo().search([
                 ('account_id', '=', account.id),
                 ('event_id', '=', base_event.id),
             ], limit=1)
 
             if not base_map:
-                
+
                 all_recurrence_event_ids = self.env['calendar.event'].sudo().with_context(
                     active_test=False
                 ).search([
@@ -992,7 +1094,7 @@ class CalDAVSyncService(models.AbstractModel):
                 ]).ids
 
                 if not all_recurrence_event_ids:
-                    continue  
+                    continue
 
                 orphaned_map = self.env['caldav.event.map'].sudo().search([
                     ('account_id', '=', account.id),
@@ -1000,11 +1102,11 @@ class CalDAVSyncService(models.AbstractModel):
                 ], limit=1)
 
                 if not orphaned_map:
-                    continue  
+                    continue
 
                 old_base = orphaned_map.event_id
                 old_base_start_iso = old_base.start.strftime('%Y%m%dT%H%M%SZ') if old_base.start else None
- 
+
                 if base_event.caldav_uid != orphaned_map.caldav_uid:
                     base_event.sudo().write({'caldav_uid': orphaned_map.caldav_uid})
                     _logger.info(
@@ -1013,7 +1115,7 @@ class CalDAVSyncService(models.AbstractModel):
                         base_event.id, orphaned_map.caldav_uid,
                     )
 
-                
+
                 existing_occ_map = self.env['caldav.event.map'].sudo().search([
                     ('account_id', '=', account.id),
                     ('event_id', '=', base_event.id),
@@ -1039,9 +1141,9 @@ class CalDAVSyncService(models.AbstractModel):
                     old_base.id, old_base_start_iso, base_event.id, old_base_start_iso,
                 )
                 force_push_ids.add(base_event.id)
-                
+
                 base_map = orphaned_map
- 
+
             archived_occurrences = self.env['calendar.event'].sudo().with_context(
                 active_test=False
             ).search([
@@ -1052,7 +1154,7 @@ class CalDAVSyncService(models.AbstractModel):
 
             if not archived_occurrences:
                 continue
- 
+
             existing_exdates = set(
                 d.strip()
                 for d in (base_map.google_exdates or '').split(',')
@@ -1089,14 +1191,14 @@ class CalDAVSyncService(models.AbstractModel):
 
     @api.model
     def _build_href(self, account, uid):
-        """Build the CalDAV resource URL for a new event. 
+        """Build the CalDAV resource URL for a new event.
         """
         base = account.url.rstrip('/')
         return f'{base}/{uid}.ics'
 
     @api.model
     def _push_single_event(self, account, event, existing_map=None):
-        """Build the iCal string and PUT it to the CalDAV server. 
+        """Build the iCal string and PUT it to the CalDAV server.
         """
         uid = event.caldav_uid or str(uuid.uuid4())
         if not event.caldav_uid:
@@ -1112,7 +1214,7 @@ class CalDAVSyncService(models.AbstractModel):
             event.name, event.id, ical_str,
         )
         new_etag = account._put_ical(href, ical_str, etag=old_etag)
-        _logger.debug('Push successful; new ETag=%s', new_etag) 
+        _logger.debug('Push successful; new ETag=%s', new_etag)
         if account.server_type == 'google':
             try:
                 fresh_etag, _ = account._fetch_ical_with_etag(href)
@@ -1127,7 +1229,7 @@ class CalDAVSyncService(models.AbstractModel):
                 _logger.debug(
                     '[GOOGLE] Could not fetch fresh ETag after push for "%s": %s',
                     event.name, _fe,
-                ) 
+                )
         if account.server_type == 'zoho':
             _meaningful_prefixes = (
                 'SUMMARY', 'DTSTART', 'DTEND', 'RRULE', 'RECURRENCE-ID',
@@ -1157,9 +1259,9 @@ class CalDAVSyncService(models.AbstractModel):
             'last_odoo_write': fields.Datetime.now(),
         }
 
-        if existing_map: 
+        if existing_map:
             existing_map.sudo().write(map_vals)
-        else: 
+        else:
             existing = self.env['caldav.event.map'].sudo().search([
                 ('account_id', '=', account.id),
                 ('caldav_uid', '=', uid),
@@ -1172,8 +1274,8 @@ class CalDAVSyncService(models.AbstractModel):
 
     @api.model
     def _apply_icloud_occurrence_overrides(self, recurrence_id_vevents, uid_value, account, href, server_etag):
-        """Apply RECURRENCE-ID overrides from iCloud into the corresponding Odoo occurrences. 
-        """ 
+        """Apply RECURRENCE-ID overrides from iCloud into the corresponding Odoo occurrences.
+        """
         base_map = self.env['caldav.event.map'].sudo().search([
             ('account_id', '=', account.id),
             ('caldav_uid', '=', uid_value),
@@ -1192,7 +1294,7 @@ class CalDAVSyncService(models.AbstractModel):
             rid_comp = getattr(override_vevent, 'recurrence_id', None)
             if not rid_comp:
                 continue
-            rid_val = rid_comp.value 
+            rid_val = rid_comp.value
             if isinstance(rid_val, datetime):
                 if rid_val.tzinfo is not None:
                     rid_dt = rid_val.astimezone(timezone.utc).replace(tzinfo=None)
@@ -1224,15 +1326,15 @@ class CalDAVSyncService(models.AbstractModel):
                     rid_dt, base_event.name,
                 )
                 continue
- 
+
             vals = self._ical_to_odoo_vals(override_vevent, account)
             if not vals:
-                continue  
+                continue
             vals.pop('rrule', None)
             vals.pop('recurrence_update', None)
             vals.pop('caldav_uid', None)
 
-             
+
             if not occurrence.caldav_original_start:
                 vals['caldav_original_start'] = rid_dt
 
@@ -1241,7 +1343,7 @@ class CalDAVSyncService(models.AbstractModel):
                 '[iCLOUD] Applied RECURRENCE-ID override to occurrence "%s" (id=%s, start=%s).',
                 occurrence.name, occurrence.id, occurrence.start,
             )
-        
+
         base_map.sudo().write({
             'caldav_etag': server_etag,
             'last_odoo_write': base_event.write_date,
@@ -1250,7 +1352,7 @@ class CalDAVSyncService(models.AbstractModel):
     @api.model
     def _apply_zoho_occurrence_overrides(self, recurrence_id_vevents, uid_value, account, href, server_etag):
         """Apply RECURRENCE-ID overrides pulled from Zoho into the corresponding Odoo occurrences.
- 
+
         """
         base_map = self.env['caldav.event.map'].sudo().search([
             ('account_id', '=', account.id),
@@ -1276,16 +1378,16 @@ class CalDAVSyncService(models.AbstractModel):
             if not rid_comp:
                 continue
             rid_val = rid_comp.value
- 
+
             is_allday_rid = not isinstance(rid_val, datetime)
             if isinstance(rid_val, datetime):
                 if rid_val.tzinfo is not None:
                     rid_dt = rid_val.astimezone(pytz.utc).replace(tzinfo=None)
                 else:
                     rid_dt = rid_val
-            else: 
+            else:
                 rid_dt = datetime(rid_val.year, rid_val.month, rid_val.day, 0, 0, 0)
- 
+
             if is_allday_rid:
                 # For all-day events, match by the exact date.
                 rid_date = rid_dt.date()
@@ -1295,8 +1397,8 @@ class CalDAVSyncService(models.AbstractModel):
                     ('active', '=', True),
                     '|',
                         '&', ('caldav_original_start', '>=', rid_dt), ('caldav_original_start', '<', rid_dt_end),
-                        '&', ('caldav_original_start', '=', False), 
-                             '|', ('start_date', '=', rid_date), 
+                        '&', ('caldav_original_start', '=', False),
+                             '|', ('start_date', '=', rid_date),
                                   '&', ('start', '>=', rid_dt), ('start', '<', rid_dt_end)
                 ]
             else:
@@ -1318,14 +1420,14 @@ class CalDAVSyncService(models.AbstractModel):
                     rid_dt, base_event.name, uid_value,
                 )
                 continue
- 
+
             vals = self._ical_to_odoo_vals(override_vevent, account)
             if not vals:
-                continue 
+                continue
             vals.pop('rrule', None)
             vals.pop('recurrence_update', None)
             vals.pop('caldav_uid', None)
- 
+
             if not occurrence.caldav_original_start:
                 vals['caldav_original_start'] = rid_dt
 
@@ -1333,14 +1435,14 @@ class CalDAVSyncService(models.AbstractModel):
             _logger.info(
                 '[ZOHO] Applied RECURRENCE-ID override to occurrence "%s" (id=%s, start=%s).',
                 occurrence.name, occurrence.id, occurrence.start,
-            ) 
+            )
             occ_map_rec = self.env['caldav.event.map'].sudo().search([
                 ('account_id', '=', account.id),
                 ('event_id', '=', occurrence.id),
                 ('caldav_uid', 'like', '%__occ_%'),
             ], limit=1)
             if occ_map_rec:
-                occ_map_rec.sudo().write({'last_odoo_write': occurrence.write_date}) 
+                occ_map_rec.sudo().write({'last_odoo_write': occurrence.write_date})
         base_map.sudo().write({
             'caldav_etag': server_etag,
             'last_odoo_write': base_event.write_date,
@@ -1348,24 +1450,24 @@ class CalDAVSyncService(models.AbstractModel):
 
     @api.model
     def _push_icloud_occurrence_overrides(self, account, skip_ids=None):
-        """Push modified individual occurrences to iCloud as RECURRENCE-ID overrides. 
+        """Push modified individual occurrences to iCloud as RECURRENCE-ID overrides.
         """
         skip_ids = skip_ids or set()
         owner_partner_id = account.user_id.partner_id.id
- 
+
         all_recurrences = self.env['calendar.recurrence'].sudo().search([])
         for recurrence in all_recurrences:
             base_event = recurrence.base_event_id
             if not base_event or not base_event.active:
-                continue 
+                continue
             if not any(att.partner_id.id == owner_partner_id for att in base_event.attendee_ids):
-                continue 
+                continue
             base_map = self.env['caldav.event.map'].sudo().search([
                 ('account_id', '=', account.id),
                 ('event_id', '=', base_event.id),
             ], limit=1)
             if not base_map:
-                continue    
+                continue
             occurrences = self.env['calendar.event'].sudo().search([
                 ('recurrence_id', '=', recurrence.id),
                 ('active', '=', True),
@@ -1384,11 +1486,11 @@ class CalDAVSyncService(models.AbstractModel):
                     if occ_map.last_odoo_write and occ.write_date and occ.write_date <= occ_map.last_odoo_write:
                         if not self._occurrence_differs_from_base(occ, base_event):
                             continue
-                else: 
+                else:
                     if base_map.last_odoo_write and occ.write_date and occ.write_date <= base_map.last_odoo_write:
                         if not self._occurrence_differs_from_base(occ, base_event):
                             continue
-                modified_occs.append((occ, occ_map)) 
+                modified_occs.append((occ, occ_map))
             if base_map.last_odoo_write and base_event.write_date and \
                     base_event.write_date > base_map.last_odoo_write:
                 modified_occs.append((base_event, base_map))
@@ -1414,12 +1516,12 @@ class CalDAVSyncService(models.AbstractModel):
                 _logger.warning('[iCLOUD] Override push failed for series "%s": %s', base_event.name, e, exc_info=True)
     @api.model
     def _occurrence_differs_from_base(self, occ, base_event):
-        """Check if an occurrence deviates from the base series in any meaningful field. 
-        """ 
-        
+        """Check if an occurrence deviates from the base series in any meaningful field.
+        """
+
         name_diff = (occ.name or '').strip() != (base_event.name or '').strip()
         loc_diff = (occ.location or '').strip() != (base_event.location or '').strip()
-        
+
         desc_occ = html2plaintext(occ.description or '').strip()
         desc_base = html2plaintext(base_event.description or '').strip()
         desc_diff = desc_occ != desc_base
@@ -1430,11 +1532,11 @@ class CalDAVSyncService(models.AbstractModel):
                 occ.start, occ.id, name_diff, loc_diff, desc_diff
             )
             return True
- 
+
         expected_start = occ.caldav_original_start or occ.start
         if not expected_start:
             return False
- 
+
         start_diff_seconds = abs((occ.start - expected_start).total_seconds())
         if start_diff_seconds > 60:
             _logger.info(
@@ -1455,9 +1557,10 @@ class CalDAVSyncService(models.AbstractModel):
         return False
     @api.model
     def _push_zoho_occurrence_overrides(self, account, skip_ids=None):
-        """Push modified individual occurrences to Zoho as RECURRENCE-ID overrides. 
+        """Push modified individual occurrences to Zoho as RECURRENCE-ID overrides.
         """
         skip_ids = skip_ids or set()
+        pushed_count = 0
         owner_partner_id = account.user_id.partner_id.id
 
         all_recurrences = self.env['calendar.recurrence'].sudo().search([])
@@ -1465,16 +1568,16 @@ class CalDAVSyncService(models.AbstractModel):
             base_event = recurrence.base_event_id
             if not base_event or not base_event.active:
                 continue
- 
+
             if not any(att.partner_id.id == owner_partner_id for att in base_event.attendee_ids):
                 continue
- 
+
             base_map = self.env['caldav.event.map'].sudo().search([
                 ('account_id', '=', account.id),
                 ('event_id', '=', base_event.id),
             ], limit=1)
             if not base_map:
-                continue  
+                continue
             occurrences = self.env['calendar.event'].sudo().search([
                 ('recurrence_id', '=', recurrence.id),
                 ('active', '=', True),
@@ -1492,22 +1595,22 @@ class CalDAVSyncService(models.AbstractModel):
             for occ in occurrences:
                 if occ.id in skip_ids:
                     continue
-                 
+
                 occ_map = self.env['caldav.event.map'].sudo().search([
                     ('account_id', '=', account.id),
                     ('event_id', '=', occ.id),
                 ], limit=1)
-                
+
                 is_deletion = (occ_map and occ_map.last_odoo_write is False)
                 differs = self._occurrence_differs_from_base(occ, base_event)
-                
+
                 last_sync = occ_map.last_odoo_write if occ_map else base_map.last_odoo_write
                 modified = not last_sync or (occ.write_date and occ.write_date > last_sync)
-                
+
                 # If base is pushing, we MUST include all deviating occurrences or they might revert on server
                 if is_deletion or (differs and (modified or base_needs_push)):
                     modified_occs.append((occ, occ_map))
-  
+
             if base_needs_push:
                 _logger.info(
                     '[ZOHO] Base event "%s" (id=%s) will be pushed — including all %s deviating/modified overrides.',
@@ -1520,9 +1623,9 @@ class CalDAVSyncService(models.AbstractModel):
 
             try:
                 with self.env.cr.savepoint():
-                     
+
                     current_etag, current_ical = account._fetch_ical_with_etag(base_map.caldav_href)
- 
+
                     updated_ical = self._build_zoho_ical_with_overrides(
                         current_ical, base_event, modified_occs, account
                     )
@@ -1530,9 +1633,9 @@ class CalDAVSyncService(models.AbstractModel):
                         '[ZOHO][PUSH-OVERRIDE] Outgoing iCal payload (Going to Server) for series "%s":\n%s',
                         base_event.name, updated_ical,
                     )
- 
+
                     new_etag = account._put_ical(base_map.caldav_href, updated_ical, etag=current_etag)
- 
+
                     _meaningful_prefixes = (
                         'SUMMARY', 'DTSTART', 'DTEND', 'RRULE', 'RECURRENCE-ID',
                         'EXDATE', 'LOCATION', 'DESCRIPTION', 'STATUS',
@@ -1550,14 +1653,15 @@ class CalDAVSyncService(models.AbstractModel):
 
                     base_map.sudo().write({
                         'caldav_etag': etag_to_store,
+                        'last_odoo_write': fields.Datetime.now(),
                     })
                     _logger.info('[ZOHO] Pushed RECURRENCE-ID overrides for series "%s".', base_event.name)
-
+                    pushed_count += 1
                     for occ, occ_map in modified_occs:
                         if occ_map:
                             occ_map.sudo().write({'last_odoo_write': occ.write_date})
                         else:
-                             
+
                             existing_occ_map = self.env['caldav.event.map'].sudo().search([
                                 ('account_id', '=', account.id),
                                 ('event_id', '=', occ.id),
@@ -1565,7 +1669,7 @@ class CalDAVSyncService(models.AbstractModel):
                             if existing_occ_map:
                                 existing_occ_map.sudo().write({'last_odoo_write': occ.write_date})
                             else:
-                                 
+
                                 self.env['caldav.event.map'].sudo().create({
                                     'account_id': account.id,
                                     'event_id': occ.id,
@@ -1578,10 +1682,11 @@ class CalDAVSyncService(models.AbstractModel):
                 _logger.warning(
                     '[ZOHO] Override push failed for series "%s": %s', base_event.name, e, exc_info=True
                 )
+        return pushed_count
 
     @api.model
     def _apply_google_occurrence_overrides(self, recurrence_id_vevents, uid_value, account, href, server_etag):
-        """Apply RECURRENCE-ID overrides from Google Calendar into Odoo occurrences. 
+        """Apply RECURRENCE-ID overrides from Google Calendar into Odoo occurrences.
         """
         base_map = self.env['caldav.event.map'].sudo().search([
             ('account_id', '=', account.id),
@@ -1680,7 +1785,7 @@ class CalDAVSyncService(models.AbstractModel):
         owner_partner_id = account.user_id.partner_id.id
         pushed_count = 0
         all_recurrences = self.env['calendar.recurrence'].sudo().search([])
-        
+
         for recurrence in all_recurrences:
             base_event = recurrence.base_event_id
             if not base_event or not base_event.active:
@@ -1693,13 +1798,13 @@ class CalDAVSyncService(models.AbstractModel):
             ], limit=1)
             if not base_map:
                 continue
- 
+
             occurrences = self.env['calendar.event'].sudo().search([
                 ('recurrence_id', '=', recurrence.id),
                 ('active', '=', True),
                 ('id', '!=', base_event.id),
             ])
- 
+
             base_needs_direct_push = False
             if base_event.id not in skip_ids:
                 if not base_map.last_odoo_write:
@@ -1735,7 +1840,7 @@ class CalDAVSyncService(models.AbstractModel):
                         occ.id, occ.name,
                     )
                     modified_occs.append((occ, occ_map))
-                elif base_needs_direct_push: 
+                elif base_needs_direct_push:
                     pinned_occs.append((occ, occ_map))
                     _logger.info(
                         '[GOOGLE][PUSH] Occurrence id=%s "%s" is unchanged — pinning '
@@ -1750,7 +1855,7 @@ class CalDAVSyncService(models.AbstractModel):
                 with self.env.cr.savepoint():
                     current_etag, current_ical = account._fetch_ical_with_etag(base_map.caldav_href)
 
-                    if base_needs_direct_push and pinned_occs: 
+                    if base_needs_direct_push and pinned_occs:
                         step1_ical = self._build_google_base_edit(current_ical, base_event, account)
                         if modified_occs:
                             step1_ical = self._build_google_ical_with_overrides(
@@ -1860,13 +1965,13 @@ class CalDAVSyncService(models.AbstractModel):
             return
 
         vevent = None
-        recurrence_id_vevents = []   
+        recurrence_id_vevents = []
         for component in cal.components():
             if component.name == 'VEVENT':
                 if hasattr(component, 'recurrence_id'):
                     recurrence_id_vevents.append(component)
                 elif vevent is None:
-                    vevent = component   
+                    vevent = component
         if vevent is None:
             return
 
@@ -1913,8 +2018,8 @@ class CalDAVSyncService(models.AbstractModel):
 
         if existing_map and (existing_map.event_id or event):
             event = event or existing_map.event_id
-            vals.pop('caldav_uid', None) 
-            
+            vals.pop('caldav_uid', None)
+
             if event.recurrence_id:
                 if account.server_type not in ('zoho', 'google', 'icloud') and vals.get('rrule'):
                     # --- Radicale / Generic CalDAV: re-apply RRULE if it changed ---
@@ -1943,6 +2048,19 @@ class CalDAVSyncService(models.AbstractModel):
                         )
                         vals['recurrence_update'] = 'all_events'
                         event.with_context(**ctx_kwargs).write(vals)
+                        # ← INSERT HERE
+                        stale_occ_maps = self.env['caldav.event.map'].sudo().search([
+                            ('account_id', '=', account.id),
+                            ('caldav_href', '=', href),
+                            ('caldav_uid', 'like', '%__occ_%'),
+                        ])
+                        if stale_occ_maps:
+                            _logger.info(
+                                '[ZOHO][PULL] Cleaning up %s stale occurrence map(s) after '
+                                'RRULE re-apply for "%s".',
+                                len(stale_occ_maps), event.name,
+                            )
+                            stale_occ_maps.sudo().unlink()
                     else:
                         # RRULE unchanged — only update scalar fields
                         vals.pop('rrule', None)
@@ -1950,18 +2068,23 @@ class CalDAVSyncService(models.AbstractModel):
                         event.with_context(**ctx_kwargs).write(vals)
 
                 elif account.server_type == 'zoho' and vals.get('rrule'):
-                    incoming_rrule = (vals.get('rrule') or '').strip().upper()
-                    current_rrule = (event.recurrence_id.rrule or '').strip().upper()
+                    def _strip_defaults(r):
+                        return ';'.join(
+                            p for p in r.strip().upper().split(';')
+                            if p not in ('INTERVAL=1', 'WKST=SU', 'WKST=MO')
+                        )
+                    incoming_rrule = _strip_defaults(vals.get('rrule') or '')
+                    current_rrule = _strip_defaults(event.recurrence_id.rrule or '')    
                     if incoming_rrule and incoming_rrule != current_rrule:
                         _weekday_remap = {'mo': 'mon', 'tu': 'tue', 'we': 'wed', 'th': 'thu', 'fr': 'fri', 'sa': 'sat', 'su': 'sun'}
-                        _odoo_weekday_fields = set(_weekday_remap.values()) 
+                        _odoo_weekday_fields = set(_weekday_remap.values())
                         update_vals = {}
                         for _k, _v in vals.items():
                             if _k != 'rrule':
                                 update_vals[_weekday_remap.get(_k, _k)] = _v
                         for _day_field in _odoo_weekday_fields:
                             update_vals[_day_field] = False
-                        
+
                         import re as _re
                         _byday_to_field = {'MO': 'mon', 'TU': 'tue', 'WE': 'wed', 'TH': 'thu', 'FR': 'fri', 'SA': 'sat', 'SU': 'sun'}
                         _byday_match = _re.search(r'BYDAY=([^;]+)', incoming_rrule, _re.IGNORECASE)
@@ -1969,10 +2092,10 @@ class CalDAVSyncService(models.AbstractModel):
                             for _day_token in _byday_match.group(1).split(','):
                                 _day_code = _day_token.strip().upper()[-2:]
                                 if _day_code in _byday_to_field:
-                                    update_vals[_byday_to_field[_day_code]] = True 
+                                    update_vals[_byday_to_field[_day_code]] = True
                         update_vals['recurrence_update'] = 'all_events'
                         event.with_context(**ctx_kwargs).write(update_vals)
-                    else: 
+                    else:
                         vals.pop('rrule', None)
                         vals.pop('recurrence_update', None)
                         event.with_context(**ctx_kwargs).write(vals)
@@ -1982,11 +2105,11 @@ class CalDAVSyncService(models.AbstractModel):
                     for _k, _v in vals.items():
                         if _k != 'rrule':
                             write_vals[_weekday_remap.get(_k, _k)] = _v
-                    
+
                     write_vals['recurrence_update'] = 'all_events'
                     event.with_context(**ctx_kwargs).write(write_vals)
                     event.invalidate_recordset()
-                    
+
                     if event.recurrence_id:
                         new_base = event.recurrence_id.base_event_id
                         if new_base and new_base.exists() and new_base.id != event.id:
@@ -1995,7 +2118,7 @@ class CalDAVSyncService(models.AbstractModel):
                             if existing_map:
                                 existing_map.sudo().write({'event_id': new_base.id})
                             event = new_base
-                        
+
                         all_occs = self.env['calendar.event'].sudo().search([
                             ('recurrence_id', '=', event.recurrence_id.id),
                             ('active', '=', True),
@@ -2065,7 +2188,7 @@ class CalDAVSyncService(models.AbstractModel):
                 write_vals['recurrence_update'] = 'all_events'
                 event.with_context(**ctx_kwargs).write(write_vals)
                 event.invalidate_recordset()
- 
+
                 if event.recurrence_id:
                     new_base = event.recurrence_id.base_event_id
                     if new_base and new_base.exists() and new_base.id != event.id:
@@ -2138,7 +2261,7 @@ class CalDAVSyncService(models.AbstractModel):
                 'account_id': account.id, 'event_id': event.id, 'caldav_href': href,
                 'caldav_etag': server_etag, 'caldav_uid': uid_value,
             })
- 
+
         exdate_comps = getattr(vevent, 'exdate_list', [])
         if not exdate_comps and getattr(vevent, 'exdate', None):
             exdate_comps = [vevent.exdate]
@@ -2155,7 +2278,7 @@ class CalDAVSyncService(models.AbstractModel):
                             from datetime import date as _date
                             excluded_dates.add(_date(ex.year, ex.month, ex.day))
                     except Exception: pass
-            
+
             override_starts = set()
             for override_vevent in recurrence_id_vevents:
                 rid_comp = getattr(override_vevent, 'recurrence_id', None)
@@ -2168,7 +2291,7 @@ class CalDAVSyncService(models.AbstractModel):
                             override_starts.add(_date(rid_val.year, rid_val.month, rid_val.day))
                     except Exception: pass
 
-            if excluded_dates: 
+            if excluded_dates:
                 if account.server_type == 'zoho':
                     effective_exclusions = excluded_dates - override_starts
                 else:
@@ -2211,7 +2334,7 @@ class CalDAVSyncService(models.AbstractModel):
                     len(recurrence_id_vevents), event.name, uid_value,
                 )
                 self._apply_icloud_occurrence_overrides(recurrence_id_vevents, uid_value, account, href, server_etag)
- 
+
         map_vals = {'account_id': account.id, 'event_id': event.id, 'caldav_uid': uid_value, 'caldav_href': href, 'caldav_etag': server_etag, 'last_odoo_write': fields.Datetime.now()}
         if existing_map: existing_map.sudo().write(map_vals)
         else: self.env['caldav.event.map'].sudo().create(map_vals)
@@ -2220,7 +2343,7 @@ class CalDAVSyncService(models.AbstractModel):
         # Google/Zoho/iCloud handle their own notification flows.
         # For generic CalDAV (Nextcloud/Radicale), Odoo's ORM does not automatically
         # trigger _send_mail_to_attendees() on pulled events, so we do it explicitly.
-        if account.send_invitation_emails and account.server_type not in ('zoho', 'icloud'):
+        if account.send_invitation_emails and account.server_type not in ('icloud'):
             try:
                 attendees_to_notify = event.attendee_ids.filtered(
                     lambda a: a.state == 'needsAction'
@@ -2245,7 +2368,7 @@ class CalDAVSyncService(models.AbstractModel):
                     event.name, _mail_err,
                 )
 
-        return event 
+        return event
 
     @api.model
     def _odoo_event_to_ical(self, event, account, existing_map=None):
@@ -2255,11 +2378,11 @@ class CalDAVSyncService(models.AbstractModel):
 
         cal = vobject.iCalendar()
         cal.add('prodid').value = '-//Creyox Technologies//CalDAV Sync//EN'
-        cal.add('version').value = '2.0' 
-        vevent = cal.add('vevent') 
+        cal.add('version').value = '2.0'
+        vevent = cal.add('vevent')
         uid = event.caldav_uid or str(uuid.uuid4())
-        vevent.add('uid').value = uid 
-        vevent.add('dtstamp').value = datetime.now(pytz.utc) 
+        vevent.add('uid').value = uid
+        vevent.add('dtstamp').value = datetime.now(pytz.utc)
         vevent.add('summary').value = event.name or ''
 
         if account.server_type in ('zoho', 'google'):
@@ -2276,7 +2399,7 @@ class CalDAVSyncService(models.AbstractModel):
                     if d.strip()
                 ]
                 if exdates:
-                    min_ex = min(exdates) 
+                    min_ex = min(exdates)
                     current_start_naive = _to_utc_naive(original_start)
                     if min_ex < current_start_naive:
                         _logger.info(
@@ -2299,7 +2422,7 @@ class CalDAVSyncService(models.AbstractModel):
         else:
             start_utc = _to_utc_naive(original_start) or datetime.utcnow()
             stop_utc = _to_utc_naive(original_stop) or (start_utc + timedelta(hours=1))
-            
+
             dtstart = vevent.add('dtstart')
             dtstart.value = datetime(
                 start_utc.year, start_utc.month, start_utc.day,
@@ -2322,17 +2445,17 @@ class CalDAVSyncService(models.AbstractModel):
         is_apple = account.server_type == 'icloud' or (account.url and 'icloud.com' in account.url)
         if (is_apple or account.server_type == 'zoho') and event.videocall_location:
             _logger.info('[PUSH] Setting iCal URL for %s: %s', account.name, event.videocall_location)
-            vevent.add('URL').value = event.videocall_location
+            vevent.add('url').value = event.videocall_location
 
         _privacy_to_class = {'public': 'PUBLIC', 'private': 'PRIVATE', 'confidential': 'CONFIDENTIAL'}
         class_val = _privacy_to_class.get(event.privacy or 'public', 'PUBLIC')
         vevent.add('class').value = class_val
- 
-        if event.description: 
+
+        if event.description:
             plain = html2plaintext(event.description or '').strip()
             if plain:
                 vevent.add('description').value = plain
- 
+
         rrule_value = None
         if event.recurrence_id:
             raw = event.recurrence_id.rrule or ''
@@ -2423,7 +2546,7 @@ class CalDAVSyncService(models.AbstractModel):
             for occ in all_occurrences:
                 occ_start_naive = _to_utc_naive(occ.start)
                 if occ_start_naive in excluded_starts:
-                    continue 
+                    continue
                 original_start_naive = _to_utc_naive(original_start)
                 event_start_naive = _to_utc_naive(event.start)
                 original_was_shifted = (original_start_naive != event_start_naive)
@@ -2617,7 +2740,7 @@ class CalDAVSyncService(models.AbstractModel):
     @api.model
     def _migrate_recurrence_mappings(self, account):
         """Finds sync mappings for archived base events and transfers them to new active bases.
- 
+
         """
         inactive_maps = self.env['caldav.event.map'].sudo().search([
             ('account_id', '=', account.id),
@@ -2635,7 +2758,7 @@ class CalDAVSyncService(models.AbstractModel):
                     map_rec.sudo().write({'event_id': new_base.id})
 
     def _ical_to_odoo_vals(self, vevent, account):
-        """Parse a vobject VEVENT component into Odoo calendar.event field values. 
+        """Parse a vobject VEVENT component into Odoo calendar.event field values.
         """
         try:
             vals = {}
@@ -2678,7 +2801,7 @@ class CalDAVSyncService(models.AbstractModel):
                     stop_val = _to_utc_naive(dtend_comp.value)
                     vals['stop'] = stop_val or (start_utc + timedelta(hours=1))
                 elif duration_comp and duration_comp.value:
-                    dur = duration_comp.value  
+                    dur = duration_comp.value
                     vals['stop'] = start_utc + dur
                 else:
                     vals['stop'] = start_utc + timedelta(hours=1)
@@ -2697,13 +2820,13 @@ class CalDAVSyncService(models.AbstractModel):
             desc_comp = getattr(vevent, 'description', None)
             if desc_comp and desc_comp.value:
                 description = desc_comp.value
-                
+
                 if account.server_type == 'google':
                     url_search = re.search(r'https://meet\.google\.com/[a-z0-9\-]+', description)
                     if url_search:
                         vals['videocall_location'] = url_search.group(0)
                         _logger.debug('Extracted Google Meet URL: %s', vals['videocall_location'])
-                    
+
                     markers = ['Join with Google Meet', '-::~']
                     first_idx = len(description)
                     found = False
@@ -2712,15 +2835,15 @@ class CalDAVSyncService(models.AbstractModel):
                         if idx != -1:
                             first_idx = min(first_idx, idx)
                             found = True
-                    
+
                     if found:
                         description = description[:first_idx].strip()
-                
+
                 if description:
                     vals['description'] = f'<p>{description.replace(chr(10), "<br/>")}</p>'
                 else:
                     vals['description'] = False
-                
+
                 if description:
                     vals['description'] = f'<p>{description.replace(chr(10), "<br/>")}</p>'
                 else:
@@ -2854,7 +2977,7 @@ class CalDAVSyncService(models.AbstractModel):
             _logger.warning('Failed to parse VEVENT: %s', e, exc_info=True)
             return {}
 
- 
+
     @api.model
     def action_sync_current_user(self):
         """Sync all active CalDAV accounts for the current user. 
@@ -2886,7 +3009,7 @@ class CalDAVSyncService(models.AbstractModel):
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
-            'params': {  
+            'params': {
                 'title': 'CalDAV Sync',
                 'message': message,
                 'type': msg_type,
