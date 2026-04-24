@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 # Part of Creyox Technologies.
 {
-    'name': 'Odoo CalDAV Connector | Odoo CalDAV Calendar Integration | Smart CalDAV Sync for Odoo | Odoo CalDAV Event Integration',
-    'author': 'Creyox Technologies',
+    "name": "Odoo CalDAV Connector | Odoo CalDAV Calendar Integration | Smart CalDAV Sync for Odoo | Odoo CalDAV Event Integration",
+    "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "https://www.creyox.com/helpdesk",
-    'live_test_url': 'https://www.creyox.com/helpdesk?module_tech_name=cr_all_in_one_direct_print&version=19.0',
-    'category': 'Extra Tools',
-    'summary': """
+    "live_test_url": "https://www.creyox.com/helpdesk?module_tech_name=cr_all_in_one_direct_print&version=19.0",
+    "category": "Extra Tools",
+    "summary": """
     Odoo CalDAV Calendar Synchronization enables seamless two-way syncing between Odoo and popular CalDAV services like Radicale, Google Calendar, iCloud, Nextcloud, and Zoho. It automatically keeps your calendar events updated across all platforms, ensuring consistency without any manual effort.
 
     The module supports recurring events, reminders, and privacy settings, along with secure per-user account configuration. With efficient change detection, only updated data is synced, providing a fast, reliable, and user-friendly calendar integration experience within Odoo.
     """,
     "license": "OPL-1",
     "version": "18.0.0.0",
-    'description': """
+    "description": """
     <h1>Odoo CalDAV Connector – Professional iCloud, Synology & Nextcloud Sync</h1>
     <p>The Odoo CalDAV Connector provides a robust, bidirectional bridge between Odoo Calendar and external CalDAV servers. It enables businesses to centralize their scheduling, automate event synchronization, and ensure that every meeting is reflected accurately across all personal and professional devices.</p>
     
@@ -58,20 +58,20 @@
     <p>Read our blog post, visit <a href="https://www.creyox.com/blog">Creyox Technologies Blogs</a></p>
 
     """,
-    'depends': ['base', 'calendar'],
-    'data': [
-        'security/ir.model.access.csv',
-        'views/groups.xml',
-        'data/ir_cron.xml',
-        'views/caldav_account_views.xml',
-        'views/caldav_sync_log_views.xml',
-        'views/res_config_settings_views.xml',
-        'views/calendar_views.xml',
-        'views/menu.xml',
+    "depends": ["base", "calendar"],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/groups.xml",
+        "data/ir_cron.xml",
+        "views/caldav_account_views.xml",
+        "views/caldav_sync_log_views.xml",
+        "views/res_config_settings_views.xml",
+        "views/calendar_views.xml",
+        "views/menu.xml",
     ],
-    'images': ['static/description/banner.png'],
-    'installable': True,
-    'application': True,
-    "price": "",
-    'currency': 'USD'
+    "images": ["static/description/banner.png"],
+    "installable": True,
+    "application": True,
+    "price": 179,
+    "currency": "USD",
 }

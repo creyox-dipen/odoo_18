@@ -11,14 +11,14 @@ class ResConfigSettings(models.TransientModel):
     shortcut button to open the CalDAV Accounts management form.
     """
 
-    _inherit = 'res.config.settings'
+    _inherit = "res.config.settings"
 
     caldav_sync_enabled = fields.Boolean(
-        string='Enable CalDAV Sync',
-        config_parameter='cr_odoo_caldav_sync.enabled',
+        string="Enable CalDAV Sync",
+        config_parameter="cr_odoo_caldav_sync.enabled",
         help=(
-            'When enabled, Odoo will automatically sync calendar events with '
-            'configured CalDAV servers every 15 minutes.'
+            "When enabled, Odoo will automatically sync calendar events with "
+            "configured CalDAV servers every 15 minutes."
         ),
     )
 
@@ -28,7 +28,9 @@ class ResConfigSettings(models.TransientModel):
         If disabled, the root menu is deactivated (active=False), hiding it from the dashboard.
         """
         super().set_values()
-        menu = self.env.ref('cr_odoo_caldav_sync.menu_caldav_root', raise_if_not_found=False)
+        menu = self.env.ref(
+            "cr_odoo_caldav_sync.menu_caldav_root", raise_if_not_found=False
+        )
         if menu:
             menu.sudo().active = self.caldav_sync_enabled
 
@@ -39,9 +41,9 @@ class ResConfigSettings(models.TransientModel):
         :rtype: dict
         """
         return {
-            'type': 'ir.actions.act_window',
-            'name': 'CalDAV Accounts',
-            'res_model': 'caldav.account',
-            'view_mode': 'list,form',
-            'target': 'current',
+            "type": "ir.actions.act_window",
+            "name": "CalDAV Accounts",
+            "res_model": "caldav.account",
+            "view_mode": "list,form",
+            "target": "current",
         }

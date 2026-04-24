@@ -13,58 +13,58 @@ class CalDAVEventMap(models.Model):
     sync service can detect changes efficiently without fetching every event.
     """
 
-    _name = 'caldav.event.map'
-    _description = 'CalDAV ↔ Odoo Event Mapping'
-    _order = 'account_id, caldav_uid'
+    _name = "caldav.event.map"
+    _description = "CalDAV ↔ Odoo Event Mapping"
+    _order = "account_id, caldav_uid"
 
     account_id = fields.Many2one(
-        'caldav.account',
-        string='CalDAV Account',
+        "caldav.account",
+        string="CalDAV Account",
         required=True,
-        ondelete='cascade',
+        ondelete="cascade",
         index=True,
     )
     event_id = fields.Many2one(
-        'calendar.event',
-        string='Odoo Event',
-        ondelete='cascade',
+        "calendar.event",
+        string="Odoo Event",
+        ondelete="cascade",
         index=True,
-        help='The Odoo calendar event linked to this CalDAV resource.',
+        help="The Odoo calendar event linked to this CalDAV resource.",
     )
     caldav_uid = fields.Char(
-        string='CalDAV UID',
+        string="CalDAV UID",
         required=True,
         index=True,
-        help='The globally-unique UID from the iCal VEVENT (UID property).',
+        help="The globally-unique UID from the iCal VEVENT (UID property).",
     )
     caldav_href = fields.Char(
-        string='CalDAV Href',
+        string="CalDAV Href",
         required=True,
-        help='Absolute or server-relative URL path to the .ics resource.',
+        help="Absolute or server-relative URL path to the .ics resource.",
     )
     caldav_etag = fields.Char(
-        string='ETag',
-        help='The ETag returned by the server on the last successful GET/PUT. '
-             'Used for optimistic locking and incremental change detection.',
+        string="ETag",
+        help="The ETag returned by the server on the last successful GET/PUT. "
+        "Used for optimistic locking and incremental change detection.",
     )
     last_odoo_write = fields.Datetime(
-        string='Last Odoo Write',
-        help='The write_date of the linked Odoo event at the time of the last '
-             'push to the CalDAV server. Used to detect events modified in Odoo '
-             'since the previous sync.',
+        string="Last Odoo Write",
+        help="The write_date of the linked Odoo event at the time of the last "
+        "push to the CalDAV server. Used to detect events modified in Odoo "
+        "since the previous sync.",
     )
     google_exdates = fields.Text(
-        string='Google EXDATEs',
-        help='Comma-separated ISO 8601 UTC datetimes of deleted occurrences '
-             '(Google only). These are injected as EXDATE lines in the next '
-             'iCal push so Google hides only those specific occurrences '
-             'without deleting the entire series.',
+        string="Google EXDATEs",
+        help="Comma-separated ISO 8601 UTC datetimes of deleted occurrences "
+        "(Google only). These are injected as EXDATE lines in the next "
+        "iCal push so Google hides only those specific occurrences "
+        "without deleting the entire series.",
     )
 
     _sql_constraints = [
         (
-            'unique_account_uid',
-            'UNIQUE(account_id, caldav_uid)',
-            'A UID can only appear once per CalDAV account.',
+            "unique_account_uid",
+            "UNIQUE(account_id, caldav_uid)",
+            "A UID can only appear once per CalDAV account.",
         ),
     ]
