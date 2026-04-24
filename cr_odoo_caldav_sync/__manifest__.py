@@ -45,12 +45,12 @@
     
     <h2>Related Apps</h2>
     <ul>
-        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_miro_odoo_integration">Odoo Miro Connector</a></li>
-        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_gelato_odoo_integration">Odoo To Gelato Integration</a></li>
-        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_nacex_odoo_integration">Nacex Shipping Integration</a></li>
-        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_mydsv_odoo">MYDSV Shipping Integration</a></li>
-        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_bigcommerce_odoo_integration">Advanced Odoo BigCommerce Connector</a></li>
-        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_bigquerrys_odoo_integration">Odoo BigQuery Integration</a></li>
+        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_3cx_crm_connector">3CX CRM Connector</a></li>
+        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_odoo_brevo_integration">Odoo Brevo Integration</a></li>
+        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_basecamp_integration">Odoo Basecamp Integration</a></li>
+        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_remove_powered_by">Remove Powered By Odoo</a></li>
+        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_power_bi_desktop_connector">Odoo Power BI Desktop Connector</a></li>
+        <li><a href="https://apps.odoo.com/apps/modules/18.0/cr_tiktok_shop_connector">Odoo TikTok Shop Connector</a></li>
     </ul>
     <p>For custom Odoo integrations and CRM enhancements, visit <a href="https://creyox.com">Creyox Technologies</a></p>
     <p>Watch the youtube video, visit <a href="https://www.youtube.com/@CreyoxTechnologies">Creyox Technologies YouTube Videos</a></p>
