@@ -3,8 +3,9 @@
 {
     'name': 'Odoo CalDAV Connector | Odoo CalDAV Calendar Integration | Smart CalDAV Sync for Odoo | Odoo CalDAV Event Integration',
     'author': 'Creyox Technologies',
-    'website': 'https://www.creyox.com',
-    'support': 'support@creyox.com',
+    "website": "https://www.creyox.com",
+    "support": "https://www.creyox.com/helpdesk",
+    'live_test_url': 'https://www.creyox.com/helpdesk?module_tech_name=cr_all_in_one_direct_print&version=19.0',
     'category': 'Extra Tools',
     'summary': """
     Odoo CalDAV Calendar Synchronization enables seamless two-way syncing between Odoo and popular CalDAV services like Radicale, Google Calendar, iCloud, Nextcloud, and Zoho. It automatically keeps your calendar events updated across all platforms, ensuring consistency without any manual effort.
@@ -71,6 +72,6 @@
     'images': ['static/description/banner.png'],
     'installable': True,
     'application': True,
-    "price": 100,
+    "price": "",
     'currency': 'USD'
 }
