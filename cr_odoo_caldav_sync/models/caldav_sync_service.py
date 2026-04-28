@@ -2835,22 +2835,50 @@ class CalDAVSyncService(models.AbstractModel):
                         vals.pop("recurrence_update", None)
                         event.with_context(**ctx_kwargs).write(vals)
                 elif vals.get("rrule") and account.server_type == "google":
-                    _weekday_remap = {
-                        "mo": "mon",
-                        "tu": "tue",
-                        "we": "wed",
-                        "th": "thu",
-                        "fr": "fri",
-                        "sa": "sat",
-                        "su": "sun",
-                    }
-                    write_vals = {}
-                    for _k, _v in vals.items():
-                        if _k != "rrule":
-                            write_vals[_weekday_remap.get(_k, _k)] = _v
+                    # Google: existing recurring event with RRULE change.
+                    # Only re-apply if the RRULE actually changed to avoid
+                    # spurious recurrence resets on every sync.
+                    incoming_rrule = (vals.get("rrule") or "").strip().upper()
+                    raw_current = (event.recurrence_id.rrule or "").strip()
+                    current_rrule = ""
+                    for _line in raw_current.splitlines():
+                        _line = _line.strip().upper()
+                        if _line.startswith("RRULE:"):
+                            current_rrule = _line[len("RRULE:"):]
+                            break
+                    if not current_rrule:
+                        current_rrule = raw_current.upper()
 
-                    write_vals["recurrence_update"] = "all_events"
-                    event.with_context(**ctx_kwargs).write(write_vals)
+                    if incoming_rrule and incoming_rrule != current_rrule:
+                        _weekday_remap = {
+                            "mo": "mon", "tu": "tue", "we": "wed",
+                            "th": "thu", "fr": "fri", "sa": "sat", "su": "sun",
+                        }
+                        _odoo_weekday_fields = set(_weekday_remap.values())
+                        write_vals = {}
+                        # Reset all weekday booleans so stale flags don't corrupt the new series.
+                        for _day_field in _odoo_weekday_fields:
+                            write_vals[_day_field] = False
+                        for _k, _v in vals.items():
+                            if _k != "rrule":
+                                write_vals[_weekday_remap.get(_k, _k)] = _v
+                        write_vals["recurrence_update"] = "all_events"
+                        _logger.info(
+                            '[GOOGLE][PULL] RRULE changed for existing series "%s" (id=%s): '
+                            '"%s" -> "%s". Re-applying recurrence.',
+                            event.name, event.id, current_rrule, incoming_rrule,
+                        )
+                        event.with_context(**ctx_kwargs).write(write_vals)
+                    else:
+                        # RRULE unchanged — only update scalar fields (name, time, etc.)
+                        vals.pop("rrule", None)
+                        vals.pop("recurrence_update", None)
+                        _logger.info(
+                            '[GOOGLE][PULL] RRULE unchanged for series "%s" (id=%s). '
+                            'Updating scalar fields only.',
+                            event.name, event.id,
+                        )
+                        event.with_context(**ctx_kwargs).write(vals)
                     event.invalidate_recordset()
 
                     if event.recurrence_id:
@@ -2958,6 +2986,13 @@ class CalDAVSyncService(models.AbstractModel):
             elif vals.get("rrule") and account.server_type == "google":
                 # CASE C: Single event being promoted to a recurring series for the first time.
                 # event.recurrence_id was False, so we did NOT enter the upper if-block.
+                #
+                # IMPORTANT: Do NOT set recurrence_update='all_events' here.
+                # recurrence_update is only meaningful for events that ALREADY belong
+                # to a series. On a non-recurring event it causes Odoo to look for an
+                # existing series, find none, and silently skip recurrence creation,
+                # leaving the event non-recurring (or creating only 1 occurrence).
+                # Just write the recurrence fields directly and Odoo will create the series.
                 _weekday_remap = {
                     "mo": "mon",
                     "tu": "tue",
@@ -2967,11 +3002,20 @@ class CalDAVSyncService(models.AbstractModel):
                     "sa": "sat",
                     "su": "sun",
                 }
+                _odoo_weekday_fields = set(_weekday_remap.values())
                 write_vals = {}
+                # Reset all weekday booleans so stale flags don't corrupt the new series.
+                for _day_field in _odoo_weekday_fields:
+                    write_vals[_day_field] = False
                 for _k, _v in vals.items():
                     if _k != "rrule":
                         write_vals[_weekday_remap.get(_k, _k)] = _v
-                write_vals["recurrence_update"] = "all_events"
+                # Explicitly do NOT add recurrence_update here.
+                _logger.info(
+                    '[GOOGLE][PULL] CASE-C: Promoting single event "%s" (id=%s) to '
+                    'recurring series. RRULE: %s  write_vals keys: %s',
+                    event.name, event.id, vals.get("rrule"), list(write_vals.keys()),
+                )
                 event.with_context(**ctx_kwargs).write(write_vals)
                 event.invalidate_recordset()
 
