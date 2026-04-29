@@ -909,9 +909,32 @@ class CalDAVSyncService(models.AbstractModel):
                 try:
                     with self.env.cr.savepoint():
                         if map_rec.event_id:
-                            map_rec.event_id.with_context(no_sync=True).sudo().write(
-                                {"active": False}
-                            )
+                            event = map_rec.event_id
+                            # For Radicale/generic: if the deleted href belongs to a
+                            # recurring series, archive ALL occurrences — not just the
+                            # base event. Without this, only the base is archived and
+                            # Odoo promotes a remaining occurrence to the new base,
+                            # which then gets spuriously pushed on the next sync.
+                            if (
+                                    account.server_type not in ("google", "zoho", "icloud")
+                                    and event.recurrence_id
+                            ):
+                                all_occs = (
+                                    self.env["calendar.event"]
+                                    .sudo()
+                                    .search([
+                                        ("recurrence_id", "=", event.recurrence_id.id),
+                                        ("active", "=", True),
+                                    ])
+                                )
+                                if all_occs:
+                                    all_occs.with_context(no_sync=True).sudo().write(
+                                        {"active": False}
+                                    )
+                            else:
+                                event.with_context(no_sync=True).sudo().write(
+                                    {"active": False}
+                                )
                         map_rec.sudo().unlink()
                         deleted += 1
                 except Exception as e:
