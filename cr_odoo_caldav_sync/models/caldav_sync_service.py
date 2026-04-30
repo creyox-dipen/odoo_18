@@ -308,6 +308,7 @@ class CalDAVSyncService(models.AbstractModel):
                     else:
                         server_base.add("description").value = plain
 
+        base_in_all_occs = any(occ.id == base_event.id for occ, _ in all_occs)
         updating_starts_utc = set()
         for occ, _ in all_occs:
             if occ.allday:
@@ -400,9 +401,19 @@ class CalDAVSyncService(models.AbstractModel):
                     exdated_dates.add(orig.date() if hasattr(orig, "date") else orig)
 
         if "vevent" in cal.contents:
+            if base_in_all_occs:
+                _logger.info(
+                    "[ZOHO] Full base re-push for '%s': purging all existing server-side "
+                    "RECURRENCE-ID overrides before rebuilding from current Odoo state.",
+                    base_event.name,
+                )
             new_vevents = []
             for ve in cal.contents["vevent"]:
                 if hasattr(ve, "recurrence_id"):
+                    if base_in_all_occs:
+                        # Base is being re-pushed: drop ALL stale server overrides.
+                        # Fresh ones are rebuilt below from all_occs.
+                        continue
                     rid_val = ve.recurrence_id.value
                     # Normalize rid_key for date comparison
                     if _is_date_only(rid_val):
@@ -754,13 +765,26 @@ class CalDAVSyncService(models.AbstractModel):
                         "EXDATE",
                         "LOCATION",
                         "DESCRIPTION",
-                        "STATUS",
                     )
-                    normalized = "\n".join(
-                        line.strip()
-                        for line in zoho_ical_text.splitlines()
-                        if any(line.strip().startswith(p) for p in _prefixes)
-                    )
+                    _in_valarm = False
+                    _norm_lines = []
+                    for _line in zoho_ical_text.splitlines():
+                        _s = _line.strip()
+                        if _s == "BEGIN:VALARM":
+                            _in_valarm = True
+                        elif _s == "END:VALARM":
+                            _in_valarm = False
+                        elif not _in_valarm and any(_s.startswith(p) for p in _prefixes):
+                            if ':' in _s and not _s.split(':', 1)[1].strip():
+                                continue
+                            if _s.upper().startswith("RRULE:"):
+                                _parts = sorted(
+                                    p for p in _s.split(':', 1)[1].strip().upper().split(';')
+                                    if p and p not in ("INTERVAL=1", "WKST=SU", "WKST=MO")
+                                )
+                                _s = "RRULE:" + ";".join(_parts)
+                            _norm_lines.append(_s)
+                    normalized = "\n".join(sorted(_norm_lines))
                     content_hash = (
                         "zoho_hash:" + hashlib.sha256(normalized.encode()).hexdigest()
                     )
@@ -778,9 +802,8 @@ class CalDAVSyncService(models.AbstractModel):
 
                         if not force_pull:
                             has_pending = not existing.last_odoo_write or (
-                                existing.event_id.write_date
-                                and existing.event_id.write_date
-                                > existing.last_odoo_write
+                                    existing.event_id.write_date
+                                    and (existing.event_id.write_date - existing.last_odoo_write).total_seconds() > 2
                             )
                             if not has_pending and existing.event_id.recurrence_id:
                                 self.env.cr.execute(
@@ -916,7 +939,7 @@ class CalDAVSyncService(models.AbstractModel):
                             # Odoo promotes a remaining occurrence to the new base,
                             # which then gets spuriously pushed on the next sync.
                             if (
-                                    account.server_type not in ("google", "zoho", "icloud")
+                                    account.server_type not in ("google", "icloud")
                                     and event.recurrence_id
                             ):
                                 all_occs = (
@@ -1230,15 +1253,19 @@ class CalDAVSyncService(models.AbstractModel):
                 and event.id not in radicale_force_push_ids
             ):
                 last_push = existing_map.last_odoo_write
-                if last_push and event.write_date and event.write_date <= last_push:
-                    _logger.debug(
-                        '[PUSH] SKIP event id=%s "%s": unchanged (write_date=%s <= last_push=%s).',
-                        event.id,
-                        event.name,
-                        event.write_date,
-                        last_push,
-                    )
-                    continue
+                if last_push and event.write_date:
+                    _diff_secs = (event.write_date - last_push).total_seconds()
+                    _skip_tolerance = 2 if account.server_type == "zoho" else 0
+                    if _diff_secs <= _skip_tolerance:
+                        _logger.debug(
+                            '[PUSH] SKIP event id=%s "%s": unchanged (write_date=%s <= last_push=%s, diff=%.3fs).',
+                            event.id,
+                            event.name,
+                            event.write_date,
+                            last_push,
+                            _diff_secs,
+                        )
+                        continue
             _logger.info('[PUSH] WILL PUSH event id=%s "%s".', event.id, event.name)
             try:
                 with self.env.cr.savepoint():
@@ -1622,13 +1649,26 @@ class CalDAVSyncService(models.AbstractModel):
                 "EXDATE",
                 "LOCATION",
                 "DESCRIPTION",
-                "STATUS",
             )
-            normalized_push = "\n".join(
-                line.strip()
-                for line in ical_str.splitlines()
-                if any(line.strip().startswith(p) for p in _meaningful_prefixes)
-            )
+            _in_valarm = False
+            _norm_lines = []
+            for _line in ical_str.splitlines():
+                _s = _line.strip()
+                if _s == "BEGIN:VALARM":
+                    _in_valarm = True
+                elif _s == "END:VALARM":
+                    _in_valarm = False
+                elif not _in_valarm and any(_s.startswith(p) for p in _meaningful_prefixes):
+                    if ':' in _s and not _s.split(':', 1)[1].strip():
+                        continue
+                    if _s.upper().startswith("RRULE:"):
+                        _parts = sorted(
+                            p for p in _s.split(':', 1)[1].strip().upper().split(';')
+                            if p and p not in ("INTERVAL=1", "WKST=SU", "WKST=MO")
+                        )
+                        _s = "RRULE:" + ";".join(_parts)
+                    _norm_lines.append(_s)
+            normalized_push = "\n".join(sorted(_norm_lines))
             etag_to_store = (
                 "zoho_hash:" + hashlib.sha256(normalized_push.encode()).hexdigest()
             )
@@ -1903,8 +1943,18 @@ class CalDAVSyncService(models.AbstractModel):
                     limit=1,
                 )
             )
+            pull_ts = fields.Datetime.now()
             if occ_map_rec:
-                occ_map_rec.sudo().write({"last_odoo_write": occurrence.write_date})
+                occ_map_rec.sudo().write({"last_odoo_write": pull_ts})
+            else:
+                self.env["caldav.event.map"].sudo().create({
+                    "account_id": account.id,
+                    "event_id": occurrence.id,
+                    "caldav_uid": f"{uid_value}__occ_{occurrence.id}",
+                    "caldav_href": href,
+                    "caldav_etag": server_etag,
+                    "last_odoo_write": pull_ts,
+                })
         base_map.sudo().write(
             {
                 "caldav_etag": server_etag,
@@ -2128,6 +2178,7 @@ class CalDAVSyncService(models.AbstractModel):
                 )
             )
 
+            differing_occs = []
             modified_occs = []
             for occ in occurrences:
                 if occ.id in skip_ids:
@@ -2156,8 +2207,21 @@ class CalDAVSyncService(models.AbstractModel):
                 )
 
                 # If base is pushing, we MUST include all deviating occurrences or they might revert on server
-                if is_deletion or (differs and (modified or base_needs_push)):
+                if is_deletion or (differs and modified):
                     modified_occs.append((occ, occ_map))
+                elif differs:
+                    # Differs from base but not recently modified.
+                    # Zoho rebuilds all non-overridden occurrences from the base RRULE
+                    # on every PUT — so if any push happens, these must be re-sent as
+                    # RECURRENCE-ID overrides or Zoho will silently revert them to base.
+                    differing_occs.append((occ, occ_map))
+
+            # Zoho re-applies base RRULE to all occurrences without an explicit
+            # RECURRENCE-ID override on every PUT. Whenever we push anything for
+            # this series, re-include ALL differing occurrences to prevent revert.
+            if modified_occs or base_needs_push:
+                for _diff_item in differing_occs:
+                    modified_occs.append(_diff_item)
 
             if base_needs_push:
                 _logger.info(
@@ -2200,13 +2264,26 @@ class CalDAVSyncService(models.AbstractModel):
                         "EXDATE",
                         "LOCATION",
                         "DESCRIPTION",
-                        "STATUS",
                     )
-                    normalized_push = "\n".join(
-                        line.strip()
-                        for line in updated_ical.splitlines()
-                        if any(line.strip().startswith(p) for p in _meaningful_prefixes)
-                    )
+                    _in_valarm = False
+                    _norm_lines = []
+                    for _line in updated_ical.splitlines():
+                        _s = _line.strip()
+                        if _s == "BEGIN:VALARM":
+                            _in_valarm = True
+                        elif _s == "END:VALARM":
+                            _in_valarm = False
+                        elif not _in_valarm and any(_s.startswith(p) for p in _meaningful_prefixes):
+                            if ':' in _s and not _s.split(':', 1)[1].strip():
+                                continue
+                            if _s.upper().startswith("RRULE:"):
+                                _parts = sorted(
+                                    p for p in _s.split(':', 1)[1].strip().upper().split(';')
+                                    if p and p not in ("INTERVAL=1", "WKST=SU", "WKST=MO")
+                                )
+                                _s = "RRULE:" + ";".join(_parts)
+                            _norm_lines.append(_s)
+                    normalized_push = "\n".join(sorted(_norm_lines))
                     etag_to_store = (
                         "zoho_hash:"
                         + hashlib.sha256(normalized_push.encode()).hexdigest()
@@ -3302,6 +3379,13 @@ class CalDAVSyncService(models.AbstractModel):
                     _mail_err,
                 )
 
+        # Zoho: re-stamp last_odoo_write after invitation email sending, because
+        # _send_mail_to_attendees may trigger a stored-field recompute on calendar.event
+        # that bumps event.write_date past the last_odoo_write we set above —
+        # causing a false-positive "pending Odoo change" on the very next sync.
+        if account.server_type == "zoho" and existing_map and existing_map.exists():
+            existing_map.sudo().write({"last_odoo_write": fields.Datetime.now()})
+
         return event
 
     @api.model
@@ -3757,12 +3841,19 @@ class CalDAVSyncService(models.AbstractModel):
         for alarm in event.alarm_ids:
             """Add a VALARM for each reminder configured on the event."""
             valarm = vevent.add("valarm")
-            if account.server_type == "zoho" and alarm.alarm_type == "notification":
-                valarm.add("action").value = "DISPLAY"
-                valarm.add("x-action").value = "NOTIFICATION"
-            else:
-                action = "EMAIL" if alarm.alarm_type == "email" else "DISPLAY"
-                valarm.add("action").value = action
+            if account.server_type == "zoho":
+                if alarm.alarm_type == "notification":
+                    valarm.add("action").value = "DISPLAY"
+                    # vobject drops x- properties added via .add(); use contents dict directly
+                    from vobject.base import ContentLine
+                    valarm.contents.setdefault("x-action", []).append(
+                        ContentLine("X-ACTION", [], "NOTIFICATION")
+                    )
+                elif alarm.alarm_type == "email":
+                    valarm.add("action").value = "EMAIL"
+                    valarm.add("attendee").value = f"mailto:{account.user_id.email or account.username}"
+                else:
+                    valarm.add("action").value = "DISPLAY"
             valarm.add("description").value = alarm.name or "Reminder"
 
             minutes = alarm.duration_minutes or 0
