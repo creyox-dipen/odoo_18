@@ -440,10 +440,33 @@ class CalDAVSyncService(models.AbstractModel):
             cal.contents["vevent"] = new_vevents
 
         uid = base_event.caldav_uid
+
+        # Determine the server's DTSTART date. If the base event's date differs
+        # (a leading occurrence was deleted and the next was promoted to base),
+        # we must emit an explicit RECURRENCE-ID override for it — Zoho does not
+        # reliably derive the new first visible occurrence from DTSTART+EXDATE alone.
+        _server_dtstart_date = None
+        if server_base:
+            _srv_dt = server_base.dtstart.value
+            _server_dtstart_date = (
+                _srv_dt
+                if isinstance(_srv_dt, date) and not isinstance(_srv_dt, datetime)
+                else (_srv_dt.date() if hasattr(_srv_dt, "date") else None)
+            )
+
         for occ, _ in all_occs:
             if occ.id == base_event.id:
-                # The master VEVENT already contains the latest base event data.
-                continue
+                # The master VEVENT already holds the latest base event data.
+                # EXCEPTION: if this base event does NOT correspond to the series's
+                # original DTSTART (i.e. a leading occurrence was deleted and this
+                # occurrence was promoted to base), fall through and emit an explicit
+                # RECURRENCE-ID override so Zoho does not silently drop it.
+                _base_occ_date = occ.caldav_original_start or occ.start
+                if hasattr(_base_occ_date, "date"):
+                    _base_occ_date = _base_occ_date.date()
+                if _server_dtstart_date is None or _server_dtstart_date == _base_occ_date:
+                    continue
+                # Fall through: emit RECURRENCE-ID for the displaced base occurrence.
 
             ovr = vobject.newFromBehavior("vevent")
             ovr.add("uid").value = uid
@@ -453,6 +476,130 @@ class CalDAVSyncService(models.AbstractModel):
             ovr.add("class").value = "PUBLIC"
             ovr.add("status").value = "CONFIRMED"
             ovr.add("transp").value = "OPAQUE"
+            if occ.allday:
+                ovr.add("recurrence-id").value = (
+                    occ.caldav_original_start or occ.start
+                ).date()
+                ovr.add("dtstart").value = occ.start.date()
+                ovr.add("dtend").value = occ.stop.date() + timedelta(days=1)
+            else:
+                orig_start = _to_utc_naive(occ.caldav_original_start or occ.start)
+                ovr.add("recurrence-id").value = orig_start.replace(tzinfo=pytz.utc)
+                ovr.add("dtstart").value = _to_utc_naive(occ.start).replace(
+                    tzinfo=pytz.utc
+                )
+                ovr.add("dtend").value = _to_utc_naive(occ.stop).replace(
+                    tzinfo=pytz.utc
+                )
+
+            if occ.location:
+                ovr.add("location").value = occ.location
+            if occ.description:
+                plain = html2plaintext(occ.description).strip()
+                if plain:
+                    ovr.add("description").value = plain
+
+            cal.add(ovr)
+
+        return cal.serialize()
+
+    @api.model
+    def _build_icloud_ical_with_overrides(
+        self, current_ical, base_event, all_occs, account
+    ):
+        """Build an iCal string containing the base series plus RECURRENCE-ID overrides for iCloud."""
+        if vobject is None:
+            raise RuntimeError("vobject required.")
+
+        cal = vobject.readOne(current_ical)
+
+        server_base = None
+        for comp in cal.components():
+            if comp.name == "VEVENT" and not hasattr(comp, "recurrence_id"):
+                server_base = comp
+                break
+
+        # Ensure RRULE is present if the base event is now recurring
+        if server_base and base_event.recurrence_id:
+            raw_rrule = base_event.recurrence_id.rrule or ""
+            rrule_val = None
+            for line in raw_rrule.splitlines():
+                if line.upper().startswith("RRULE:"):
+                    rrule_val = line[6:].strip()
+                    break
+            if not rrule_val and raw_rrule:
+                rrule_val = raw_rrule.lstrip("RRULE:").strip()
+            if rrule_val:
+                if hasattr(server_base, "rrule"):
+                    server_base.rrule.value = rrule_val
+                else:
+                    server_base.add("rrule").value = rrule_val
+
+        # Sequence number to ensure server recognizes update
+        seq = int(datetime.utcnow().timestamp())
+        if server_base:
+            if hasattr(server_base, "sequence"):
+                server_base.sequence.value = str(seq)
+            else:
+                server_base.add("sequence").value = str(seq)
+
+            # Update base fields from Odoo
+            if hasattr(server_base, "summary"):
+                server_base.summary.value = base_event.name or ""
+            else:
+                server_base.add("summary").value = base_event.name or ""
+
+            if base_event.location:
+                if hasattr(server_base, "location"):
+                    server_base.location.value = base_event.location
+                else:
+                    server_base.add("location").value = base_event.location
+
+            if base_event.description:
+                plain = html2plaintext(base_event.description).strip()
+                if plain:
+                    if hasattr(server_base, "description"):
+                        server_base.description.value = plain
+                    else:
+                        server_base.add("description").value = plain
+
+        updating_starts_utc = set()
+        for occ, _ in all_occs:
+            if occ.id == base_event.id:
+                continue
+            orig_start = occ.caldav_original_start or occ.start
+            if occ.allday:
+                updating_starts_utc.add(orig_start.date())
+            else:
+                updating_starts_utc.add(_to_utc_naive(orig_start))
+
+        # Purge stale RECURRENCE-ID vevents for dates we are about to re-push
+        if "vevent" in cal.contents:
+            new_vevents = []
+            for ve in cal.contents["vevent"]:
+                if hasattr(ve, "recurrence_id"):
+                    rid_val = ve.recurrence_id.value
+                    rid_key = (
+                        rid_val  # already a date object, .date() doesn't exist on date
+                        if _is_date_only(rid_val)
+                        else _to_utc_naive(rid_val)
+                    )
+                    if rid_key in updating_starts_utc:
+                        continue
+                new_vevents.append(ve)
+            cal.contents["vevent"] = new_vevents
+
+        uid = base_event.caldav_uid
+        for occ, _ in all_occs:
+            if occ.id == base_event.id:
+                continue
+
+            ovr = vobject.newFromBehavior("vevent")
+            ovr.add("uid").value = uid
+            ovr.add("dtstamp").value = datetime.now(pytz.utc)
+            ovr.add("sequence").value = str(seq)
+            ovr.add("summary").value = occ.name or ""
+
             if occ.allday:
                 ovr.add("recurrence-id").value = (
                     occ.caldav_original_start or occ.start
@@ -573,7 +720,32 @@ class CalDAVSyncService(models.AbstractModel):
                 else:
                     server_base.add("description").value = plain
 
-        if orig_naive != base_start_naive:
+        _orig_dtstart_is_exdated = False
+        if orig_naive != base_start_naive and hasattr(server_base, "exdate"):
+            _ex_list = server_base.exdate.value
+            if not isinstance(_ex_list, (list, tuple)):
+                _ex_list = [_ex_list]
+            _orig_date_cmp = (
+                orig_dtstart
+                if _is_date_only(orig_dtstart)
+                else orig_naive.date()
+            )
+            for _ex_item in _ex_list:
+                _ex_date_cmp = (
+                    _ex_item
+                    if (_is_date_only(_ex_item))
+                    else (_ex_item.date() if hasattr(_ex_item, "date") else _ex_item)
+                )
+                if _ex_date_cmp == _orig_date_cmp:
+                    _orig_dtstart_is_exdated = True
+                    _logger.info(
+                        "[GOOGLE][BASE-EDIT] Original DTSTART %s is now EXDATEd — "
+                        "keeping DTSTART unchanged to preserve COUNT/UNTIL semantics.",
+                        orig_dtstart,
+                    )
+                    break
+
+        if orig_naive != base_start_naive and not _orig_dtstart_is_exdated:
             if _is_date_only(orig_dtstart):
                 server_base.dtstart.value = base_event.start.date()
                 if hasattr(server_base, "dtend"):
@@ -939,7 +1111,7 @@ class CalDAVSyncService(models.AbstractModel):
                             # Odoo promotes a remaining occurrence to the new base,
                             # which then gets spuriously pushed on the next sync.
                             if (
-                                    account.server_type not in ("google", "icloud")
+                                    account.server_type not in ("icloud")
                                     and event.recurrence_id
                             ):
                                 all_occs = (
@@ -1127,10 +1299,14 @@ class CalDAVSyncService(models.AbstractModel):
         if account.server_type == "google":
             try:
                 with self.env.cr.savepoint():
-                    google_pushed = self._push_google_occurrence_overrides(
+                    google_pushed, google_handled_ids = self._push_google_occurrence_overrides(
                         account, skip_ids=skip_ids
                     )
                     pushed += google_pushed or 0
+                    # Remove IDs already pushed by occurrence-override method so the
+                    # main event loop does not issue a redundant second PUT for the
+                    # same series (which causes a spurious extra occurrence on Google).
+                    google_force_push_ids -= google_handled_ids
             except Exception as e:
                 _logger.warning(
                     "[GOOGLE] Occurrence override push failed: %s", e, exc_info=True
@@ -2501,6 +2677,7 @@ class CalDAVSyncService(models.AbstractModel):
         skip_ids = skip_ids or set()
         owner_partner_id = account.user_id.partner_id.id
         pushed_count = 0
+        handled_base_ids = set()  # ← ADD THIS LINE
         all_recurrences = self.env["calendar.recurrence"].sudo().search([])
 
         for recurrence in all_recurrences:
@@ -2691,6 +2868,8 @@ class CalDAVSyncService(models.AbstractModel):
                         }
                     )
                     pushed_count += 1
+                    if base_needs_direct_push:  # ← ADD
+                        handled_base_ids.add(base_event.id)
 
                     for occ, occ_map in all_occs_to_push:
                         timestamp = fields.Datetime.now()
@@ -2713,7 +2892,7 @@ class CalDAVSyncService(models.AbstractModel):
                     base_event.name,
                     e,
                 )
-        return pushed_count
+        return pushed_count, handled_base_ids
 
     @api.model
     def _upsert_from_ical(
@@ -3352,7 +3531,7 @@ class CalDAVSyncService(models.AbstractModel):
         # Google/Zoho/iCloud handle their own notification flows.
         # For generic CalDAV (Nextcloud/Radicale), Odoo's ORM does not automatically
         # trigger _send_mail_to_attendees() on pulled events, so we do it explicitly.
-        if account.send_invitation_emails and account.server_type not in ("icloud"):
+        if account.send_invitation_emails:
             try:
                 attendees_to_notify = event.attendee_ids.filtered(
                     lambda a: a.state == "needsAction"
@@ -3476,7 +3655,7 @@ class CalDAVSyncService(models.AbstractModel):
         # --- Apple (iCloud) & Zoho: map videocall_location → URL field on push ---
         # Only iCloud/Zoho use the iCal URL property for video call links.
         # We check both server_type and the URL string itself for 'icloud' to be extra safe.
-        is_apple = account.server_type == "icloud" or (
+        is_apple = account.server_type == "other" or (
             account.url and "icloud.com" in account.url
         )
         if (is_apple or account.server_type == "zoho") and event.videocall_location:
@@ -3807,7 +3986,11 @@ class CalDAVSyncService(models.AbstractModel):
             lambda p: p != account.user_id.partner_id
         )
 
-        if other_partners:
+        # For Zoho: always send ORGANIZER + ATTENDEE block so Zoho honors removals.
+        # Without this, a PUT with no ATTENDEE lines causes Zoho to keep stale attendees.
+        _should_write_attendees = other_partners or account.server_type == "zoho"
+
+        if _should_write_attendees:
             owner = account.user_id.partner_id
             org = vevent.add("organizer")
 
@@ -3854,6 +4037,9 @@ class CalDAVSyncService(models.AbstractModel):
                     valarm.add("attendee").value = f"mailto:{account.user_id.email or account.username}"
                 else:
                     valarm.add("action").value = "DISPLAY"
+            else:
+                action = "EMAIL" if alarm.alarm_type == "email" else "DISPLAY"
+                valarm.add("action").value = action
             valarm.add("description").value = alarm.name or "Reminder"
 
             minutes = alarm.duration_minutes or 0
@@ -3946,7 +4132,7 @@ class CalDAVSyncService(models.AbstractModel):
             # --- Apple (iCloud) & Zoho: map URL field → videocall_location on pull ---
             # Only iCloud/Zoho use the iCal URL property for video call links.
             # Google and other servers are intentionally NOT touched here.
-            if account.server_type in ("icloud", "zoho"):
+            if account.server_type in ("zoho", "other"):
                 url_comp = getattr(vevent, "url", None)
                 vals["videocall_location"] = (
                     url_comp.value if (url_comp and url_comp.value) else False
