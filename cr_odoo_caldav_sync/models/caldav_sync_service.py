@@ -276,6 +276,9 @@ class CalDAVSyncService(models.AbstractModel):
         # Use a high sequence number (timestamp) to ensure it's always increasing
         seq = int(datetime.utcnow().timestamp())
 
+        # Initialize before the server_base block so it is always in scope.
+        _original_server_dtstart_date = None
+
         if server_base:
             if hasattr(server_base, "sequence"):
                 server_base.sequence.value = str(seq)
@@ -308,9 +311,73 @@ class CalDAVSyncService(models.AbstractModel):
                     else:
                         server_base.add("description").value = plain
 
+            # Capture original server DTSTART BEFORE overwriting it.
+            # This is used later to decide whether the base occurrence
+            # has been displaced and needs an explicit RECURRENCE-ID override.
+            _original_server_dtstart_date = None
+            if server_base and hasattr(server_base, "dtstart"):
+                _orig_srv_dt = server_base.dtstart.value
+                _original_server_dtstart_date = (
+                    _orig_srv_dt
+                    if isinstance(_orig_srv_dt, date) and not isinstance(_orig_srv_dt, datetime)
+                    else (_orig_srv_dt.date() if hasattr(_orig_srv_dt, "date") else None)
+                )
+
+            # --- Zoho Fix: Sync master DTSTART/DTEND with Odoo base ---
+            # When Odoo promotes a base event (e.g. Week 1 deleted -> Week 2 is base),
+            # the master VEVENT's DTSTART should be updated to match the new anchor.
+            # This ensures the RRULE (which Odoo generates starting from the new base)
+            # is correctly anchored on the server.
+            if base_event.allday:
+                server_base.dtstart.value = base_event.start.date()
+                if hasattr(server_base, "dtend"):
+                    server_base.dtend.value = base_event.stop.date() + timedelta(days=1)
+            else:
+                server_base.dtstart.value = _to_utc_naive(base_event.start).replace(
+                    tzinfo=pytz.utc
+                )
+                if hasattr(server_base, "dtend"):
+                    server_base.dtend.value = _to_utc_naive(base_event.stop).replace(
+                        tzinfo=pytz.utc
+                    )
+                elif hasattr(server_base, "duration"):
+                    server_base.duration.value = base_event.stop - base_event.start
+ 
+            if server_base and hasattr(server_base, "rrule") and base_event.recurrence_id:
+                _rrule_str = server_base.rrule.value or ""
+                if "COUNT=" in _rrule_str.upper():
+                    _active_count = (
+                        self.env["calendar.event"]
+                        .sudo()
+                        .search_count(
+                            [
+                                ("recurrence_id", "=", base_event.recurrence_id.id),
+                                ("active", "=", True),
+                            ]
+                        )
+                    )
+                    if _active_count > 0:
+                        _new_rrule = re.sub(
+                            r"COUNT=\d+",
+                            f"COUNT={_active_count}",
+                            _rrule_str,
+                            flags=re.IGNORECASE,
+                        )
+                        if _new_rrule != _rrule_str:
+                            server_base.rrule.value = _new_rrule
+                            _logger.info(
+                                "[ZOHO] Adjusted RRULE COUNT to %s for series '%s' "
+                                "(DTSTART shifted after base occurrence deletion).",
+                                _active_count,
+                                base_event.name,
+                            )
+
         base_in_all_occs = any(occ.id == base_event.id for occ, _ in all_occs)
         updating_starts_utc = set()
         for occ, _ in all_occs:
+            if not occ.active:
+                # Do not block EXDATEs for archived occurrences.
+                continue
             if occ.allday:
                 updating_starts_utc.add((occ.caldav_original_start or occ.start).date())
             else:
@@ -332,25 +399,50 @@ class CalDAVSyncService(models.AbstractModel):
             )
         )
         if base_map and base_map.google_exdates:
+            # Determine reference date for filtering stale EXDATEs
+            ref_dt = (
+                base_event.start.date()
+                if base_event.allday
+                else _to_utc_naive(base_event.start)
+            )
+
             for iso_dt in base_map.google_exdates.split(","):
                 iso_dt = iso_dt.strip()
                 if not iso_dt:
                     continue
                 try:
                     ex_dt_naive = datetime.strptime(iso_dt, "%Y%m%dT%H%M%SZ")
-                    ex_dt = pytz.utc.localize(ex_dt_naive)
                     if base_event.allday:
-                        ex_val = ex_dt.date()
+                        ex_val = ex_dt_naive.date()
                     else:
-                        ex_val = ex_dt
+                        ex_val = ex_dt_naive  # Naive UTC
+
+                    # Skip EXDATEs that fall BEFORE the new series anchor (DTSTART).
+                    # When the old base occurrence is deleted and the series is
+                    # re-anchored at the next occurrence, the deleted slot is
+                    # already excluded by DTSTART — adding an EXDATE before
+                    # DTSTART causes Zoho to reject or corrupt the payload.
+                    if ex_val < ref_dt:
+                        _logger.info(
+                            "[ZOHO] Skipping stale EXDATE %s (before new DTSTART %s) "
+                            "for series '%s'.",
+                            ex_val,
+                            ref_dt,
+                            base_event.name,
+                        )
+                        continue
 
                     if ex_val in updating_starts_utc:
                         # If we are pushing an override for this date, do NOT also exdate it!
                         continue
 
                     if hasattr(server_base, "exdate"):
-                        if ex_val not in server_base.exdate.value:
-                            server_base.exdate.value.append(ex_val)
+                        _ex_list = server_base.exdate.value
+                        if not isinstance(_ex_list, (list, tuple)):
+                            _ex_list = [_ex_list]
+                        if ex_val not in _ex_list:
+                            _ex_list.append(ex_val)
+                        server_base.exdate.value = _ex_list
                     else:
                         server_base.add("exdate").value = [ex_val]
                 except Exception:
@@ -398,7 +490,10 @@ class CalDAVSyncService(models.AbstractModel):
             for arch_occ in archived_occs:
                 orig = arch_occ.caldav_original_start or arch_occ.start
                 if orig:
-                    exdated_dates.add(orig.date() if hasattr(orig, "date") else orig)
+                    ex_d = orig.date() if hasattr(orig, "date") else orig
+                    if hasattr(ex_d, "date"):
+                        ex_d = ex_d.date()
+                    exdated_dates.add(ex_d)
 
         if "vevent" in cal.contents:
             if base_in_all_occs:
@@ -441,19 +536,7 @@ class CalDAVSyncService(models.AbstractModel):
 
         uid = base_event.caldav_uid
 
-        # Determine the server's DTSTART date. If the base event's date differs
-        # (a leading occurrence was deleted and the next was promoted to base),
-        # we must emit an explicit RECURRENCE-ID override for it — Zoho does not
-        # reliably derive the new first visible occurrence from DTSTART+EXDATE alone.
-        _server_dtstart_date = None
-        if server_base:
-            _srv_dt = server_base.dtstart.value
-            _server_dtstart_date = (
-                _srv_dt
-                if isinstance(_srv_dt, date) and not isinstance(_srv_dt, datetime)
-                else (_srv_dt.date() if hasattr(_srv_dt, "date") else None)
-            )
-
+        # Use the captured original server DTSTART to detect shifts.
         for occ, _ in all_occs:
             if occ.id == base_event.id:
                 # The master VEVENT already holds the latest base event data.
@@ -464,9 +547,22 @@ class CalDAVSyncService(models.AbstractModel):
                 _base_occ_date = occ.caldav_original_start or occ.start
                 if hasattr(_base_occ_date, "date"):
                     _base_occ_date = _base_occ_date.date()
-                if _server_dtstart_date is None or _server_dtstart_date == _base_occ_date:
+                if (
+                    (_original_server_dtstart_date is None or _original_server_dtstart_date == _base_occ_date)
+                    and not (base_map and base_map.google_exdates)
+                ):
+                    # Master VEVENT represents this base occurrence, and no anchor shift history exists.
                     continue
-                # Fall through: emit RECURRENCE-ID for the displaced base occurrence.
+                # Anchor shifted: emit explicit RECURRENCE-ID for the new first occurrence.
+                _logger.info(
+                    "[ZOHO] Base event '%s' displaced from %s to %s — emitting override.",
+                    occ.name, _original_server_dtstart_date, _base_occ_date
+                )
+
+            # Skip archived occurrences from the VEVENT overrides list.
+            # They are handled by the master series EXDATE property.
+            if not occ.active:
+                continue
 
             ovr = vobject.newFromBehavior("vevent")
             ovr.add("uid").value = uid
@@ -488,9 +584,7 @@ class CalDAVSyncService(models.AbstractModel):
                 ovr.add("dtstart").value = _to_utc_naive(occ.start).replace(
                     tzinfo=pytz.utc
                 )
-                ovr.add("dtend").value = _to_utc_naive(occ.stop).replace(
-                    tzinfo=pytz.utc
-                )
+                ovr.add("dtend").value = _to_utc_naive(occ.stop).replace(tzinfo=pytz.utc)
 
             if occ.location:
                 ovr.add("location").value = occ.location
@@ -1147,29 +1241,39 @@ class CalDAVSyncService(models.AbstractModel):
         skip_ids = skip_ids or set()
         owner_partner = account.user_id.partner_id
 
-        google_force_push_ids = set()
-        if account.server_type == "google":
-            google_force_push_ids = self._detect_google_archived_occurrences(account)
-            pending_exdate_maps = (
-                self.env["caldav.event.map"]
-                .sudo()
-                .search(
-                    [
-                        ("account_id", "=", account.id),
-                        ("last_odoo_write", "=", False),
-                        ("event_id.active", "=", True),
-                    ]
-                )
-            )
-            for _m in pending_exdate_maps:
-                if _m.event_id:
-                    google_force_push_ids.add(_m.event_id.id)
-                    _logger.info(
-                        '[GOOGLE][PUSH] Force-push flagged for event "%s" (id=%s): '
-                        "map has last_odoo_write=False (EXDATE pending).",
-                        _m.event_id.name,
-                        _m.event_id.id,
+        force_push_ids = set()
+        if account.server_type in ("google", "zoho", "nextcloud"):
+            try:
+                force_push_ids = self._detect_archived_occurrences(account)
+                
+                # Google-specific extra check for pending EXDATE maps
+                if account.server_type == "google":
+                    pending_exdate_maps = (
+                        self.env["caldav.event.map"]
+                        .sudo()
+                        .search(
+                            [
+                                ("account_id", "=", account.id),
+                                ("last_odoo_write", "=", False),
+                                ("event_id.active", "=", True),
+                            ]
+                        )
                     )
+                    for _m in pending_exdate_maps:
+                        if _m.event_id:
+                            force_push_ids.add(_m.event_id.id)
+                            _logger.info(
+                                '[GOOGLE][PUSH] Force-push flagged for event "%s" (id=%s): '
+                                "map has last_odoo_write=False (EXDATE pending).",
+                                _m.event_id.name,
+                                _m.event_id.id,
+                            )
+            except Exception as _de:
+                _logger.warning(
+                    "[%s] Archived-occurrence detection failed: %s", 
+                    account.server_type.upper(), _de, exc_info=True
+                )
+
         all_maps = (
             self.env["caldav.event.map"]
             .sudo()
@@ -1186,12 +1290,20 @@ class CalDAVSyncService(models.AbstractModel):
                 continue
             if not event.active and event.id not in skip_ids:
                 # ← INSERT HERE (Zoho only)
-                if account.server_type == "zoho" and "__occ_" in (
-                    map_rec.caldav_uid or ""
+                # PROTECT AGAINST DELETING WHOLE SERIES:
+                # For Zoho, Google, and Nextcloud, a recurring series is stored in a single file.
+                # If we call _delete_event(href) for an occurrence, it deletes the WHOLE series.
+                # We must SKIP the delete call for these servers if it's an archived occurrence
+                # belonging to a series (it will be handled via EXDATE in the base event push).
+                if account.server_type in ("zoho", "google", "nextcloud") and (
+                    "__occ_" in (map_rec.caldav_uid or "")
+                    or (map_rec.event_id and not map_rec.event_id.active and map_rec.event_id.recurrence_id)
                 ):
+                    tag = account.server_type.upper()
                     _logger.info(
-                        "[ZOHO] Skipping CalDAV DELETE for archived occurrence-override map "
+                        "[%s] Skipping CalDAV DELETE for archived occurrence-override map "
                         "(event_id=%s, uid=%s) — cleaning up local map only.",
+                        tag,
                         event.id,
                         map_rec.caldav_uid,
                     )
@@ -1306,7 +1418,7 @@ class CalDAVSyncService(models.AbstractModel):
                     # Remove IDs already pushed by occurrence-override method so the
                     # main event loop does not issue a redundant second PUT for the
                     # same series (which causes a spurious extra occurrence on Google).
-                    google_force_push_ids -= google_handled_ids
+                    force_push_ids -= google_handled_ids
             except Exception as e:
                 _logger.warning(
                     "[GOOGLE] Occurrence override push failed: %s", e, exc_info=True
@@ -1421,11 +1533,11 @@ class CalDAVSyncService(models.AbstractModel):
             ):
                 continue
             if account.server_type == "google" and event.recurrence_id and existing_map:
-                if event.id not in google_force_push_ids:
+                if event.id not in force_push_ids:
                     continue
             if (
                 existing_map
-                and event.id not in google_force_push_ids
+                and event.id not in force_push_ids
                 and event.id not in radicale_force_push_ids
             ):
                 last_push = existing_map.last_odoo_write
@@ -1583,14 +1695,26 @@ class CalDAVSyncService(models.AbstractModel):
         return pushed, failed, "\n".join(details)
 
     @api.model
-    def _detect_google_archived_occurrences(self, account):
-        """Detect archived recurring occurrences and record them as EXDATEs."""
+    def _detect_archived_occurrences(self, account):
+        """
+        Detect archived recurring occurrences and record them as EXDATEs.
+        Works for both Google and Zoho server types.
+        
+        This method performs two critical tasks for recurring series integrity:
+        Case A: Standard non-base occurrence deleted in Odoo. We add its date
+                to the base map's EXDATE field and flag the series for re-push.
+        Case B: Base occurrence deleted in Odoo. Odoo promotes a new base_event_id,
+                so we transfer the series map from the archived old base to the
+                new promoted base, record the old base as an EXDATE, and flag
+                the new base for re-push.
+        """
         owner_partner_id = account.user_id.partner_id.id
         force_push_ids = set()
+        tag = account.server_type.upper()
 
         _logger.debug(
-            "[GOOGLE][PUSH] Detecting archived occurrences for account %s...",
-            account.name,
+            "[%s][PUSH] Detecting archived occurrences for account %s...",
+            tag, account.name,
         )
 
         all_recurrences = self.env["calendar.recurrence"].sudo().search([])
@@ -1606,6 +1730,7 @@ class CalDAVSyncService(models.AbstractModel):
         for recurrence in relevant_recurrences:
             base_event = recurrence.base_event_id
 
+            # Find the non-occurrence map for this series
             base_map = (
                 self.env["caldav.event.map"]
                 .sudo()
@@ -1613,13 +1738,15 @@ class CalDAVSyncService(models.AbstractModel):
                     [
                         ("account_id", "=", account.id),
                         ("event_id", "=", base_event.id),
+                        ("caldav_uid", "not like", "%__occ_%"),
                     ],
                     limit=1,
                 )
             )
 
             if not base_map:
-
+                # Case B: The current promoted base has no map.
+                # Search for an orphaned map among archived events in the same series.
                 all_recurrence_event_ids = (
                     self.env["calendar.event"]
                     .sudo()
@@ -1643,6 +1770,7 @@ class CalDAVSyncService(models.AbstractModel):
                         [
                             ("account_id", "=", account.id),
                             ("event_id", "in", all_recurrence_event_ids),
+                            ("caldav_uid", "not like", "%__occ_%"),
                         ],
                         limit=1,
                     )
@@ -1658,15 +1786,16 @@ class CalDAVSyncService(models.AbstractModel):
                     else None
                 )
 
+                # Keep UID and Href consistent by updating the new base event
                 if base_event.caldav_uid != orphaned_map.caldav_uid:
                     base_event.sudo().write({"caldav_uid": orphaned_map.caldav_uid})
                     _logger.info(
-                        "Google Case B: Updated caldav_uid on new base (id=%s) to match "
-                        'old map UID "%s" so href and iCal UID stay consistent.',
-                        base_event.id,
-                        orphaned_map.caldav_uid,
+                        "[%s] Case B: Updated caldav_uid on new base (id=%s) to match "
+                        'old map UID "%s" for series consistency.',
+                        tag, base_event.id, orphaned_map.caldav_uid,
                     )
 
+                # Remove any stale/duplicate maps for the new base
                 existing_occ_map = (
                     self.env["caldav.event.map"]
                     .sudo()
@@ -1681,6 +1810,7 @@ class CalDAVSyncService(models.AbstractModel):
                 if existing_occ_map:
                     existing_occ_map.sudo().unlink()
 
+                # Transfer map and record the old base as an EXDATE
                 existing_ex = orphaned_map.google_exdates or ""
                 ex_list = set(d for d in existing_ex.split(",") if d)
                 if old_base_start_iso:
@@ -1694,19 +1824,14 @@ class CalDAVSyncService(models.AbstractModel):
                     }
                 )
                 _logger.info(
-                    "Google Case B: Transferred map (id=%s, href=%s) from archived base "
-                    "(id=%s, start=%s) to new base (id=%s) with EXDATE %s.",
-                    orphaned_map.id,
-                    orphaned_map.caldav_href,
-                    old_base.id,
-                    old_base_start_iso,
-                    base_event.id,
-                    old_base_start_iso,
+                    "[%s] Case B: Transferred map (id=%s) from archived base (id=%s) "
+                    "to new base (id=%s) with EXDATE %s.",
+                    tag, orphaned_map.id, old_base.id, base_event.id, old_base_start_iso,
                 )
                 force_push_ids.add(base_event.id)
-
                 base_map = orphaned_map
 
+            # Case A: Search for non-base archived occurrences that need EXDATEs
             archived_occurrences = (
                 self.env["calendar.event"]
                 .sudo()
@@ -1738,11 +1863,9 @@ class CalDAVSyncService(models.AbstractModel):
                 if start_iso not in existing_exdates:
                     new_exdates.add(start_iso)
                     _logger.info(
-                        "Google EXDATE detected: archived occurrence (id=%s, start=%s) "
-                        'in series "%s" — will push EXDATE to Google.',
-                        occ.id,
-                        start_iso,
-                        base_event.name,
+                        "[%s] EXDATE detected: archived occurrence (id=%s, start=%s) "
+                        'in series "%s" — flagging for push.',
+                        tag, occ.id, start_iso, base_event.name,
                     )
 
             if new_exdates:
@@ -1755,13 +1878,16 @@ class CalDAVSyncService(models.AbstractModel):
                 )
                 force_push_ids.add(base_event.id)
                 _logger.info(
-                    'Updated google_exdates on map (id=%s) for series "%s": %s',
-                    base_map.id,
-                    base_event.name,
-                    ",".join(sorted(all_exdates)),
+                    '[%s] Updated google_exdates on map (id=%s) for series "%s".',
+                    tag, base_map.id, base_event.name,
                 )
 
         return force_push_ids
+
+    @api.model
+    def _detect_google_archived_occurrences(self, account):
+        # Redirect to the unified method for backward compatibility
+        return self._detect_archived_occurrences(account)
 
     @api.model
     def _build_href(self, account, uid):
@@ -1960,6 +2086,7 @@ class CalDAVSyncService(models.AbstractModel):
                 )
             )
 
+            tag = account.server_type.upper()
             if not occurrence:
                 _logger.warning(
                     '[iCLOUD] No Odoo occurrence found for RECURRENCE-ID %s (original or current) in series "%s".',
@@ -2107,6 +2234,10 @@ class CalDAVSyncService(models.AbstractModel):
                 occurrence.id,
                 occurrence.start,
             )
+            # --- Bug Fix: stamp occurrence map after pull ---
+            # Use a slightly future timestamp (+1s) to ensure this sync's ORM writes
+            # (which update write_date) are definitively considered "seen" by the
+            # next push cycle, even if the DB clock and Odoo clock differ slightly.
             occ_map_rec = (
                 self.env["caldav.event.map"]
                 .sudo()
@@ -2119,7 +2250,7 @@ class CalDAVSyncService(models.AbstractModel):
                     limit=1,
                 )
             )
-            pull_ts = fields.Datetime.now()
+            pull_ts = fields.Datetime.now() + timedelta(seconds=1)
             if occ_map_rec:
                 occ_map_rec.sudo().write({"last_odoo_write": pull_ts})
             else:
@@ -2131,10 +2262,11 @@ class CalDAVSyncService(models.AbstractModel):
                     "caldav_etag": server_etag,
                     "last_odoo_write": pull_ts,
                 })
+        # --- Bug Fix: use pull_ts (+1s) to prevent immediate ping-pong push ---
         base_map.sudo().write(
             {
                 "caldav_etag": server_etag,
-                "last_odoo_write": base_event.write_date,
+                "last_odoo_write": fields.Datetime.now() + timedelta(seconds=1),
             }
         )
 
@@ -2333,13 +2465,17 @@ class CalDAVSyncService(models.AbstractModel):
             )
             if not base_map:
                 continue
+
+            # Search for ALL occurrences (active or recently archived)
+            # Archived ones must be included so they can be recorded as EXDATEs
+            # and their stale RECURRENCE-ID overrides purged on the server.
             occurrences = (
                 self.env["calendar.event"]
                 .sudo()
+                .with_context(active_test=False)
                 .search(
                     [
                         ("recurrence_id", "=", recurrence.id),
-                        ("active", "=", True),
                         ("id", "!=", base_event.id),
                     ]
                 )
@@ -2373,7 +2509,7 @@ class CalDAVSyncService(models.AbstractModel):
                 )
 
                 is_deletion = occ_map and occ_map.last_odoo_write is False
-                differs = self._occurrence_differs_from_base(occ, base_event)
+                differs = occ.active and self._occurrence_differs_from_base(occ, base_event)
 
                 last_sync = (
                     occ_map.last_odoo_write if occ_map else base_map.last_odoo_write
@@ -2382,19 +2518,16 @@ class CalDAVSyncService(models.AbstractModel):
                     occ.write_date and occ.write_date > last_sync
                 )
 
-                # If base is pushing, we MUST include all deviating occurrences or they might revert on server
+                # Flag for inclusion in the iCal builder's all_occs list.
+                # Deletions (is_deletion) are included so the builder can purge
+                # their stale RECURRENCE-ID blocks and ensure they are EXDATEd.
                 if is_deletion or (differs and modified):
                     modified_occs.append((occ, occ_map))
-                elif differs:
-                    # Differs from base but not recently modified.
-                    # Zoho rebuilds all non-overridden occurrences from the base RRULE
-                    # on every PUT — so if any push happens, these must be re-sent as
-                    # RECURRENCE-ID overrides or Zoho will silently revert them to base.
+                elif occ.active:
+                    # Active occurrences that don't differ are also included
+                    # to prevent Zoho from reverting them to base series data.
                     differing_occs.append((occ, occ_map))
 
-            # Zoho re-applies base RRULE to all occurrences without an explicit
-            # RECURRENCE-ID override on every PUT. Whenever we push anything for
-            # this series, re-include ALL differing occurrences to prevent revert.
             if modified_occs or base_needs_push:
                 for _diff_item in differing_occs:
                     modified_occs.append(_diff_item)
@@ -3000,6 +3133,41 @@ class CalDAVSyncService(models.AbstractModel):
             event = event or existing_map.event_id
             vals.pop("caldav_uid", None)
 
+            # --- Promoted Base Protection (Nextcloud Only) ---
+            # If the incoming DTSTART from the server matches a date Odoo has already
+            # excluded (EXDATEd) and promoted (shifted the base event forward),
+            # we must NOT write that stale start date back to the Odoo base event.
+            # Doing so would "resurrect" the deleted occurrence in Odoo.
+            if (
+                account.server_type == "nextcloud"
+                and existing_map and existing_map.google_exdates
+                and vals.get("start")
+                and event.recurrence_id
+            ):
+                _exdated_dates = set()
+                for _iso in existing_map.google_exdates.split(","):
+                    _iso = _iso.strip()
+                    if not _iso:
+                        continue
+                    try:
+                        from datetime import datetime as _dt
+                        _exdated_dates.add(_dt.strptime(_iso, "%Y%m%dT%H%M%SZ").date())
+                    except ValueError:
+                        pass
+
+                _incoming_start_date = vals["start"].date() if hasattr(vals["start"], "date") else None
+                if _incoming_start_date and _incoming_start_date in _exdated_dates:
+                    _logger.info(
+                        '[%s][PULL] Protecting promoted base "%s" (id=%s): '
+                        "Incoming DTSTART %s is a stored EXDATE — NOT overwriting base start/stop.",
+                        account.server_type.upper(),
+                        event.name,
+                        event.id,
+                        vals["start"],
+                    )
+                    vals.pop("start", None)
+                    vals.pop("stop", None)
+
             if event.recurrence_id:
                 if account.server_type not in ("zoho", "google", "icloud") and vals.get(
                     "rrule"
@@ -3112,6 +3280,42 @@ class CalDAVSyncService(models.AbstractModel):
                     else:
                         vals.pop("rrule", None)
                         vals.pop("recurrence_update", None)
+                        # --- Zoho Bug 2 fix: Protect promoted base from DTSTART reset ---
+                        # After a base occurrence is deleted in Odoo (step 3 in the bug
+                        # scenario), unlink() promotes the next occurrence to be the new
+                        # base and stores the deleted slot's date in google_exdates.
+                        # Zoho continues to send the ORIGINAL DTSTART in subsequent
+                        # responses (it does not know the base was moved in Odoo).
+                        # If we blindly write vals["start"] = original_week1_date to the
+                        # Odoo base event (now at week 2), Odoo regenerates a week-1
+                        # occurrence — exactly the "original base re-created" bug.
+                        # Guard: if the incoming start matches any stored EXDATE, it means
+                        # Zoho is still reporting the old (deleted) DTSTART, so we must
+                        # NOT overwrite the Odoo base start/stop.
+                        if existing_map and existing_map.google_exdates and vals.get("start"):
+                            _exdated_dates = set()
+                            for _iso in existing_map.google_exdates.split(","):
+                                _iso = _iso.strip()
+                                if not _iso:
+                                    continue
+                                try:
+                                    from datetime import datetime as _dt
+                                    _exdated_dates.add(
+                                        _dt.strptime(_iso, "%Y%m%dT%H%M%SZ").date()
+                                    )
+                                except ValueError:
+                                    pass
+                            _incoming_start_date = vals["start"].date() if hasattr(vals["start"], "date") else None
+                            if _incoming_start_date and _incoming_start_date in _exdated_dates:
+                                _logger.info(
+                                    '[ZOHO][PULL] Protecting promoted base "%s" (id=%s): '
+                                    "Incoming DTSTART %s is a stored EXDATE — NOT overwriting base start/stop.",
+                                    event.name,
+                                    event.id,
+                                    vals["start"],
+                                )
+                                vals.pop("start", None)
+                                vals.pop("stop", None)
                         event.with_context(**ctx_kwargs).write(vals)
                 elif vals.get("rrule") and account.server_type == "google":
                     # Google: existing recurring event with RRULE change.
@@ -3562,8 +3766,8 @@ class CalDAVSyncService(models.AbstractModel):
         # _send_mail_to_attendees may trigger a stored-field recompute on calendar.event
         # that bumps event.write_date past the last_odoo_write we set above —
         # causing a false-positive "pending Odoo change" on the very next sync.
-        if account.server_type == "zoho" and existing_map and existing_map.exists():
-            existing_map.sudo().write({"last_odoo_write": fields.Datetime.now()})
+        if account.server_type in ("zoho", "nextcloud") and existing_map and existing_map.exists():
+            existing_map.sudo().write({"last_odoo_write": fields.Datetime.now() + timedelta(seconds=1)})
 
         return event
 
@@ -3582,7 +3786,7 @@ class CalDAVSyncService(models.AbstractModel):
         vevent.add("dtstamp").value = datetime.now(pytz.utc)
         vevent.add("summary").value = event.name or ""
 
-        if account.server_type in ("zoho", "google"):
+        if account.server_type in ("zoho", "google", "nextcloud"):
             write_dt = event.write_date or datetime.utcnow()
             vevent.add("sequence").value = str(int(write_dt.timestamp()))
             vevent.add("last-modified").value = (
@@ -4005,7 +4209,7 @@ class CalDAVSyncService(models.AbstractModel):
                 except Exception:
                     pass
                 org_email = google_email or owner.email or account.username
-            elif account.server_type in ("zoho", "icloud"):
+            elif account.server_type in ("zoho", "icloud", "nextcloud"):
                 org_email = account.username or owner.email
             else:
                 org_email = owner.email or account.username
@@ -4013,13 +4217,19 @@ class CalDAVSyncService(models.AbstractModel):
             org.value = f"mailto:{org_email}"
             org.params["CN"] = [owner.name or org_email]
 
-            for partner in event.partner_ids:
-                if not partner.email:
+            _state_to_partstat = {
+                "accepted": "ACCEPTED",
+                "declined": "DECLINED",
+                "tentative": "TENTATIVE",
+                "needsAction": "NEEDS-ACTION",
+            }
+            for attendee in event.attendee_ids:
+                if not attendee.partner_id.email:
                     continue
                 att = vevent.add("attendee")
-                att.value = f"mailto:{partner.email}"
-                att.params["CN"] = [partner.name or partner.email]
-                att.params["PARTSTAT"] = ["ACCEPTED"]
+                att.value = f"mailto:{attendee.partner_id.email}"
+                att.params["CN"] = [attendee.partner_id.name or attendee.partner_id.email]
+                att.params["PARTSTAT"] = [_state_to_partstat.get(attendee.state, "NEEDS-ACTION")]
 
         for alarm in event.alarm_ids:
             """Add a VALARM for each reminder configured on the event."""
@@ -4198,17 +4408,7 @@ class CalDAVSyncService(models.AbstractModel):
                             v = ",".join(str(x) for x in v)
                         parts.append(f"{k}={v}")
                     rrule_str = ";".join(parts)
-
-                # --- Normalize RRULE UNTIL: strip trailing Z suffix ---
-                # Radicale / Thunderbird write UNTIL in UTC with a Z suffix,
-                # e.g. UNTIL=20260430T113000Z.  Odoo's _rrule_parse passes a
-                # timezone-naive start_dt to dateutil.  When UNTIL is tz-aware
-                # (has Z) and dtstart is naive, dateutil raises:
-                #   "can't compare offset-naive and offset-aware datetimes"
-                # That exception is silently caught below, leaving vals without
-                # 'rrule' and 'recurrency', so the event stays non-recurring.
-                # Fix: strip the Z so UNTIL is also naive-UTC, consistent with
-                # how we store all datetimes internally.
+ 
                 _rrule_str_normalized = re.sub(
                     r"(UNTIL=\d{8}T\d{6})Z\b",
                     r"\1",
