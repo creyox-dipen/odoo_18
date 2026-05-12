@@ -13,7 +13,7 @@
             <xpath expr="//form" position="inside">
                 <app string="CalDAV Sync"
                      name="cr_odoo_caldav_sync"
-                     logo="/cr_odoo_caldav_sync/static/description/banner.png">
+                     logo="/cr_odoo_caldav_sync/static/description/icon.png">
 
                     <block title="CalDAV Calendar Synchronisation" name="caldav_sync_block">
 
