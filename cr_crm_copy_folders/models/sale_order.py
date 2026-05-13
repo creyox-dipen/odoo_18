@@ -73,6 +73,7 @@ class SaleOrder(models.Model):
                     'folder_id': project_folder.id,
                     'type': 'folder',
                     'company_id': self.company_id.id,
+                    'is_master_folder': True,
                 })
                 _logger.info("CREATED folder 'Customer Data' inside Project folder '%s'", project_folder.name)
             else:
@@ -92,6 +93,7 @@ class SaleOrder(models.Model):
                     'folder_id': customer_data_folder.id,
                     'type': 'folder',
                     'company_id': self.company_id.id,
+                    'is_master_folder': True,
                 })
                 _logger.info("CREATED SO folder '%s' inside 'Customer Data'", so_folder_name)
             else:
@@ -109,12 +111,24 @@ class SaleOrder(models.Model):
             _logger.info("Found %s subfolders in Opportunity to copy.", len(opp_subfolders))
 
             for opp_sub in opp_subfolders:
-                # Create the corresponding subfolder in the new SO folder using copy()
-                # to inherit all properties but change the parent folder
-                target_sub = opp_sub.copy(default={
-                    'folder_id': so_folder.id,
-                })
-                _logger.info("  -> COPIED subfolder '%s' inside '%s'", target_sub.name, so_folder.name)
+                # Check if this subfolder already exists in the target SO folder
+                target_sub = self.env['documents.document'].search([
+                    ('name', '=', opp_sub.name),
+                    ('folder_id', '=', so_folder.id),
+                    ('type', '=', 'folder')
+                ], limit=1)
+
+                if not target_sub:
+                    # Use copy_data() + create() to perform a NON-RECURSIVE copy.
+                    # This copies all folder settings (fixing the JS error) but keeps it empty.
+                    folder_copy_vals = opp_sub.copy_data(default={
+                        'folder_id': so_folder.id,
+                        'name': opp_sub.name,
+                    })[0]
+                    target_sub = self.env['documents.document'].create(folder_copy_vals)
+                    _logger.info("  -> COPIED subfolder metadata '%s' inside '%s'", target_sub.name, so_folder.name)
+                else:
+                    _logger.info("  -> Subfolder '%s' ALREADY EXISTS inside '%s'", target_sub.name, so_folder.name)
 
                 # Find files (binary documents) in the Opportunity subfolder
                 files = self.env['documents.document'].search([
@@ -123,12 +137,22 @@ class SaleOrder(models.Model):
                 ])
                 
                 for file in files:
-                    # Use copy() to create a new document record.
-                    # This avoids the unique constraint on attachment_id by creating 
-                    # a new attachment record that points to the same physical file.
-                    file.copy(default={
-                        'folder_id': target_sub.id,
-                    })
-                    _logger.info("     * Copied file (as shortcut/link): %s", file.name)
+                    # Check if this file already exists in the target subfolder
+                    existing_file = self.env['documents.document'].search([
+                        ('name', '=', file.name),
+                        ('folder_id', '=', target_sub.id),
+                        ('type', '=', 'binary')
+                    ], limit=1)
+
+                    if not existing_file:
+                        # Use copy() to create a new document record.
+                        # Explicitly set the name to avoid "(copy)" suffix.
+                        file.copy(default={
+                            'folder_id': target_sub.id,
+                            'name': file.name,
+                        })
+                        _logger.info("     * Copied file: %s", file.name)
+                    else:
+                        _logger.info("     * File '%s' already exists, skipping copy.", file.name)
             
             _logger.info("FINISH: Successfully completed folder and shortcut creation for SO %s -> Project %s", self.name, project.name)
