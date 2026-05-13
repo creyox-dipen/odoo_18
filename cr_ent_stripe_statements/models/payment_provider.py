@@ -21,6 +21,12 @@ class PaymentProvider(models.Model):
         comodel_name="account.account",
         domain=[("account_type", "=", "asset_cash")],
     )
+    stripe_fees_expense_account_id = fields.Many2one(
+        string="Stripe Fees Expense Account",
+        comodel_name="account.account",
+        domain=[("account_type", "=", "expense")],
+        help="Expense account used to post Stripe processing fees",
+    )
 
     def action_stripe_create_webhook(self):
         """Create or update a webhook with additional events and return a feedback notification.

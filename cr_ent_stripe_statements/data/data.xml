@@ -25,8 +25,8 @@
         <field name="company_id" ref="base.main_company"/>
     </record>
 
-    <record id="stripe_statement_product_fee_id_1" model="product.product">
-        <field name="name">Stripe Fees</field>
+    <record id="stripe_statement_product_fee_id" model="product.product">
+        <field name="name">Stripe Product</field>
         <field name="type">service</field>
         <field name="property_account_expense_id" ref="account_expense_custom_600001_id"/>
         <!-- <field name="purchase_ok">True</field> -->
