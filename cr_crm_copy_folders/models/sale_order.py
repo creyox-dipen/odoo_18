@@ -137,22 +137,30 @@ class SaleOrder(models.Model):
                 ])
                 
                 for file in files:
-                    # Check if this file already exists in the target subfolder
-                    existing_file = self.env['documents.document'].search([
+                    # 1. Search for any existing document with this name in the target folder
+                    # that is NOT already the correct shortcut.
+                    existing_items = self.env['documents.document'].search([
                         ('name', '=', file.name),
                         ('folder_id', '=', target_sub.id),
-                        ('type', '=', 'binary')
+                    ])
+                    
+                    # If an actual file or a different shortcut exists with the same name, remove it
+                    for item in existing_items:
+                        if item.shortcut_document_id.id != file.id:
+                            _logger.info("     * Removing actual file/old item '%s' to replace with shortcut.", item.name)
+                            item.unlink()
+
+                    # 2. Check if the correct shortcut already exists (re-search after cleanup)
+                    existing_shortcut = self.env['documents.document'].search([
+                        ('shortcut_document_id', '=', file.id),
+                        ('folder_id', '=', target_sub.id),
                     ], limit=1)
 
-                    if not existing_file:
-                        # Use copy() to create a new document record.
-                        # Explicitly set the name to avoid "(copy)" suffix.
-                        file.copy(default={
-                            'folder_id': target_sub.id,
-                            'name': file.name,
-                        })
-                        _logger.info("     * Copied file: %s", file.name)
+                    if not existing_shortcut:
+                        # Use the official Odoo method to create the 'blue link' shortcut
+                        file.action_create_shortcut(location_folder_id=target_sub.id)
+                        _logger.info("     * CREATED SHORTCUT for file: %s", file.name)
                     else:
-                        _logger.info("     * File '%s' already exists, skipping copy.", file.name)
+                        _logger.info("     * Shortcut for '%s' already exists.", file.name)
             
             _logger.info("FINISH: Successfully completed folder and shortcut creation for SO %s -> Project %s", self.name, project.name)
