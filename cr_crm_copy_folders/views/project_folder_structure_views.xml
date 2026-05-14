@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wizard Form View -->
+    <record id="view_project_folder_structure_wizard_form" model="ir.ui.view">
+        <field name="name">project.folder.structure.wizard.form</field>
+        <field name="model">project.folder.structure.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Project Folder Structure">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Configure Folder Structure</h1>
+                    </div>
+                    <p class="text-muted">
+                        Define the hierarchy using dot notation (e.g. 1.0, 1.1). 
+                        Click 'Create Folders' to apply this structure to all projects.
+                    </p>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="sequence" string="Sequence (e.g. 1.0)"/>
+                            <field name="name" string="Folder Name"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button name="action_create_folders" string="Create Folders" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Updated Action to open the Wizard -->
+    <record id="action_project_folder_structure" model="ir.actions.act_window">
+        <field name="name">Folder Structure</field>
+        <field name="res_model">project.folder.structure.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menu Item (remains same) -->
+    <menuitem id="menu_project_folder_structure"
+              name="Folder Structure"
+              parent="project.menu_project_config"
+              action="action_project_folder_structure"
+              sequence="50"/>
+</odoo>

@@ -164,3 +164,91 @@ class SaleOrder(models.Model):
                         _logger.info("     * Shortcut for '%s' already exists.", file.name)
             
             _logger.info("FINISH: Successfully completed folder and shortcut creation for SO %s -> Project %s", self.name, project.name)
+
+    def _get_project_so_folder(self):
+        """Helper to find the specific SO folder in the project workspace."""
+        self.ensure_one()
+        # 1. Find the Project(s) linked to this Sale Order
+        project = self.env['project.project'].search([('sale_order_id', '=', self.id)], limit=1)
+        if not project and hasattr(self, 'project_ids') and self.project_ids:
+            project = self.project_ids[0]
+
+        if not project:
+            return False
+
+        # 2. Find the Project's document folder
+        project_folder = self.env['documents.document'].search([
+            ('name', '=', project.name),
+            ('type', '=', 'folder'),
+            ('folder_id.name', '=', 'Projects')
+        ], limit=1)
+        if not project_folder:
+            return False
+
+        # 3. Find "Customer Data" inside Project
+        customer_data = self.env['documents.document'].search([
+            ('name', '=', 'Customer Data'),
+            ('folder_id', '=', project_folder.id),
+            ('type', '=', 'folder')
+        ], limit=1)
+        if not customer_data:
+            return False
+
+        # 4. Find the SO specific folder inside Customer Data
+        so_folder_name = f"{self.name} - {self.partner_id.name}"
+        return self.env['documents.document'].search([
+            ('name', '=', so_folder_name),
+            ('folder_id', '=', customer_data.id),
+            ('type', '=', 'folder')
+        ], limit=1)
+
+    def _compute_document_count(self):
+        """Override to count documents in the Project SO folder instead of CRM folder."""
+        for order in self:
+            so_folder = order._get_project_so_folder()
+            if so_folder:
+                # Count binary files inside the SO folder and its subfolders
+                order.document_count = self.env['documents.document'].search_count([
+                    ('folder_id', 'child_of', so_folder.id),
+                    ('type', '=', 'binary')
+                ])
+            else:
+                # Fallback to standard behavior if project folder isn't ready
+                super(SaleOrder, order)._compute_document_count()
+
+    def action_open_documents(self):
+        """Override to open the Project SO folder with the exact same behavior as the CRM module."""
+        self.ensure_one()
+        so_folder = self._get_project_so_folder()
+
+        if not so_folder:
+            # Fallback if the folder hasn't been created yet
+            return super(SaleOrder, self).action_open_documents()
+
+        # Get the list view reference to ensure it's used
+        list_view = self.env.ref('documents.documents_view_list', raise_if_not_found=False)
+
+        return {
+            'name': _("Documents - %s", self.name),
+            'type': 'ir.actions.act_window',
+            'res_model': 'documents.document',
+            'view_mode': 'list,kanban,activity',
+            'views': [
+                (list_view.id if list_view else False, 'list'),
+                (False, 'kanban'),
+                (False, 'activity'),
+            ],
+            'context': {
+                'default_folder_id': so_folder.id,
+                'searchpanel_default_folder_id': so_folder.id,
+            },
+            # This domain is the key: it shows binary files in the tree 
+            # AND direct sub-folders as records in the list view.
+            'domain': [
+                ('folder_id', 'child_of', so_folder.id),
+                '|',
+                ('type', '=', 'binary'),
+                ('folder_id', '=', so_folder.id)
+            ],
+            'target': 'current',
+        }

@@ -15,6 +15,7 @@
     'depends': ['crm', 'sale_management', 'project', 'documents', 'cr_crm_opportunity_document_management'],
     'data': [
         'security/ir.model.access.csv',
+        'views/project_folder_structure_views.xml',
     ],
     'installable': True,
     'application': True,
