@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
+# Part of Creyox Technologies.
 from odoo import models, api, _
 import logging
 
 _logger = logging.getLogger(__name__)
 
+
 class SaleOrder(models.Model):
-    _inherit = 'sale.order'
+    _inherit = "sale.order"
 
     def action_confirm(self):
         """
@@ -16,191 +19,281 @@ class SaleOrder(models.Model):
             try:
                 order._copy_folders_to_project()
             except Exception as e:
-                _logger.error("Error in _copy_folders_to_project for SO %s: %s", order.name, str(e))
+                _logger.error(
+                    "Error in _copy_folders_to_project for SO %s: %s",
+                    order.name,
+                    str(e),
+                )
         return res
 
     def _copy_folders_to_project(self):
         self.ensure_one()
         _logger.info("Starting folder copy process for Sale Order: %s", self.name)
-        
+
         # 1. Identify the linked Opportunity and its document folder
         opportunity = self.opportunity_id
         if not opportunity:
-            _logger.warning("No Opportunity linked to SO %s. Skipping folder copy.", self.name)
-            return
-        
-        if not opportunity.document_folder_id:
-            _logger.warning("Opportunity '%s' has no document folder. Skipping folder copy.", opportunity.name)
+            _logger.warning(
+                "No Opportunity linked to SO %s. Skipping folder copy.", self.name
+            )
             return
 
-        _logger.info("Found Opportunity folder: %s (ID: %s)", opportunity.document_folder_id.name, opportunity.document_folder_id.id)
+        if not opportunity.document_folder_id:
+            _logger.warning(
+                "Opportunity '%s' has no document folder. Skipping folder copy.",
+                opportunity.name,
+            )
+            return
+
+        _logger.info(
+            "Found Opportunity folder: %s (ID: %s)",
+            opportunity.document_folder_id.name,
+            opportunity.document_folder_id.id,
+        )
 
         # 2. Find the Project(s) linked to this Sale Order
-        projects = self.env['project.project'].search([('sale_order_id', '=', self.id)])
-        if not projects and hasattr(self, 'project_ids'):
+        projects = self.env["project.project"].search([("sale_order_id", "=", self.id)])
+        if not projects and hasattr(self, "project_ids"):
             projects = self.project_ids
 
         if not projects:
-            _logger.warning("No projects found for SO %s. Folder copy cannot proceed.", self.name)
+            _logger.warning(
+                "No projects found for SO %s. Folder copy cannot proceed.", self.name
+            )
             return
 
         for project in projects:
             _logger.info("Processing Project: %s (ID: %s)", project.name, project.id)
 
             # 3. Find the Project's document folder
-            project_folder = self.env['documents.document'].search([
-                ('name', '=', project.name),
-                ('type', '=', 'folder'),
-                ('folder_id.name', '=', 'Projects')
-            ], limit=1)
+            project_folder = self.env["documents.document"].search(
+                [
+                    ("name", "=", project.name),
+                    ("type", "=", "folder"),
+                    ("folder_id.name", "=", "Projects"),
+                ],
+                limit=1,
+            )
 
             if not project_folder:
-                _logger.error("Project folder '%s' NOT FOUND under 'Projects' workspace. Skipping this project.", project.name)
+                _logger.error(
+                    "Project folder '%s' NOT FOUND under 'Projects' workspace. Skipping this project.",
+                    project.name,
+                )
                 continue
 
             _logger.info("Found Project root folder: %s", project_folder.name)
 
             # 4. Create "Customer Data" folder inside the Project folder
-            customer_data_folder = self.env['documents.document'].search([
-                ('name', '=', 'Customer Data'),
-                ('folder_id', '=', project_folder.id),
-                ('type', '=', 'folder')
-            ], limit=1)
-            
+            customer_data_folder = self.env["documents.document"].search(
+                [
+                    ("name", "=", "Customer Data"),
+                    ("folder_id", "=", project_folder.id),
+                    ("type", "=", "folder"),
+                ],
+                limit=1,
+            )
+
             if not customer_data_folder:
-                customer_data_folder = self.env['documents.document'].create({
-                    'name': 'Customer Data',
-                    'folder_id': project_folder.id,
-                    'type': 'folder',
-                    'company_id': self.company_id.id,
-                    'is_master_folder': True,
-                })
-                _logger.info("CREATED folder 'Customer Data' inside Project folder '%s'", project_folder.name)
+                customer_data_folder = self.env["documents.document"].create(
+                    {
+                        "name": "Customer Data",
+                        "folder_id": project_folder.id,
+                        "type": "folder",
+                        "company_id": self.company_id.id,
+                        "is_master_folder": True,
+                    }
+                )
+                _logger.info(
+                    "CREATED folder 'Customer Data' inside Project folder '%s'",
+                    project_folder.name,
+                )
             else:
-                _logger.info("Folder 'Customer Data' ALREADY EXISTS inside Project folder '%s'", project_folder.name)
+                _logger.info(
+                    "Folder 'Customer Data' ALREADY EXISTS inside Project folder '%s'",
+                    project_folder.name,
+                )
 
             # 5. Create "[SO Name] - [Customer Name]" folder inside "Customer Data"
             so_folder_name = f"{self.name} - {self.partner_id.name}"
-            so_folder = self.env['documents.document'].search([
-                ('name', '=', so_folder_name),
-                ('folder_id', '=', customer_data_folder.id),
-                ('type', '=', 'folder')
-            ], limit=1)
+            so_folder = self.env["documents.document"].search(
+                [
+                    ("name", "=", so_folder_name),
+                    ("folder_id", "=", customer_data_folder.id),
+                    ("type", "=", "folder"),
+                ],
+                limit=1,
+            )
 
             if not so_folder:
-                so_folder = self.env['documents.document'].create({
-                    'name': so_folder_name,
-                    'folder_id': customer_data_folder.id,
-                    'type': 'folder',
-                    'company_id': self.company_id.id,
-                    'is_master_folder': True,
-                })
-                _logger.info("CREATED SO folder '%s' inside 'Customer Data'", so_folder_name)
+                so_folder = self.env["documents.document"].create(
+                    {
+                        "name": so_folder_name,
+                        "folder_id": customer_data_folder.id,
+                        "type": "folder",
+                        "company_id": self.company_id.id,
+                        "is_master_folder": True,
+                    }
+                )
+                _logger.info(
+                    "CREATED SO folder '%s' inside 'Customer Data'", so_folder_name
+                )
             else:
-                _logger.info("SO folder '%s' ALREADY EXISTS inside 'Customer Data'", so_folder_name)
+                _logger.info(
+                    "SO folder '%s' ALREADY EXISTS inside 'Customer Data'",
+                    so_folder_name,
+                )
 
             # 6. Copy standard subfolders from Opportunity as shortcuts
-            standard_subfolders = ['Technical Data', 'Vendor Quotations', 'Costing', 'Quotation', 'Sales Order', 'Customer PO']
-            
-            opp_subfolders = self.env['documents.document'].search([
-                ('folder_id', '=', opportunity.document_folder_id.id),
-                ('name', 'in', standard_subfolders),
-                ('type', '=', 'folder')
-            ])
+            standard_subfolders = [
+                "Technical Data",
+                "Vendor Quotations",
+                "Costing",
+                "Quotation",
+                "Sales Order",
+                "Customer PO",
+            ]
 
-            _logger.info("Found %s subfolders in Opportunity to copy.", len(opp_subfolders))
+            opp_subfolders = self.env["documents.document"].search(
+                [
+                    ("folder_id", "=", opportunity.document_folder_id.id),
+                    ("name", "in", standard_subfolders),
+                    ("type", "=", "folder"),
+                ]
+            )
+
+            _logger.info(
+                "Found %s subfolders in Opportunity to copy.", len(opp_subfolders)
+            )
 
             for opp_sub in opp_subfolders:
                 # Check if this subfolder already exists in the target SO folder
-                target_sub = self.env['documents.document'].search([
-                    ('name', '=', opp_sub.name),
-                    ('folder_id', '=', so_folder.id),
-                    ('type', '=', 'folder')
-                ], limit=1)
+                target_sub = self.env["documents.document"].search(
+                    [
+                        ("name", "=", opp_sub.name),
+                        ("folder_id", "=", so_folder.id),
+                        ("type", "=", "folder"),
+                    ],
+                    limit=1,
+                )
 
                 if not target_sub:
                     # Use copy_data() + create() to perform a NON-RECURSIVE copy.
                     # This copies all folder settings (fixing the JS error) but keeps it empty.
-                    folder_copy_vals = opp_sub.copy_data(default={
-                        'folder_id': so_folder.id,
-                        'name': opp_sub.name,
-                    })[0]
-                    target_sub = self.env['documents.document'].create(folder_copy_vals)
-                    _logger.info("  -> COPIED subfolder metadata '%s' inside '%s'", target_sub.name, so_folder.name)
+                    folder_copy_vals = opp_sub.copy_data(
+                        default={
+                            "folder_id": so_folder.id,
+                            "name": opp_sub.name,
+                        }
+                    )[0]
+                    target_sub = self.env["documents.document"].create(folder_copy_vals)
+                    _logger.info(
+                        "  -> COPIED subfolder metadata '%s' inside '%s'",
+                        target_sub.name,
+                        so_folder.name,
+                    )
                 else:
-                    _logger.info("  -> Subfolder '%s' ALREADY EXISTS inside '%s'", target_sub.name, so_folder.name)
+                    _logger.info(
+                        "  -> Subfolder '%s' ALREADY EXISTS inside '%s'",
+                        target_sub.name,
+                        so_folder.name,
+                    )
 
                 # Find files (binary documents) in the Opportunity subfolder
-                files = self.env['documents.document'].search([
-                    ('folder_id', '=', opp_sub.id),
-                    ('type', '=', 'binary')
-                ])
-                
+                files = self.env["documents.document"].search(
+                    [("folder_id", "=", opp_sub.id), ("type", "=", "binary")]
+                )
+
                 for file in files:
                     # 1. Search for any existing document with this name in the target folder
                     # that is NOT already the correct shortcut.
-                    existing_items = self.env['documents.document'].search([
-                        ('name', '=', file.name),
-                        ('folder_id', '=', target_sub.id),
-                    ])
-                    
+                    existing_items = self.env["documents.document"].search(
+                        [
+                            ("name", "=", file.name),
+                            ("folder_id", "=", target_sub.id),
+                        ]
+                    )
+
                     # If an actual file or a different shortcut exists with the same name, remove it
                     for item in existing_items:
                         if item.shortcut_document_id.id != file.id:
-                            _logger.info("     * Removing actual file/old item '%s' to replace with shortcut.", item.name)
+                            _logger.info(
+                                "     * Removing actual file/old item '%s' to replace with shortcut.",
+                                item.name,
+                            )
                             item.unlink()
 
                     # 2. Check if the correct shortcut already exists (re-search after cleanup)
-                    existing_shortcut = self.env['documents.document'].search([
-                        ('shortcut_document_id', '=', file.id),
-                        ('folder_id', '=', target_sub.id),
-                    ], limit=1)
+                    existing_shortcut = self.env["documents.document"].search(
+                        [
+                            ("shortcut_document_id", "=", file.id),
+                            ("folder_id", "=", target_sub.id),
+                        ],
+                        limit=1,
+                    )
 
                     if not existing_shortcut:
                         # Use the official Odoo method to create the 'blue link' shortcut
                         file.action_create_shortcut(location_folder_id=target_sub.id)
                         _logger.info("     * CREATED SHORTCUT for file: %s", file.name)
                     else:
-                        _logger.info("     * Shortcut for '%s' already exists.", file.name)
-            
-            _logger.info("FINISH: Successfully completed folder and shortcut creation for SO %s -> Project %s", self.name, project.name)
+                        _logger.info(
+                            "     * Shortcut for '%s' already exists.", file.name
+                        )
+
+            _logger.info(
+                "FINISH: Successfully completed folder and shortcut creation for SO %s -> Project %s",
+                self.name,
+                project.name,
+            )
 
     def _get_project_so_folder(self):
         """Helper to find the specific SO folder in the project workspace."""
         self.ensure_one()
         # 1. Find the Project(s) linked to this Sale Order
-        project = self.env['project.project'].search([('sale_order_id', '=', self.id)], limit=1)
-        if not project and hasattr(self, 'project_ids') and self.project_ids:
+        project = self.env["project.project"].search(
+            [("sale_order_id", "=", self.id)], limit=1
+        )
+        if not project and hasattr(self, "project_ids") and self.project_ids:
             project = self.project_ids[0]
 
         if not project:
             return False
 
         # 2. Find the Project's document folder
-        project_folder = self.env['documents.document'].search([
-            ('name', '=', project.name),
-            ('type', '=', 'folder'),
-            ('folder_id.name', '=', 'Projects')
-        ], limit=1)
+        project_folder = self.env["documents.document"].search(
+            [
+                ("name", "=", project.name),
+                ("type", "=", "folder"),
+                ("folder_id.name", "=", "Projects"),
+            ],
+            limit=1,
+        )
         if not project_folder:
             return False
 
         # 3. Find "Customer Data" inside Project
-        customer_data = self.env['documents.document'].search([
-            ('name', '=', 'Customer Data'),
-            ('folder_id', '=', project_folder.id),
-            ('type', '=', 'folder')
-        ], limit=1)
+        customer_data = self.env["documents.document"].search(
+            [
+                ("name", "=", "Customer Data"),
+                ("folder_id", "=", project_folder.id),
+                ("type", "=", "folder"),
+            ],
+            limit=1,
+        )
         if not customer_data:
             return False
 
         # 4. Find the SO specific folder inside Customer Data
         so_folder_name = f"{self.name} - {self.partner_id.name}"
-        return self.env['documents.document'].search([
-            ('name', '=', so_folder_name),
-            ('folder_id', '=', customer_data.id),
-            ('type', '=', 'folder')
-        ], limit=1)
+        return self.env["documents.document"].search(
+            [
+                ("name", "=", so_folder_name),
+                ("folder_id", "=", customer_data.id),
+                ("type", "=", "folder"),
+            ],
+            limit=1,
+        )
 
     def _compute_document_count(self):
         """Override to count documents in the Project SO folder instead of CRM folder."""
@@ -208,10 +301,9 @@ class SaleOrder(models.Model):
             so_folder = order._get_project_so_folder()
             if so_folder:
                 # Count binary files inside the SO folder and its subfolders
-                order.document_count = self.env['documents.document'].search_count([
-                    ('folder_id', 'child_of', so_folder.id),
-                    ('type', '=', 'binary')
-                ])
+                order.document_count = self.env["documents.document"].search_count(
+                    [("folder_id", "child_of", so_folder.id), ("type", "=", "binary")]
+                )
             else:
                 # Fallback to standard behavior if project folder isn't ready
                 super(SaleOrder, order)._compute_document_count()
@@ -226,29 +318,31 @@ class SaleOrder(models.Model):
             return super(SaleOrder, self).action_open_documents()
 
         # Get the list view reference to ensure it's used
-        list_view = self.env.ref('documents.documents_view_list', raise_if_not_found=False)
+        list_view = self.env.ref(
+            "documents.documents_view_list", raise_if_not_found=False
+        )
 
         return {
-            'name': _("Documents - %s", self.name),
-            'type': 'ir.actions.act_window',
-            'res_model': 'documents.document',
-            'view_mode': 'list,kanban,activity',
-            'views': [
-                (list_view.id if list_view else False, 'list'),
-                (False, 'kanban'),
-                (False, 'activity'),
+            "name": _("Documents - %s", self.name),
+            "type": "ir.actions.act_window",
+            "res_model": "documents.document",
+            "view_mode": "list,kanban,activity",
+            "views": [
+                (list_view.id if list_view else False, "list"),
+                (False, "kanban"),
+                (False, "activity"),
             ],
-            'context': {
-                'default_folder_id': so_folder.id,
-                'searchpanel_default_folder_id': so_folder.id,
+            "context": {
+                "default_folder_id": so_folder.id,
+                "searchpanel_default_folder_id": so_folder.id,
             },
-            # This domain is the key: it shows binary files in the tree 
+            # This domain is the key: it shows binary files in the tree
             # AND direct sub-folders as records in the list view.
-            'domain': [
-                ('folder_id', 'child_of', so_folder.id),
-                '|',
-                ('type', '=', 'binary'),
-                ('folder_id', '=', so_folder.id)
+            "domain": [
+                ("folder_id", "child_of", so_folder.id),
+                "|",
+                ("type", "=", "binary"),
+                ("folder_id", "=", so_folder.id),
             ],
-            'target': 'current',
+            "target": "current",
         }
