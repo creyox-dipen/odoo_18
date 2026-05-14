@@ -16,6 +16,7 @@
                     </p>
                     <field name="line_ids">
                         <list editable="bottom">
+                            <field name="is_selected" widget="boolean"/>
                             <field name="sequence" string="Sequence (e.g. 1.0)"/>
                             <field name="name" string="Folder Name"/>
                         </list>
@@ -23,6 +24,7 @@
                 </sheet>
                 <footer>
                     <button name="action_create_folders" string="Create Folders" type="object" class="btn-primary"/>
+                    <button name="action_delete_selected" string="Delete Selected" type="object" class="btn-danger"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -37,7 +39,7 @@
         <field name="target">new</field>
     </record>
 
-    <!-- Menu Item (remains same) -->
+    <!-- Menu Item -->
     <menuitem id="menu_project_folder_structure"
               name="Folder Structure"
               parent="project.menu_project_config"

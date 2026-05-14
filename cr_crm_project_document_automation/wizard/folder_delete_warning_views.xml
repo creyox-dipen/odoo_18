@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cr_folder_delete_warning_form" model="ir.ui.view">
+        <field name="name">cr.folder.delete.warning.form</field>
+        <field name="model">cr.folder.delete.warning</field>
+        <field name="arch" type="xml">
+            <form string="Safe Delete Warning">
+                <div class="alert alert-warning" role="alert">
+                    <field name="message"/>
+                </div>
+                <footer>
+                    <button name="action_confirm" string="Delete Empty Folders" type="object" class="btn-danger"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

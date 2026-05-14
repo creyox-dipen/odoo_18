@@ -30,6 +30,7 @@
     "data": [
         "security/ir.model.access.csv",
         "views/project_folder_structure_views.xml",
+        "wizard/folder_delete_warning_views.xml",
     ],
     "installable": True,
     "application": True,

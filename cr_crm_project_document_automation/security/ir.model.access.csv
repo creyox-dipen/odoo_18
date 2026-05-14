@@ -2,3 +2,4 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_project_folder_structure,project.folder.structure,model_project_folder_structure,base.group_user,1,1,1,1
 access_project_folder_structure_wizard,project.folder.structure.wizard,model_project_folder_structure_wizard,base.group_user,1,1,1,1
 access_project_folder_structure_wizard_line,project.folder.structure.wizard.line,model_project_folder_structure_wizard_line,base.group_user,1,1,1,1
+access_cr_folder_delete_warning,cr.folder.delete.warning,model_cr_folder_delete_warning,base.group_user,1,1,1,1
