@@ -114,6 +114,16 @@ class SaleOrder(models.Model):
                     project_folder.name,
                 )
 
+            # --- AUTOMATION: Apply Global Folder Structure ---
+            self.env["project.folder.structure"].apply_structure_to_folder(
+                customer_data_folder
+            )
+            _logger.info(
+                "Automatically applied global folder structure to '%s'",
+                customer_data_folder.name,
+            )
+            # --------------------------------------------------
+
             # 5. Create "[SO Name] - [Customer Name]" folder inside "Customer Data"
             so_folder_name = f"{self.name} - {self.partner_id.name}"
             so_folder = self.env["documents.document"].search(
