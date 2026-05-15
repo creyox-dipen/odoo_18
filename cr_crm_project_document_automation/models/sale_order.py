@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 # Part of Creyox Technologies.
-from odoo import models, api, _
+from odoo import models, api, _, fields
 import logging
+import base64
+import io
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+except ImportError:
+    canvas = False
 
 _logger = logging.getLogger(__name__)
 
@@ -115,13 +122,8 @@ class SaleOrder(models.Model):
                 )
 
             # --- AUTOMATION: Apply Global Folder Structure ---
-            self.env["project.folder.structure"].apply_structure_to_folder(
-                customer_data_folder
-            )
-            _logger.info(
-                "Automatically applied global folder structure to '%s'",
-                customer_data_folder.name,
-            )
+            self.env['project.folder.structure'].apply_structure_to_folder(customer_data_folder)
+            _logger.info("Automatically applied global folder structure to '%s'", customer_data_folder.name)
             # --------------------------------------------------
 
             # 5. Create "[SO Name] - [Customer Name]" folder inside "Customer Data"
@@ -176,6 +178,24 @@ class SaleOrder(models.Model):
                 "Found %s subfolders in Opportunity to copy.", len(opp_subfolders)
             )
 
+            # PRE-GENERATE Placeholder PDF for Shortcuts (Small File Size)
+            placeholder_bytes = b''
+            if canvas:
+                placeholder_output = io.BytesIO()
+                c_p = canvas.Canvas(placeholder_output, pagesize=A4)
+                c_p.setFont("Helvetica-Bold", 11)
+                c_p.drawString(60, 800, "SHORTCUT - Full-quality file is on the main record.")
+                c_p.setFont("Helvetica", 9)
+                c_p.drawString(60, 784, "This is an automated shortcut to the Opportunity document.")
+                c_p.drawString(60, 770, "Use Download / Preview to access the original file.")
+                c_p.showPage()
+                c_p.save()
+                placeholder_bytes = placeholder_output.getvalue()
+            else:
+                placeholder_bytes = b"SHORTCUT - Full-quality file is on the main record."
+            
+            compressed_content = base64.b64encode(placeholder_bytes)
+
             for opp_sub in opp_subfolders:
                 # Check if this subfolder already exists in the target SO folder
                 target_sub = self.env["documents.document"].search(
@@ -189,7 +209,6 @@ class SaleOrder(models.Model):
 
                 if not target_sub:
                     # Use copy_data() + create() to perform a NON-RECURSIVE copy.
-                    # This copies all folder settings (fixing the JS error) but keeps it empty.
                     folder_copy_vals = opp_sub.copy_data(
                         default={
                             "folder_id": so_folder.id,
@@ -216,7 +235,6 @@ class SaleOrder(models.Model):
 
                 for file in files:
                     # 1. Search for any existing document with this name in the target folder
-                    # that is NOT already the correct shortcut.
                     existing_items = self.env["documents.document"].search(
                         [
                             ("name", "=", file.name),
@@ -243,9 +261,17 @@ class SaleOrder(models.Model):
                     )
 
                     if not existing_shortcut:
-                        # Use the official Odoo method to create the 'blue link' shortcut
-                        file.action_create_shortcut(location_folder_id=target_sub.id)
-                        _logger.info("     * CREATED SHORTCUT for file: %s", file.name)
+                        # Mirror Logic: Create a REDUCED SIZE shortcut with URL extension
+                        self.env['documents.document'].create({
+                            'name': file.name,
+                            'folder_id': target_sub.id,
+                            'type': 'binary',
+                            'datas': compressed_content,
+                            'shortcut_document_id': file.id,
+                            'file_extension': 'URL',
+                            'company_id': self.company_id.id,
+                        })
+                        _logger.info("     * CREATED REDUCED-SIZE SHORTCUT (URL) for file: %s", file.name)
                     else:
                         _logger.info(
                             "     * Shortcut for '%s' already exists.", file.name
