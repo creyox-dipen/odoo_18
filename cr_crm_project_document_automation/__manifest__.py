@@ -8,7 +8,7 @@
     "category": "Sales/CRM",
     "summary": "Automated Project folder and shortcut creation from CRM Opportunities",
     "license": "OPL-1",
-    "version": "18.0.0.0",
+    "version": "18.0.0.1",
     "description": """
         Automates Document workspace organization between CRM and Project modules.
         

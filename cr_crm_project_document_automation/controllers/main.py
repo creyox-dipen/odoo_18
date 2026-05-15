@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Part of Creyox Technologies.
 from odoo.addons.documents.controllers.documents import ShareRoute
 from odoo.http import request, content_disposition
 from odoo.exceptions import MissingError
