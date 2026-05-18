@@ -7,12 +7,18 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
+            <!-- Hide the base Documents smart button -->
+            <xpath expr="//button[@name='action_open_documents']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Add and rename our folders smart button to "Documents" -->
             <div name="button_box" position="inside">
                 <button name="action_view_product_folders"
                         type="object"
                         class="oe_stat_button"
                         icon="fa-folder-open">
-                    <field name="folder_count" widget="statinfo" string="Folders"/>
+                    <field name="folder_count" widget="statinfo" string="Documents"/>
                 </button>
             </div>
         </field>
