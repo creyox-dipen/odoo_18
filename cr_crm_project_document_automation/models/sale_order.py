@@ -145,12 +145,15 @@ class SaleOrder(models.Model):
                         "type": "folder",
                         "company_id": self.company_id.id,
                         "is_master_folder": True,
+                        "sequence": 1,
                     }
                 )
                 _logger.info(
                     "CREATED SO folder '%s' inside 'Customer Data'", so_folder_name
                 )
             else:
+                if so_folder.sequence != 1:
+                    so_folder.write({"sequence": 1})
                 _logger.info(
                     "SO folder '%s' ALREADY EXISTS inside 'Customer Data'",
                     so_folder_name,

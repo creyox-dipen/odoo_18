@@ -144,11 +144,14 @@ class ProjectFolderStructure(models.Model):
                         "company_id": cd_folder.company_id.id,
                         "is_master_folder": True,
                         "cr_project_folder_line_id": line.id,
+                        "sequence": 10,
                     }
                 )
 
             if existing:
                 seq_to_doc[normalized_seq] = existing
+                if existing.sequence != 10:
+                    existing.write({"sequence": 10})
 
 
 class ProjectFolderStructureWizard(models.TransientModel):
@@ -306,6 +309,9 @@ class ProjectFolderStructureWizardLine(models.TransientModel):
 
 class DocumentsDocument(models.Model):
     _inherit = "documents.document"
+    _order = "sequence, id desc"
+
+    sequence = fields.Integer(string="Sequence", default=10)
 
     cr_project_folder_line_id = fields.Many2one(
         "project.folder.structure",
@@ -313,6 +319,30 @@ class DocumentsDocument(models.Model):
         ondelete="set null",
         index=True,
     )
+
+    @api.model
+    def search_panel_select_range(self, field_name, **kwargs):
+        res = super(DocumentsDocument, self).search_panel_select_range(field_name, **kwargs)
+        if field_name == "folder_id" and res and "values" in res:
+            values = res["values"]
+            doc_ids = [v["id"] for v in values if isinstance(v.get("id"), int)]
+            if doc_ids:
+                docs_data = self.env["documents.document"].search_read(
+                    [("id", "in", doc_ids)],
+                    ["sequence"]
+                )
+                seq_map = {d["id"]: d["sequence"] for d in docs_data}
+                for v in values:
+                    if isinstance(v.get("id"), int):
+                        v["sequence"] = seq_map.get(v["id"], 10)
+                
+                real_folders = [v for v in values if isinstance(v.get("id"), int)]
+                special_roots = [v for v in values if not isinstance(v.get("id"), int)]
+                
+                # Sort real folders stably by sequence (stable sort keeps alphabetical name order within same sequence)
+                real_folders.sort(key=lambda x: x.get("sequence", 10))
+                res["values"] = real_folders + special_roots
+        return res
 
     def _cr_has_direct_documents(self):
         """Check if this specific folder instance contains files."""
