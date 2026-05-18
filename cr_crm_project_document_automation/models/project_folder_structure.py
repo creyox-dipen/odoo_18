@@ -309,7 +309,6 @@ class ProjectFolderStructureWizardLine(models.TransientModel):
 
 class DocumentsDocument(models.Model):
     _inherit = "documents.document"
-    _order = "sequence, id desc"
 
     sequence = fields.Integer(string="Sequence", default=10)
 
