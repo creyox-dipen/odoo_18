@@ -14,19 +14,19 @@ class DocumentsDocument(models.Model):
     the subtree, the entire folder hierarchy is deleted.
     """
 
-    _inherit = 'documents.document'
+    _inherit = "documents.document"
 
     cr_category_folder_line_id = fields.Many2one(
-        'cr.category.folder.line',
-        string='Category Folder Line',
-        ondelete='set null',
+        "cr.category.folder.line",
+        string="Category Folder Line",
+        ondelete="set null",
         index=True,
-        help='References the category folder line that created this folder.',
+        help="References the category folder line that created this folder.",
     )
     cr_is_product_root = fields.Boolean(
-        string='Is Product Root Folder',
+        string="Is Product Root Folder",
         default=False,
-        help='True for the auto-created root folder that wraps all line folders for a product.',
+        help="True for the auto-created root folder that wraps all line folders for a product.",
     )
 
     def _cr_has_documents(self):
@@ -39,12 +39,12 @@ class DocumentsDocument(models.Model):
         self.ensure_one()
         # Check direct non-folder children (actual documents)
         non_folder_children = self.children_ids.filtered(
-            lambda d: d.type != 'folder' and not d.shortcut_document_id
+            lambda d: d.type != "folder" and not d.shortcut_document_id
         )
         if non_folder_children:
             return True
         # Recurse into sub-folders
-        sub_folders = self.children_ids.filtered(lambda d: d.type == 'folder')
+        sub_folders = self.children_ids.filtered(lambda d: d.type == "folder")
         for sub in sub_folders:
             if sub._cr_has_documents():
                 return True
@@ -64,7 +64,7 @@ class DocumentsDocument(models.Model):
             # Do not delete — documents exist in this folder tree
             return
         # Recursively delete sub-folders first (safe to delete)
-        for child in self.children_ids.filtered(lambda d: d.type == 'folder'):
+        for child in self.children_ids.filtered(lambda d: d.type == "folder"):
             child._cr_safe_delete_folder()
         # Now delete self (no documents in subtree)
         self.unlink()

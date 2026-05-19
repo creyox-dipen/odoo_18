@@ -17,15 +17,15 @@ class ProductCategory(models.Model):
     folders with no documents are deleted, folders with documents are preserved.
     """
 
-    _inherit = 'product.category'
+    _inherit = "product.category"
 
     folder_structure_ids = fields.One2many(
-        'cr.category.folder.line',
-        'category_id',
-        string='Folder Structure',
+        "cr.category.folder.line",
+        "category_id",
+        string="Folder Structure",
         help=(
-            'Define a folder hierarchy for products in this category. '
-            'Sequence uses dot notation: 1.0 = top-level, 1.1 = child of 1.0, etc.'
+            "Define a folder hierarchy for products in this category. "
+            "Sequence uses dot notation: 1.0 = top-level, 1.1 = child of 1.0, etc."
         ),
     )
 
@@ -41,56 +41,70 @@ class ProductCategory(models.Model):
         """
         # 1. Identify deleted lines and handle cascading deletions
         deleted_line_ids = []
-        if 'folder_structure_ids' in vals:
-            for cmd in vals['folder_structure_ids']:
+        if "folder_structure_ids" in vals:
+            for cmd in vals["folder_structure_ids"]:
                 # Command.DELETE (2) or Command.UNLINK (3)
                 if cmd[0] in (2, 3) and cmd[1]:
                     deleted_line_ids.append(cmd[1])
 
             if deleted_line_ids:
-                lines = self.env['cr.category.folder.line'].browse(deleted_line_ids)
+                lines = self.env["cr.category.folder.line"].browse(deleted_line_ids)
                 all_to_delete = lines
                 for line in lines:
                     all_to_delete |= line._get_descendant_lines()
 
                 # Check if any folder (including subfolders) has documents
                 if any(l._cr_has_any_documents() for l in all_to_delete):
-                    if not self.env.context.get('cr_force_delete_lines'):
-                        action = self.env.ref('cr_group_subfolder_product.action_cr_folder_delete_warning')
+                    if not self.env.context.get("cr_force_delete_lines"):
+                        action = self.env.ref(
+                            "cr_group_subfolder_product.action_cr_folder_delete_warning"
+                        )
                         raise RedirectWarning(
-                            _("Some subfolders contain files. Do you want to continue or cancel?"),
+                            _(
+                                "Some subfolders contain files. Do you want to continue or cancel?"
+                            ),
                             action.id,
                             _("Continue with Deletion"),
                             additional_context={
-                                'default_line_ids': [fields.Command.set(all_to_delete.ids)],
-                                'default_category_id': self.id,
-                            }
+                                "default_line_ids": [
+                                    fields.Command.set(all_to_delete.ids)
+                                ],
+                                "default_category_id": self.id,
+                            },
                         )
 
                 # Ensure all descendant lines are also marked for deletion in vals
                 # so the One2many is cleaned up logically
                 final_deleted_ids = all_to_delete.ids
-                existing_cmds_ids = [c[1] for c in vals['folder_structure_ids'] if c[0] in (2, 3)]
+                existing_cmds_ids = [
+                    c[1] for c in vals["folder_structure_ids"] if c[0] in (2, 3)
+                ]
                 for line_id in final_deleted_ids:
                     if line_id not in existing_cmds_ids:
-                        vals['folder_structure_ids'].append((2, line_id, 0))
+                        vals["folder_structure_ids"].append((2, line_id, 0))
 
                 deleted_line_ids = final_deleted_ids  # For step 2
 
         # 2. Identify all managed folders linked to these specific lines (all products)
-        folders_to_delete = self.env['documents.document']
+        folders_to_delete = self.env["documents.document"]
         if deleted_line_ids:
-            folders_to_delete = self.env['documents.document'].sudo().search([
-                ('type', '=', 'folder'),
-                ('cr_category_folder_line_id', 'in', deleted_line_ids),
-            ])
+            folders_to_delete = (
+                self.env["documents.document"]
+                .sudo()
+                .search(
+                    [
+                        ("type", "=", "folder"),
+                        ("cr_category_folder_line_id", "in", deleted_line_ids),
+                    ]
+                )
+            )
 
         # 3. Perform the write to the database
         result = super().write(vals)
 
         # 4. Handle Deletions: Safe-delete folders that lost their configuration line
         # If cr_force_delete_lines is in context, we skip safety checks
-        force_delete = self.env.context.get('cr_force_delete_lines')
+        force_delete = self.env.context.get("cr_force_delete_lines")
         for folder in folders_to_delete:
             if folder.exists():
                 if force_delete:
@@ -99,11 +113,13 @@ class ProductCategory(models.Model):
                     folder._cr_safe_delete_folder()
 
         # 5. Handle Additions/Updates: Sync structure for all related products
-        if 'folder_structure_ids' in vals:
+        if "folder_structure_ids" in vals:
             for category in self:
-                products = self.env['product.template'].search([
-                    ('categ_id', '=', category.id),
-                ])
+                products = self.env["product.template"].search(
+                    [
+                        ("categ_id", "=", category.id),
+                    ]
+                )
                 for product in products:
                     product._cr_create_folder_structure(category)
 
@@ -115,7 +131,7 @@ class ProductCategory(models.Model):
         skipping any folders that contain files or are parents of folders with files.
         """
         self.ensure_one()
-        selected_lines = self.folder_structure_ids.filtered('is_selected')
+        selected_lines = self.folder_structure_ids.filtered("is_selected")
         if not selected_lines:
             raise UserError(_("Please select at least one line to delete."))
 
@@ -136,33 +152,53 @@ class ProductCategory(models.Model):
 
         # 3. Handle skips and redirection
         if candidates:
-            folders_with_files = candidates.filtered(lambda l: l._cr_has_direct_documents())
+            folders_with_files = candidates.filtered(
+                lambda l: l._cr_has_direct_documents()
+            )
             skipped_parents = (candidates & untouchable) - folders_with_files
-            
+
             msg_parts = []
             if folders_with_files:
                 names_files = ", ".join([f"{l.name}" for l in folders_with_files])
-                msg_parts.append(_("there are items inside of the %s folder in some products") % names_files)
-            
+                msg_parts.append(
+                    _("there are items inside of the %s folder in some products")
+                    % names_files
+                )
+
             message = "\n".join(msg_parts)
 
             # Show warning wizard to confirm selective deletion
             return {
-                'name': _("Deletion Information"),
-                'type': 'ir.actions.act_window',
-                'res_model': 'cr.folder.delete.warning',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': {
-                    'default_category_id': self.id,
-                    'default_line_ids': [fields.Command.set(candidates.ids)],
-                    'default_message': (message + _("\nDo you want to proceed? Empty folders will be deleted, while folders with items will be kept.")) if message else _("Are you sure you want to delete the selected empty folders?"),
-                }
+                "name": _("Deletion Information"),
+                "type": "ir.actions.act_window",
+                "res_model": "cr.folder.delete.warning",
+                "view_mode": "form",
+                "target": "new",
+                "context": {
+                    "default_category_id": self.id,
+                    "default_line_ids": [fields.Command.set(candidates.ids)],
+                    "default_message": (
+                        (
+                            message
+                            + _(
+                                "\nDo you want to proceed? Empty folders will be deleted, while folders with items will be kept."
+                            )
+                        )
+                        if message
+                        else _(
+                            "Are you sure you want to delete the selected empty folders?"
+                        )
+                    ),
+                },
             }
 
         # No untouchable folders in selection, delete everything selected
         if final_to_delete:
-            self.write({
-                'folder_structure_ids': [fields.Command.unlink(line.id) for line in final_to_delete]
-            })
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
+            self.write(
+                {
+                    "folder_structure_ids": [
+                        fields.Command.unlink(line.id) for line in final_to_delete
+                    ]
+                }
+            )
+        return {"type": "ir.actions.client", "tag": "reload"}

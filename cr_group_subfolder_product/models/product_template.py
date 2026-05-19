@@ -22,54 +22,68 @@ class ProductTemplate(models.Model):
       - If old folders have no documents → silently replace with new structure
     """
 
-    _inherit = 'product.template'
+    _inherit = "product.template"
 
     cr_document_folder_ids = fields.One2many(
-        'documents.document',
-        compute='_compute_cr_document_folder_ids',
-        string='Product Folders',
-        help='Folder hierarchy in Documents for this product.',
+        "documents.document",
+        compute="_compute_cr_document_folder_ids",
+        string="Product Folders",
+        help="Folder hierarchy in Documents for this product.",
     )
     folder_count = fields.Integer(
-        string='Folder Count',
-        compute='_compute_folder_count',
+        string="Folder Count",
+        compute="_compute_folder_count",
     )
 
     def _compute_folder_count(self):
         """Count only the file records inside this product's folders."""
         for product in self:
-            product_folders = self.env['documents.document'].search([
-                ('res_model', '=', 'product.template'),
-                ('res_id', '=', product.id),
-                ('type', '=', 'folder'),
-            ])
-            product.folder_count = self.env['documents.document'].search_count([
-                ('type', '!=', 'folder'),
-                ('shortcut_document_id', '=', False),
-                ('folder_id', 'in', product_folders.ids),
-            ])
-    
+            product_folders = self.env["documents.document"].search(
+                [
+                    ("res_model", "=", "product.template"),
+                    ("res_id", "=", product.id),
+                    ("type", "=", "folder"),
+                ]
+            )
+            product.folder_count = self.env["documents.document"].search_count(
+                [
+                    ("type", "!=", "folder"),
+                    ("shortcut_document_id", "=", False),
+                    ("folder_id", "in", product_folders.ids),
+                ]
+            )
 
     def action_view_product_folders(self):
         self.ensure_one()
 
-        root_folder = self.env['documents.document'].sudo().search([
-            ('type', '=', 'folder'),
-            ('res_model', '=', 'product.template'),
-            ('res_id', '=', self.id),
-            ('cr_is_product_root', '=', True),
-        ], limit=1)
-    
-        action = self.env.ref('documents.document_action').sudo().read()[0]
-        action.update({
-            'name': _('Documents – %s') % self.name,
-            'target': 'current',
-            'context': {
-                'searchpanel_default_folder_id': root_folder.id if root_folder else False,
-                'default_res_model': 'product.template',
-                'default_res_id': self.id,
-            },
-        })
+        root_folder = (
+            self.env["documents.document"]
+            .sudo()
+            .search(
+                [
+                    ("type", "=", "folder"),
+                    ("res_model", "=", "product.template"),
+                    ("res_id", "=", self.id),
+                    ("cr_is_product_root", "=", True),
+                ],
+                limit=1,
+            )
+        )
+
+        action = self.env.ref("documents.document_action").sudo().read()[0]
+        action.update(
+            {
+                "name": _("Documents – %s") % self.name,
+                "target": "current",
+                "context": {
+                    "searchpanel_default_folder_id": (
+                        root_folder.id if root_folder else False
+                    ),
+                    "default_res_model": "product.template",
+                    "default_res_id": self.id,
+                },
+            }
+        )
         return action
 
     # def action_view_product_folders(self):
@@ -114,14 +128,16 @@ class ProductTemplate(models.Model):
 
     def _compute_cr_document_folder_ids(self):
         """Compute the top-level document folders linked to this product."""
-        DocumentDocument = self.env['documents.document']
+        DocumentDocument = self.env["documents.document"]
         for product in self:
-            product.cr_document_folder_ids = DocumentDocument.search([
-                ('type', '=', 'folder'),
-                ('res_model', '=', 'product.template'),
-                ('res_id', '=', product.id),
-                ('folder_id', '=', False),  # top-level only
-            ])
+            product.cr_document_folder_ids = DocumentDocument.search(
+                [
+                    ("type", "=", "folder"),
+                    ("res_model", "=", "product.template"),
+                    ("res_id", "=", product.id),
+                    ("folder_id", "=", False),  # top-level only
+                ]
+            )
 
     def write(self, vals):
         """
@@ -132,40 +148,47 @@ class ProductTemplate(models.Model):
             - If confirmed via wizard (cr_skip_folder_check): continue.
             - Otherwise: raise error (fallback if onchange was bypassed).
         """
-        if 'categ_id' in vals:
+        if "categ_id" in vals:
             for product in self:
-                if product.categ_id.id == vals['categ_id']:
+                if product.categ_id.id == vals["categ_id"]:
                     continue
 
                 if product._cr_has_any_documents():
-                    if not self.env.context.get('cr_skip_folder_check'):
+                    if not self.env.context.get("cr_skip_folder_check"):
                         # Provide a button to open the warning wizard
-                        action = self.env.ref('cr_group_subfolder_product.action_cr_folder_change_warning')
+                        action = self.env.ref(
+                            "cr_group_subfolder_product.action_cr_folder_change_warning"
+                        )
                         raise RedirectWarning(
-                            _("The current folders for product '%s' contain documents. "
-                              "Changing the category will cause folder replacement.") % product.name,
+                            _(
+                                "The current folders for product '%s' contain documents. "
+                                "Changing the category will cause folder replacement."
+                            )
+                            % product.name,
                             action.id,
                             _("Continue by replacing older structure"),
                             additional_context={
-                                'default_product_id': product.id,
-                                'default_new_categ_id': vals['categ_id'],
-                            }
+                                "default_product_id": product.id,
+                                "default_new_categ_id": vals["categ_id"],
+                            },
                         )
 
         # Proceed with save
         result = super().write(vals)
 
-        if 'categ_id' in vals:
+        if "categ_id" in vals:
             for product in self:
                 # If we reached here, either it was safe or it was confirmed.
                 # Silent replacement for safe ones (no documents)
                 if not product._cr_has_any_documents():
                     # Delete all managed folders for this product
-                    old_folders = self.env['documents.document'].search([
-                        ('type', '=', 'folder'),
-                        ('res_model', '=', 'product.template'),
-                        ('res_id', '=', product.id),
-                    ])
+                    old_folders = self.env["documents.document"].search(
+                        [
+                            ("type", "=", "folder"),
+                            ("res_model", "=", "product.template"),
+                            ("res_id", "=", product.id),
+                        ]
+                    )
                     # We can't easily know the exact "old" category structure here
                     # as it's already updated, so we delete based on line association
                     # or product association.
@@ -177,7 +200,7 @@ class ProductTemplate(models.Model):
 
         return result
 
-    @api.onchange('categ_id')
+    @api.onchange("categ_id")
     def _onchange_categ_id_warning(self):
         """
         Trigger the confirmation wizard if the user changes the category
@@ -190,25 +213,27 @@ class ProductTemplate(models.Model):
         if self.categ_id != self._origin.categ_id:
             if self._origin._cr_has_any_documents():
                 return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'cr.folder.change.warning',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'name': _('Warning: Folder Structure Change'),
-                    'context': {
-                        'default_product_id': self._origin.id,
-                        'default_new_categ_id': self.categ_id.id,
-                    }
+                    "type": "ir.actions.act_window",
+                    "res_model": "cr.folder.change.warning",
+                    "view_mode": "form",
+                    "target": "new",
+                    "name": _("Warning: Folder Structure Change"),
+                    "context": {
+                        "default_product_id": self._origin.id,
+                        "default_new_categ_id": self.categ_id.id,
+                    },
                 }
 
     def _cr_has_any_documents(self):
         """Helper to check if any managed folder for this product has documents."""
         self.ensure_one()
-        folders = self.env['documents.document'].search([
-            ('type', '=', 'folder'),
-            ('res_model', '=', 'product.template'),
-            ('res_id', '=', self.id),
-        ])
+        folders = self.env["documents.document"].search(
+            [
+                ("type", "=", "folder"),
+                ("res_model", "=", "product.template"),
+                ("res_id", "=", self.id),
+            ]
+        )
         return any(f._cr_has_documents() for f in folders)
 
     @api.model_create_multi
@@ -237,12 +262,14 @@ class ProductTemplate(models.Model):
         :param product.category new_categ: the new category
         """
         self.ensure_one()
-        old_folders = self.env['documents.document'].search([
-            ('type', '=', 'folder'),
-            ('res_model', '=', 'product.template'),
-            ('res_id', '=', self.id),
-        ])
-        has_docs = any(f._cr_has_documents() for f in old_folders if f.type == 'folder')
+        old_folders = self.env["documents.document"].search(
+            [
+                ("type", "=", "folder"),
+                ("res_model", "=", "product.template"),
+                ("res_id", "=", self.id),
+            ]
+        )
+        has_docs = any(f._cr_has_documents() for f in old_folders if f.type == "folder")
 
         if has_docs:
             # Return action to open the warning wizard — the caller in JS
@@ -253,17 +280,19 @@ class ProductTemplate(models.Model):
                 cr_old_categ_id=old_categ.id,
             )
             # Create wizard record and return action
-            wizard = self.env['cr.folder.change.warning'].create({
-                'product_id': self.id,
-                'new_categ_id': new_categ.id,
-            })
+            wizard = self.env["cr.folder.change.warning"].create(
+                {
+                    "product_id": self.id,
+                    "new_categ_id": new_categ.id,
+                }
+            )
             return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'cr.folder.change.warning',
-                'res_id': wizard.id,
-                'view_mode': 'form',
-                'target': 'new',
-                'name': _('Warning: Folder Structure Change'),
+                "type": "ir.actions.act_window",
+                "res_model": "cr.folder.change.warning",
+                "res_id": wizard.id,
+                "view_mode": "form",
+                "target": "new",
+                "name": _("Warning: Folder Structure Change"),
             }
         else:
             # No documents — safe to replace directly
@@ -277,100 +306,122 @@ class ProductTemplate(models.Model):
         Prioritizes folders with no owner (owner_id=False) to ensure we target
         the shared 'Company' section rather than a private folder in 'My Drive'.
         """
-        Document = self.env['documents.document'].sudo()
-        
+        Document = self.env["documents.document"].sudo()
+
         # 1. Search for 'Company' Workspace (top-level)
         # We order by ID asc to find the oldest one, which is usually the system-created folder
-        company_workspace = Document.search([
-            ('type', '=', 'folder'),
-            ('name', '=', 'Company'),
-            ('folder_id', '=', False),
-        ], order='id asc', limit=1)
-        
+        company_workspace = Document.search(
+            [
+                ("type", "=", "folder"),
+                ("name", "=", "Company"),
+                ("folder_id", "=", False),
+            ],
+            order="id asc",
+            limit=1,
+        )
+
         if company_workspace:
             # 2. Find 'Products' folder inside the Company workspace
-            products_folder = Document.search([
-                ('type', '=', 'folder'),
-                ('name', '=', 'Products'),
-                ('folder_id', '=', company_workspace.id)
-            ], order='id asc', limit=1)
+            products_folder = Document.search(
+                [
+                    ("type", "=", "folder"),
+                    ("name", "=", "Products"),
+                    ("folder_id", "=", company_workspace.id),
+                ],
+                order="id asc",
+                limit=1,
+            )
             return products_folder
-        
+
         # 3. Final fallback: search for 'Products' as a top-level folder
-        return Document.search([
-            ('type', '=', 'folder'),
-            ('name', '=', 'Products'),
-            ('folder_id', '=', False),
-        ], order='id asc', limit=1)
+        return Document.search(
+            [
+                ("type", "=", "folder"),
+                ("name", "=", "Products"),
+                ("folder_id", "=", False),
+            ],
+            order="id asc",
+            limit=1,
+        )
 
     def _cr_create_folder_structure(self, categ):
         self.ensure_one()
-        Document = self.env['documents.document']
-    
+        Document = self.env["documents.document"]
+
         # Find or create the single product root folder
-        root_folder = Document.sudo().search([
-            ('type', '=', 'folder'),
-            ('res_model', '=', 'product.template'),
-            ('res_id', '=', self.id),
-            ('cr_is_product_root', '=', True),
-        ], limit=1)
-    
+        root_folder = Document.sudo().search(
+            [
+                ("type", "=", "folder"),
+                ("res_model", "=", "product.template"),
+                ("res_id", "=", self.id),
+                ("cr_is_product_root", "=", True),
+            ],
+            limit=1,
+        )
+
         if not root_folder:
             base_folder = self._cr_get_base_folder()
-            root_folder = Document.sudo().create({
-                'name': self.default_code,
-                'type': 'folder',
-                'res_model': 'product.template',
-                'res_id': self.id,
-                'folder_id': base_folder.id if base_folder else False,
-                'cr_is_product_root': True,
-                'access_internal': 'edit',
-                'access_via_link': 'none',
-                'owner_id': self.env.user.id,  # Use current user instead of False (required field)
-            })
-    
+            root_folder = Document.sudo().create(
+                {
+                    "name": self.default_code,
+                    "type": "folder",
+                    "res_model": "product.template",
+                    "res_id": self.id,
+                    "folder_id": base_folder.id if base_folder else False,
+                    "cr_is_product_root": True,
+                    "access_internal": "edit",
+                    "access_via_link": "none",
+                    "owner_id": self.env.user.id,  # Use current user instead of False (required field)
+                }
+            )
+
         lines = categ.folder_structure_ids.sorted(key=lambda l: l.sequence)
         seq_to_doc = {}
-    
+
         for line in lines:
             normalized_seq = line._get_normalized_sequence()
-            existing_doc = Document.sudo().search([
-                ('type', '=', 'folder'),
-                ('res_model', '=', 'product.template'),
-                ('res_id', '=', self.id),
-                ('cr_category_folder_line_id', '=', line.id),
-            ], limit=1)
-    
+            existing_doc = Document.sudo().search(
+                [
+                    ("type", "=", "folder"),
+                    ("res_model", "=", "product.template"),
+                    ("res_id", "=", self.id),
+                    ("cr_category_folder_line_id", "=", line.id),
+                ],
+                limit=1,
+            )
+
             parent_doc = self._cr_find_parent_document(line, seq_to_doc)
             # Top-level lines (no parent) go under root_folder instead of False
             parent_folder_id = parent_doc.id if parent_doc else root_folder.id
-    
+
             vals = {
-                'name': line.name,
-                'folder_id': parent_folder_id,
-                'cr_category_folder_line_id': line.id,
+                "name": line.name,
+                "folder_id": parent_folder_id,
+                "cr_category_folder_line_id": line.id,
             }
-    
+
             if existing_doc:
                 update_vals = {}
-                if existing_doc.name != vals['name']:
-                    update_vals['name'] = vals['name']
+                if existing_doc.name != vals["name"]:
+                    update_vals["name"] = vals["name"]
                 if existing_doc.folder_id.id != parent_folder_id:
-                    update_vals['folder_id'] = parent_folder_id
+                    update_vals["folder_id"] = parent_folder_id
                 if update_vals:
                     existing_doc.sudo().write(update_vals)
                 doc = existing_doc
             else:
-                vals.update({
-                    'type': 'folder',
-                    'res_model': 'product.template',
-                    'res_id': self.id,
-                    'access_internal': 'edit',
-                    'access_via_link': 'none',
-                    'owner_id': self.env.user.id,
-                })
+                vals.update(
+                    {
+                        "type": "folder",
+                        "res_model": "product.template",
+                        "res_id": self.id,
+                        "access_internal": "edit",
+                        "access_via_link": "none",
+                        "owner_id": self.env.user.id,
+                    }
+                )
                 doc = Document.sudo().create(vals)
-    
+
             seq_to_doc[normalized_seq] = doc
 
     def _cr_find_parent_document(self, line, seq_to_doc):

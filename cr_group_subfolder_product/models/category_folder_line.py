@@ -20,56 +20,59 @@ class CrCategoryFolderLine(models.Model):
     records for every product.template that belongs to this category.
     """
 
-    _name = 'cr.category.folder.line'
-    _description = 'Category Folder Line'
-    _order = 'sequence asc'
+    _name = "cr.category.folder.line"
+    _description = "Category Folder Line"
+    _order = "sequence asc"
 
     category_id = fields.Many2one(
-        'product.category',
-        string='Category',
+        "product.category",
+        string="Category",
         required=True,
-        ondelete='cascade',
+        ondelete="cascade",
     )
     sequence = fields.Char(
-        string='Sequence',
+        string="Sequence",
         required=True,
         help=(
-            'Defines hierarchy using dot notation. '
-            'Example: 1.0 = top-level, 1.1 = child of 1.0, 1.1.1 = child of 1.1'
+            "Defines hierarchy using dot notation. "
+            "Example: 1.0 = top-level, 1.1 = child of 1.0, 1.1.1 = child of 1.1"
         ),
     )
     name = fields.Char(
-        string='Folder Name',
+        string="Folder Name",
         required=True,
     )
     is_selected = fields.Boolean(
-        string='Select',
+        string="Select",
         default=False,
-        help='Check to select this line for bulk operations.',
+        help="Check to select this line for bulk operations.",
     )
 
-    @api.constrains('sequence')
+    @api.constrains("sequence")
     def _check_sequence_format(self):
         """Ensure sequence only contains digits and dots, and follows dot notation."""
         import re
+
         for line in self:
             if not line.sequence:
                 continue
-            if not re.match(r'^\d+(\.\d+)*$', line.sequence):
+            if not re.match(r"^\d+(\.\d+)*$", line.sequence):
                 raise ValidationError(
                     f"Invalid sequence format: '{line.sequence}'. "
                     "Only digits and dots are allowed (e.g., 1.0, 1.1.1)."
                 )
 
-    @api.constrains('sequence')
+    @api.constrains("sequence")
     def _check_sequence_unique_per_category(self):
         """Ensure sequence values are unique within the same category (normalized)."""
         for line in self:
             norm_seq = line._get_normalized_sequence()
-            existing_lines = self.search([
-                ('category_id', '=', line.category_id.id),
-                ('id', '!=', line.id),
-            ])
+            existing_lines = self.search(
+                [
+                    ("category_id", "=", line.category_id.id),
+                    ("id", "!=", line.id),
+                ]
+            )
             for existing in existing_lines:
                 if existing._get_normalized_sequence() == norm_seq:
                     raise ValidationError(
@@ -89,7 +92,7 @@ class CrCategoryFolderLine(models.Model):
         if not self.sequence:
             return ()
         parts = []
-        for p in self.sequence.split('.'):
+        for p in self.sequence.split("."):
             p_trimmed = p.strip()
             if not p_trimmed:
                 continue
@@ -132,10 +135,11 @@ class CrCategoryFolderLine(models.Model):
         self.ensure_one()
         norm_seq = self._get_normalized_sequence()
         # Find all lines in the same category
-        all_lines = self.search([('category_id', '=', self.category_id.id)])
+        all_lines = self.search([("category_id", "=", self.category_id.id)])
         # Descendant if its normalized sequence starts with this line's sequence (and is longer)
         return all_lines.filtered(
-            lambda l: l.id != self.id and l._get_normalized_sequence()[:len(norm_seq)] == norm_seq
+            lambda l: l.id != self.id
+            and l._get_normalized_sequence()[: len(norm_seq)] == norm_seq
         )
 
     def _cr_has_any_documents(self):
@@ -143,9 +147,15 @@ class CrCategoryFolderLine(models.Model):
         Check if this folder line has any documents on any product.
         """
         self.ensure_one()
-        folders = self.env['documents.document'].sudo().search([
-            ('cr_category_folder_line_id', '=', self.id),
-        ])
+        folders = (
+            self.env["documents.document"]
+            .sudo()
+            .search(
+                [
+                    ("cr_category_folder_line_id", "=", self.id),
+                ]
+            )
+        )
         return any(f._cr_has_documents() for f in folders)
 
     def _cr_get_parent_line(self):
@@ -155,20 +165,20 @@ class CrCategoryFolderLine(models.Model):
         self.ensure_one()
         parent_seq = self._get_parent_sequence()
         if not parent_seq:
-            return self.env['cr.category.folder.line']
+            return self.env["cr.category.folder.line"]
         # Find the line with the matching normalized sequence
-        all_lines = self.search([('category_id', '=', self.category_id.id)])
+        all_lines = self.search([("category_id", "=", self.category_id.id)])
         for line in all_lines:
             if line._get_normalized_sequence() == parent_seq:
                 return line
-        return self.env['cr.category.folder.line']
+        return self.env["cr.category.folder.line"]
 
     def _cr_get_all_parent_lines(self):
         """
         Recursively find all parent lines in the hierarchy.
         """
         self.ensure_one()
-        parents = self.env['cr.category.folder.line']
+        parents = self.env["cr.category.folder.line"]
         current = self._cr_get_parent_line()
         while current:
             parents |= current
@@ -181,11 +191,19 @@ class CrCategoryFolderLine(models.Model):
         This does not recurse into sub-folders.
         """
         self.ensure_one()
-        folders = self.env['documents.document'].sudo().search([
-            ('cr_category_folder_line_id', '=', self.id),
-        ])
+        folders = (
+            self.env["documents.document"]
+            .sudo()
+            .search(
+                [
+                    ("cr_category_folder_line_id", "=", self.id),
+                ]
+            )
+        )
         for folder in folders:
             # Check for direct children that are not folders
-            if folder.children_ids.filtered(lambda d: d.type != 'folder' and not d.shortcut_document_id):
+            if folder.children_ids.filtered(
+                lambda d: d.type != "folder" and not d.shortcut_document_id
+            ):
                 return True
         return False

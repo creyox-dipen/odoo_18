@@ -3,18 +3,20 @@
 
 from odoo import fields, models, api, _
 
+
 class CrFolderDeleteWarning(models.TransientModel):
     """
     Wizard shown when a user tries to delete a folder structure line
     that has existing documents in its related folders on products.
     """
-    _name = 'cr.folder.delete.warning'
-    _description = 'Folder Line Delete Warning'
 
-    category_id = fields.Many2one('product.category', string='Category', required=True)
-    line_ids = fields.Many2many('cr.category.folder.line', string='Lines to Delete')
+    _name = "cr.folder.delete.warning"
+    _description = "Folder Line Delete Warning"
+
+    category_id = fields.Many2one("product.category", string="Category", required=True)
+    line_ids = fields.Many2many("cr.category.folder.line", string="Lines to Delete")
     message = fields.Text(
-        string='Warning Message',
+        string="Warning Message",
         readonly=True,
     )
 
@@ -27,59 +29,67 @@ class CrFolderDeleteWarning(models.TransientModel):
         """
         self.ensure_one()
         if not self.line_ids or self.message and "skipped" in self.message:
-            return {'type': 'ir.actions.act_window_close'}
-            
+            return {"type": "ir.actions.act_window_close"}
+
         category = self.category_id
         lines_skipped = []
-        
+
         # We process lines to check contents across all products
         # Sorting by sequence length (depth) descending ensures children are handled before parents
-        sorted_lines = self.line_ids.sorted(key=lambda l: len(l.sequence.split('.')), reverse=True)
-        
-        Document = self.env['documents.document'].sudo()
-        
+        sorted_lines = self.line_ids.sorted(
+            key=lambda l: len(l.sequence.split(".")), reverse=True
+        )
+
+        Document = self.env["documents.document"].sudo()
+
         for line in sorted_lines:
             # Find all product folders linked to this template line
-            folders = Document.search([
-                ('cr_category_folder_line_id', '=', line.id),
-            ])
-            
+            folders = Document.search(
+                [
+                    ("cr_category_folder_line_id", "=", line.id),
+                ]
+            )
+
             for folder in folders:
                 if not folder._cr_has_documents():
                     # Folder is empty, safe to delete for this product
                     folder.unlink()
-            
+
             # After processing all products, track if any folders were preserved for the message
-            remaining_count = Document.search_count([
-                ('cr_category_folder_line_id', '=', line.id),
-            ])
+            remaining_count = Document.search_count(
+                [
+                    ("cr_category_folder_line_id", "=", line.id),
+                ]
+            )
             if remaining_count > 0:
                 # Some products still have files here, so folders were skipped
                 lines_skipped.append(f"{line.name} ({line.sequence})")
-            
+
             # Always delete the line from the category structure
             line.unlink()
 
         if lines_skipped:
             # Update message and clear line_ids to show 'Close' button only
-            self.write({
-                'message': _("not all folder/sub folders were deleted."),
-                'line_ids': [fields.Command.clear()],
-            })
+            self.write(
+                {
+                    "message": _("not all folder/sub folders were deleted."),
+                    "line_ids": [fields.Command.clear()],
+                }
+            )
             return {
-                'name': _("Deletion Information"),
-                'type': 'ir.actions.act_window',
-                'res_model': self._name,
-                'res_id': self.id,
-                'view_mode': 'form',
-                'target': 'new',
+                "name": _("Deletion Information"),
+                "type": "ir.actions.act_window",
+                "res_model": self._name,
+                "res_id": self.id,
+                "view_mode": "form",
+                "target": "new",
             }
 
         return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
+            "type": "ir.actions.client",
+            "tag": "reload",
         }
 
     def action_cancel(self):
         """Do nothing and close."""
-        return {'type': 'ir.actions.act_window_close'}
+        return {"type": "ir.actions.act_window_close"}

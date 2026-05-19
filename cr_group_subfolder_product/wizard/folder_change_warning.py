@@ -16,35 +16,35 @@ class CrFolderChangeWarning(models.TransientModel):
     replacement, or cancel to keep the current structure.
     """
 
-    _name = 'cr.folder.change.warning'
-    _description = 'Folder Change Warning'
+    _name = "cr.folder.change.warning"
+    _description = "Folder Change Warning"
 
     product_id = fields.Many2one(
-        'product.template',
-        string='Product',
+        "product.template",
+        string="Product",
         required=True,
-        ondelete='cascade',
+        ondelete="cascade",
     )
     new_categ_id = fields.Many2one(
-        'product.category',
-        string='New Category',
+        "product.category",
+        string="New Category",
         required=True,
     )
     message = fields.Char(
-        string='Warning Message',
+        string="Warning Message",
         default=lambda self: _(
-            'The current folder structure for this product contains documents. '
-            'Changing the category will delete ALL existing folders (including those with files) '
-            'and create a new folder structure. '
-            'FILES IN THESE FOLDERS MAY BE LOST. '
-            'Do you want to continue?'
+            "The current folder structure for this product contains documents. "
+            "Changing the category will delete ALL existing folders (including those with files) "
+            "and create a new folder structure. "
+            "FILES IN THESE FOLDERS MAY BE LOST. "
+            "Do you want to continue?"
         ),
         readonly=True,
     )
 
     def action_confirm(self):
         """
-        Confirm the category change. 
+        Confirm the category change.
         - Updates the product category in the database.
         - Deletes the OLD folder structure (even if it contains files).
         - Creates the NEW folder structure.
@@ -54,17 +54,23 @@ class CrFolderChangeWarning(models.TransientModel):
         new_categ = self.new_categ_id
 
         # 1. Update the product category (bypass safe check in write via context)
-        product.with_context(cr_skip_folder_check=True).write({
-            'categ_id': new_categ.id
-        })
+        product.with_context(cr_skip_folder_check=True).write(
+            {"categ_id": new_categ.id}
+        )
 
         # 2. Force delete old folders for this product
         # (We delete all top-level folders linked to this product)
-        old_folders = self.env['documents.document'].sudo().search([
-            ('type', '=', 'folder'),
-            ('res_model', '=', 'product.template'),
-            ('res_id', '=', product.id),
-        ])
+        old_folders = (
+            self.env["documents.document"]
+            .sudo()
+            .search(
+                [
+                    ("type", "=", "folder"),
+                    ("res_model", "=", "product.template"),
+                    ("res_id", "=", product.id),
+                ]
+            )
+        )
         # We use unlink() directly to ensure everything is gone as confirmed
         old_folders.sudo().unlink()
 
@@ -74,16 +80,16 @@ class CrFolderChangeWarning(models.TransientModel):
 
         # Return action to reload the product page
         return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
+            "type": "ir.actions.client",
+            "tag": "reload",
         }
 
     def action_cancel(self):
         """
-        Cancel the category change dialog. 
+        Cancel the category change dialog.
         Returns a reload action to ensure the UI reverts the unsaved category change.
         """
         return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
+            "type": "ir.actions.client",
+            "tag": "reload",
         }
