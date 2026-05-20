@@ -12,15 +12,15 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
 
-            <!-- Add and rename our folders smart button to "Documents" -->
-            <div name="button_box" position="inside">
+            <!-- Add and rename our folders smart button after Forecasted button -->
+            <xpath expr="//button[@name='action_product_tmpl_forecast_report']" position="after">
                 <button name="action_view_product_folders"
                         type="object"
                         class="oe_stat_button"
                         icon="fa-folder-open">
                     <field name="folder_count" widget="statinfo" string="Documents"/>
                 </button>
-            </div>
+            </xpath>
         </field>
     </record>
 
