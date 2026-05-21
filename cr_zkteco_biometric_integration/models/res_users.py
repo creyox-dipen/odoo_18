@@ -2,8 +2,9 @@
 # Part of Creyox Technologies.
 from odoo import models, fields, api
 
+
 class ResUsers(models.Model):
-    _inherit = 'res.users'
+    _inherit = "res.users"
 
     can_edit_biometric_data = fields.Boolean(
         string="Can Edit Biometric Data",
@@ -13,9 +14,12 @@ class ResUsers(models.Model):
         store=True,
     )
 
-    @api.depends('groups_id')
+    @api.depends("groups_id")
     def _compute_can_edit_biometric_data(self):
-        group = self.env.ref('cr_zkteco_biometric_integration.group_biometric_editor', raise_if_not_found=False)
+        group = self.env.ref(
+            "cr_zkteco_biometric_integration.group_biometric_editor",
+            raise_if_not_found=False,
+        )
         for user in self:
             if group:
                 user.can_edit_biometric_data = group in user.groups_id
@@ -23,7 +27,10 @@ class ResUsers(models.Model):
                 user.can_edit_biometric_data = False
 
     def _inverse_can_edit_biometric_data(self):
-        group = self.env.ref('cr_zkteco_biometric_integration.group_biometric_editor', raise_if_not_found=False)
+        group = self.env.ref(
+            "cr_zkteco_biometric_integration.group_biometric_editor",
+            raise_if_not_found=False,
+        )
         if not group:
             return
         for user in self:
