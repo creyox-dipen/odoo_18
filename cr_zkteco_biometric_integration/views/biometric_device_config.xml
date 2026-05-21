@@ -109,19 +109,18 @@
                             <field name="auto_checkout"/>
                             <field name="auto_checkout_time" widget="float_time" invisible="not auto_checkout"/>
                             <field name="heartbeat_delay" placeholder="Default: 30"/>
+                            <label for="action_view_cleanup_cron" string="Command Cleanup Settings"/>
+                            <div>
+                                <button name="action_view_cleanup_cron"
+                                        type="object"
+                                        string="Configure Cleanup"
+                                        class="btn-link"
+                                        icon="fa-arrow-right"/>
+                                <span class="text-muted">(Auto-delete old processed commands)</span>
+                            </div>
                             <field name="auto_clear_log" widget="boolean_toggle"/>
                         </group>
                     </group>
-
-                    <!-- Cleanup cron link -->
-                    <div class="alert alert-info d-flex align-items-center p-2 mb-2" role="alert" style="border-radius:6px;">
-                        <i class="fa fa-trash-o me-2"/>
-                        <strong class="me-2">Command Cleanup:</strong>
-                        <button name="action_view_cleanup_cron"
-                                type="object"
-                                string="Configure scheduled auto-delete of old commands"
-                                class="btn-link p-0 border-0 bg-transparent"/>
-                    </div>
 
                     <group string="Smart Policies" name="smart_policies">
                         <field name="attendance_policy"/>
