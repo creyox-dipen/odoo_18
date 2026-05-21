@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_biometric_user_transfer_wizard_form" model="ir.ui.view">
+        <field name="name">biometric.user.transfer.wizard.form</field>
+        <field name="model">biometric.user.transfer.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Transfer Biometric User">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <p>This will transfer <strong><field name="template_count"/></strong> biometric templates for employee <strong><field name="employee_id" readonly="1" options="{'no_open': True}"/></strong> to the selected devices below.</p>
+                    </div>
+                    <group>
+                        <field name="device_ids" widget="many2many_checkboxes" string="Select Target Devices"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_transfer" string="Transfer Now" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_biometric_user_transfer_wizard" model="ir.actions.act_window">
+        <field name="name">Transfer to Devices</field>
+        <field name="res_model">biometric.user.transfer.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

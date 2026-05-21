@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="group_biometric_editor" model="res.groups">
+            <field name="name">Can Edit Biometric Data</field>
+            <field name="comment">Users in this group can edit, delete and fetch biometric data.</field>
+        </record>
+    </data>
+</odoo>

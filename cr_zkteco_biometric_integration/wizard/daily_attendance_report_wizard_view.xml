@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_biometric_daily_attendance_report_wizard_form" model="ir.ui.view">
+        <field name="name">biometric.daily.attendance.report.wizard.form</field>
+        <field name="model">biometric.daily.attendance.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Daily Attendance Report">
+                <group>
+                    <field name="date"/>
+                </group>
+                <footer>
+                    <button name="action_print_pdf" string="Print PDF" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_biometric_daily_attendance_report_wizard" model="ir.actions.act_window">
+        <field name="name">Daily Attendance Report</field>
+        <field name="res_model">biometric.daily.attendance.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_biometric_daily_attendance_report"
+              name="Daily Attendance Report"
+              parent="cr_zkteco_biometric_integration.menu_hr_attendance_management"
+              action="action_biometric_daily_attendance_report_wizard"
+              sequence="50"/>
+</odoo>

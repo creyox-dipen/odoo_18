@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_biometric_absence_report_wizard_form" model="ir.ui.view">
+        <field name="name">biometric.absence.report.wizard.form</field>
+        <field name="model">biometric.absence.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Absence Report">
+                <group>
+                    <group>
+                        <field name="from_date"/>
+                    </group>
+                    <group>
+                        <field name="to_date"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_print_pdf" string="Print PDF" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_biometric_absence_report_wizard" model="ir.actions.act_window">
+        <field name="name">Absence Report</field>
+        <field name="res_model">biometric.absence.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_biometric_absence_report"
+              name="Absence Report"
+              parent="cr_zkteco_biometric_integration.menu_hr_attendance_management"
+              action="action_biometric_absence_report_wizard"
+              sequence="40"/>
+</odoo>

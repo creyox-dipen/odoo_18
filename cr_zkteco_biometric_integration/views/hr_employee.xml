@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="add_device_user_id_field_to_employee" model="ir.ui.view">
+        <field name="name">device_user_id_to_hr_employee</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='category_ids']" position="after">
+                <field name="device_user_id"/>
+                <field name="biometric_privilege" invisible="not device_user_id"/>
+            </xpath>
+
+            <!-- Add Sync Buttons to Header -->
+            <xpath expr="//header" position="inside">
+                <button name="action_sync_to_devices"
+                        string="Push User Data"
+                        type="object"
+                        class="btn-primary"
+                        invisible="not device_user_id"
+                        groups="cr_zkteco_biometric_integration.group_biometric_editor"
+                        help="Push this employee's Name and ID to all active biometric devices."/>
+                <button name="action_request_templates_from_device"
+                        string="Fetch Biometric Data"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not device_user_id"
+                        groups="cr_zkteco_biometric_integration.group_biometric_editor"
+                        help="Pull this user's Name, Role, Fingerprints, and Faces from the machine."/>
+                <button name="action_open_enroll_wizard"
+                        string="Remote Enrollment"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not device_user_id"
+                        groups="cr_zkteco_biometric_integration.group_biometric_editor"
+                        help="Trigger the physical device to start scanning this employee's fingerprint or face."/>
+                <button name="action_open_transfer_wizard"
+                        string="Transfer to Devices"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not device_user_id"
+                        groups="cr_zkteco_biometric_integration.group_biometric_editor"
+                        help="Copy this employee's biometric templates from one machine to another."/>
+                <button name="action_delete_from_devices"
+                        string="Delete from Device"
+                        type="object"
+                        class="btn-danger"
+                        invisible="not device_user_id"
+                        groups="cr_zkteco_biometric_integration.group_biometric_editor"
+                        confirm="Are you sure you want to remove this user from all biometric devices? This will wipe their templates from the machines."/>
+            </xpath>
+
+            <!-- Add Biometric Templates Tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Biometric Data" name="biometric_data" invisible="not device_user_id">
+                    <field name="biometric_template_ids">
+                        <list create="false" edit="false" delete="true">
+                            <field name="type"/>
+                            <field name="finger_index" string="Index"/>
+                            <field name="template_data" password="True"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

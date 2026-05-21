@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- =====================================================================
+         Form View: biometric.device
+    ====================================================================== -->
+    <record id="view_biometric_device_form" model="ir.ui.view">
+        <field name="name">biometric.device.form</field>
+        <field name="model">biometric.device</field>
+        <field name="arch" type="xml">
+            <form string="Biometric Device">
+                <header>
+                    <button name="action_approve"
+                            string="Approve Device"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"
+                            groups="hr_attendance.group_hr_attendance_manager"/>
+                    <button name="action_sync_all_biometrics"
+                            string="Download User Data"
+                            type="object"
+                            invisible="state != 'confirmed'"
+                            groups="cr_zkteco_biometric_integration.group_biometric_editor"
+                            help="Fetch all users, fingerprints, and faces from the device."/>
+                    <button name="action_export_all_users"
+                            string="Export Users"
+                            type="object"
+                            invisible="state != 'confirmed'"
+                            groups="cr_zkteco_biometric_integration.group_biometric_editor"
+                            confirm="This will push all Odoo employees (with Biometric IDs) to the machine. It may overwrite existing names on the device. Do you want to proceed?"
+                            help="Push all Odoo employees to this biometric device."/>
+                    <button name="action_request_attlog"
+                            string="Download All Logs"
+                            type="object"
+                            invisible="state != 'confirmed'"
+                            groups="hr_attendance.group_hr_attendance_manager"
+                            help="Forces the device to re-send all attendance logs."/>
+                    <button name="action_reboot"
+                            string="Reboot Device"
+                            type="object"
+                            invisible="state != 'confirmed'"
+                            groups="hr_attendance.group_hr_attendance_manager"/>
+                    <button name="action_clear_log"
+                            string="Clear Device Logs"
+                            type="object"
+                            invisible="state != 'confirmed'"
+                            groups="hr_attendance.group_hr_attendance_manager"
+                            confirm="Are you sure you want to clear all attendance logs from the physical device? This cannot be undone."/>
+                    <button name="action_push_heartbeat_delay"
+                            string="Push Heartbeat Interval"
+                            type="object"
+                            invisible="state != 'confirmed'"
+                            groups="hr_attendance.group_hr_attendance_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed"/>
+                </header>
+
+                <sheet>
+                    <!-- ── Smart Buttons ─────────────────────────────────── -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_logs"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-list-alt">
+                            <field name="attendance_log_count"
+                                   widget="statinfo"
+                                   string="Attendance Logs"/>
+                        </button>
+                    </div>
+
+                    <!-- ── Title ─────────────────────────────────────────── -->
+                    <widget name="web_ribbon"
+                            title="Archived"
+                            bg_color="bg-danger"
+                            invisible="active"/>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Main Entrance"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <!-- Left: Identity -->
+                        <group string="Device Identity">
+                            <field name="serial_number"
+                                   placeholder="e.g. ABC1234567890"/>
+                            <!-- <field name="device_ip"
+                                   placeholder="e.g. 192.168.1.100"/>
+                            <field name="device_port"/> -->
+                            <field name="password" widget="boolean_toggle"/>
+                            <field name="communication_key"
+                                   password="True"
+                                   invisible="not password" required="password"
+                                   placeholder="Enter device communication key"/>
+                            <field name="timezone"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+
+                        <!-- Right: Status -->
+                        <!-- Right: Status & Rules -->
+                        <group string="Rules &amp; Status">
+                            <field name="last_seen"
+                                   readonly="True"
+                                   widget="datetime"/>
+                            <field name="used_for"/>
+                            <field name="status_code_based" invisible="used_for != 'both'"/>
+                            <field name="min_punch_interval"/>
+                            <field name="auto_checkout"/>
+                            <field name="auto_checkout_time" widget="float_time" invisible="not auto_checkout"/>
+                            <field name="heartbeat_delay" placeholder="Default: 30"/>
+                            <field name="auto_clear_log" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+
+                    <!-- Cleanup cron link -->
+                    <div class="alert alert-info d-flex align-items-center p-2 mb-2" role="alert" style="border-radius:6px;">
+                        <i class="fa fa-trash-o me-2"/>
+                        <strong class="me-2">Command Cleanup:</strong>
+                        <button name="action_view_cleanup_cron"
+                                type="object"
+                                string="Configure scheduled auto-delete of old commands"
+                                class="btn-link p-0 border-0 bg-transparent"/>
+                    </div>
+
+                    <group string="Smart Policies" name="smart_policies">
+                        <field name="attendance_policy"/>
+                        <field name="flexible_period" invisible="attendance_policy != 'calendar'"/>
+                        <label for="grace_end_in" string="Check-In Grace (After Shift Start)" invisible="attendance_policy != 'calendar'"/>
+                        <div class="o_row" invisible="attendance_policy != 'calendar'">
+                            <field name="grace_end_in"/> <span>mins late will be rounded back to shift start.</span>
+                        </div>
+                        <label for="grace_start_out" string="Check-Out Grace (Before Shift End)" invisible="attendance_policy != 'calendar'"/>
+                        <div class="o_row" invisible="attendance_policy != 'calendar'">
+                            <field name="grace_start_out"/> <span>mins early will be rounded up to shift end.</span>
+                        </div>
+                    </group>
+
+                    <notebook>
+                        <page string="Recent Logs" name="logs">
+                            <field name="attendance_log_ids" readonly="1">
+                                <list limit="10">
+                                    <field name="timestamp"/>
+                                    <field name="device_user_id"/>
+                                    <field name="employee_id"/>
+                                    <field name="verify_state"/>
+                                    <field name="status"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Command History" name="commands">
+                            <field name="command_ids" readonly="1">
+                                <list decoration-info="status == 'pending'"
+                                      decoration-success="status == 'success'"
+                                      decoration-danger="status == 'failed'">
+                                    <field name="create_date" string="Sent At"/>
+                                    <field name="command_text"/>
+                                    <field name="status"/>
+                                    <field name="response_text"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+
+                </sheet>
+
+                <!-- ── Chatter ───────────────────────────────────────────── -->
+                <chatter/>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- =====================================================================
+         List View: biometric.device
+    ====================================================================== -->
+    <record id="view_biometric_device_list" model="ir.ui.view">
+        <field name="name">biometric.device.list</field>
+        <field name="model">biometric.device</field>
+        <field name="arch" type="xml">
+            <list string="Biometric Devices"
+                  decoration-success="last_seen != False"
+                  decoration-muted="last_seen == False">
+                <field name="name"/>
+                <field name="serial_number"/>
+                <field name="timezone"/>
+                <field name="attendance_log_count" string="Logs"/>
+                <field name="last_seen"/>
+                <field name="active" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- =====================================================================
+         Search View: biometric.device
+    ====================================================================== -->
+    <record id="view_biometric_device_search" model="ir.ui.view">
+        <field name="name">biometric.device.search</field>
+        <field name="model">biometric.device</field>
+        <field name="arch" type="xml">
+            <search string="Search Biometric Devices">
+                <field name="name" string="Device Name"/>
+                <field name="serial_number" string="Serial Number"/>
+
+                <filter string="Active" name="active"
+                        domain="[('active', '=', True)]"/>
+                <filter string="Seen Recently" name="seen"
+                        domain="[('last_seen', '!=', False)]"/>
+                <filter string="Never Seen" name="never_seen"
+                        domain="[('last_seen', '=', False)]"/>
+
+                <!-- Archive filter -->
+                <separator/>
+                <filter string="Archived" name="archived"
+                        domain="[('active', '=', False)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Timezone" name="group_timezone"
+                            context="{'group_by': 'timezone'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- =====================================================================
+         Action: biometric.device
+    ====================================================================== -->
+    <record id="action_biometric_device" model="ir.actions.act_window">
+        <field name="name">Biometric Devices</field>
+        <field name="res_model">biometric.device</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_biometric_device_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No biometric devices registered yet!
+            </p>
+            <p>
+                Register a ZKTeco device and configure it to push attendance
+                data to <strong>/iclock/cdata</strong>.
+            </p>
+        </field>
+    </record>
+
+</odoo>

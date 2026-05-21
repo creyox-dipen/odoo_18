@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_biometric_calculate_attendance_wizard_form" model="ir.ui.view">
+        <field name="name">biometric.calculate.attendance.wizard.form</field>
+        <field name="model">biometric.calculate.attendance.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Calculate Attendance">
+                <group>
+                    <group>
+                        <field name="from_date"/>
+                    </group>
+                    <group>
+                        <field name="to_date"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_calculate" string="Calculate" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_biometric_calculate_attendance_wizard" model="ir.actions.act_window">
+        <field name="name">Calculate Attendance</field>
+        <field name="res_model">biometric.calculate.attendance.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_biometric_calculate_attendance"
+              name="Calculate Attendance"
+              parent="cr_zkteco_biometric_integration.menu_hr_attendance_management"
+              action="action_biometric_calculate_attendance_wizard"
+              sequence="10"/>
+</odoo>

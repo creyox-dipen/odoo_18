@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         Biometric Menus inside Attendances
+    ================================================================ -->
+
+    <!-- ── Dashboard under Attendances ────────────────────────── -->
+    <menuitem id="menu_biometric_dashboard"
+              name="Dashboard"
+              parent="hr_attendance.menu_hr_attendance_root"
+              action="action_biometric_dashboard"
+              sequence="1"
+              groups="hr_attendance.group_hr_attendance_manager"/>
+
+    <!-- ── Configuration under Attendances ───────────────────────── -->
+    <menuitem id="menu_biometric_configuration"
+              name="Biometric Configuration"
+              parent="hr_attendance.menu_hr_attendance_root"
+              sequence="90"
+              groups="hr_attendance.group_hr_attendance_manager"/>
+
+    <menuitem id="menu_biometric_device"
+              name="Devices"
+              parent="menu_biometric_configuration"
+              action="action_biometric_device"
+              sequence="10"
+              groups="hr_attendance.group_hr_attendance_manager"/>
+
+    <!-- ── Management under Attendances ────────────────────────── -->
+    <menuitem id="menu_hr_attendance_management"
+              name="Attendance reports"
+              parent="hr_attendance.menu_hr_attendance_root"
+              sequence="20"
+              groups="hr_attendance.group_hr_attendance_manager"/>
+
+    <!-- ── Attendance Logs under Attendances ─────────────────────── -->
+    <menuitem id="menu_biometric_attendance_log"
+              name="Biometric Attendance Logs"
+              parent="hr_attendance.menu_hr_attendance_root"
+              action="action_biometric_attendance_log"
+              sequence="95"
+              groups="hr_attendance.group_hr_attendance_manager"/>
+
+</odoo>

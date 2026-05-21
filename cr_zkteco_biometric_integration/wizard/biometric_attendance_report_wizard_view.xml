@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_biometric_attendance_report_wizard_form" model="ir.ui.view">
+        <field name="name">biometric.attendance.report.wizard.form</field>
+        <field name="model">biometric.attendance.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Attendance Report">
+                <group invisible="excel_file">
+                    <field name="is_log_report" invisible="1"/>
+                    <group>
+                        <field name="from_date"/>
+                        <field name="to_date"/>
+                    </group>
+                    <group>
+                        <field name="report_type" invisible="is_log_report"/>
+                    </group>
+                </group>
+                
+                <div invisible="not excel_file" class="alert alert-success text-center" role="alert">
+                    <p>Your report is ready for download!</p>
+                    <field name="file_name" invisible="1"/>
+                    <h2>
+                        <field name="excel_file" filename="file_name" widget="binary" string="Download Excel"/>
+                    </h2>
+                </div>
+
+                <footer>
+                    <button name="action_export_excel" string="Export" type="object" class="btn-primary" invisible="excel_file"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Server Action to open the wizard from hr.attendance -->
+    <record id="action_server_attendance_report" model="ir.actions.server">
+        <field name="name">Attendance Report</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_view_types">tree</field>
+        <field name="state">code</field>
+        <field name="code">
+action = env.ref('cr_zkteco_biometric_integration.action_biometric_attendance_report_wizard').read()[0]
+action['context'] = {'default_attendance_ids': records.ids}
+        </field>
+    </record>
+
+    <!-- Server Action to open the wizard from biometric.attendance.log -->
+    <record id="action_server_log_report" model="ir.actions.server">
+        <field name="name">Attendance Report</field>
+        <field name="model_id" ref="model_biometric_attendance_log"/>
+        <field name="binding_model_id" ref="model_biometric_attendance_log"/>
+        <field name="binding_view_types">tree</field>
+        <field name="state">code</field>
+        <field name="code">
+action = env.ref('cr_zkteco_biometric_integration.action_biometric_attendance_report_wizard').read()[0]
+action['context'] = {'default_log_ids': records.ids, 'default_is_log_report': True}
+        </field>
+    </record>
+
+    <record id="action_biometric_attendance_report_wizard" model="ir.actions.act_window">
+        <field name="name">Attendance Report</field>
+        <field name="res_model">biometric.attendance.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_biometric_attendance_report"
+              name="Attendance Report (Excel)"
+              parent="cr_zkteco_biometric_integration.menu_hr_attendance_management"
+              action="action_biometric_attendance_report_wizard"
+              sequence="20"/>
+</odoo>

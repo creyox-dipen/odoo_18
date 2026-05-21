@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="cr_zkteco_biometric_integration.BiometricDashboard" owl="1">
+        <div t-attf-class="o_biometric_dashboard container-fluid p-4 #{state.darkMode ? 'dark-mode' : 'light-mode'}">
+            <!-- Dashboard Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0 fw-bold dashboard-title">Biometric Insights</h2>
+                <button class="btn btn-sm theme-toggle-btn" t-on-click="toggleTheme">
+                    <i t-attf-class="fa #{state.darkMode ? 'fa-sun-o' : 'fa-moon-o'}"></i>
+                    <span class="ms-2"><t t-esc="state.darkMode ? 'Light Mode' : 'Dark Mode'"/></span>
+                </button>
+            </div>
+            <!-- Header Stats -->
+            <div class="row mb-4">
+                <div class="col-md-2">
+                    <div class="stat-card total-emp animate__animated animate__fadeInUp">
+                        <div class="card-icon"><i class="fa fa-users"></i></div>
+                        <div class="card-value"><t t-esc="state.data.total_employees"/></div>
+                        <div class="card-label">Total Employees</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="stat-card present-today animate__animated animate__fadeInUp" style="animation-delay: 0.1s">
+                        <div class="card-icon"><i class="fa fa-check-circle"></i></div>
+                        <div class="card-value"><t t-esc="state.data.present_count"/></div>
+                        <div class="card-label">Present Today</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="stat-card absent-today animate__animated animate__fadeInUp" style="animation-delay: 0.2s">
+                        <div class="card-icon"><i class="fa fa-times-circle"></i></div>
+                        <div class="card-value"><t t-esc="state.data.absent_count"/></div>
+                        <div class="card-label">Absent Today</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card late-arrivals animate__animated animate__fadeInUp" style="animation-delay: 0.3s">
+                        <div class="card-icon"><i class="fa fa-clock-o"></i></div>
+                        <div class="card-value"><t t-esc="state.data.late_count"/></div>
+                        <div class="card-label">Late Arrivals</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card early-leavings animate__animated animate__fadeInUp" style="animation-delay: 0.4s">
+                        <div class="card-icon"><i class="fa fa-sign-out"></i></div>
+                        <div class="card-value"><t t-esc="state.data.early_count"/></div>
+                        <div class="card-label">Early Leavings</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Left Column: Detailed Lists -->
+                <div class="col-md-8">
+                    <div class="row">
+                        <!-- Presented Employees -->
+                        <div class="col-md-6 mb-4">
+                            <div class="content-card presented-list">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span class="title"><i class="fa fa-check-circle me-2 text-success"></i>Presented Today</span>
+                                    <span class="badge badge-circle bg-success"><t t-esc="state.data.present_count"/></span>
+                                </div>
+                                <div class="card-body scrollable">
+                                    <div t-if="state.data.presented_employees.length == 0" class="empty-state text-center py-5">
+                                        <i class="fa fa-user-circle-o fa-3x text-muted mb-2"></i>
+                                        <p class="text-muted">No one has punched in yet.</p>
+                                    </div>
+                                    <div t-foreach="state.data.presented_employees" t-as="emp" t-key="emp.id" 
+                                         class="employee-item d-flex align-items-center p-2 mb-2 animate__animated animate__fadeIn clickable"
+                                         t-on-click="() => this.openEmployee(emp.id)">
+                                        <img t-if="emp.image" t-att-src="'data:image/png;base64,' + emp.image" class="emp-avatar me-3"/>
+                                        <div t-else="" class="emp-avatar-placeholder me-3"><t t-esc="emp.name[0]"/></div>
+                                        <div class="emp-info">
+                                            <div class="emp-name text-white"><t t-esc="emp.name"/></div>
+                                            <div class="emp-job text-muted small"><t t-esc="emp.job"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Absented Employees -->
+                        <div class="col-md-6 mb-4">
+                            <div class="content-card absented-list">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span class="title"><i class="fa fa-times-circle me-2 text-danger"></i>Absented Today</span>
+                                    <span class="badge badge-circle bg-danger"><t t-esc="state.data.absent_count"/></span>
+                                </div>
+                                <div class="card-body scrollable">
+                                    <div t-if="state.data.absented_employees.length == 0" class="empty-state text-center py-5">
+                                        <i class="fa fa-smile-o fa-3x text-success mb-2"></i>
+                                        <p class="text-muted">Everyone is present!</p>
+                                    </div>
+                                    <div t-foreach="state.data.absented_employees" t-as="emp" t-key="emp.id" 
+                                         class="employee-item d-flex align-items-center p-2 mb-2 animate__animated animate__fadeIn clickable"
+                                         t-on-click="() => this.openEmployee(emp.id)">
+                                        <img t-if="emp.image" t-att-src="'data:image/png;base64,' + emp.image" class="emp-avatar me-3"/>
+                                        <div t-else="" class="emp-avatar-placeholder me-3"><t t-esc="emp.name[0]"/></div>
+                                        <div class="emp-info">
+                                            <div class="emp-name text-white"><t t-esc="emp.name"/></div>
+                                            <div class="emp-job text-muted small"><t t-esc="emp.job"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Punches -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="content-card punch-list shadow-lg">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span class="title"><i class="fa fa-history me-2 text-info"></i>Recent Biometric Punches</span>
+                                    <button class="btn btn-sm btn-outline-info" t-on-click="() => this.viewAllLogs()">View All Logs</button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table punch-table table-hover table-borderless align-middle mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Employee</th>
+                                                    <th>Device</th>
+                                                    <th>Time</th>
+                                                    <th class="text-end">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr t-foreach="state.data.recent_punches" t-as="punch" t-key="punch.time" class="animate__animated animate__fadeInRight">
+                                                    <td><strong class="punch-employee"><t t-esc="punch.employee"/></strong></td>
+                                                    <td class="text-muted"><t t-esc="punch.device"/></td>
+                                                    <td><span class="badge punch-time-badge border border-info border-opacity-25"><t t-esc="punch.time"/></span></td>
+                                                    <td class="text-end">
+                                                        <span t-attf-class="badge rounded-pill #{punch.type == 'Check In' ? 'bg-success' : 'bg-warning'} bg-opacity-25 text-#{punch.type == 'Check In' ? 'success' : 'warning'}">
+                                                            <i t-attf-class="fa #{punch.type == 'Check In' ? 'fa-sign-in' : 'fa-sign-out'} me-1"></i>
+                                                            <t t-esc="punch.type"/>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Device Status -->
+                <div class="col-md-4">
+                    <div class="content-card device-list h-100 shadow-lg">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="title"><i class="fa fa-server me-2 text-primary"></i>Live Device Monitor</span>
+                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.refreshData()"><i class="fa fa-refresh"></i></button>
+                        </div>
+                        <div class="card-body">
+                            <div t-foreach="state.data.device_stats" t-as="dev" t-key="dev.sn" 
+                                 class="device-item p-3 mb-3 animate__animated animate__slideInRight clickable"
+                                 t-on-click="() => this.openDevice(dev.id)">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <div t-attf-class="status-indicator me-3 #{dev.status}"></div>
+                                        <div class="dev-name text-white fw-bold"><t t-esc="dev.name"/></div>
+                                    </div>
+                                    <span t-attf-class="badge #{dev.status == 'online' ? 'bg-success' : 'bg-danger'} bg-opacity-10 text-#{dev.status == 'online' ? 'success' : 'danger'} border border-#{dev.status == 'online' ? 'success' : 'danger'} border-opacity-25">
+                                        <t t-esc="dev.status.toUpperCase()"/>
+                                    </span>
+                                </div>
+                                <div class="dev-details small d-flex justify-content-between">
+                                    <span class="text-muted"><i class="fa fa-barcode me-1"></i><t t-esc="dev.sn"/></span>
+                                    <span class="text-muted"><i class="fa fa-eye me-1"></i><t t-esc="dev.last_seen"/></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
