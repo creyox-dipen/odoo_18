@@ -1,0 +1,205 @@
+<odoo>
+
+    <!-- ================================================================
+         NMI Master Inline Form
+         ================================================================
+         This is the entry point for all NMI inline payments. It detects
+         whether the user selected ACH or a Card and renders the
+         appropriate fields.
+    -->
+    <template id="inline_form">
+        <t t-if="pm_sudo.code == 'ach_direct_debit'">
+            <t t-call="cr_payment_nmi_integration.ach_fields_only"/>
+        </t>
+        <t t-else="">
+            <t t-call="cr_payment_nmi_integration.card_fields_only"/>
+        </t>
+    </template>
+
+    <!-- ACH Fields (Internal) -->
+    <template id="ach_fields_only">
+        <!--
+            This template is called via inline_form_view_id from Odoo's
+            payment.method_form template.  That template iterates over all
+            payment methods (card, credit, ach_direct_debit) and calls
+            inline_form_view_id for EACH one.
+
+            The `t-call` that invokes this template inherits the full QWeb
+            rendering context of the caller, which includes `pm_sudo` — the
+            payment.method record currently being rendered in the loop.
+
+            We gate the entire form body on
+                pm_sudo.code == 'ach_direct_debit'
+            so that zero ACH HTML is emitted for card / credit options.
+            No JavaScript is needed to hide / clear those elements afterwards.
+
+            We intentionally use a <div> here, NOT a <form>, to avoid invalid
+            nested-form HTML.  Nested <form> tags terminate the outer Odoo
+            checkout form prematurely, stripping the CSRF token and causing
+            the "Session expired (invalid CSRF token)" 400 error.
+
+            The reference and amount fields are NOT hidden inputs in this
+            template.  They are read from the processingValues returned by the
+            transaction RPC call inside nmi_ach_payment_form.js and injected
+            into the dynamically built submission form at runtime.
+        -->
+        <div class="o_payment_ach_form">
+                <div class="o_payment_ach_fields">
+                    <!-- Account Holder Name -->
+                    <div class="mb-3">
+                        <label for="nmi_checkname" class="form-label fw-bold">Account Holder Name</label>
+                        <input
+                            type="text"
+                            id="nmi_checkname"
+                            name="checkname"
+                            class="form-control"
+                            placeholder="Full name as it appears on the bank account"
+                            required="required"
+                            autocomplete="name"
+                        />
+                    </div>
+
+                    <!-- Routing Number -->
+                    <div class="mb-3">
+                        <label for="nmi_checkaba" class="form-label fw-bold">Routing Number</label>
+                        <input
+                            type="text"
+                            id="nmi_checkaba"
+                            name="checkaba"
+                            class="form-control"
+                            placeholder="9-digit bank routing number"
+                            required="required"
+                            maxlength="9"
+                            pattern="\d{9}"
+                            inputmode="numeric"
+                            autocomplete="off"
+                        />
+                        <div class="form-text text-muted">
+                            The 9-digit number found on the bottom-left of your check.
+                        </div>
+                    </div>
+
+                    <!-- Account Number -->
+                    <div class="mb-3">
+                        <label for="nmi_checkaccount" class="form-label fw-bold">Account Number</label>
+                        <input
+                            type="text"
+                            id="nmi_checkaccount"
+                            name="checkaccount"
+                            class="form-control"
+                            placeholder="Bank account number"
+                            required="required"
+                            inputmode="numeric"
+                            autocomplete="off"
+                        />
+                    </div>
+
+                    <!-- Account Type (Checking / Savings) -->
+                    <div class="mb-3">
+                        <label for="nmi_account_type" class="form-label fw-bold">Account Type</label>
+                        <select id="nmi_account_type" name="account_type" class="form-select" required="required">
+                            <option value="checking">Checking</option>
+                            <option value="savings">Savings</option>
+                        </select>
+                    </div>
+
+                    <!-- Account Holder Type (Personal / Business) -->
+                    <div class="mb-3">
+                        <label for="nmi_account_holder_type" class="form-label fw-bold">Account Holder Type</label>
+                        <select id="nmi_account_holder_type" name="account_holder_type" class="form-select" required="required">
+                            <option value="personal">Personal</option>
+                            <option value="business">Business</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+    </template>
+    
+    <!-- ================================================================
+         NMI Card Payment Form (Inline)
+         ================================================================
+         Visible form rendered inline on the Odoo checkout page when the
+         customer selects a card payment method.
+         This replaces the Ekashu redirect flow, allowing Odoo to capture
+         card details and apply conditional fees before processing.
+    -->
+    <template id="card_fields_only">
+        <div class="o_payment_nmi_card_form" 
+             t-att-data-credit-fee-percent="provider_sudo.nmi_credit_card_fee if provider_sudo.is_nmi_card_fee else 0"
+             t-att-data-debit-fee-percent="provider_sudo.nmi_debit_card_fee if provider_sudo.is_nmi_card_fee else 0"
+             t-att-data-fee-active="provider_sudo.is_nmi_card_fee">
+                <div class="o_payment_nmi_card_fields">
+                    <!-- Card Number -->
+                    <div class="mb-3">
+                        <label for="nmi_ccnumber" class="form-label fw-bold">Card Number</label>
+                        <div class="input-group">
+                            <input
+                                type="text"
+                                id="nmi_ccnumber"
+                                name="ccnumber"
+                                class="form-control"
+                                placeholder="•••• •••• •••• ••••"
+                                required="required"
+                                maxlength="19"
+                                inputmode="numeric"
+                                autocomplete="cc-number"
+                            />
+                            <span class="input-group-text">
+                                <i class="fa fa-credit-card" id="nmi_card_icon"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Expiry Date -->
+                        <div class="col-6 mb-3">
+                            <label for="nmi_ccexp" class="form-label fw-bold">Expiration (MM/YY)</label>
+                            <input
+                                type="text"
+                                id="nmi_ccexp"
+                                name="ccexp"
+                                class="form-control"
+                                placeholder="MM/YY"
+                                required="required"
+                                maxlength="5"
+                                pattern="\d{2}/\d{2}"
+                                inputmode="numeric"
+                                autocomplete="cc-exp"
+                            />
+                        </div>
+
+                        <!-- CVV -->
+                        <div class="col-6 mb-3">
+                            <label for="nmi_cvv" class="form-label fw-bold">CVV</label>
+                            <input
+                                type="text"
+                                id="nmi_cvv"
+                                name="cvv"
+                                class="form-control"
+                                placeholder="•••"
+                                required="required"
+                                maxlength="4"
+                                pattern="\d{3,4}"
+                                inputmode="numeric"
+                                autocomplete="cc-csc"
+                            />
+                        </div>
+                    </div>
+                    
+                    <!-- Fee Summary (Dynamicly updated by JS) -->
+                    <div id="nmi_fee_summary" class="alert alert-info d-none mt-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Payment Fee:</span>
+                            <span id="nmi_fee_amount">$0.00</span>
+                        </div>
+                        <hr class="my-1"/>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Total to Pay:</span>
+                            <span id="nmi_total_amount">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </template>
+
+</odoo>

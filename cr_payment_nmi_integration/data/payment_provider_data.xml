@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo noupdate="0">
+    <record id="payment_provider_nmi" model="payment.provider">
+        <field name="name">NMI</field>
+        <field name="image_128" type="base64" file="cr_payment_nmi_integration/static/description/icon.png"/>
+        <field name="code">nmi</field>
+        <field name="redirect_form_view_id" eval="False"/>
+        <field name="inline_form_view_id" ref="inline_form"/>
+        <field name="allow_tokenization">True</field>
+        <field name="module_id" ref="base.module_cr_payment_nmi_integration"/>
+        <field name="payment_method_ids"
+               eval="[Command.set([
+                         ref('payment.payment_method_card'),
+                         ref('payment.payment_method_credit'),
+                         ref('payment.payment_method_ach_direct_debit'),
+                     ])]"
+        />
+        <field name="company_id" ref="base.main_company"/>
+    </record>
+
+    <!-- Enable tokenisation support for ACH Direct Debit -->
+    <function model="payment.method" name="write">
+        <value eval="[ref('payment.payment_method_ach_direct_debit')]"/>
+        <value eval="{'support_tokenization': True}"/>
+    </function>
+
+    <!-- Enable tokenisation support for Card and Credit payment methods -->
+    <function model="payment.method" name="write">
+        <value eval="[ref('payment.payment_method_card')]"/>
+        <value eval="{'support_tokenization': True}"/>
+    </function>
+    <function model="payment.method" name="write">
+        <value eval="[ref('payment.payment_method_credit')]"/>
+        <value eval="{'support_tokenization': True}"/>
+    </function>
+</odoo>
