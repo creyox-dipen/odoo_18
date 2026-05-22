@@ -171,7 +171,7 @@ class NmiController(http.Controller):
                 'card_type': card_type,
             })
             _logger.info("NMI Card: customer_vault_id in result: %s", result.get('customer_vault_id'))
-            tx_sudo._process('nmi', result)
+            tx_sudo._handle_notification_data('nmi', result)
             
         except Exception as e:
             _logger.error("NMI Card API Error: %s", str(e))
@@ -301,7 +301,7 @@ class NmiController(http.Controller):
         result['checkaccount'] = data.get('checkaccount', '')
 
         # Step 6: Update transaction state.
-        tx_sudo._process('nmi', result)
+        tx_sudo._handle_notification_data('nmi', result)
 
         return request.redirect('/payment/status')
 

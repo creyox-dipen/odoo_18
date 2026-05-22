@@ -1,49 +1,169 @@
 /** @odoo-module **/
+// Part of Creyox Technologies
 
-import { Interaction } from '@web/public/interaction';
-import { registry } from '@web/core/registry';
-import { rpc, RPCError } from '@web/core/network/rpc';
+/**
+ * NMI Card Payment — Odoo 18 CE frontend handler.
+ *
+ * WHY THIS APPROACH
+ * ─────────────────
+ * The original code used `Interaction` from `@web/public/interaction`, which is
+ * an Odoo 19/SaaS feature NOT available in Odoo 18 CE. This caused the module
+ * to fail loading entirely with:
+ *   "@web/public/interaction not in correct asset bundle"
+ *
+ * The correct Odoo 18 CE pattern (used by payment_demo, payment_stripe, etc.) is
+ * to import PaymentForm from '@payment/js/payment_form' and use .include() to
+ * extend it with provider-specific overrides.
+ *
+ * HOW IT WORKS
+ * ────────────
+ * 1. _prepareInlineForm  → sets paymentContext.flow = 'direct' for NMI card.
+ *    This makes _getPaymentFlow() return 'direct' at submit time so
+ *    _initiatePaymentFlow calls _processDirectFlow (safe no-op) instead of
+ *    _processRedirectFlow (which crashes when redirect_form_html is missing).
+ *
+ * 2. _processDirectFlow  → handles NMI card via POST to /payment/nmi/card/process.
+ *    processingValues.reference is already created by the base RPC call.
+ *    paymentContext.tokenizationRequested is already set by _submitForm.
+ *
+ * 3. _processRedirectFlow → CRITICAL SAFETY NET. If flow is still 'redirect'
+ *    (edge case: radio pre-selected and _expandInlineForm not yet called),
+ *    we intercept here before the null.setAttribute crash.
+ *
+ * 4. NmiCardFeeDisplay publicWidget → BIN-lookup fee display using the
+ *    standard Odoo 18 publicWidget pattern (no Interaction needed).
+ */
 
-export class NmiCardPaymentForm extends Interaction {
-    static selector = '#o_payment_form';
+import PaymentForm from '@payment/js/payment_form';
+import publicWidget from '@web/legacy/js/public/public_widget';
+import { rpc } from '@web/core/network/rpc';
 
-    setup() {
-        this._handlePayNowClick = this._onPayNowClick.bind(this);
-        document.addEventListener('click', this._handlePayNowClick, true);
-        
-        // Listen for input on the card number field to detect card type and show fees
-        this._handleCardInput = this._onCardInput.bind(this);
-        this.el.addEventListener('input', this._handleCardInput);
+// ─── Extend PaymentForm (canonical Odoo 18 provider pattern) ─────────────────
+// Same pattern as payment_demo, payment_stripe, payment_authorize, etc.
 
-        // Listen for radio button changes (selecting saved tokens)
-        this._handleRadioChange = this._onRadioChange.bind(this);
-        this.el.addEventListener('change', this._handleRadioChange);
+PaymentForm.include({
 
-        this.registerCleanup(() => {
-            document.removeEventListener('click', this._handlePayNowClick, true);
-            this.el.removeEventListener('input', this._handleCardInput);
-            this.el.removeEventListener('change', this._handleRadioChange);
-        });
-    }
+    /**
+     * Override _prepareInlineForm to set flow='direct' for NMI card.
+     *
+     * @override method from @payment/js/payment_form
+     */
+    async _prepareInlineForm(providerId, providerCode, paymentOptionId, paymentMethodCode, flow) {
+        if (providerCode === 'nmi' && paymentMethodCode !== 'ach_direct_debit' && flow !== 'token') {
+            this._setPaymentFlow('direct');
+        }
+        return this._super(...arguments);
+    },
 
-    _onRadioChange(ev) {
-        if (ev.target.name !== 'o_payment_radio') return;
-        
-        const isToken = ev.target.dataset.paymentOptionType === 'token';
-        // For now, we don't know the type of existing tokens on the client side 
-        // unless we add it to the template. But we can hide the summary for now
-        // or wait for a more advanced implementation.
-        // Actually, let's just clear the summary when changing options.
+    /**
+     * Override _processDirectFlow to handle NMI card payment.
+     * Called when paymentContext.flow === 'direct' (set by _prepareInlineForm above).
+     *
+     * @override method from @payment/js/payment_form
+     */
+    async _processDirectFlow(providerCode, paymentOptionId, paymentMethodCode, processingValues) {
+        if (providerCode !== 'nmi' || paymentMethodCode === 'ach_direct_debit') {
+            this._super(...arguments);
+            return;
+        }
+        const checkedRadio = this.el.querySelector('input[name="o_payment_radio"]:checked');
+        if (!checkedRadio || this._getPaymentOptionType(checkedRadio) === 'token') {
+            this._super(...arguments);
+            return;
+        }
+        this._submitNmiCardForm(processingValues);
+    },
+
+    /**
+     * Override _processRedirectFlow — CRITICAL SAFETY NET.
+     * If flow is still 'redirect', intercept here before the null.setAttribute crash.
+     * processingValues.reference is already available from the base RPC.
+     *
+     * @override method from @payment/js/payment_form
+     */
+    _processRedirectFlow(providerCode, paymentOptionId, paymentMethodCode, processingValues) {
+        if (providerCode !== 'nmi' || paymentMethodCode === 'ach_direct_debit') {
+            this._super(...arguments);
+            return;
+        }
+        const checkedRadio = this.el.querySelector('input[name="o_payment_radio"]:checked');
+        if (!checkedRadio || this._getPaymentOptionType(checkedRadio) === 'token') {
+            this._super(...arguments);
+            return;
+        }
+        // Intercept NMI card redirect — prevents null.setAttribute crash.
+        this._submitNmiCardForm(processingValues);
+    },
+
+    /**
+     * Shared helper: validate card fields and POST to /payment/nmi/card/process.
+     * Card data travels: browser → Odoo HTTPS → NMI API (server-to-server).
+     */
+    _submitNmiCardForm(processingValues) {
+        // Read card fields from the payment form (works even if inline form is d-none).
+        const getValue = (id) => this.el.querySelector(`#${id}`)?.value?.trim() ?? '';
+
+        const ccnumber = getValue('nmi_ccnumber').replace(/\s+/g, '');
+        const ccexp    = getValue('nmi_ccexp');
+        const cvv      = getValue('nmi_cvv');
+
+        if (!ccnumber || ccnumber.length < 13) {
+            this._enableButton();
+            window.alert('Please enter a valid card number.');
+            return;
+        }
+        if (!/^\d{2}\/\d{2}$/.test(ccexp)) {
+            this._enableButton();
+            window.alert('Please enter the expiry date in MM/YY format.');
+            return;
+        }
+        if (!/^\d{3,4}$/.test(cvv)) {
+            this._enableButton();
+            window.alert('Please enter a valid CVV (3 or 4 digits).');
+            return;
+        }
+
+        // paymentContext.tokenizationRequested is set by _submitForm (line 154-156).
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = '/payment/nmi/card/process';
+
+        const fields = {
+            reference: processingValues.reference,
+            ccnumber,
+            ccexp,
+            cvv,
+            tokenize: this.paymentContext['tokenizationRequested'] ? '1' : '0',
+        };
+
+        for (const [name, value] of Object.entries(fields)) {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+    },
+});
+
+// ─── BIN-Lookup fee display (publicWidget — Odoo 18 CE compatible) ────────────
+
+publicWidget.registry.NmiCardFeeDisplay = publicWidget.Widget.extend({
+    selector: '#o_payment_form',
+    events: {
+        'input #nmi_ccnumber': '_onCardInput',
+        'change input[name="o_payment_radio"]': '_onRadioChange',
+    },
+
+    _onRadioChange() {
         this._updateFeeSummary(false);
-    }
-
-    // =========================================================================
-    // Card Type Detection & Fee Calculation
-    // =========================================================================
+        this.lastBin = null;
+    },
 
     async _onCardInput(ev) {
-        if (ev.target.id !== 'nmi_ccnumber') return;
-
         const cardNumber = ev.target.value.replace(/\s+/g, '');
         if (cardNumber.length < 6) {
             this.lastBin = null;
@@ -52,45 +172,33 @@ export class NmiCardPaymentForm extends Interaction {
         }
 
         const bin = cardNumber.substring(0, 6);
-        if (this.lastBin === bin) return; 
+        if (this.lastBin === bin) return;
         this.lastBin = bin;
-
-        console.log('[NMI] Triggering BIN lookup for:', bin);
 
         try {
             const checkedRadio = this.el.querySelector('input[name="o_payment_radio"]:checked');
-            const providerId = parseInt(checkedRadio?.dataset.providerId);
-            
-            console.log('[NMI] Sending RPC to Odoo with Provider ID:', providerId);
-
+            const providerId   = parseInt(checkedRadio?.dataset.providerId);
             const result = await rpc('/payment/nmi/bin_lookup', {
-                bin_number: bin,
+                bin_number:  bin,
                 provider_id: providerId,
             });
-
-            console.log('[NMI] Lookup result from Odoo:', result);
-
-            // NMI returns 'credit', 'debit', 'charge', or 'unknown'
-            const isCredit = result.type === 'credit' || result.type === 'charge';
-            console.log('[NMI] Decision - Is Credit/Charge?', isCredit);
-            
             this._updateFeeSummary(result.type);
         } catch (error) {
-            console.error('[NMI BIN Lookup] RPC Error:', error);
+            console.error('[NMI BIN Lookup] Error:', error);
             this._updateFeeSummary(false);
         }
-    }
+    },
 
     _updateFeeSummary(cardType) {
-        const formContainer = this.el.classList.contains('o_payment_nmi_card_form') ? 
-                             this.el : this.el.querySelector('.o_payment_nmi_card_form');
+        const formContainer = this.el.classList.contains('o_payment_nmi_card_form')
+            ? this.el
+            : this.el.querySelector('.o_payment_nmi_card_form');
         const summary = this.el.querySelector('#nmi_fee_summary');
         if (!summary || !formContainer) return;
 
-        const ctx = formContainer.dataset;
+        const ctx       = formContainer.dataset;
         const feeActive = ctx.feeActive === 'True' || ctx.feeActive === 'true' || ctx.feeActive === '1';
-        
-        // Map card type to the correct fee percentage
+
         let feePercent = 0;
         if (cardType === 'credit' || cardType === 'charge') {
             feePercent = parseFloat(ctx.creditFeePercent) || 0;
@@ -99,149 +207,19 @@ export class NmiCardPaymentForm extends Interaction {
         }
 
         if (feeActive && feePercent > 0) {
-            const baseAmount = parseFloat(this.el.closest('.o_payment_form').dataset.amount) || 0;
-            const fee = (baseAmount * feePercent) / 100;
-            const total = baseAmount + fee;
+            const baseAmount   = parseFloat(this.el.dataset.amount) || 0;
+            const fee          = (baseAmount * feePercent) / 100;
+            const total        = baseAmount + fee;
+            const currencyName = this.el.dataset.currencyName || 'USD';
+            const formatter    = new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyName });
 
-            const formatter = new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: this.el.closest('.o_payment_form').dataset.currencyName || 'USD',
-            });
-
-            this.el.querySelector('#nmi_fee_amount').textContent = formatter.format(fee);
-            this.el.querySelector('#nmi_total_amount').textContent = formatter.format(total);
+            const feeEl   = this.el.querySelector('#nmi_fee_amount');
+            const totalEl = this.el.querySelector('#nmi_total_amount');
+            if (feeEl)   feeEl.textContent  = formatter.format(fee);
+            if (totalEl) totalEl.textContent = formatter.format(total);
             summary.classList.remove('d-none');
         } else {
             summary.classList.add('d-none');
         }
-    }
-
-    _formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-    }
-
-    // =========================================================================
-    // Event Interception
-    // =========================================================================
-
-    async _onPayNowClick(ev) {
-        if (!ev.target.closest('[name="o_payment_submit_button"]')) return;
-
-        const checkedRadio = this.el.querySelector('input[name="o_payment_radio"]:checked');
-        if (!checkedRadio) return;
-
-        const ds = checkedRadio.dataset;
-        const providerCode = ds.providerCode;
-        const pmCode = ds.paymentMethodCode;
-
-        // Bail out immediately if this is not an NMI payment
-        if (providerCode !== 'nmi') return;
-
-        // Bail out for ACH direct debit (handled by the ACH form separately)
-        if (pmCode === 'ach_direct_debit') return;
-
-        // Bail out for saved tokens — check the container for card input fields
-        // If no card number input exists in this option's container, it's a token
-        const container = checkedRadio.closest('[name="o_payment_option"]');
-        const cardNumberInput = container?.querySelector('#nmi_ccnumber');
-        if (!cardNumberInput) return;  // Saved token — let Odoo handle it natively
-
-        ev.stopImmediatePropagation();
-        ev.preventDefault();
-
-        await this._processCardPayment(checkedRadio);
-    }
-
-    async _processCardPayment(checkedRadio) {
-        const optionContainer = checkedRadio.closest('[name="o_payment_option"]');
-        const inlineForm = optionContainer?.querySelector('[name="o_payment_inline_form"]');
-
-        const getValue = (id) => inlineForm?.querySelector(`#${id}`)?.value?.trim() ?? '';
-        
-        const ccnumber = getValue('nmi_ccnumber').replace(/\s+/g, '');
-        const ccexp = getValue('nmi_ccexp');
-        const cvv = getValue('nmi_cvv');
-
-        if (!ccnumber || ccnumber.length < 13) {
-            this._showError('Please enter a valid card number.');
-            return;
-        }
-        if (!/^\d{2}\/\d{2}$/.test(ccexp)) {
-            this._showError('Please enter expiry in MM/YY format.');
-            return;
-        }
-        if (!/^\d{3,4}$/.test(cvv)) {
-            this._showError('Please enter a valid CVV.');
-            return;
-        }
-
-        this._setButtonState(true);
-
-        try {
-            const ctx = this.el.dataset;
-            const transactionRoute = ctx.transactionRoute || '/shop/payment/transaction';
-
-            // Check if the user wants to save their card
-            const tokenizeCheckbox = optionContainer?.querySelector('input[name="o_payment_tokenize_checkbox"]');
-            const tokenizationRequested = tokenizeCheckbox ? tokenizeCheckbox.checked : false;
-
-            const transactionParams = {
-                provider_id: parseInt(checkedRadio.dataset.providerId),
-                payment_method_id: parseInt(checkedRadio.dataset.paymentOptionId),
-                token_id: null,
-                amount: ctx.amount !== undefined ? parseFloat(ctx.amount) : null,
-                flow: 'direct',
-                tokenization_requested: tokenizationRequested,
-                landing_route: ctx.landingRoute || '/payment/status',
-                access_token: ctx.accessToken || '',
-                csrf_token: odoo.csrf_token,
-            };
-
-            const processingValues = await rpc(transactionRoute, transactionParams);
-
-            if (!processingValues || processingValues.state === 'error') {
-                this._showError('Payment initialisation failed: ' + (processingValues?.state_message || 'Unknown error'));
-                return;
-            }
-
-            // Submit to our new card processing controller
-            const form = document.createElement('form');
-            form.method = 'post';
-            form.action = '/payment/nmi/card/process';
-
-            const formFields = {
-                reference: processingValues.reference,
-                ccnumber,
-                ccexp,
-                cvv,
-                tokenize: tokenizationRequested ? '1' : '0',
-            };
-
-            for (const [name, value] of Object.entries(formFields)) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = name;
-                input.value = value;
-                form.appendChild(input);
-            }
-
-            document.body.appendChild(form);
-            form.submit();
-
-        } catch (error) {
-            console.error('[NMI Card] Error:', error);
-            this._showError('An unexpected error occurred.');
-        }
-    }
-
-    _setButtonState(disabled) {
-        document.querySelectorAll('[name="o_payment_submit_button"]').forEach(btn => btn.disabled = disabled);
-    }
-
-    _showError(message) {
-        this._setButtonState(false);
-        window.alert(message);
-    }
-}
-
-registry.category('public.interactions').add('payment.nmi_card_payment', NmiCardPaymentForm);
+    },
+});

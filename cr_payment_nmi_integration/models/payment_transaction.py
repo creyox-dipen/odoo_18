@@ -48,34 +48,24 @@ class PaymentTransaction(models.Model):
         return res
 
     def _get_specific_rendering_values(self, processing_values):
-        """Override to build provider-specific rendering values for the redirect form.
+        """Override to build provider-specific rendering values.
 
-        For card payments (all non-ACH methods), delegates to the Ekashu redirect
-        form builder. ACH is handled as a direct flow.
+        NMI card payments are processed via Direct Post through our own
+        controller (/payment/nmi/card/process), handled entirely by
+        nmi_card_form.js. We intentionally return an empty dict here so that
+        Odoo's base JS uses _processDirectFlow instead of _processRedirectFlow.
+        _processRedirectFlow would crash with a TypeError because there is no
+        redirect form element to populate.
+
+        ACH (ach_direct_debit) is similarly a direct flow managed by
+        nmi_ach_form.js and also falls through to the empty res.
         """
         res = super()._get_specific_rendering_values(processing_values)
         if self.provider_code != 'nmi':
             return res
-
-        # Card flow — Ekashu hosted redirect form.
-        if self.payment_method_code != 'ach_direct_debit':
-            first_name, last_name = payment_utils.split_partner_name(self.partner_name)
-            paydata = {
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': self.partner_email,
-                'phone': self.partner_phone,
-                'address': self.partner_address,
-                'city': self.partner_city,
-                'state': self.partner_state_id.name or '',
-                'zip': self.partner_zip,
-                'country': self.partner_country_id.name or '',
-                'amount': self.amount,
-                'reference': self.reference,
-                'currency': self.currency_id.name,
-                'base_url': self.provider_id.get_base_url(),
-            }
-            return self.provider_id._get_rendering_values(paydata)
+        # Return empty dict for all NMI methods (card and ACH).
+        # nmi_card_form.js / nmi_ach_form.js intercept the Pay Now button and
+        # submit directly to our controllers — no redirect form is needed.
         return res
 
     def _get_tx_from_notification_data(self, provider_code, notification_data):
@@ -124,8 +114,12 @@ class PaymentTransaction(models.Model):
             )
         return tx
 
-    def _apply_updates(self, notification_data):
+    def _process_notification_data(self, notification_data):
         """Override to update the transaction state from NMI notification data."""
+        super()._process_notification_data(notification_data)
+        if self.provider_code != 'nmi':
+            return
+
         # ---- ACH Direct Post response ----------------------------------------
         if notification_data.get('_ach_flow'):
             response_code = notification_data.get('response')
@@ -350,8 +344,8 @@ class PaymentTransaction(models.Model):
         # Parse and process the response.
         result = dict(urllib.parse.parse_qsl(nmi_response.text))
         _logger.info("NMI token payment response for %s: %s", self.reference, result.get('responsetext'))
-        # Inject ACH flow marker so _process_notification_data/apply_updates handles it correctly.
+        # Inject ACH flow marker so _process_notification_data handles it correctly.
         result['_ach_flow'] = True
         result['amount'] = result.get('amount') or post_payload.get('amount')
         result['currency'] = result.get('currency') or post_payload.get('currency')
-        self._process('nmi', result)
+        self._handle_notification_data('nmi', result)

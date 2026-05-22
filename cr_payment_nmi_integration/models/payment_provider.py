@@ -38,8 +38,8 @@ class PaymentProvider(models.Model):
         ),
     )
     is_nmi_card_fee = fields.Boolean(
-        string="Add Credit Card Fees",
-        help="If enabled, a surcharge will be applied to credit card payments calculated in Odoo.",
+        string="Add Card Fees",
+        help="If enabled, a surcharge will be applied to card payments calculated in Odoo.",
     )
     nmi_credit_card_fee = fields.Float(
         string="Credit Card Fee (%)",

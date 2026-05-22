@@ -81,8 +81,6 @@
         'data/payment_provider_data.xml',
     ],
     'assets': {
-        # Loaded on every public/frontend page — required for the checkout
-        # payment form where the ACH inline form is rendered.
         'web.assets_frontend': [
             'cr_payment_nmi_integration/static/src/js/nmi_ach_form.js',
             'cr_payment_nmi_integration/static/src/js/nmi_card_form.js',
