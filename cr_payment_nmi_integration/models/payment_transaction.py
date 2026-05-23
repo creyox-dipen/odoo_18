@@ -135,6 +135,9 @@ class PaymentTransaction(models.Model):
                 # Approved — mark transaction as paid.
                 self.provider_reference = transaction_id
                 self._set_done()
+                self._set_done()
+                if self.tokenize:
+                    self._tokenize_from_notification_data(notification_data)
                 _logger.info(
                     "ACH transaction %s approved by NMI (transactionid=%s).",
                     self.reference,
@@ -167,6 +170,9 @@ class PaymentTransaction(models.Model):
         if auth_result == 'success':
             self.provider_reference = notification_data.get('ekashu_reference', self.reference)
             self._set_done()
+            self._set_done()
+            if self.tokenize:
+                self._tokenize_from_notification_data(notification_data)
         else:
             _logger.warning(
                 "Received data with invalid success code (%s) for transaction reference %s.",
@@ -175,25 +181,47 @@ class PaymentTransaction(models.Model):
             )
             self._set_error("NMI: " + _("Unknown success code: %s", auth_result))
 
+    def _tokenize_from_notification_data(self, notification_data):
+        """ Create a new token from the notification data.
+        Note: self.ensure_one()
+        :param dict notification_data: The notification data sent by the provider.
+        :return: None
+        """
+        self.ensure_one()
+
+        token_values = self._extract_token_values(notification_data)
+        if not token_values.get('provider_ref'):
+             _logger.warning("NMI: Tokenization requested but no vault ID found in notification data.")
+             return
+
+        token_values.update({
+            'provider_id': self.provider_id.id,
+            'payment_method_id': self.payment_method_id.id,
+            'partner_id': self.partner_id.id,
+        })
+        token = self.env['payment.token'].create(token_values)
+        self.write({
+            'token_id': token.id,
+            'tokenize': False,
+        })
+        _logger.info(
+            "NMI: Created token with id %(token_id)s (Name: %(name)s) for transaction %(ref)s.",
+            {'token_id': token.id, 'name': token.display_name, 'ref': self.reference},
+        )
+
     def _extract_token_values(self, payment_data):
-        """Override to extract NMI token values from notification data.
-
-        For ACH transactions that requested tokenisation, NMI returns a
-        `customer_vault_id`. We store this as the provider_reference of the
-        newly created token.
-
+        """Extract NMI token values from notification data.
         :param dict payment_data: The notification / response data dict.
         :return: Dict of create values for the payment.token record.
         :rtype: dict
         """
-        res = super()._extract_token_values(payment_data)
         if self.provider_code != 'nmi':
-            return res
+            return {}
 
         vault_id = payment_data.get('customer_vault_id')
-        _logger.info("NMI _extract_token_values: vault_id=%s", vault_id)
+        _logger.info("NMI: Found vault_id=%s", vault_id)
         if not vault_id:
-            return res
+            return {}
 
         # Build a friendly name depending on whether this is a card or ACH token
         if payment_data.get('ccnumber_last4'):

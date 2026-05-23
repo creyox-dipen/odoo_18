@@ -149,6 +149,7 @@ class NmiController(http.Controller):
         # If the user requested to save their card, add it to the NMI Customer Vault
         _logger.info("NMI Card: tokenize flag=%s", data.get('tokenize'))
         if data.get('tokenize') == '1':
+            tx_sudo.tokenize = True
             post_payload['customer_vault'] = 'add_customer'
             _logger.info("NMI Card: customer_vault=add_customer added to payload")
 
@@ -158,7 +159,6 @@ class NmiController(http.Controller):
             response = http_requests.post(api_url, data=post_payload, timeout=30)
             response.raise_for_status()
             result = dict(urllib.parse.parse_qsl(response.text))
-            _logger.info("NMI Card raw response: %s", result)
 
             # Use Odoo's internal processing flow
             result.update({
@@ -170,7 +170,6 @@ class NmiController(http.Controller):
                 'ccnumber_last4': ccnumber[-4:] if len(ccnumber) >= 4 else ccnumber,
                 'card_type': card_type,
             })
-            _logger.info("NMI Card: customer_vault_id in result: %s", result.get('customer_vault_id'))
             tx_sudo._handle_notification_data('nmi', result)
             
         except Exception as e:
@@ -258,6 +257,7 @@ class NmiController(http.Controller):
 
         # Handle tokenisation (saving bank details to NMI Customer Vault)
         if data.get('tokenize') in (True, 'true', '1'):
+            tx_sudo.tokenize = True
             post_payload['customer_vault'] = 'add_customer'
 
         # NMI sandbox only allows emails to the sandbox account owner's address.

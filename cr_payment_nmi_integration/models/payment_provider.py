@@ -93,6 +93,13 @@ class PaymentProvider(models.Model):
     def _get_compatible_providers(self, *args, is_validation=False, **kwargs):
         return super()._get_compatible_providers(*args, is_validation=is_validation, **kwargs)
 
+    def _compute_feature_support_fields(self):
+        """ Override of `payment` to enable tokenization for NMI. """
+        super()._compute_feature_support_fields()
+        self.filtered(lambda p: p.code == 'nmi').update({
+            'support_tokenization': True,
+        })
+
     def _get_ach_rendering_values(self, data):
         """Build the dict of values needed to render the ACH payment form."""
         return {
