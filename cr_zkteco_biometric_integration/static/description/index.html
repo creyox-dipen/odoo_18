@@ -298,10 +298,10 @@
                         <div class="col-lg-3 col-md-6">
                             <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-top: 10px solid #7c3aed;">
                                 <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #f5f3ff; border-radius: 20px; color: #7c3aed; font-size: 30px;">
-                                    <i class="fa fa-moon-o"></i>
+                                    <i class="fa fa-camera"></i>
                                 </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">Night Shift Support</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Flexible overnight period detection for cross-midnight shift workers.</p>
+                                <h5 style="font-weight: 800; color: #1e293b;">Punch Photo Audit</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Stores real-time camera captures from the biometric device at each punch to prevent buddy punching.</p>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6">
@@ -826,7 +826,7 @@
                                     loading="lazy"
                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             <li>
-                                If <b>Auto Check-Out</b> is enabled, the <b>Auto Check-Out Time</b> field will appear, allowing you to set a specific time to automatically close open attendance records.
+                                If <b>Auto Check-Out</b> is enabled, the <b>Auto Check-Out Time</b> field will appear, allowing you to set the number of hours. Odoo will close any open attendance records at the configured hours after the shift end time for that day.
                             </li>
                         </ul>
                         <ul style="font-size: 22px;">
@@ -850,13 +850,7 @@
                                     loading="lazy"
                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             <li>
-                                    Using <b>Attendance Policy</b>, you can manage <b>night shifts</b> and configure grace periods for employee check-in and check-out timings to handle late arrivals or early departures more accurately.
-                            </li>
-                            <img src="images/flexible period.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
-                                    loading="lazy"
-                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                            <li>
-                                If <b>Flexible Period</b> is enabled, the system can correctly handle night shifts where check-in and check-out happen on different dates. It combines them into a single attendance record based on the employee’s configured working schedule, preventing incorrect separate attendance entries.
+                                    Using <b>Attendance Policy</b>, you can configure <b>Grace Periods</b> for employee check-in and check-out timings to handle late arrivals or early departures more accurately.
                             </li>
                             <img src="images/time grace.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                     loading="lazy"
