@@ -124,7 +124,7 @@
 
                     <group string="Smart Policies" name="smart_policies">
                         <field name="attendance_policy"/>
-                        <field name="flexible_period" invisible="attendance_policy != 'calendar'"/>
+                        <!-- <field name="flexible_period" invisible="attendance_policy != 'calendar'"/> -->
                         <label for="grace_end_in" string="Check-In Grace (After Shift Start)" invisible="attendance_policy != 'calendar'"/>
                         <div class="o_row" invisible="attendance_policy != 'calendar'">
                             <field name="grace_end_in"/> <span>mins late will be rounded back to shift start.</span>

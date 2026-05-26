@@ -553,40 +553,78 @@ class HrEmployeeExtend(models.Model):
     def _run_biometric_auto_checkout(self):
         """
         Finds open attendances for employees and closes them if auto-checkout is enabled on the device.
+        Auto-checkout delay is configured in hours relative to the employee's working calendar shift end time.
         """
-        from datetime import datetime, time
+        from datetime import datetime, timedelta, time
         import pytz
 
         devices = (
             self.env["biometric.device"].sudo().search([("auto_checkout", "=", True)])
         )
-        for device in devices:
-            # We look for open attendances for employees linked to this device
-            open_attendances = (
-                self.env["hr.attendance"].sudo().search([("check_out", "=", False)])
-            )
+        if not devices:
+            return
 
-            for att in open_attendances:
-                # Convert auto_checkout_time (float) to time object
-                hours = int(device.auto_checkout_time)
-                minutes = int((device.auto_checkout_time - hours) * 60)
+        # Find all open attendances
+        open_attendances = (
+            self.env["hr.attendance"].sudo().search([("check_out", "=", False)])
+        )
+        if not open_attendances:
+            return
 
-                # We close it using the device timezone's "today at X time"
-                tz = pytz.timezone(device.timezone or "UTC")
+        for att in open_attendances:
+            employee = att.employee_id
+            calendar = employee.resource_calendar_id
+            if not calendar:
+                continue
 
-                # Ensure the check_in date is used
-                checkout_dt_tz = tz.localize(
-                    datetime.combine(att.check_in.date(), time(hours, minutes))
+            # In multi-device setups, we can use the device settings of the first active device with auto_checkout.
+            device = devices[0]
+
+            tz_name = calendar.tz or device.timezone or self.env.user.tz or "UTC"
+            tz = pytz.timezone(tz_name)
+
+            # Convert check_in UTC time to timezone-aware local time
+            check_in_local = pytz.utc.localize(att.check_in).astimezone(tz)
+
+            # Get shift intervals for that day (search up to 30 hours to catch night shifts starting on that date)
+            day_start = tz.localize(datetime.combine(check_in_local.date(), time.min))
+            day_end = day_start + timedelta(hours=30)
+
+            intervals = calendar._attendance_intervals_batch(
+                day_start, day_end, employee.resource_id
+            )[employee.resource_id.id]
+
+            if not intervals:
+                continue
+
+            # Find the shift that should have ended after the employee checked in
+            matching_shift = False
+            for start, end, meta in sorted(intervals, key=lambda x: x[0]):
+                start_local = start.astimezone(tz)
+                end_local = end.astimezone(tz)
+                if end_local > check_in_local:
+                    matching_shift = (start_local, end_local)
+                    break
+
+            if not matching_shift:
+                continue
+
+            shift_start, shift_end = matching_shift
+
+            # Threshold time: shift_end + delay hours
+            threshold_dt = shift_end + timedelta(hours=device.auto_checkout_time)
+
+            # Current local time
+            now_local = datetime.now(tz)
+
+            if now_local > threshold_dt:
+                checkout_utc = shift_end.astimezone(pytz.utc).replace(tzinfo=None)
+                logger.info(
+                    "Auto-Checkout: Closing attendance for %s. Shift ended at %s, auto-checkout triggered at %s.",
+                    employee.name,
+                    shift_end,
+                    threshold_dt,
                 )
-                checkout_dt_utc = checkout_dt_tz.astimezone(pytz.UTC).replace(
-                    tzinfo=None
-                )
-
-                # Only close if it's currently later than the checkout time
-                if datetime.now() > checkout_dt_utc and att.check_in < checkout_dt_utc:
-                    logger.info(
-                        "Auto-Checkout: Closing attendance for %s at %s",
-                        att.employee_id.name,
-                        checkout_dt_utc,
-                    )
-                    att.write({"check_out": checkout_dt_utc})
+                # Ensure the check_out is later than check_in (sanity check)
+                if checkout_utc > att.check_in:
+                    att.write({"check_out": checkout_utc})

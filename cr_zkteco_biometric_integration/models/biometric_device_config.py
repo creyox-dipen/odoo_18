@@ -178,12 +178,12 @@ class BiometricDevice(models.Model):
     auto_checkout = fields.Boolean(
         string="Auto Check-out",
         default=False,
-        help="If enabled, the system will automatically close open attendances at a specific time.",
+        help="If enabled, the system will automatically close open attendances based on the shift end time.",
     )
     auto_checkout_time = fields.Float(
-        string="Auto Check-out Time",
-        default=20.0,
-        help="The time of day (0-24) to automatically close open attendances (e.g. 20.0 = 8:00 PM).",
+        string="Auto Check-out Delay (Hours)",
+        default=2.0,
+        help="The delay in hours after the scheduled shift end time to automatically close open attendances (e.g. 2.0 = 2 hours).",
     )
     auto_clear_log = fields.Boolean(
         string="Auto-Clear Device Logs",
