@@ -604,7 +604,6 @@ class HrEmployeeExtend(models.Model):
                 end_local = end.astimezone(tz)
                 if end_local > check_in_local:
                     matching_shift = (start_local, end_local)
-                    break
 
             if not matching_shift:
                 continue
