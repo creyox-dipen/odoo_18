@@ -26,10 +26,12 @@
         "project",
         "documents",
         "cr_crm_opportunity_document_management",
+        "bizzup_crm_customization",
     ],
     "data": [
         "security/ir.model.access.csv",
         "views/project_folder_structure_views.xml",
+        "views/sale_order_views.xml",
         "wizard/folder_delete_warning_views.xml",
     ],
     "installable": True,

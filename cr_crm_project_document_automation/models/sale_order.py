@@ -16,6 +16,47 @@ _logger = logging.getLogger(__name__)
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
+    quotation_number_link = fields.Html(
+        string="Quotation Number",
+        compute="_compute_quotation_number_link",
+        sanitize=False
+    )
+    opportunity_number_link = fields.Html(
+        string="Opportunity Number",
+        compute="_compute_opportunity_number_link",
+        sanitize=False
+    )
+
+    @api.depends('opportunity_id', 'opportunity_number')
+    def _compute_opportunity_number_link(self):
+        for order in self:
+            opp = order.opportunity_id
+            if opp:
+                opp_num = getattr(order, 'opportunity_number', False) or opp.custom_number or opp.name or f"OPPORTUNITY/{opp.id}"
+                url = f"/odoo/crm.lead/{opp.id}"
+                order.opportunity_number_link = f'<a class="o_form_uri" href="{url}" onclick="window.location.href=\'{url}\'; return false;">{opp_num}</a>'
+            else:
+                order.opportunity_number_link = False
+
+    @api.depends('quotation_number')
+    def _compute_quotation_number_link(self):
+        for order in self:
+            quote_num = getattr(order, 'quotation_number', False)
+            if quote_num:
+                # Find matching quotation record
+                quote_rec = self.env['sale.order'].search(
+                    [('name', '=', quote_num)], limit=1
+                )
+                if not quote_rec:
+                    quote_rec = self.env['sale.order'].search(
+                        [('name', '=like', f"{quote_num}-V%")], limit=1
+                    )
+                target_rec = quote_rec or order
+                url = f"/odoo/sale.order/{target_rec.id}"
+                order.quotation_number_link = f'<a class="o_form_uri" href="{url}" onclick="window.location.href=\'{url}\'; return false;">{quote_num}</a>'
+            else:
+                order.quotation_number_link = False
+
     def action_confirm(self):
         """
         Override action_confirm to trigger the folder copying logic
@@ -262,8 +303,8 @@ class SaleOrder(models.Model):
                 project.name,
             )
 
-    def _get_project_so_folder(self):
-        """Helper to find the specific SO folder in the project workspace."""
+    def _get_project_root_folder(self):
+        """Helper to find the root Project folder in the document workspace."""
         self.ensure_one()
         # 1. Find the Project(s) linked to this Sale Order
         project = self.env["project.project"].search(
@@ -276,7 +317,7 @@ class SaleOrder(models.Model):
             return False
 
         # 2. Find the Project's document folder
-        project_folder = self.env["documents.document"].search(
+        return self.env["documents.document"].search(
             [
                 ("name", "=", project.name),
                 ("type", "=", "folder"),
@@ -284,6 +325,11 @@ class SaleOrder(models.Model):
             ],
             limit=1,
         )
+
+    def _get_project_so_folder(self):
+        """Helper to find the specific SO folder in the project workspace."""
+        self.ensure_one()
+        project_folder = self._get_project_root_folder()
         if not project_folder:
             return False
 
@@ -299,24 +345,24 @@ class SaleOrder(models.Model):
         )
 
     def _compute_document_count(self):
-        """Override to count documents in the Project SO folder instead of CRM folder."""
+        """Override to count documents in the Project root folder instead of CRM folder."""
         for order in self:
-            so_folder = order._get_project_so_folder()
-            if so_folder:
-                # Count binary files inside the SO folder and its subfolders
+            project_folder = order._get_project_root_folder()
+            if project_folder:
+                # Count binary files inside the Project folder and its subfolders
                 order.document_count = self.env["documents.document"].search_count(
-                    [("folder_id", "child_of", so_folder.id), ("type", "=", "binary")]
+                    [("folder_id", "child_of", project_folder.id), ("type", "=", "binary")]
                 )
             else:
                 # Fallback to standard behavior if project folder isn't ready
                 super(SaleOrder, order)._compute_document_count()
 
     def action_open_documents(self):
-        """Override to open the Project SO folder with the exact same behavior as the CRM module."""
+        """Override to open the Project root folder with the exact same behavior as the CRM module."""
         self.ensure_one()
-        so_folder = self._get_project_so_folder()
+        project_folder = self._get_project_root_folder()
 
-        if not so_folder:
+        if not project_folder:
             # Fallback if the folder hasn't been created yet
             return super(SaleOrder, self).action_open_documents()
 
@@ -336,16 +382,16 @@ class SaleOrder(models.Model):
                 (False, "activity"),
             ],
             "context": {
-                "default_folder_id": so_folder.id,
-                "searchpanel_default_folder_id": so_folder.id,
+                "default_folder_id": project_folder.id,
+                "searchpanel_default_folder_id": project_folder.id,
             },
             # This domain is the key: it shows binary files in the tree
             # AND direct sub-folders as records in the list view.
             "domain": [
-                ("folder_id", "child_of", so_folder.id),
+                ("folder_id", "child_of", project_folder.id),
                 "|",
                 ("type", "=", "binary"),
-                ("folder_id", "=", so_folder.id),
+                ("folder_id", "=", project_folder.id),
             ],
             "target": "current",
         }
