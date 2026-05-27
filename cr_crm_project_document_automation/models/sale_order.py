@@ -189,6 +189,7 @@ class SaleOrder(models.Model):
                         default={
                             "folder_id": so_folder.id,
                             "name": opp_sub.name,
+                            "sequence": 10,
                         }
                     )[0]
                     target_sub = self.env["documents.document"].create(folder_copy_vals)
@@ -198,6 +199,8 @@ class SaleOrder(models.Model):
                         so_folder.name,
                     )
                 else:
+                    if target_sub.sequence != 10:
+                        target_sub.write({"sequence": 10})
                     _logger.info(
                         "  -> Subfolder '%s' ALREADY EXISTS inside '%s'",
                         target_sub.name,

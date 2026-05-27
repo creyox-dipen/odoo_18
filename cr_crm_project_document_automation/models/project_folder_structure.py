@@ -144,14 +144,14 @@ class ProjectFolderStructure(models.Model):
                         "company_id": cd_folder.company_id.id,
                         "is_master_folder": True,
                         "cr_project_folder_line_id": line.id,
-                        "sequence": 10,
+                        "sequence": 20,
                     }
                 )
 
             if existing:
                 seq_to_doc[normalized_seq] = existing
-                if existing.sequence != 10:
-                    existing.write({"sequence": 10})
+                if existing.sequence != 20:
+                    existing.write({"sequence": 20})
 
 
 class ProjectFolderStructureWizard(models.TransientModel):
