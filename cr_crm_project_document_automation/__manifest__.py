@@ -8,12 +8,12 @@
     "category": "Sales/CRM",
     "summary": "Automated Project folder and shortcut creation from CRM Opportunities",
     "license": "OPL-1",
-    "version": "18.0.0.1",
+    "version": "18.0.0.2",
     "description": """
         Automates Document workspace organization between CRM and Project modules.
         
         Key Features:
-        * Auto-creates "Customer Data" and SO-specific folders in Project workspaces on SO confirmation.
+        * Auto-creates integrated "Customer Data - [SO Name] - [Customer Name]" folders directly in Project workspaces on SO confirmation.
         * Links standard folders from Opportunity to Project using official Odoo shortcuts (Blue links).
         * Global "Folder Structure" configuration wizard for defining standard project sub-folders.
         * Support for complex hierarchies using dot-notation sequences (1.0, 1.1, etc.).

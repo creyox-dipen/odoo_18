@@ -5,3 +5,8 @@ Automated CRM-to-Project folder synchronization with hierarchical templates and 
 18.0.0.1(Date: 15th May,2026)
 -------------------------------
 Implemented reduced-size placeholder shortcuts with 'URL' extension visibility and optimized ZIP download handling.
+
+18.0.0.2(Date: 27th May,2026)
+-------------------------------
+Merged intermediate Customer Data and SO folder levels into a single flat level labeled 'Customer Data - [SO Name] - [Customer Name]' created directly in Project root.
+

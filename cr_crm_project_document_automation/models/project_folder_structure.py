@@ -193,7 +193,12 @@ class ProjectFolderStructureWizard(models.TransientModel):
         """Save structure and apply/sync folders to all projects."""
         self._save_lines()
         customer_data_folders = self.env["documents.document"].search(
-            [("name", "=", "Customer Data"), ("type", "=", "folder")]
+            [
+                "|",
+                ("name", "=", "Customer Data"),
+                ("name", "=like", "Customer Data - %"),
+                ("type", "=", "folder"),
+            ]
         )
         for cd_folder in customer_data_folders:
             self.env["project.folder.structure"].apply_structure_to_folder(cd_folder)
@@ -204,7 +209,12 @@ class ProjectFolderStructureWizard(models.TransientModel):
         self._save_lines()
 
         customer_data_folders = self.env["documents.document"].search(
-            [("name", "=", "Customer Data"), ("type", "=", "folder")]
+            [
+                "|",
+                ("name", "=", "Customer Data"),
+                ("name", "=like", "Customer Data - %"),
+                ("type", "=", "folder"),
+            ]
         )
         for cd_folder in customer_data_folders:
             self.env["project.folder.structure"].apply_structure_to_folder(

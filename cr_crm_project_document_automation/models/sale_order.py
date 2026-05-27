@@ -91,47 +91,12 @@ class SaleOrder(models.Model):
 
             _logger.info("Found Project root folder: %s", project_folder.name)
 
-            # 4. Create "Customer Data" folder inside the Project folder
-            customer_data_folder = self.env["documents.document"].search(
-                [
-                    ("name", "=", "Customer Data"),
-                    ("folder_id", "=", project_folder.id),
-                    ("type", "=", "folder"),
-                ],
-                limit=1,
-            )
-
-            if not customer_data_folder:
-                customer_data_folder = self.env["documents.document"].create(
-                    {
-                        "name": "Customer Data",
-                        "folder_id": project_folder.id,
-                        "type": "folder",
-                        "company_id": self.company_id.id,
-                        "is_master_folder": True,
-                    }
-                )
-                _logger.info(
-                    "CREATED folder 'Customer Data' inside Project folder '%s'",
-                    project_folder.name,
-                )
-            else:
-                _logger.info(
-                    "Folder 'Customer Data' ALREADY EXISTS inside Project folder '%s'",
-                    project_folder.name,
-                )
-
-            # --- AUTOMATION: Apply Global Folder Structure ---
-            self.env['project.folder.structure'].apply_structure_to_folder(customer_data_folder)
-            _logger.info("Automatically applied global folder structure to '%s'", customer_data_folder.name)
-            # --------------------------------------------------
-
-            # 5. Create "[SO Name] - [Customer Name]" folder inside "Customer Data"
-            so_folder_name = f"{self.name} - {self.partner_id.name}"
+            # 4. Create "Customer Data - [SO Name] - [Customer Name]" merged folder directly in Project root
+            so_folder_name = f"Customer Data - {self.name} - {self.partner_id.name}"
             so_folder = self.env["documents.document"].search(
                 [
                     ("name", "=", so_folder_name),
-                    ("folder_id", "=", customer_data_folder.id),
+                    ("folder_id", "=", project_folder.id),
                     ("type", "=", "folder"),
                 ],
                 limit=1,
@@ -141,7 +106,7 @@ class SaleOrder(models.Model):
                 so_folder = self.env["documents.document"].create(
                     {
                         "name": so_folder_name,
-                        "folder_id": customer_data_folder.id,
+                        "folder_id": project_folder.id,
                         "type": "folder",
                         "company_id": self.company_id.id,
                         "is_master_folder": True,
@@ -149,15 +114,23 @@ class SaleOrder(models.Model):
                     }
                 )
                 _logger.info(
-                    "CREATED SO folder '%s' inside 'Customer Data'", so_folder_name
+                    "CREATED merged folder '%s' inside Project folder '%s'",
+                    so_folder_name,
+                    project_folder.name,
                 )
             else:
                 if so_folder.sequence != 1:
                     so_folder.write({"sequence": 1})
                 _logger.info(
-                    "SO folder '%s' ALREADY EXISTS inside 'Customer Data'",
+                    "Merged folder '%s' ALREADY EXISTS inside Project folder '%s'",
                     so_folder_name,
+                    project_folder.name,
                 )
+
+            # --- AUTOMATION: Apply Global Folder Structure ---
+            self.env['project.folder.structure'].apply_structure_to_folder(so_folder)
+            _logger.info("Automatically applied global folder structure to '%s'", so_folder.name)
+            # --------------------------------------------------
 
             # 6. Copy standard subfolders from Opportunity as shortcuts
             standard_subfolders = [
@@ -311,24 +284,12 @@ class SaleOrder(models.Model):
         if not project_folder:
             return False
 
-        # 3. Find "Customer Data" inside Project
-        customer_data = self.env["documents.document"].search(
-            [
-                ("name", "=", "Customer Data"),
-                ("folder_id", "=", project_folder.id),
-                ("type", "=", "folder"),
-            ],
-            limit=1,
-        )
-        if not customer_data:
-            return False
-
-        # 4. Find the SO specific folder inside Customer Data
-        so_folder_name = f"{self.name} - {self.partner_id.name}"
+        # 3. Find the merged folder "Customer Data - [SO Name] - [Customer Name]" inside Project folder
+        so_folder_name = f"Customer Data - {self.name} - {self.partner_id.name}"
         return self.env["documents.document"].search(
             [
                 ("name", "=", so_folder_name),
-                ("folder_id", "=", customer_data.id),
+                ("folder_id", "=", project_folder.id),
                 ("type", "=", "folder"),
             ],
             limit=1,
