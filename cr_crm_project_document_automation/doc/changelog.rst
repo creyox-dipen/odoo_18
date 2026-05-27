@@ -8,5 +8,9 @@ Implemented reduced-size placeholder shortcuts with 'URL' extension visibility a
 
 18.0.0.2(Date: 27th May,2026)
 -------------------------------
-Merged intermediate Customer Data and SO folder levels into a single flat level labeled 'Customer Data - [SO Name] - [Customer Name]' created directly in Project root.
+Merged Customer Data and SO folders into a single flat folder level under the Project root.
+Made Opportunity Number and Quotation Number fields clickable to open in the same tab.
+Documents Smart Button of SO now redirect to root project folder instead of customer data.
+
+
 
