@@ -1,307 +1,1135 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Odoo</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
-    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
-          integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
-    <link href=https://apps.odoocdn.com/web/content/7247337-184ae0e/1/web.assets_frontend.css" rel="stylesheet">
 
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Odoo CAWL Payment Gateway Integration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <style>
+        .nav-tabs .nav-link.active {
+            background-color: transparent !important;
+            color: #121130 !important;
+            border-bottom: 4px solid #121130 !important;
+        }
+
+        .deep_hover:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
 </head>
 
-<body>
-<main class="container" style="border-radius:20px;">
-    <header class="py-2">
-        <div class="row align-items-center" style="margin-top: 20px;">
-            <div class="col-12 col-md-12 text-right">
-                <span style="font-size: 19px; font-weight: 500;margin-right: 20px;color: black;"><i
-                        class="fa fa-check-circle mr-1" style="color: #00D100;"></i> Community</span>
-                <span style="font-size: 19px; font-weight: 500;color: black;"><i class="fa fa-check-circle mr-1"
-                                                                                 style="color: #00D100;"></i> Enterprise</span>
-                <span style="font-size: 19px; font-weight: 500;color: black;padding: 15px;"><i
-                        class="fa fa-check-circle mr-1" style="color: #00D100;"></i> Odoo.sh</span>
-            </div>
-        </div>
-        <hr/>
-    </header>
+<body style="font-family:'Roboto',sans-serif; background-color: #f8fafc;">
 
-    <!-- <center><span style="font-size: 28px;" class="text-success">We are offering a 20% discount on any odoo service.</span></center> -->
-    <div class="px-md-5 py-md-4 p-2 mb-4 bg-white shadow " style="border-radius:20px; font-family:'system-ui'">
-        <center>
-            <div class="oe_container" style="margin-left:calc(-42vw + 50%); width:84vw">
+    <main class="container" style="border-radius:20px;">
 
-                <div class="row o_equal_col_sm">
-
-                    <!--                    <div class="" style="display:block; margin:0 auto;width:100%">-->
-                    <!--                        <span style="width:100%; display:inline-block">-->
-                    <!--                            -->
-                    <!--                            <img class="img img-responsive mt24 mb8" src="static_img/odoo_learning_partner_rgb-imageonline.co-merged.png" style="display:block; margin:0 auto; width: 800px;">-->
-                    <!--                            -->
-                    <!--                        </span>-->
-                    <!--                    </div>-->
-
+        <header class="py-2">
+            <div class="row align-items-center" style="margin-top: 20px;">
+                <div class="col-12 col-md-12 text-end">
+                    <span style="font-size: 19px; font-weight: 500;margin-right: 20px;color: black;"><i
+                            class="fa fa-check-circle me-1" style="color: #00D100;"></i> Community</span>
+                    <span style="font-size: 19px; font-weight: 500;color: black;"><i class="fa fa-check-circle me-1"
+                            style="color: #00D100;"></i> Enterprise</span>
+                    <span class="p-3" style="font-size: 19px; font-weight: 500;color: black;"><i
+                            class="fa fa-check-circle me-1" style="color: #00D100;"></i> Odoo.sh</span>
                 </div>
-                <!-- </center> -->
             </div>
-        </center>
-        <div class="position-relative mb-4" style="border-radius:10px">
-            <img alt="" class="w-100 h-100 position-absolute img-fluid left_0" loading="lazy"
-                 src="static_img/main_bg.jpg" style="border-radius: 25px;">
-            <div class="p-lg-5 p-3 position-relative">
-                <div class="row py-4 py-lg-0">
-                    <div class="col-md-12">
-                        <h1 style="font-family:'system-ui'; font-style:normal; font-weight:bold; font-size:calc(2.06rem + 1vw); line-height:120%; text-align:center; text-transform:capitalize">
-                            <span style="font-family:system-ui; color:#10488A; font-size:calc(2.06rem + 1vw)">GET PERSONALIZED DEMO</span>
-                        </h1>
-                    </div>
-                    <div class="col-md-12 py-2">
-                        <p style="font-family:system-ui; font-weight:500; font-size:18px; line-height:150% !important; text-align:center; letter-spacing:-0.02em; color:#4F4F4F">
-                            Please send your inquiry on email or skype to know more about this application.
-                        </p>
-                    </div>
-                    <div class="col-md-12 py-2 text-center ">
-                        <a href="mailto:support@creyox.com" target="_blank"
-                           style="background-color:#091E42; border-radius:12px; display:inline-block; padding:7px 33px; border:1px solid #091E42"
-                           class="mx-1 mb-2 deep-1 deep_hover">
-                            <img class="img" style="width:30px" src="static_img/email.png">
-                            <span class="pl-2" style="color:#fff; font-size:16px; vertical-align:middle">
-                                Email Us
-                            </span>
-                        </a>
-                        <a href="skype:live:.cid.d7506ede68fce23e?chat" target="_blank"
-                           style="background-color:#091E42; border-radius:12px; display:inline-block; padding:7px 33px; border:1px solid #091E42"
-                           class="mx-1 mb-2 deep-1 deep_hover">
-                            <img class="img" style="width:27px" src="static_img/skype.png">
-                            <span class="pl-2" style="color:#fff; font-size:16px; vertical-align:middle">
-                                Skype Us
-                            </span>
-                        </a>
+            <hr />
+        </header>
+
+        <!-- Demo Request Block -->
+        <div class="px-md-5 py-md-4 p-2 mb-4 bg-white shadow rounded" style="font-family:'system-ui'">
+            <div class="position-relative mb-4 rounded-3">
+                <img alt="" class="w-100 h-100 position-absolute img-fluid left_0" loading="lazy"
+                    src="static_img/main_bg.jpg" style="border-radius: 25px; object-fit: cover;">
+                <div class="p-lg-5 p-3 position-relative">
+                    <div class="row py-4 py-lg-0">
+                        <div class="col-md-12">
+                            <h1
+                                style="font-family:'system-ui'; font-style:normal; font-weight:bold; font-size:calc(2.06rem + 1vw); line-height:120%; text-align:center; text-transform:capitalize">
+                                <span style="font-family:system-ui; color:#121130; font-size:calc(2.06rem + 1vw)">GET
+                                    PERSONALIZED DEMO</span>
+                            </h1>
+                        </div>
+                        <div class="col-md-12 py-2 text-center ">
+                            <p
+                                style="font-family:system-ui; font-weight:500; font-size:18px; line-height:150% !important; text-align:center; letter-spacing:-0.02em; color:#4F4F4F">
+                                Please send your inquiry on email or Submit your ticket on helpdesk to know more
+                                about this application.</p>
+                            <a href="mailto:support@creyox.com" target="_blank"
+                                style="background-color:#121130; display:inline-block; padding:7px 33px; border:1px solid #121130; height: 45px; text-decoration: none;"
+                                class="mx-1 mb-2 deep-1 deep_hover rounded-3">
+                                <img class="img" style="width:30px" src="static_img/email.png">
+                                <span class="pl-2" style="color:#fff; font-size:16px; vertical-align:middle">
+                                    Email Us
+                                </span>
+                            </a>
+                            <a href="https://creyox.com/helpdesk" target="_blank"
+                                style="background-color:#121130; display:inline-block; padding:7px 33px; border:1px solid #121130; height: 45px; text-decoration: none;"
+                                class="mx-1 mb-2 deep-1 deep_hover rounded-3">
+                                <img class="img" style="width:30px" src="static_img/helpdesk.png">
+                                <span class="pl-2" style="color:#fff; font-size:16px; vertical-align:middle">
+                                    https://creyox.com/helpdesk
+                                </span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="px-md-5 py-md-4 p-2 mb-4 bg-white shadow " style="border-radius:20px; font-family:'system-ui'">
-        <div class="position-relative mb-4" style="border-radius:10px">
-            <img alt="" class="w-100 h-100 position-absolute img-fluid left_0" loading="lazy"
-                 src="static_img/main_bg.jpg" style="border-radius: 25px;">
-            <div class="p-lg-5 p-3 position-relative">
-                <div class="row py-4 py-lg-0">
-                    <div class="col-md-12">
-                        <h1 style="font-family:'system-ui'; font-style:normal; font-weight:bold; font-size:calc(2.06rem + 1vw); line-height:120%; text-align:center; text-transform:capitalize">
-                            <span style="font-family:system-ui; color:#10488A; font-size:calc(2.06rem + 1vw)">NMI Payment Gateway</span>
-                        </h1>
-                    </div>
-                    <div class="col-md-12 py-2 text-center">
-                        <a class="btn btn-primary btn-lg mt8" target="_blank" style="color: #FFFFFF !important;"
-                           href="https://youtu.be/EiL90V-IjT8">
-                            <i class="fa fa-check-square"></i> Watch Video </a>
+        <!-- Main Title / Banner -->
+        <div class="px-md-5 py-md-4 p-2 mb-4 bg-white shadow " style="border-radius:20px; font-family:'system-ui'">
+            <div class="position-relative mb-4" style="border-radius:10px">
+                <img alt="" class="w-100 h-100 position-absolute img-fluid left_0" loading="lazy"
+                    src="static_img/main_bg.jpg" style="border-radius: 25px; object-fit: cover;">
+                <div class="p-lg-5 p-3 position-relative">
+                    <div class="row py-4 py-lg-0">
+                        <div class="col-md-12">
+                            <h1
+                                style="font-family:'system-ui'; font-style:normal; font-weight:bold; font-size:calc(2.06rem + 1vw); line-height:120%; text-align:center; text-transform:capitalize">
+                                <span style="font-family:system-ui; color:#121130; font-size:calc(2.06rem + 1vw)">NMI Payment Gateway</span>
+                            </h1>
+                        </div>
+                        <div class="col-md-12 py-2">
+                            <p
+                                style="font-family:system-ui; font-weight:500; font-size:18px; line-height:150% !important; text-align:center; letter-spacing:-0.02em; color:#4F4F4F">
+                                Accept online credit/debit cards and ACH payments using
+                                NMI Payment Gateway.
+                            </p>
+                        </div>
+                         <div class="col-md-12 py-2 text-center">
+                            <a class="btn btn-primary btn-lg mt8" target="_blank" style="background-color:#121130; color: #FFF !important;"
+                                href="https://youtu.be/RNcTjRE6ieU">
+                                <i class="fa fa-play-circle" style="margin-right:8px;"></i> Watch Video </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="mb-4 bg-white shadow" style="border-radius:20px; font-family:'system-ui'; font-weight:400">
-        <div class="tab-content p-md-5 p-2 py-3" id="myTabContent">
-            <div class="card shadow"
-                 style="background-color:#FFFAFA !important; border-color:#dfdfdf; border-radius:10px">
-                <br/>
-                <div class="row mb-5">
-                    <div class="col-12 col-md-12 text-center text-md-left">
-                        <center><h1 style="color: #000099;">Overview</h1></center>
+        <!-- Overview Section -->
+        <div class="bg-white shadow rounded mb-4" style="font-family:'system-ui';font-weight:400;">
+            <div class="p-4 px-5">
+                <div class="shadow rounded-3 p-5" style="background-color:#f0faf7;border:1px solid #ccece3;">
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <h1 style="color:#121130;font-weight:800;">Overview</h1>
+                            <div class="mx-auto mt-3" style="width:70px;height:4px;background:#121130;"></div>
+                        </div>
                     </div>
-                </div>
-                <div class="row align-items-center mb-4" style="margin-top:-25px">
-                    <div class="col-12 col-md-12">
-                        <center>
-                            <div class="col-10 col-md-10">
-                                <p style="font-size: 20px;">
-                                    NMI payment gateway for an Odoo website includes setting up the framework
-                                    to permit clients to make secure and fearless payment for their purchase online,
-                                    It creates a secure and efficient payment process, allowing your customers to
-                                    complete transactions seamlessly, This integration includes configuring NMI API with
-                                    odoo's eCommerce platform to process the payments for customer purchases.
-                                </p>
+                    <div class="row" style="margin-top:20px;">
+                        <div class="col-md-6" style="margin-bottom:20px;">
+                            <div class="d-flex align-items-start">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle me-3 mt-1"
+                                    style="background-color:#121130;min-width:42px;height:42px;">
+                                    <i class="fa fa-lock" style="color:#fff;font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <h5 style="color:#121130;font-weight:700;margin-bottom:6px;">Secure Direct Post
+                                    </h5>
+                                    <p style="font-size:16px;color:#444;margin:0;line-height:1.6;">Sends payment data
+                                        directly from Odoo via secure HTTPS to NMI's Direct Post API, keeping sensitive card
+                                        and bank account credentials completely off Odoo's local database.</p>
+                                </div>
                             </div>
-                        </center>
-                    </div>
-                </div>
-            </div>
-            <br/>
-            <div class="card shadow"
-                 style="background-color:#FFFAFA !important; border-color:#dfdfdf; border-radius:10px">
-                <br/>
-                <div class="row mb-5">
-                    <div class="col-12 col-md-12 text-center text-md-left">
-                        <center><h1 style="color: #000099;">Features</h1></center>
-                    </div>
-                </div>
-                <div class="row align-items-center mb-4" style="margin-top:-25px">
-                    <div class="col-12 col-md-12">
-                        <ul style="font-size: 22px;">
-                            <li>Integrating the NMI API with Odoo's eCommerce platform.</li>
-                            <li>Effective Transaction Management using NMI Payment Gateway.</li>
-                            <li>Easy & Secure Payment for Purchases.</li>
-                        </ul>
+                        </div>
+                        <div class="col-md-6" style="margin-bottom:20px;">
+                            <div class="d-flex align-items-start">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle me-3 mt-1"
+                                    style="background-color:#121130;min-width:42px;height:42px;">
+                                    <i class="fa fa-credit-card" style="color:#fff;font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <h5 style="color:#121130;font-weight:700;margin-bottom:6px;">Customer Vault
+                                        (Tokenization)</h5>
+                                    <p style="font-size:16px;color:#444;margin:0;line-height:1.6;">Customers can
+                                        securely save their credit/debit cards or ACH bank accounts in NMI's Customer Vault,
+                                        enabling seamless one-click subsequent checkouts.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" style="margin-bottom:20px;">
+                            <div class="d-flex align-items-start">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle me-3 mt-1"
+                                    style="background-color:#121130;min-width:42px;height:42px;">
+                                    <i class="fa fa-refresh" style="color:#fff;font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <h5 style="color:#121130;font-weight:700;margin-bottom:6px;">Real-Time Card Lookup
+                                    </h5>
+                                    <p style="font-size:16px;color:#444;margin:0;line-height:1.6;">Integrates NMI's v4 Query
+                                        API to instantly look up the card's BIN number, accurately detecting credit vs.
+                                        debit card types as the customer enters their details.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" style="margin-bottom:20px;">
+                            <div class="d-flex align-items-start">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle me-3 mt-1"
+                                    style="background-color:#121130;min-width:42px;height:42px;">
+                                    <i class="fa fa-check" style="color:#fff;font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <h5 style="color:#121130;font-weight:700;margin-bottom:6px;">Automated Surcharge Fees</h5>
+                                    <p style="font-size:16px;color:#444;margin:0;line-height:1.6;">Enables merchants to
+                                        calculate and apply distinct surcharge percentage fees for credit and debit cards,
+                                        which are automatically added to sales orders and transaction totals.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" style="margin-bottom:20px;">
+                            <div class="d-flex align-items-start">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle me-3 mt-1"
+                                    style="background-color:#121130;min-width:42px;height:42px;">
+                                    <i class="fa fa-undo" style="color:#fff;font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <h5 style="color:#121130;font-weight:700;margin-bottom:6px;">ACH eCheck Payments</h5>
+                                    <p style="font-size:16px;color:#444;margin:0;line-height:1.6;">Allows customers to
+                                        securely make payments using bank routing (ABA) and account numbers with standard
+                                        WEB SEC code for online checkouts.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" style="margin-bottom:20px;">
+                            <div class="d-flex align-items-start">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle me-3 mt-1"
+                                    style="background-color:#121130;min-width:42px;height:42px;">
+                                    <i class="fa fa-bell" style="color:#fff;font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <h5 style="color:#121130;font-weight:700;margin-bottom:6px;">Duplicate Protection</h5>
+                                    <p style="font-size:16px;color:#444;margin:0;line-height:1.6;">Intelligently prevents
+                                        order-duplicate transaction declines by appending dynamic attempt timestamps and
+                                        managing API parameters to allow seamless payment retries.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <br/>
-            <div class="row mb-5">
-                <div class="col-12 col-md-12 text-center text-md-left">
-                    <center><h1 style="color: #000099;">NMI Payment Gateway</h1></center>
+            <!-- Complete Data Operations -->
+            <div class="py-5 px-3">
+                <div class="container">
+                    <div class="text-center mb-5">
+                        <h1 style="font-size:36px;color:#121130;font-weight:800;">Complete Data Operations</h1>
+                        <div class="mx-auto my-3" style="width:80px;height:4px;background:#121130;"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6" style="margin-bottom:24px;">
+                            <div class="bg-white shadow rounded p-4 h-100 d-flex align-items-center"
+                                style="border-top:4px solid #121130;">
+                                <div class="p-4 rounded-3 me-4" style="background:rgba(18,17,48,0.05);">
+                                    <i class="fa fa-refresh" style="font-size:35px;color:#121130;"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-weight:700;color:#333;">Credit &amp; Debit Cards</h4>
+                                    <p style="font-size:15px;color:#666;margin:0;">Allows customers to complete online
+                                        transactions using major card brands like Visa, Mastercard, AMEX, Discover, JCB, etc.
+                                        through direct API execution.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" style="margin-bottom:24px;">
+                            <div class="bg-white shadow rounded p-4 h-100 d-flex align-items-center"
+                                style="border-top:4px solid #121130;">
+                                <div class="p-4 rounded-3 me-4" style="background:rgba(18,17,48,0.05);">
+                                    <i class="fa fa-globe" style="font-size:35px;color:#121130;"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-weight:700;color:#333;">Direct ACH Bank Payments</h4>
+                                    <p style="font-size:15px;color:#666;margin:0;">Supports seamless checking and savings
+                                        account payments via direct Routing (ABA) and Account inputs, processed using the
+                                        secure NMI Direct Post transaction flow.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" style="margin-bottom:24px;">
+                            <div class="bg-white shadow rounded p-4 h-100 d-flex align-items-center"
+                                style="border-top:4px solid #121130;">
+                                <div class="p-4 rounded-3 me-4" style="background:rgba(18,17,48,0.05);">
+                                    <i class="fa fa-user-plus" style="font-size:35px;color:#121130;"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-weight:700;color:#333;">Secure Vault Tokenization</h4>
+                                    <p style="font-size:15px;color:#666;margin:0;">Generates secure customer vault tokens
+                                        in NMI during checkout or portal set-ups. Enables safe, customer-initiated 1-click
+                                        tokenized checkouts for future orders.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" style="margin-bottom:24px;">
+                            <div class="bg-white shadow rounded p-4 h-100 d-flex align-items-center"
+                                style="border-top:4px solid #121130;">
+                                <div class="p-4 rounded-3 me-4" style="background:rgba(18,17,48,0.05);">
+                                    <i class="fa fa-cogs" style="font-size:35px;color:#121130;"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-weight:700;color:#333;">Real-Time Surcharge Matrix</h4>
+                                    <p style="font-size:15px;color:#666;margin:0;">Automatically detects card types in
+                                        real-time to compute and inject debit or credit card fees directly into the Sales
+                                        Order before sending payment requests.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="row align-items-center mb-4" style="margin-top:-25px">
-                <div class="col-12 col-md-12">
-                    <ul style="font-size: 22px;">
-                        <li>Navigate to <b>Website</b> >> <b>Configuration</b> >> under it eCommerce user will see <b>Payment
-                            Provider</b>.
-                        </li>
-                        <img src="images/1.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5" loading="lazy"
-                             style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                    </ul>
 
-                    <ul style="font-size: 22px;">
-                        <li>Here user will find <b>NMI</b> payment gateway.</li>
-                        <li>Further into it user will find <b>Credentials</b> where user need to mention some security
-                            details for processing the payments.
-                        </li>
-                        <img src="images/2.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5" loading="lazy"
-                             style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                    </ul>
-                    <ul style="font-size: 22px;">
-                        <li>Here in checkout page user will see the <b>NMI</b> payment method.</li>
-                        <img src="images/3.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5" loading="lazy"
-                             style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                    </ul>
-                    <ul style="font-size: 22px;">
-                        <li>Clicking on <b>Pay Now</b> user will see <b>Payment Page</b> asking for the <b>Debit or
-                            Credit Card</b> details followed by <b>Cardholder Details</b> and lastly click on <b>Continue</b>
-                            button.
-                        </li>
-                        <img src="images/4.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5" loading="lazy"
-                             style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                        <li>Then user will see a <b>Authentication</b> page asking for the password for the transaction.
-                        </li>
-                        <img src="images/5.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5" loading="lazy"
-                             style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                        <li>Lastly user will have a order success page <b>Thanking for order</b> and <b>Amount
-                            Summary</b>.
-                        </li>
-                        <img src="images/6.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5" loading="lazy"
-                             style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                    </ul>
-                    <br/>
-                </div>
-            </div>
-            <div class="row mb-5">
-                <div class="col-12 col-md-12 text-center text-md-left">
-                    <center><h1 style="color: #000099;"></h1></center>
+            <!-- Synchronization Matrix (Supported Methods Table) -->
+            <div class="py-5 px-3">
+                <div class="container">
+                    <div class="text-center mb-5">
+                        <h1 style="font-size:36px;color:#121130;font-weight:800;">Supported Payment Methods</h1>
+                        <div class="mx-auto my-3" style="width:80px;height:4px;background:#121130;"></div>
+                    </div>
+                    <div class="table-responsive shadow rounded border overflow-hidden">
+                        <table class="table mb-0" style="background:#fff; vertical-align: middle;">
+                            <thead>
+                                <tr>
+                                    <th style="background-color:#121130;color:#fff;border:none;padding:20px 15px;">
+                                        Payment Method
+                                    </th>
+                                    <th
+                                        style="background-color:#121130;color:#fff;border:none;padding:20px 15px;text-align:center;">
+                                        Method Logo
+                                    </th>
+                                    <th
+                                        style="background-color:#121130;color:#fff;border:none;padding:20px 15px;text-align:center;">
+                                        Direct Sync
+                                    </th>
+                                    <th
+                                        style="background-color:#121130;color:#fff;border:none;padding:20px 15px;text-align:center;">
+                                        Operations Supported
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;">
+                                        <strong style="color:#333;">Visa</strong>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <img src="images/payment_methods/visa.png" style="height:30px;" alt="Visa">
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <i class="fa fa-check-circle" style="font-size:20px;color:#00D100;"></i>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        Direct Post, Tokenization
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;">
+                                        <strong style="color:#333;">Mastercard</strong>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <img src="images/payment_methods/mastercard.png" style="height:30px;"
+                                            alt="Mastercard">
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <i class="fa fa-check-circle" style="font-size:20px;color:#00D100;"></i>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        Direct Post, Tokenization
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;">
+                                        <strong style="color:#333;">American Express</strong>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <img src="images/payment_methods/amex.png" style="height:30px;" alt="Amex">
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <i class="fa fa-check-circle" style="font-size:20px;color:#00D100;"></i>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        Direct Post, Tokenization
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;">
+                                        <strong style="color:#333;">Discover</strong>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <img src="images/payment_methods/discover.png" style="height:30px;"
+                                            alt="Discover">
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <i class="fa fa-check-circle" style="font-size:20px;color:#00D100;"></i>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        Direct Post, Tokenization
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;">
+                                        <strong style="color:#333;">Diners Club</strong>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <img src="images/payment_methods/diners.png" style="height:30px;"
+                                            alt="Diners Club">
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <i class="fa fa-check-circle" style="font-size:20px;color:#00D100;"></i>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        Direct Post, Tokenization
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;">
+                                        <strong style="color:#333;">JCB</strong>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <img src="images/payment_methods/jcb.png" style="height:30px;"
+                                            alt="JCB">
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <i class="fa fa-check-circle" style="font-size:20px;color:#00D100;"></i>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        Direct Post, Tokenization
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;">
+                                        <strong style="color:#333;">UnionPay</strong>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <img src="images/payment_methods/unionpay.png" style="height:30px;"
+                                            alt="UnionPay">
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <i class="fa fa-check-circle" style="font-size:20px;color:#00D100;"></i>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        Direct Post, Tokenization
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;">
+                                        <strong style="color:#333;">ACH / eCheck</strong>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <i class="fa fa-bank" style="font-size:28px;color:#121130;" title="ACH Bank Account"></i>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        <i class="fa fa-check-circle" style="font-size:20px;color:#00D100;"></i>
+                                    </td>
+                                    <td style="padding:18px 15px;border-bottom:1px solid #f0f0f0;text-align:center;">
+                                        Direct Post, Tokenization
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <div class="pr-5" style="font-size: 1.6rem; font-weight: 600; color: #0b3b52;">
-                <br/>
-                <center><a style="text-align: center; color: #000099;" target="_blank"
-                           href="https://apps.odoo.com/apps/modules/browse?author=Creyox Technologies"><i
-                        class="fa fa-list"></i> OUR MORE APPS</a></center>
-                <br/>
+            <!-- Tabs Section -->
+            <ul class="nav nav-tabs justify-content-center border-0" id="nav-tab" role="tablist"
+                style="margin-top:20px;">
+                <li class="nav-item">
+                    <a class="nav-link active" id="features-tab" data-bs-toggle="pill" href="#pills-features" role="tab"
+                        style="font-size:19px;font-weight:600;color:#333;padding:15px 40px;border-bottom:3px solid transparent;text-decoration:none;"
+                        class="nav-link rounded-0">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="setup-tab" data-bs-toggle="pill" href="#pills-setup" role="tab"
+                        style="font-size:19px;font-weight:600;color:#333;padding:15px 40px;border-bottom:3px solid transparent;text-decoration:none;"
+                        class="nav-link rounded-0">Setup Guide</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="faq-tab" data-bs-toggle="pill" href="#pills-faq" role="tab"
+                        style="font-size:19px;font-weight:600;color:#333;padding:15px 40px;border-bottom:3px solid transparent;text-decoration:none;"
+                        class="nav-link rounded-0">FAQ Section</a>
+                </li>
+            </ul>
+
+            <div class="tab-content" style="border-top:1px solid #dee2e6;padding-top:40px;" id="pills-tabContent">
+
+                <!-- Features Panel -->
+                <div class="tab-pane fade show active" id="pills-features" role="tabpanel">
+                    <div style="padding-top:10px; padding: 20px;">
+                        <div class="container">
+                            <div class="text-center" style="margin-bottom:40px;">
+                                <h1 style="font-size:35px;color:#121130;margin-bottom:10px;">Hot Features</h1>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
+                                    <div class="d-flex justify-content-center align-items-center rounded shadow p-3 h-100"
+                                        style="border:1px solid #99f6e4; border-bottom:4px solid #99f6e4; background-color:#f0fdfa;">
+                                        <span class="align-middle ps-2 text-center"
+                                            style="color:#212121; font-weight:600; font-size: 15px;">Secure Direct Post Checkout</span>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
+                                    <div class="d-flex justify-content-center align-items-center rounded shadow h-100 p-3"
+                                        style="border:1px solid #99f6e4; border-bottom:4px solid #99f6e4; background-color:#f0fdfa;">
+                                        <span class="align-middle ps-2 text-center"
+                                            style="color:#212121; font-weight:600; font-size: 15px;">Secure Card Tokenization</span>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
+                                    <div class="d-flex justify-content-center align-items-center rounded shadow h-100 p-3"
+                                        style="border:1px solid #99f6e4; border-bottom:4px solid #99f6e4; background-color:#f0fdfa;">
+                                        <span class="align-middle ps-2 text-center"
+                                            style="color:#212121; font-weight:600; font-size: 15px;">One-Click Token Payments</span>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
+                                    <div class="d-flex justify-content-center align-items-center rounded shadow h-100 p-3"
+                                        style="border:1px solid #99f6e4; border-bottom:4px solid #99f6e4; background-color:#f0fdfa;">
+                                        <span class="align-middle ps-2 text-center"
+                                            style="color:#212121; font-weight:600; font-size: 15px;">Real-Time Card Type Detection</span>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
+                                    <div class="d-flex justify-content-center align-items-center rounded shadow h-100 p-3"
+                                        style="border:1px solid #99f6e4; border-bottom:4px solid #99f6e4; background-color:#f0fdfa;">
+                                        <span class="align-middle ps-2 text-center"
+                                            style="color:#212121; font-weight:600; font-size: 15px;">Credit &amp; Debit Surcharge Fees</span>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
+                                    <div class="d-flex justify-content-center align-items-center rounded shadow h-100 p-3"
+                                        style="border:1px solid #99f6e4; border-bottom:4px solid #99f6e4; background-color:#f0fdfa;">
+                                        <span class="align-middle ps-2 text-center"
+                                            style="color:#212121; font-weight:600; font-size: 15px;">ACH eCheck Payments Support</span>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
+                                    <div class="d-flex justify-content-center align-items-center rounded shadow h-100 p-3"
+                                        style="border:1px solid #99f6e4; border-bottom:4px solid #99f6e4; background-color:#f0fdfa;">
+                                        <span class="align-middle ps-2 text-center"
+                                            style="color:#212121; font-weight:600; font-size: 15px;">Customer Vault Integration</span>
+                                    </div>
+                                </div>
+                                 <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
+                                    <div class="d-flex justify-content-center align-items-center rounded shadow h-100 p-3"
+                                        style="border:1px solid #99f6e4; border-bottom:4px solid #99f6e4; background-color:#f0fdfa;">
+                                        <span class="align-middle ps-2 text-center"
+                                            style="color:#212121; font-weight:600; font-size: 15px;">Automated Surcharge Calculations</span>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
+                                    <div class="d-flex justify-content-center align-items-center rounded shadow h-100 p-3"
+                                        style="border:1px solid #99f6e4; border-bottom:4px solid #99f6e4; background-color:#f0fdfa;">
+                                        <span class="align-middle ps-2 text-center"
+                                            style="color:#212121; font-weight:600; font-size: 15px;">NMI v4 Query API Integration</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <br /><br />
+
+                    <div class="row" style="margin-bottom:30px;">
+                        <div class="col-12 text-center">
+                            <h1 style="color:#121130;">Key Capabilities</h1>
+                        </div>
+                    </div>
+
+                    <div class="row align-items-center" style="margin-top:-25px; padding: 20px;">
+                        <div class="col-12">
+                            <div class="container">
+                                <div class="shadow rounded-3 p-3 mt-3"
+                                    style="background-color:#f0fdfa;border:1px solid #dfdfdf;">
+                                    <span class="fa fa-arrow-right pe-3"
+                                        style="color:#121130;font-weight:600;font-size:18px;"></span>
+                                    <span class="ps-2 fw-medium text-capitalize"
+                                        style="font-size:18px;color:#212529;">PCI-DSS Compliant Direct Post secure payment processing.</span>
+                                </div>
+                                <div class="shadow rounded-3 p-3 mt-3"
+                                    style="background-color:#f0fdfa;border:1px solid #dfdfdf;">
+                                    <span class="fa fa-arrow-right pe-3"
+                                        style="color:#121130;font-weight:600;font-size:18px;"></span>
+                                    <span class="ps-2 fw-medium text-capitalize"
+                                        style="font-size:18px;color:#212529;">Seamless ACH &amp; eCheck payment flow utilizing Routing (ABA) and Account inputs.</span>
+                                </div>
+                                <div class="shadow rounded-3 p-3 mt-3"
+                                    style="background-color:#f0fdfa;border:1px solid #dfdfdf;">
+                                    <span class="fa fa-arrow-right pe-3"
+                                        style="color:#121130;font-weight:600;font-size:18px;"></span>
+                                    <span class="ps-2 fw-medium text-capitalize"
+                                        style="font-size:18px;color:#212529;">Real-time card lookup using NMI's official v4 API to identify credit/debit card types.</span>
+                                </div>
+                                <div class="shadow rounded-3 p-3 mt-3"
+                                    style="background-color:#f0fdfa;border:1px solid #dfdfdf;">
+                                    <span class="fa fa-arrow-right pe-3"
+                                        style="color:#121130;font-weight:600;font-size:18px;"></span>
+                                    <span class="ps-2 fw-medium text-capitalize"
+                                        style="font-size:18px;color:#212529;">Configure distinct debit and credit surcharge percentages to add automatically to Sales Orders.</span>
+                                    <img src="static_img/new.png" style="width: 42px; margin-left: 8px;"
+                                        alt="New Feature">
+                                </div>
+                                <div class="shadow rounded-3 p-3 mt-3"
+                                    style="background-color:#f0fdfa;border:1px solid #dfdfdf;">
+                                    <span class="fa fa-arrow-right pe-3"
+                                        style="color:#121130;font-weight:600;font-size:18px;"></span>
+                                    <span class="ps-2 fw-medium text-capitalize"
+                                        style="font-size:18px;color:#212529;">Enable Vault Tokenization for frictionless customer checkouts on subsequent purchases.</span>
+                                    <img src="static_img/new.png" style="width: 42px; margin-left: 8px;"
+                                        alt="New Feature">
+                                </div>
+                                <div class="shadow rounded-3 p-3 mt-3"
+                                    style="background-color:#f0fdfa;border:1px solid #dfdfdf;">
+                                    <span class="fa fa-arrow-right pe-3"
+                                        style="color:#121130;font-weight:600;font-size:18px;"></span>
+                                    <span class="ps-2 fw-medium text-capitalize"
+                                        style="font-size:18px;color:#212529;">Prevent duplicate transaction errors during checkout retries by using dynamic order timestamp signatures.</span>
+                                    <img src="static_img/new.png" style="width: 42px; margin-left: 8px;"
+                                        alt="New Feature">
+                                </div>
+                                <div class="shadow rounded-3 p-3 mt-3"
+                                    style="background-color:#f0fdfa;border:1px solid #dfdfdf;">
+                                    <span class="fa fa-arrow-right pe-3"
+                                        style="color:#121130;font-weight:600;font-size:18px;"></span>
+                                    <span class="ps-2 fw-medium text-capitalize"
+                                        style="font-size:18px;color:#212529;">Seamless transaction processing for Odoo eCommerce checkouts and backend customer invoice payments.</span>
+                                    <img src="static_img/new.png" style="width: 42px; margin-left: 8px;"
+                                        alt="New Feature">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setup Guide Panel -->
+                <div class="tab-pane fade" id="pills-setup" role="tabpanel">
+                    <center>
+                        <h1 style="color:#121130;font-weight:800;margin-bottom:40px;">NMI Provider Setup &amp; Customer
+                            Flow</h1>
+                    </center>
+                    <div style="padding-left:40px;padding-right:40px;">
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            Navigate to <b>Invoicing</b> >> <b>Configuration</b> >> <b>Payment Providers</b> and click on <b>NMI</b> Payment Provider.
+                        </div>
+                        <img src="images/payment provider menu.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+                        <img src="images/nmi card provider.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+
+
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            Enable the <b>NMI</b> payment provider.
+                        </div>
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            Copy the <b>Private Key</b> from your NMI account and paste it into the <b>NMI Security Key (API Key)</b> field. This key is used to authenticate payment processing requests.
+                        </div>
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            Also, copy the <b>Partner Key</b> from your NMI account and paste it into the <b>v4 API Key</b> field. This key is used to identify the card type, such as debit or credit.
+                        </div>
+                        <img src="images/nmi provider configuration.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+                        
+                        
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            Then go to the <b>Configuration</b> tab, where you will find the <b>NMI Card Surcharges</b> section.
+                        </div>
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            Also enable both the <b>Card</b> and <b>ACH</b> payment methods to allow users to make payments through either option.
+                        </div>
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            Check the <b>Add Card Fees</b> checkbox and set the <b>Credit Card Fees</b> and <b>Debit Card Fees</b> percentages to apply card fees to transactions.
+                        </div>
+                        <img src="images/nmi card fees.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            On the checkout page, you will see the card payment form. Enter the card details, and as soon as you enter the card number, a fees badge will appear showing the calculated card fees and the total amount based on the detected card type.
+                        </div>
+                        <img src="images/card payment on checkout.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+                            
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            By clicking on <b>Pay Now</b>, the payment will be processed successfully for the total amount, including the applicable card fees.
+                        </div>
+                        <img src="images/successful card payment.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            A separate fees line will also be automatically added to the <b>Sale Order</b> for the applicable card charges.
+                        </div>
+                        <img src="images/card fee line on sale order.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            On the next payment attempt, you can use the saved card details to quickly complete the transaction without re-entering the details.
+                        </div>
+                        <img src="images/card saved token payment.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            Now ensure that the <b>ACH Direct Debit</b> payment method is enabled on the <b>NMI</b> payment provider.
+                        </div>
+                        <img src="images/payment method.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            Once Configured, You will see ACH payment form on the checkout page, just enter the required details and you can also check the <b>Save my payment details</b> checkbox to save the payment details for future use.
+                        </div>
+                        <img src="images/ach payment on checkout.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            By clicking on <b>Pay Now</b> the transaction will be successfully processed.
+                        </div>
+                        <img src="images/successful ach payment.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+                        
+                        <div style="font-size:21px;color:#333;margin-bottom:15px;font-weight:500;"><i class="fa fa-arrow-right" style="color:#121130; margin-right: 10px;"></i>
+                            On the next payment attempt, you can use the saved payment details to quickly complete the transaction without re-entering the details.
+                        </div>
+                        <img src="images/ach saved token  payment.png"
+                            class="img-fluid w-100 bg-white shadow rounded-3 mb-5"
+                            style="border: 1px solid rgb(242, 238, 247);" />
+                    </div>
+                </div>
+                
+
+                <!-- FAQ Section Panel -->
+                <div class="tab-pane fade" id="pills-faq" role="tabpanel">
+                    <center>
+                        <h1 style="color:#121130;font-weight:800;margin-bottom:40px;">Frequently Asked Questions</h1>
+                    </center>
+                    <div style="padding-left:40px;padding-right:40px;">
+                        <div class="accordion" id="faqAccordion">
+                            <!-- Question 1 -->
+                            <div class="panel panel-default shadow rounded bg-white mb-3" style="padding:15px;">
+                                <div class="panel-heading" role="tab" id="faq1">
+                                    <h4 class="panel-title mb-0">
+                                        <div
+                                            style="font-size:17px; color:#212121; text-decoration:none; font-weight:600; display:flex; align-items:center;">
+                                            <i class="fa fa-question-circle"
+                                                style="color:#121130; font-size:20px; margin-right:15px;"></i>
+                                            Is this app compatible with Odoo Community as well as Enterprise?
+                                        </div>
+                                    </h4>
+                                </div>
+                                <div id="ans1" class="panel-collapse collapse show">
+                                    <div class="panel-body pt-4">
+                                        <ul class="ps-4 m-0" style="font-size:16px; color:#555;">
+                                            <li style="margin-bottom:0px">
+                                                Yes, this app works perfectly with Odoo Enterprise (Odoo.sh &amp;
+                                                On-Premise) as well as the Community version.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Question 2 -->
+                            <div class="panel panel-default shadow rounded bg-white mb-3" style="padding:15px;">
+                                <div class="panel-heading" role="tab" id="faq2">
+                                    <h4 class="panel-title mb-0">
+                                        <div
+                                            style="font-size:17px; color:#212121; text-decoration:none; font-weight:600; display:flex; align-items:center;">
+                                            <i class="fa fa-question-circle"
+                                                style="color:#121130; font-size:20px; margin-right:15px;"></i>
+                                            Does the app require an NMI Merchant Account?
+                                        </div>
+                                    </h4>
+                                </div>
+                                <div id="ans2" class="panel-collapse collapse show">
+                                    <div class="panel-body pt-4">
+                                        <ul class="ps-4 m-0" style="font-size:16px; color:#555;">
+                                            <li style="margin-bottom:0px">
+                                                Yes, you will need an active NMI Merchant Account and a valid NMI Security Key (API Key) from your NMI portal.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Question 3 -->
+                            <div class="panel panel-default shadow rounded bg-white mb-3" style="padding:15px;">
+                                <div class="panel-heading" role="tab" id="faq3">
+                                    <h4 class="panel-title mb-0">
+                                        <div
+                                            style="font-size:17px; color:#212121; text-decoration:none; font-weight:600; display:flex; align-items:center;">
+                                            <i class="fa fa-question-circle"
+                                                style="color:#121130; font-size:20px; margin-right:15px;"></i>
+                                            Can I charge card surcharge fees using NMI?
+                                        </div>
+                                    </h4>
+                                </div>
+                                <div id="ans3" class="panel-collapse collapse show">
+                                    <div class="panel-body pt-4">
+                                        <ul class="ps-4 m-0" style="font-size:16px; color:#555;">
+                                            <li style="margin-bottom:0px">
+                                                Yes! The module integrates NMI's official Card Type Lookup API to identify if the card is credit or debit, and automatically adds your custom configured credit or debit surcharge fee percentage to the Sales Order and transaction totals.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Question 4 -->
+                            <div class="panel panel-default shadow rounded bg-white mb-3" style="padding:15px;">
+                                <div class="panel-heading" role="tab" id="faq4">
+                                    <h4 class="panel-title mb-0">
+                                        <div
+                                            style="font-size:17px; color:#212121; text-decoration:none; font-weight:600; display:flex; align-items:center;">
+                                            <i class="fa fa-question-circle"
+                                                style="color:#121130; font-size:20px; margin-right:15px;"></i>
+                                            Are customers able to save their payment details for future checkouts?
+                                        </div>
+                                    </h4>
+                                </div>
+                                <div id="ans4" class="panel-collapse collapse show">
+                                    <div class="panel-body pt-4">
+                                        <ul class="ps-4 m-0" style="font-size:16px; color:#555;">
+                                            <li style="margin-bottom:0px">
+                                                Yes! The module integrates with NMI's secure Customer Vault. Customers can securely choose to save credit/debit cards or ACH eCheck details for one-click seamless future checkouts.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Question 5 -->
+                            <div class="panel panel-default shadow rounded bg-white mb-3" style="padding:15px;">
+                                <div class="panel-heading" role="tab" id="faq5">
+                                    <h4 class="panel-title mb-0">
+                                        <div
+                                            style="font-size:17px; color:#212121; text-decoration:none; font-weight:600; display:flex; align-items:center;">
+                                            <i class="fa fa-question-circle"
+                                                style="color:#121130; font-size:20px; margin-right:15px;"></i>
+                                            Is card or bank data saved on my Odoo server?
+                                        </div>
+                                    </h4>
+                                </div>
+                                <div id="ans5" class="panel-collapse collapse show">
+                                    <div class="panel-body pt-4">
+                                        <ul class="ps-4 m-0" style="font-size:16px; color:#555;">
+                                            <li style="margin-bottom:0px">
+                                                No, the card and bank information is processed securely using NMI's Direct Post API over HTTPS. Odoo never stores sensitive card or bank details in the database; it only stores secure NMI Customer Vault tokens.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Question 7 -->
+                            <div class="panel panel-default shadow rounded bg-white mb-3" style="padding:15px;">
+                                <div class="panel-heading" role="tab" id="faq7">
+                                    <h4 class="panel-title mb-0">
+                                        <div
+                                            style="font-size:17px; color:#212121; text-decoration:none; font-weight:600; display:flex; align-items:center;">
+                                            <i class="fa fa-question-circle"
+                                                style="color:#121130; font-size:20px; margin-right:15px;"></i>
+                                            Is this module compatible with Odoo.sh?
+                                        </div>
+                                    </h4>
+                                </div>
+                                <div id="ans7" class="panel-collapse collapse show">
+                                    <div class="panel-body pt-4">
+                                        <ul class="ps-4 m-0" style="font-size:16px; color:#555;">
+                                            <li style="margin-bottom:0px">
+                                                Yes, it works perfectly on Odoo.sh, Odoo On-Premise, and Odoo Community
+                                                or Enterprise editions.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Question 8 -->
+                            <div class="panel panel-default shadow rounded bg-white mb-3" style="padding:15px;">
+                                <div class="panel-heading" role="tab" id="faq8">
+                                    <h4 class="panel-title mb-0">
+                                        <div
+                                            style="font-size:17px; color:#212121; text-decoration:none; font-weight:600; display:flex; align-items:center;">
+                                            <i class="fa fa-question-circle"
+                                                style="color:#121130; font-size:20px; margin-right:15px;"></i>
+                                            Can I customize this module?
+                                        </div>
+                                    </h4>
+                                </div>
+                                <div id="ans8" class="panel-collapse collapse show">
+                                    <div class="panel-body pt-4">
+                                        <ul class="ps-4 m-0" style="font-size:16px; color:#555;">
+                                            <li style="margin-bottom:0px">
+                                                Yes! If you require any additional features or customized checkout
+                                                flows, please contact us at <a href="mailto:support@creyox.com"
+                                                    style="color:#121130; text-decoration:none; font-weight:600;">support@creyox.com</a>.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Similar Apps (Unchanged) -->
+            <div class="p-4 px-5" style="font-size:1.6rem;font-weight:600;color:#0b3b52;">
                 <center>
-                    <div style="border: 1px solid black;width:50%;"></div>
+                    <h2 style="font-size:35px; color:#000099; margin-bottom:20px; font-weight:700;">Explore similar
+                        picks</h2>
+                    <div style="border:1px solid black;width:30%;"></div>
+                </center>
+                <br />
+                <div class="row">
+                    <div class="col-md-4 mt-3">
+                        <div style="text-align:center; border:1px solid #aaa">
+                            <div style="padding:10px; border-bottom:1px solid #aaa">
+                                <a href="https://apps.odoo.com/apps/modules/18.0/cr_payment_fiserv"
+                                    target="_blank">
+                                    <img src="banner_images/cr_payment_fiserv.png"
+                                        style="width:100%;height:200px;object-fit:contain;">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mt-3">
+                        <div style="text-align:center; border:1px solid #aaa">
+                            <div style="padding:10px; border-bottom:1px solid #aaa">
+                                <a href="https://apps.odoo.com/apps/modules/18.0/cr_global_payment_provider" target="_blank">
+                                    <img src="banner_images/cr_global_payment_provider.png"
+                                        style="width:100%;height:200px;object-fit:contain;">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mt-3">
+                        <div style="text-align:center; border:1px solid #aaa">
+                            <div style="padding:10px; border-bottom:1px solid #aaa">
+                                <a href="https://apps.odoo.com/apps/modules/18.0/cr_payment_conekta_oxoo"
+                                    target="_blank">
+                                    <img src="banner_images/cr_payment_conekta_oxoo.png"
+                                        style="width:100%;height:200px;object-fit:contain;">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mt-3">
+                        <div style="text-align:center; border:1px solid #aaa">
+                            <div style="padding:10px; border-bottom:1px solid #aaa">
+                                <a href="https://apps.odoo.com/apps/modules/18.0/cr_paylike_payment"
+                                    target="_blank">
+                                    <img src="banner_images/cr_paylike_payment.png"
+                                        style="width:100%;height:200px;object-fit:contain;">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mt-3">
+                        <div style="text-align:center; border:1px solid #aaa">
+                            <div style="padding:10px; border-bottom:1px solid #aaa">
+                                <a href="https://apps.odoo.com/apps/modules/18.0/cr_moneris_payment_integration"
+                                    target="_blank">
+                                    <img src="banner_images/cr_moneris_payment_integration.png"
+                                        style="width:100%;height:200px;object-fit:contain;">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mt-3">
+                        <div style="text-align:center; border:1px solid #aaa">
+                            <div style="padding:10px; border-bottom:1px solid #aaa">
+                                <a href="https://apps.odoo.com/apps/modules/18.0/cr_montonio_integration"
+                                    target="_blank">
+                                    <img src="banner_images/cr_montonio_integration.png"
+                                        style="width:100%;height:200px;object-fit:contain;">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br />
+                <center>
+                    <a class="btn btn-primary btn-lg" target="_blank" style="color:#FFFFFF !important;"
+                        href="https://apps.odoo.com/apps/modules/browse?author=Creyox Technologies">
+                        <i class="fa fa-list me-2"></i> Explore Our Other Apps
+                    </a>
+                </center>
+                <br />
+                <center>
+                    <div style="border:1px solid black;width:50%;"></div>
                 </center>
             </div>
 
+            <!-- Our Services (Unchanged) -->
             <div class="row mb-5">
                 <div class="col-12 col-md-12 text-center text-md-left" style="margin-top: 40px;">
-                    <center><h1 style="color: #000099;"><i class="fa fa-handshake-o" style="color: #B87333;"></i> Our
-                        Services <i class="fa fa-handshake-o" style="color: #B87333;"></i></h1></center>
+                    <center>
+                        <h2 style="color: #000099;"><i class="fa fa-handshake-o" style="color: #B87333;"></i> Our
+                            Services <i class="fa fa-handshake-o" style="color: #B87333;"></i></h2>
+                    </center>
                 </div>
             </div>
-            <div class="container" style="width: 100%; height:100%;">
+            <div class="container pb-5" style="width:100%; height:100%; padding: 20px;">
                 <div class="row">
-                    <div class="col-md-3 text-center">
-                        <div class="box p-4 shadow rounded mb-2"
-                             style="background-color: #99b3ff;border: 2px solid #000099;border-radius: 0.25rem !important;">
-                            <a href="mailto:support@creyox.com" target="_blank" style="text-decoration: none;">
+                    <!-- Odoo Implementation -->
+                    <div class="col-md-4 text-center">
+                        <div class="box p-4 shadow rounded mb-3"
+                            style="background-color:#99b3ff; border:2px solid #000099; border-radius:0.25rem!important;">
+                            <a href="mailto:support@creyox.com" style="text-decoration:none;">
                                 <div class="icon_img mb-2">
-                                    <h3><i class="fa fa-cloud-upload" style="color: #000099;"></i></h3>
+                                    <h3><i class="fa fa-cloud-upload" style="color:#000099;"></i></h3>
                                 </div>
-                                <div class="content">
-                                    <p class="mb-0" style="font-size: 18px;color: #000099;font-weight: bold;">Odoo <br/>Implementation
-                                    </p>
-                                </div>
+                                <p class="mb-0" style="font-size:18px; color:#000099; font-weight:bold;">
+                                    Odoo <br /> Implementation
+                                </p>
                             </a>
                         </div>
                     </div>
-                    <div class="col-md-3 text-center">
-                        <div class="box p-4 shadow rounded mb-2"
-                             style="background-color: #99ff99;border: 2px solid #006600;border-radius: 0.25rem !important;">
-                            <a href="mailto:support@creyox.com" target="_blank" style="text-decoration: none;">
-                                <div class="icon_img mb-2">
-                                    <h3><i class="fa fa-gear" style="color: #006600;"></i></h3>
-                                </div>
-                                <div class="content">
-                                    <p class="mb-0" style="font-size: 18px;color: #006600;font-weight: bold;">Odoo <br/>
-                                        Customization</p>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-md-3 text-center">
-                        <div class="box p-4 shadow rounded mb-2"
-                             style="background-color: #ff9980;border: 2px solid #b32400;border-radius: 0.25rem !important;">
-                            <a href="mailto:support@creyox.com" target="_blank" style="text-decoration: none;">
-                                <div class="icon_img mb-2">
-                                    <h3><i class="fa fa-exchange" style="color: #b32400;"></i></h3>
-                                </div>
-                                <div class="content">
-                                    <p class="mb-0" style="font-size: 18px;color: #b32400;font-weight: bold;">Odoo <br/>
-                                        Migration</p>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-md-3 text-center">
 
-                        <div class="box p-4 shadow rounded mb-2"
-                             style="background-color: #ffe699;border: 2px solid #997300;border-radius: 0.25rem !important;">
-                            <a href="mailto:support@creyox.com" target="_blank"
-                               style="text-decoration: none;">
+                    <!-- Odoo Customization -->
+                    <div class="col-md-4 text-center">
+                        <div class="box p-4 shadow rounded mb-3"
+                            style="background-color:#99ff99; border:2px solid #006600; border-radius:0.25rem!important;">
+                            <a href="mailto:support@creyox.com" style="text-decoration:none;">
                                 <div class="icon_img mb-2">
-                                    <h3><i class="fa fa-users" style="color: #997300;"></i></h3>
+                                    <h3><i class="fa fa-gear" style="color:#006600;"></i></h3>
                                 </div>
-                                <div class="content">
-                                    <p class="mb-0"
-                                       style="font-size: 18px;color: #997300;font-weight: bold;">
-                                        Support &<br>
-                                        Maintenance</p>
+                                <p class="mb-0" style="font-size:18px; color:#006600; font-weight:bold;">
+                                    Odoo <br /> Customization
+                                </p>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- AI Powered Odoo Solutions -->
+                    <div class="col-md-4 text-center">
+                        <div class="box p-4 shadow rounded mb-3"
+                            style="background-color:#ffccff; border:2px solid #b300b3; border-radius:0.25rem!important;">
+                            <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                <div class="icon_img mb-2">
+                                    <h3><i class="fa fa-magic" style="color:#b300b3;"></i></h3>
                                 </div>
+                                <p class="mb-0" style="font-size:18px; color:#b300b3; font-weight:bold;">
+                                    AI Powered <br /> Odoo Solutions
+                                </p>
                             </a>
                         </div>
                     </div>
                 </div>
-                <!-- <div class="pr-5" style="font-size: 1.6rem; font-weight: 600; color: #0b3b52;">
-                    <br/>
-                    <center><a style="text-align: center; color: light green;" href="mailto:support@creyox.com"><i class="fa fa-envelope"></i> Email Us</a></center>
-                </div> -->
+
+                <div class="row">
+                    <!-- Odoo Data & Module Migration -->
+                    <div class="col-md-4 text-center">
+                        <div class="box p-4 shadow rounded mb-3"
+                            style="background-color:#ff9980; border:2px solid #b32400; border-radius:0.25rem!important;">
+                            <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                <div class="icon_img mb-2">
+                                    <h3><i class="fa fa-exchange" style="color:#b32400;"></i></h3>
+                                </div>
+                                <p class="mb-0" style="font-size:18px; color:#b32400; font-weight:bold;">
+                                    Odoo Data & <br /> Module Migration
+                                </p>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Third Party App Integration -->
+                    <div class="col-md-4 text-center">
+                        <div class="box p-4 shadow rounded mb-3"
+                            style="background-color:#ffeb99; border:2px solid #b38f00; border-radius:0.25rem!important;">
+                            <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                <div class="icon_img mb-2">
+                                    <h3><i class="fa fa-link" style="color:#b38f00;"></i></h3>
+                                </div>
+                                <p class="mb-0" style="font-size:18px; color:#b38f00; font-weight:bold;">
+                                    Third Party <br /> App Integration
+                                </p>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Odoo Artificial Intelligence Services -->
+                    <div class="col-md-4 text-center">
+                        <div class="box p-4 shadow rounded mb-3"
+                            style="background-color:#c2d6ff; border:2px solid #0047b3; border-radius:0.25rem!important;">
+                            <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                <div class="icon_img mb-2">
+                                    <h3><i class="fa fa-lightbulb-o" style="color:#0047b3;"></i></h3>
+                                </div>
+                                <p class="mb-0" style="font-size:18px; color:#0047b3; font-weight:bold;">
+                                    Odoo Artificial <br /> Intelligence Services
+                                </p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Mobile App Development -->
+                    <div class="col-md-4 text-center">
+                        <div class="box p-4 shadow rounded mb-3"
+                            style="background-color:#b3e6ff; border:2px solid #006699; border-radius:0.25rem!important;">
+                            <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                <div class="icon_img mb-2">
+                                    <h3><i class="fa fa-mobile" style="color:#006699;"></i></h3>
+                                </div>
+                                <p class="mb-0" style="font-size:18px; color:#006699; font-weight:bold;">
+                                    Mobile App <br /> Development
+                                </p>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Support & Maintenance -->
+                    <div class="col-md-4 text-center">
+                        <div class="box p-4 shadow rounded mb-3"
+                            style="background-color:#99ffcf; border:2px solid #00796b; border-radius:0.25rem!important;">
+                            <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                <div class="icon_img mb-2">
+                                    <h3><i class="fa fa-users" style="color:#00796b;"></i></h3>
+                                </div>
+                                <p class="mb-0" style="font-size:18px; color:#00796b; font-weight:bold;">
+                                    Support & <br /> Maintenance
+                                </p>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Odoo Training & Guidance -->
+                    <div class="col-md-4 text-center">
+                        <div class="box p-4 shadow rounded mb-3"
+                            style="background-color:#d9ffb3; border:2px solid #4d9900; border-radius:0.25rem!important;">
+                            <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                <div class="icon_img mb-2">
+                                    <h3><i class="fa fa-graduation-cap" style="color:#4d9900;"></i></h3>
+                                </div>
+                                <p class="mb-0" style="font-size:18px; color:#4d9900; font-weight:bold;">
+                                    Odoo Training <br /> & Guidance
+                                </p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
+
         </div>
-</main>
+    </main>
 
-<link href="https://apps.odoocdn.com/web/content/7247337-184ae0e/1/web.assets_frontend.css" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="style.css">
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
 
+</html>
