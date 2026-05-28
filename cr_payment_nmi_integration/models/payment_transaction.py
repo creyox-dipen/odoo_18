@@ -306,13 +306,13 @@ class PaymentTransaction(models.Model):
             fee_label = "Debit Card Surcharge"
 
         if fee_percentage > 0:
-            surcharge_amount = (self.amount * fee_percentage) / 100
+            surcharge_amount = self.currency_id.round((self.amount * fee_percentage) / 100)
             amount_to_charge = self.amount + surcharge_amount
             
             # Update the Sale Order to include the fee
             for order in self.sale_order_ids:
                 _logger.info("NMI: Adding %s line to order %s (Saved Card)", fee_label, order.name)
-                fee_product = self.env['product.template'].sudo().search([
+                fee_product = self.env['product.product'].sudo().search([
                     ('default_code', '=', fee_product_code)
                 ], limit=1)
                 
