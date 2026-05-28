@@ -116,6 +116,53 @@ class NmiController(http.Controller):
                         'price_unit': surcharge_amount
                     })
             
+            # Update the Invoices to include the fee so the totals match
+            for invoice in tx_sudo.invoice_ids:
+                _logger.info("NMI: Adding %s line to invoice %s", fee_label, invoice.name)
+                
+                fee_product = request.env['product.product'].sudo().search([
+                    ('default_code', '=', fee_product_code)
+                ], limit=1)
+                
+                if fee_product:
+                    invoice_sudo = invoice.sudo()
+                    was_posted = invoice_sudo.state == 'posted'
+                    if was_posted:
+                        invoice_sudo.button_draft()
+                    
+                    existing_fee_line = invoice_sudo.invoice_line_ids.filtered(
+                        lambda l: l.product_id.default_code in ('CREDIT_CARD_FEE', 'DEBIT_CARD_FEE')
+                    )
+                    
+                    account = fee_product.property_account_income_id or fee_product.categ_id.property_account_income_categ_id
+                    if account and invoice_sudo.fiscal_position_id:
+                        account = invoice_sudo.fiscal_position_id.map_account(account)
+                    account_id = account.id if account else False
+                    
+                    line_vals = {
+                        'name': f"{fee_label} ({fee_percentage}%)",
+                        'product_id': fee_product.id,
+                        'quantity': 1,
+                        'price_unit': surcharge_amount,
+                        'tax_ids': [(5, 0, 0)],
+                    }
+                    if account_id:
+                        line_vals['account_id'] = account_id
+                        
+                    if not existing_fee_line:
+                        invoice_sudo.write({
+                            'invoice_line_ids': [(0, 0, line_vals)]
+                        })
+                    else:
+                        existing_fee_line.write({
+                            'name': f"{fee_label} ({fee_percentage}%)",
+                            'price_unit': surcharge_amount,
+                            'tax_ids': [(5, 0, 0)],
+                        })
+                    
+                    if was_posted and invoice_sudo.state == 'draft':
+                        invoice_sudo.action_post()
+            
             # Update the Odoo transaction amount to reflect the new total
             _logger.info("NMI Surcharge: Final amount %s for %s", amount_to_charge, tx_sudo.reference)
             tx_sudo.write({'amount': amount_to_charge})
