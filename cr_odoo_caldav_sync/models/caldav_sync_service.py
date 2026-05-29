@@ -231,6 +231,64 @@ class CalDAVSyncService(models.AbstractModel):
                 if plain:
                     ovr.add("description").value = plain
 
+            # Privacy / Class (Visibility Mode)
+            _privacy_to_class = {
+                "public": "PUBLIC",
+                "private": "PRIVATE",
+                "confidential": "CONFIDENTIAL",
+            }
+            class_val = _privacy_to_class.get(occ.privacy or "public", "PUBLIC")
+            ovr.add("class").value = class_val
+
+            # Attendees & Organizer
+            other_partners = occ.partner_ids.filtered(
+                lambda p: p != account.user_id.partner_id
+            )
+            if other_partners or account.server_type == "zoho":
+                owner = account.user_id.partner_id
+                org = ovr.add("organizer")
+
+                from urllib.parse import urlparse
+                google_email = None
+                try:
+                    path_parts = urlparse(account.url).path.strip("/").split("/")
+                    if len(path_parts) >= 3:
+                        google_email = path_parts[2]
+                except Exception:
+                    pass
+                org_email = google_email or owner.email or account.username
+
+                org.value = f"mailto:{org_email}"
+                org.params["CN"] = [owner.name or org_email]
+
+                _state_to_partstat = {
+                    "accepted": "ACCEPTED",
+                    "declined": "DECLINED",
+                    "tentative": "TENTATIVE",
+                    "needsAction": "NEEDS-ACTION",
+                }
+                for attendee in occ.attendee_ids:
+                    if not attendee.partner_id.email:
+                        continue
+                    att = ovr.add("attendee")
+                    att.value = f"mailto:{attendee.partner_id.email}"
+                    att.params["CN"] = [
+                        attendee.partner_id.name or attendee.partner_id.email
+                    ]
+                    att.params["PARTSTAT"] = [
+                        _state_to_partstat.get(attendee.state, "NEEDS-ACTION")
+                    ]
+
+            # Reminders (Alarms)
+            for alarm in occ.alarm_ids:
+                valarm = ovr.add("valarm")
+                action = "EMAIL" if alarm.alarm_type == "email" else "DISPLAY"
+                valarm.add("action").value = action
+                valarm.add("description").value = alarm.name or "Reminder"
+
+                minutes = alarm.duration_minutes or 0
+                valarm.add("trigger").value = timedelta(minutes=-minutes)
+
             cal.add(ovr)
             _logger.info(
                 '[GOOGLE] Built RECURRENCE-ID override for occ "%s" (id=%s)',
@@ -2935,6 +2993,39 @@ class CalDAVSyncService(models.AbstractModel):
                 []
             )  # Occurrences NOT changed but need pinning when base changes
 
+            if base_needs_direct_push and occurrences:
+                # Check if the other occurrences were NOT updated with the base event's new values.
+                # If they still have their old values, it means the user's edit to the base event
+                # was a "self_only" (Only this event) edit, so the base event itself is an override!
+                unchanged_other_occs_differ = False
+                for occ in occurrences:
+                    occ_map = (
+                        self.env["caldav.event.map"]
+                        .sudo()
+                        .search(
+                            [
+                                ("account_id", "=", account.id),
+                                ("event_id", "=", occ.id),
+                            ],
+                            limit=1,
+                        )
+                    )
+                    last_sync = occ_map.last_odoo_write if occ_map else base_map.last_odoo_write
+                    is_unchanged = last_sync and occ.write_date and occ.write_date <= last_sync
+                    if is_unchanged and self._occurrence_differs_from_base(occ, base_event):
+                        unchanged_other_occs_differ = True
+                        break
+
+                if unchanged_other_occs_differ:
+                    _logger.info(
+                        '[GOOGLE][PUSH] Base event id=%s "%s" has been modified as a self_only override. '
+                        'It will be pushed as a RECURRENCE-ID override, keeping the master VEVENT unchanged.',
+                        base_event.id,
+                        base_event.name,
+                    )
+                    base_needs_direct_push = False
+                    modified_occs.append((base_event, base_map))
+
             for occ in occurrences:
                 if occ.id in skip_ids:
                     continue
@@ -3419,7 +3510,16 @@ class CalDAVSyncService(models.AbstractModel):
                     if not current_rrule:
                         current_rrule = raw_current.upper()
 
-                    if incoming_rrule and incoming_rrule != current_rrule:
+                    rrule_changed = incoming_rrule and incoming_rrule != current_rrule
+                    time_changed = False
+                    if "start" in vals and vals["start"] != event.start:
+                        time_changed = True
+                    if "stop" in vals and vals["stop"] != event.stop:
+                        time_changed = True
+                    if "allday" in vals and vals["allday"] != event.allday:
+                        time_changed = True
+
+                    if rrule_changed or time_changed:
                         _weekday_remap = {
                             "mo": "mon",
                             "tu": "tue",
@@ -3438,17 +3538,25 @@ class CalDAVSyncService(models.AbstractModel):
                             if _k != "rrule":
                                 write_vals[_weekday_remap.get(_k, _k)] = _v
                         write_vals["recurrence_update"] = "all_events"
-                        _logger.info(
-                            '[GOOGLE][PULL] RRULE changed for existing series "%s" (id=%s): '
-                            '"%s" -> "%s". Re-applying recurrence.',
-                            event.name,
-                            event.id,
-                            current_rrule,
-                            incoming_rrule,
-                        )
+                        if rrule_changed:
+                            _logger.info(
+                                '[GOOGLE][PULL] RRULE changed for existing series "%s" (id=%s): '
+                                '"%s" -> "%s". Re-applying recurrence.',
+                                event.name,
+                                event.id,
+                                current_rrule,
+                                incoming_rrule,
+                            )
+                        else:
+                            _logger.info(
+                                '[GOOGLE][PULL] Timing/allday changed for existing series "%s" (id=%s). '
+                                'Re-applying recurrence with "all_events".',
+                                event.name,
+                                event.id,
+                            )
                         event.with_context(**ctx_kwargs).write(write_vals)
                     else:
-                        # RRULE unchanged — only update scalar fields (name, time, etc.)
+                        # RRULE and timing unchanged — only update scalar fields (name, time, etc.)
                         vals.pop("rrule", None)
                         vals.pop("recurrence_update", None)
                         _logger.info(
