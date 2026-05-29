@@ -848,12 +848,23 @@ class CalDAVSyncService(models.AbstractModel):
                     )
                     break
 
-        if orig_naive != base_start_naive and not _orig_dtstart_is_exdated:
-            if _is_date_only(orig_dtstart):
+        if (orig_naive != base_start_naive or base_event.allday != _is_date_only(orig_dtstart)) and not _orig_dtstart_is_exdated:
+            if base_event.allday:
                 server_base.dtstart.value = base_event.start.date()
+                if not hasattr(server_base.dtstart, "params"):
+                    server_base.dtstart.params = {}
+                server_base.dtstart.params["VALUE"] = ["DATE"]
                 if hasattr(server_base, "dtend"):
                     server_base.dtend.value = base_event.stop.date() + timedelta(days=1)
+                    if not hasattr(server_base.dtend, "params"):
+                        server_base.dtend.params = {}
+                    server_base.dtend.params["VALUE"] = ["DATE"]
             else:
+                if hasattr(server_base.dtstart, "params"):
+                    server_base.dtstart.params.pop("VALUE", None)
+                if hasattr(server_base, "dtend") and hasattr(server_base.dtend, "params"):
+                    server_base.dtend.params.pop("VALUE", None)
+
                 try:
                     new_dtstart = pytz.utc.localize(base_start_naive).astimezone(
                         server_tz
