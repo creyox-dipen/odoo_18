@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 # Part of Creyox Technologies
 {
-    'name': 'NMI Payment Gateway | NMI API Integration | Payment Provider: NMI | NMI Payment Solutions | NMI Payment Processing | NMI Payment System',
+    "name": "NMI Payment Gateway | NMI API Integration | Payment Provider: NMI | NMI Payment Solutions | NMI Payment Processing | NMI Payment System",
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "https://www.creyox.com/helpdesk",
     "live_test_url": "https://www.creyox.com/helpdesk?module_tech_name=cr_payment_nmi_integration&version=18.0",
-    'category': 'Website',
-    'summary': """
+    "category": "Website",
+    "summary": """
         The NMI Payment Gateway integration module brings a highly secure, PCI-DSS compliant, and robust payment processing system directly to your Odoo platform. By utilizing NMI's secure Direct Post API over HTTPS, the module ensures that sensitive credit/debit card and ACH/eCheck bank account credentials are sent directly to NMI without ever touching or being saved on your Odoo server database. To elevate customer convenience, the gateway fully integrates with NMI's secure Customer Vault tokenization, allowing customers to safely save their credit-debit cards or bank accounts for frictionless, one-click checkout on subsequent purchases. This works seamlessly across frontend eCommerce store checkouts and backend Odoo invoice payments.
 
         Additionally, this feature-rich integration includes real-time card BIN lookup via NMI's official v4 Query API, instantly detecting whether an entered card is credit or debit to enforce an automated surcharge matrix fee system. This allows merchants to dynamically apply custom debit or credit card surcharge percentages, automatically calculating the fees and injecting them as line items into the Sales Order and transaction totals. The module also features built-in duplicate transaction protection that intelligently manages retry checkout attempts using dynamic order timestamp signatures to prevent accidental order-declines, ensuring a smooth and uninterrupted payment experience for both customers and administrators.
         """,
     "license": "OPL-1",
-    'version': '18.0.0.2',
+    "version": "18.0.0.2",
     "price": "349",
     "currency": "USD",
-    'description': """
+    "description": """
         <h1>NMI Payment Gateway for Odoo | Secure eCommerce Payment Integration</h1>
         <p>The NMI Payment Gateway integration for Odoo lets businesses process secure credit/debit cards and ACH eCheck payments directly through their Odoo eCommerce store and backend invoicing. By linking NMI's secure Direct Post API over HTTPS, customer card details are tokenized directly with NMI's secure Customer Vault and are never saved on your local Odoo server. The module also features real-time card type BIN lookup, automated debit and credit card surcharge fees, and retry duplicate protection—boosting customer confidence and ensuring a frictionless checkout experience.</p>
         <h2>Key Features</h2>
@@ -77,21 +77,23 @@
         <p>Watch the youtube video, visit <a href="https://www.youtube.com/@CreyoxTechnologies">Creyox Technologies YouTube Videos</a></p>
         <p>Read our blog post, visit <a href="https://www.creyox.com/blog">Creyox Technologies Blogs</a></p>
     """,
-    'depends': ["base", "payment", "account", "website"],
-    'data': [
-        'views/payment_nmi_templates.xml',
-        'views/payment_provider_views.xml',
-        'data/payment_provider_data.xml',
+    "depends": ["base", "payment", "account", "website"],
+    "data": [
+        "views/payment_nmi_templates.xml",
+        "views/payment_provider_views.xml",
+        "data/payment_provider_data.xml",
     ],
-    'assets': {
-        'web.assets_frontend': [
-            'cr_payment_nmi_integration/static/src/js/nmi_ach_form.js',
-            'cr_payment_nmi_integration/static/src/js/nmi_card_form.js',
+    "assets": {
+        "web.assets_frontend": [
+            "cr_payment_nmi_integration/static/src/js/nmi_ach_form.js",
+            "cr_payment_nmi_integration/static/src/js/nmi_card_form.js",
         ],
     },
-    'application': True,
-    'post_init_hook': 'post_init_hook',
-    'uninstall_hook': 'uninstall_hook',
-    'installable': True,
-    "images": ["static/description/banner.png", ],
+    "application": True,
+    "post_init_hook": "post_init_hook",
+    "uninstall_hook": "uninstall_hook",
+    "installable": True,
+    "images": [
+        "static/description/banner.png",
+    ],
 }

@@ -26,7 +26,7 @@ class PaymentTransaction(models.Model):
     redirect flow and the NMI Direct Post ACH flow.
     """
 
-    _inherit = 'payment.transaction'
+    _inherit = "payment.transaction"
 
     def _get_specific_processing_values(self, processing_values):
         """Override to add NMI-specific processing values.
@@ -35,16 +35,18 @@ class PaymentTransaction(models.Model):
         to submit the bank details to our local controller.
         """
         res = super()._get_specific_processing_values(processing_values)
-        if self.provider_code != 'nmi':
+        if self.provider_code != "nmi":
             return res
 
-        if self.payment_method_code == 'ach_direct_debit':
-            res.update({
-                'reference': self.reference,
-                'amount': self.amount,
-                'partner_name': self.partner_name,
-                'ach_process_url': NmiController._ach_process_url,
-            })
+        if self.payment_method_code == "ach_direct_debit":
+            res.update(
+                {
+                    "reference": self.reference,
+                    "amount": self.amount,
+                    "partner_name": self.partner_name,
+                    "ach_process_url": NmiController._ach_process_url,
+                }
+            )
         return res
 
     def _get_specific_rendering_values(self, processing_values):
@@ -61,7 +63,7 @@ class PaymentTransaction(models.Model):
         nmi_ach_form.js and also falls through to the empty res.
         """
         res = super()._get_specific_rendering_values(processing_values)
-        if self.provider_code != 'nmi':
+        if self.provider_code != "nmi":
             return res
         # Return empty dict for all NMI methods (card and ACH).
         # nmi_card_form.js / nmi_ach_form.js intercept the Pay Now button and
@@ -85,29 +87,34 @@ class PaymentTransaction(models.Model):
         # _get_tx_from_notification_data, so we guard with try/except to stay
         # compatible with both Odoo 17/18 (method exists) and 19 (removed).
         try:
-            tx = super()._get_tx_from_notification_data(provider_code, notification_data)
+            tx = super()._get_tx_from_notification_data(
+                provider_code, notification_data
+            )
         except AttributeError:
-            tx = self.env['payment.transaction']
+            tx = self.env["payment.transaction"]
 
-        if provider_code != 'nmi' or len(tx) == 1:
+        if provider_code != "nmi" or len(tx) == 1:
             return tx
 
         # ACH Direct Post response — NMI echoes our orderid back as 'orderid'.
-        if notification_data.get('_ach_flow'):
-            reference = notification_data.get('orderid') or notification_data.get('reference')
+        if notification_data.get("_ach_flow"):
+            reference = notification_data.get("orderid") or notification_data.get(
+                "reference"
+            )
         else:
             # Ekashu card callback.
-            reference = notification_data.get('ekashu_reference')
+            reference = notification_data.get("ekashu_reference")
 
         if not reference:
             raise ValidationError(
-                "Nmi: " + _(
+                "Nmi: "
+                + _(
                     "Received data with missing reference %(ref)s.",
                     ref=reference,
                 )
             )
 
-        tx = self.search([('reference', '=', reference), ('provider_code', '=', 'nmi')])
+        tx = self.search([("reference", "=", reference), ("provider_code", "=", "nmi")])
         if not tx:
             raise ValidationError(
                 "Nmi: " + _("No transaction found matching reference %s.", reference)
@@ -117,21 +124,21 @@ class PaymentTransaction(models.Model):
     def _process_notification_data(self, notification_data):
         """Override to update the transaction state from NMI notification data."""
         super()._process_notification_data(notification_data)
-        if self.provider_code != 'nmi':
+        if self.provider_code != "nmi":
             return
 
         # ---- ACH Direct Post response ----------------------------------------
-        if notification_data.get('_ach_flow'):
-            response_code = notification_data.get('response')
-            response_text = notification_data.get('responsetext', 'Unknown error')
-            transaction_id = notification_data.get('transactionid', '')
+        if notification_data.get("_ach_flow"):
+            response_code = notification_data.get("response")
+            response_text = notification_data.get("responsetext", "Unknown error")
+            transaction_id = notification_data.get("transactionid", "")
 
             if not response_code:
                 raise ValidationError(
                     "NMI ACH: " + _("Received response with missing status code.")
                 )
 
-            if response_code == '1':
+            if response_code == "1":
                 # Approved — mark transaction as paid.
                 self.provider_reference = transaction_id
                 self._set_done()
@@ -143,7 +150,7 @@ class PaymentTransaction(models.Model):
                     self.reference,
                     transaction_id,
                 )
-            elif response_code == '2':
+            elif response_code == "2":
                 # Declined by bank.
                 _logger.warning(
                     "ACH transaction %s declined by NMI: %s",
@@ -162,13 +169,17 @@ class PaymentTransaction(models.Model):
             return
 
         # ---- Ekashu card callback --------------------------------------------
-        auth_result = notification_data.get('ekashu_auth_result')
+        auth_result = notification_data.get("ekashu_auth_result")
 
         if not auth_result:
-            raise ValidationError("NMI: " + _("Received data with missing status code."))
+            raise ValidationError(
+                "NMI: " + _("Received data with missing status code.")
+            )
 
-        if auth_result == 'success':
-            self.provider_reference = notification_data.get('ekashu_reference', self.reference)
+        if auth_result == "success":
+            self.provider_reference = notification_data.get(
+                "ekashu_reference", self.reference
+            )
             self._set_done()
             self._set_done()
             if self.tokenize:
@@ -182,7 +193,7 @@ class PaymentTransaction(models.Model):
             self._set_error("NMI: " + _("Unknown success code: %s", auth_result))
 
     def _tokenize_from_notification_data(self, notification_data):
-        """ Create a new token from the notification data.
+        """Create a new token from the notification data.
         Note: self.ensure_one()
         :param dict notification_data: The notification data sent by the provider.
         :return: None
@@ -190,23 +201,29 @@ class PaymentTransaction(models.Model):
         self.ensure_one()
 
         token_values = self._extract_token_values(notification_data)
-        if not token_values.get('provider_ref'):
-             _logger.warning("NMI: Tokenization requested but no vault ID found in notification data.")
-             return
+        if not token_values.get("provider_ref"):
+            _logger.warning(
+                "NMI: Tokenization requested but no vault ID found in notification data."
+            )
+            return
 
-        token_values.update({
-            'provider_id': self.provider_id.id,
-            'payment_method_id': self.payment_method_id.id,
-            'partner_id': self.partner_id.id,
-        })
-        token = self.env['payment.token'].create(token_values)
-        self.write({
-            'token_id': token.id,
-            'tokenize': False,
-        })
+        token_values.update(
+            {
+                "provider_id": self.provider_id.id,
+                "payment_method_id": self.payment_method_id.id,
+                "partner_id": self.partner_id.id,
+            }
+        )
+        token = self.env["payment.token"].create(token_values)
+        self.write(
+            {
+                "token_id": token.id,
+                "tokenize": False,
+            }
+        )
         _logger.info(
             "NMI: Created token with id %(token_id)s (Name: %(name)s) for transaction %(ref)s.",
-            {'token_id': token.id, 'name': token.display_name, 'ref': self.reference},
+            {"token_id": token.id, "name": token.display_name, "ref": self.reference},
         )
 
     def _extract_token_values(self, payment_data):
@@ -215,59 +232,66 @@ class PaymentTransaction(models.Model):
         :return: Dict of create values for the payment.token record.
         :rtype: dict
         """
-        if self.provider_code != 'nmi':
+        if self.provider_code != "nmi":
             return {}
 
-        vault_id = payment_data.get('customer_vault_id')
+        vault_id = payment_data.get("customer_vault_id")
         _logger.info("NMI: Found vault_id=%s", vault_id)
         if not vault_id:
             return {}
 
         # Build a friendly name depending on whether this is a card or ACH token
-        if payment_data.get('ccnumber_last4'):
+        if payment_data.get("ccnumber_last4"):
             # Card payment tokenization
-            last_4 = payment_data['ccnumber_last4']
+            last_4 = payment_data["ccnumber_last4"]
             token_name = _("Card ending in %s", last_4)
         else:
             # ACH payment tokenization
-            account_no = payment_data.get('checkaccount', '')
+            account_no = payment_data.get("checkaccount", "")
             last_4 = account_no[-4:] if len(account_no) >= 4 else account_no
-            token_name = _("ACH account ending in %s", last_4) if last_4 else _("ACH account")
+            token_name = (
+                _("ACH account ending in %s", last_4) if last_4 else _("ACH account")
+            )
 
         return {
-            'provider_ref': vault_id,
-            'payment_details': token_name,
-            'nmi_card_type': payment_data.get('card_type', 'unknown'),
+            "provider_ref": vault_id,
+            "payment_details": token_name,
+            "nmi_card_type": payment_data.get("card_type", "unknown"),
         }
 
     def _extract_amount_data(self, payment_data):
         """Override to extract the amount and currency from NMI notification data.
-        
+
         This method also synchronizes the transaction amount if a surcharge was
         applied during the controller processing, preventing 'Amount Mismatch' errors.
         """
         res = super()._extract_amount_data(payment_data)
-        if self.provider_code != 'nmi':
+        if self.provider_code != "nmi":
             return res
 
         # Extract amount from NMI response (Direct Post or Ekashu)
-        amount = payment_data.get('amount') or payment_data.get('ekashu_amount')
-        currency_code = payment_data.get('currency') or payment_data.get('ekashu_currency')
+        amount = payment_data.get("amount") or payment_data.get("ekashu_amount")
+        currency_code = payment_data.get("currency") or payment_data.get(
+            "ekashu_currency"
+        )
 
         if amount:
             float_amount = float(amount)
-            
-            # If the amount in the response is different from our record, 
-            # and it's an ACH/Card flow with a surcharge, update our record 
+
+            # If the amount in the response is different from our record,
+            # and it's an ACH/Card flow with a surcharge, update our record
             # before the base validation occurs.
-            if payment_data.get('_ach_flow') and float_amount != self.amount:
-                _logger.info("NMI: Synchronizing transaction amount to %s (includes surcharge)", float_amount)
-                self.sudo().write({'amount': float_amount})
-                self.invalidate_recordset(['amount'])
+            if payment_data.get("_ach_flow") and float_amount != self.amount:
+                _logger.info(
+                    "NMI: Synchronizing transaction amount to %s (includes surcharge)",
+                    float_amount,
+                )
+                self.sudo().write({"amount": float_amount})
+                self.invalidate_recordset(["amount"])
 
             return {
-                'amount': float_amount,
-                'currency_code': currency_code,
+                "amount": float_amount,
+                "currency_code": currency_code,
             }
         return res
 
@@ -280,126 +304,168 @@ class PaymentTransaction(models.Model):
         Note: self.ensure_one()
         """
         super()._send_payment_request()
-        if self.provider_code != 'nmi':
+        if self.provider_code != "nmi":
             return
 
         if not self.token_id:
-            raise ValidationError("NMI: " + _("No token provided for the payment request."))
+            raise ValidationError(
+                "NMI: " + _("No token provided for the payment request.")
+            )
 
         # Surcharge Logic for Saved Credit/Debit Cards
         amount_to_charge = self.amount
         surcharge_amount = 0.0
         provider = self.provider_id
-        
+
         # Determine fee based on card type
         fee_percentage = 0.0
-        fee_product_code = ''
-        fee_label = ''
-        
-        if self.token_id.nmi_card_type in ('credit', 'charge') and provider.is_nmi_card_fee and provider.nmi_credit_card_fee > 0:
+        fee_product_code = ""
+        fee_label = ""
+
+        if (
+            self.token_id.nmi_card_type in ("credit", "charge")
+            and provider.is_nmi_card_fee
+            and provider.nmi_credit_card_fee > 0
+        ):
             fee_percentage = provider.nmi_credit_card_fee
-            fee_product_code = 'CREDIT_CARD_FEE'
+            fee_product_code = "CREDIT_CARD_FEE"
             fee_label = "Credit Card Surcharge"
-        elif self.token_id.nmi_card_type == 'debit' and provider.is_nmi_card_fee and provider.nmi_debit_card_fee > 0:
+        elif (
+            self.token_id.nmi_card_type == "debit"
+            and provider.is_nmi_card_fee
+            and provider.nmi_debit_card_fee > 0
+        ):
             fee_percentage = provider.nmi_debit_card_fee
-            fee_product_code = 'DEBIT_CARD_FEE'
+            fee_product_code = "DEBIT_CARD_FEE"
             fee_label = "Debit Card Surcharge"
 
         if fee_percentage > 0:
-            surcharge_amount = self.currency_id.round((self.amount * fee_percentage) / 100)
+            surcharge_amount = self.currency_id.round(
+                (self.amount * fee_percentage) / 100
+            )
             amount_to_charge = self.amount + surcharge_amount
-            
+
             # Update the Sale Order to include the fee
             for order in self.sale_order_ids:
-                _logger.info("NMI: Adding %s line to order %s (Saved Card)", fee_label, order.name)
-                fee_product = self.env['product.product'].sudo().search([
-                    ('default_code', '=', fee_product_code)
-                ], limit=1)
-                
-                existing_fee_line = order.order_line.filtered(lambda l: "Surcharge" in l.name)
+                _logger.info(
+                    "NMI: Adding %s line to order %s (Saved Card)",
+                    fee_label,
+                    order.name,
+                )
+                fee_product = (
+                    self.env["product.product"]
+                    .sudo()
+                    .search([("default_code", "=", fee_product_code)], limit=1)
+                )
+
+                existing_fee_line = order.order_line.filtered(
+                    lambda l: "Surcharge" in l.name
+                )
                 if not existing_fee_line:
-                    self.env['sale.order.line'].sudo().create({
-                        'order_id': order.id,
-                        'name': f"{fee_label} ({fee_percentage}%)",
-                        'product_id': fee_product.id if fee_product else False,
-                        'product_uom_qty': 1,
-                        'price_unit': surcharge_amount,
-                        'sequence': 999,
-                    })
+                    self.env["sale.order.line"].sudo().create(
+                        {
+                            "order_id": order.id,
+                            "name": f"{fee_label} ({fee_percentage}%)",
+                            "product_id": fee_product.id if fee_product else False,
+                            "product_uom_qty": 1,
+                            "price_unit": surcharge_amount,
+                            "sequence": 999,
+                        }
+                    )
                 else:
-                    existing_fee_line.sudo().write({
-                        'name': f"{fee_label} ({fee_percentage}%)",
-                        'product_id': fee_product.id if fee_product else False,
-                        'price_unit': surcharge_amount
-                    })
-            
+                    existing_fee_line.sudo().write(
+                        {
+                            "name": f"{fee_label} ({fee_percentage}%)",
+                            "product_id": fee_product.id if fee_product else False,
+                            "price_unit": surcharge_amount,
+                        }
+                    )
+
             for invoice in self.invoice_ids:
-                fee_product = self.env['product.product'].sudo().search([('default_code', '=', fee_product_code)], limit=1)
+                fee_product = (
+                    self.env["product.product"]
+                    .sudo()
+                    .search([("default_code", "=", fee_product_code)], limit=1)
+                )
                 if fee_product:
                     invoice_sudo = invoice.sudo()
-                    was_posted = invoice_sudo.state == 'posted'
+                    was_posted = invoice_sudo.state == "posted"
                     if was_posted:
                         invoice_sudo.button_draft()
-                    
+
                     existing_fee_line = invoice_sudo.invoice_line_ids.filtered(
-                        lambda l: l.product_id.default_code in ('CREDIT_CARD_FEE', 'DEBIT_CARD_FEE')
+                        lambda l: l.product_id.default_code
+                        in ("CREDIT_CARD_FEE", "DEBIT_CARD_FEE")
                     )
-                    
-                    account = fee_product.property_account_income_id or fee_product.categ_id.property_account_income_categ_id
+
+                    account = (
+                        fee_product.property_account_income_id
+                        or fee_product.categ_id.property_account_income_categ_id
+                    )
                     if account and invoice_sudo.fiscal_position_id:
                         account = invoice_sudo.fiscal_position_id.map_account(account)
                     account_id = account.id if account else False
-                    
+
                     line_vals = {
-                        'name': f"{fee_label} ({fee_percentage}%)",
-                        'product_id': fee_product.id,
-                        'quantity': 1,
-                        'price_unit': surcharge_amount,
-                        'tax_ids': [(5, 0, 0)],
+                        "name": f"{fee_label} ({fee_percentage}%)",
+                        "product_id": fee_product.id,
+                        "quantity": 1,
+                        "price_unit": surcharge_amount,
+                        "tax_ids": [(5, 0, 0)],
                     }
                     if account_id:
-                        line_vals['account_id'] = account_id
-                        
+                        line_vals["account_id"] = account_id
+
                     if not existing_fee_line:
-                        invoice_sudo.write({
-                            'invoice_line_ids': [(0, 0, line_vals)]
-                        })
+                        invoice_sudo.write({"invoice_line_ids": [(0, 0, line_vals)]})
                     else:
-                        existing_fee_line.write({
-                            'name': f"{fee_label} ({fee_percentage}%)",
-                            'price_unit': surcharge_amount,
-                            'tax_ids': [(5, 0, 0)],
-                        })
-                    
-                    if was_posted and invoice_sudo.state == 'draft':
+                        existing_fee_line.write(
+                            {
+                                "name": f"{fee_label} ({fee_percentage}%)",
+                                "price_unit": surcharge_amount,
+                                "tax_ids": [(5, 0, 0)],
+                            }
+                        )
+
+                    if was_posted and invoice_sudo.state == "draft":
                         invoice_sudo.action_post()
-            
+
             # Update the Odoo transaction amount
-            _logger.info("NMI Token Surcharge: Final amount %s for %s", amount_to_charge, self.reference)
-            self.sudo().write({'amount': amount_to_charge})
+            _logger.info(
+                "NMI Token Surcharge: Final amount %s for %s",
+                amount_to_charge,
+                self.reference,
+            )
+            self.sudo().write({"amount": amount_to_charge})
 
         # Ensure Order ID is unique for every attempt to prevent NMI duplicate blocks
         import time
-        attempt_orderid = '%s_%d' % (self.reference, int(time.time()))
+
+        attempt_orderid = "%s_%d" % (self.reference, int(time.time()))
 
         # Build the NMI Direct Post API payload for a vault-based transaction.
         # Reference: https://secure.nmi.com/api/transact.php
         post_payload = {
-            'security_key': provider.nmi_security_key,
-            'type': 'sale',
-            'customer_vault_id': self.token_id.provider_ref,
-            'amount': "{:.2f}".format(amount_to_charge),
-            'surcharge': "{:.2f}".format(surcharge_amount) if surcharge_amount > 0 else '',
-            'orderid': attempt_orderid,
-            'currency': self.currency_id.name or 'USD',
+            "security_key": provider.nmi_security_key,
+            "type": "sale",
+            "customer_vault_id": self.token_id.provider_ref,
+            "amount": "{:.2f}".format(amount_to_charge),
+            "surcharge": (
+                "{:.2f}".format(surcharge_amount) if surcharge_amount > 0 else ""
+            ),
+            "orderid": attempt_orderid,
+            "currency": self.currency_id.name or "USD",
         }
 
         # POST server-side to NMI.
         direct_post_url = provider._nmi_get_direct_post_url()
-        _logger.info("Sending NMI token payment request for reference %s", self.reference)
+        _logger.info(
+            "Sending NMI token payment request for reference %s", self.reference
+        )
 
         try:
             import requests as http_requests
+
             nmi_response = http_requests.post(
                 direct_post_url,
                 data=post_payload,
@@ -412,9 +478,13 @@ class PaymentTransaction(models.Model):
 
         # Parse and process the response.
         result = dict(urllib.parse.parse_qsl(nmi_response.text))
-        _logger.info("NMI token payment response for %s: %s", self.reference, result.get('responsetext'))
+        _logger.info(
+            "NMI token payment response for %s: %s",
+            self.reference,
+            result.get("responsetext"),
+        )
         # Inject ACH flow marker so _process_notification_data handles it correctly.
-        result['_ach_flow'] = True
-        result['amount'] = result.get('amount') or post_payload.get('amount')
-        result['currency'] = result.get('currency') or post_payload.get('currency')
-        self._handle_notification_data('nmi', result)
+        result["_ach_flow"] = True
+        result["amount"] = result.get("amount") or post_payload.get("amount")
+        result["currency"] = result.get("currency") or post_payload.get("currency")
+        self._handle_notification_data("nmi", result)
