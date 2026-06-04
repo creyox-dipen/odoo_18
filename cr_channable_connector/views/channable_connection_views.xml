@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_channable_connection_form" model="ir.ui.view">
+            <field name="name">channable.connection.form</field>
+            <field name="model">channable.connection</field>
+            <field name="arch" type="xml">
+                <form string="Channable Connection">
+                    <header>
+                        <button name="action_test_connection"
+                                string="Test Connection"
+                                type="object"
+                                class="oe_highlight"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group string="Identity">
+                                <field name="name"/>
+                                <field name="company_id"
+                                       groups="base.group_multi_company"/>
+                            </group>
+                            <group string="API Credentials">
+                                <field name="api_token" password="True"/>
+                                <field name="company_id_num"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_channable_connection_list" model="ir.ui.view">
+            <field name="name">channable.connection.list</field>
+            <field name="model">channable.connection</field>
+            <field name="arch" type="xml">
+                <list string="Channable Connections">
+                    <field name="name"/>
+                    <field name="company_id_num"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="action_channable_connection" model="ir.actions.act_window">
+            <field name="name">Connections</field>
+            <field name="res_model">channable.connection</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_picking_form_inherit_channable" model="ir.ui.view">
+            <field name="name">stock.picking.form.inherit.channable</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form"/>
+            <field name="arch" type="xml">
+                <!--
+                    Only show the Channable tab on outgoing deliveries
+                    that originated from a Channable sale order.
+                -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Channable"
+                          name="channable_picking_info"
+                          invisible="picking_type_code != 'outgoing' or not sale_id or not sale_id.channable_marketplace_id">
+                        <group>
+                            <field name="channable_sync_status" readonly="1"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

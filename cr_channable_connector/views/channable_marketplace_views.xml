@@ -1,0 +1,539 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_channable_marketplace_form" model="ir.ui.view">
+            <field name="name">channable.marketplace.form</field>
+            <field name="model">channable.marketplace</field>
+            <field name="arch" type="xml">
+                <form string="Channable Marketplace">
+                    <header>
+                        <button name="action_sync_orders"
+                                string="Sync Orders"
+                                type="object"
+                                class="oe_highlight"/>
+                        <button name="action_sync_orders_shipment"
+                                string="Sync Shipments"
+                                type="object"/>
+                        <button name="action_push_product_stock"
+                                string="Push Product Stock"
+                                type="object"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button class="oe_stat_button"
+                                    icon="fa-list"
+                                    name="action_view_orders"
+                                    type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">Orders</span>
+                                </div>
+                            </button>
+                            <button class="oe_stat_button"
+                                    icon="fa-exclamation-triangle"
+                                    name="action_view_errors"
+                                    type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">Errors</span>
+                                </div>
+                            </button>
+                            <button class="oe_stat_button"
+                                    icon="fa-check-square-o"
+                                    name="action_view_pending_validation"
+                                    type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">Pending Validation</span>
+                                </div>
+                            </button>
+                            <button class="oe_stat_button"
+                                    icon="fa-truck"
+                                    name="action_view_pending_delivery"
+                                    type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_text">Pending Delivery</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Marketplace Name"/>
+                            </h1>
+                        </div>
+
+                        <group>
+                            <group string="Basic Configuration">
+                                <field name="active" invisible="1"/>
+                                <field name="order_configuration_id"/>
+                                <field name="project_id"/>
+                                <field name="assign_error_user_id"/>
+                                <field name="dark_mode" widget="boolean_toggle"/>
+                            </group>
+                            <group string="Logistics">
+                                <field name="warehouse_id"/>
+                                <field name="carrier_id"/>
+                                <field name="notify_shipped_auto"/>
+                            </group>
+                            <group string="Accounting &amp; Sales">
+                                <field name="pricelist_id"/>
+                                <!--
+                                    payment_provider_id removed – Odoo payment providers are
+                                    for e-commerce checkout flows, not for internal payment
+                                    registration. Use payment_journal_id instead.
+                                -->
+                                <field name="payment_journal_id"/>
+                                <field name="default_fiscal_position_id"/>
+                                <field name="intra_community_fiscal_position_id"/>
+                                <field name="team_id"/>
+                                <field name="language_id"/>
+                                <field name="tag_ids" widget="many2many_tags"/>
+                                <field name="default_partner_vat"/>
+                            </group>
+                            <group string="Synchronisation Rules">
+                                <field name="sync_product_field"/>
+                                <field name="valid_states"/>
+                                <field name="saving_attachments"/>
+                                <field name="auto_validate_quotations"/>
+                                <field name="auto_validate_orders"/>
+                                <field name="auto_validate_invoices"
+                                       invisible="not auto_validate_orders"/>
+                                <field name="difference_threshold"/>
+                                <field name="feed_url" widget="CopyClipboardChar" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Attribute Mappings" name="attribute_mappings">
+                                <field name="attribute_mapping_ids">
+                                    <list editable="bottom">
+                                        <field name="mapping_type"/>
+                                        <field name="field_id" 
+                                               invisible="mapping_type != 'field'"
+                                               required="mapping_type == 'field'"/>
+                                        <field name="attribute_id" 
+                                               invisible="mapping_type != 'attribute'"
+                                               required="mapping_type == 'attribute'"/>
+                                        <field name="target_tag"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Shipping Mappings" name="shipping_mappings">
+                                <field name="shipping_mapping_ids">
+                                    <list editable="bottom">
+                                        <field name="channable_shipping_method" placeholder="e.g. DHL Express, Standard Delivery"/>
+                                        <field name="carrier_id"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_channable_marketplace_list" model="ir.ui.view">
+            <field name="name">channable.marketplace.list</field>
+            <field name="model">channable.marketplace</field>
+            <field name="arch" type="xml">
+                <list string="Channable Marketplaces">
+                    <field name="name"/>
+                    <field name="order_configuration_id"/>
+                    <field name="project_id"/>
+                    <field name="warehouse_id"/>
+                    <field name="carrier_id"/>
+                    <field name="active" optional="show"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_channable_marketplace_kanban" model="ir.ui.view">
+            <field name="name">channable.marketplace.kanban</field>
+            <field name="model">channable.marketplace</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_dashboard" create="1" can_open="0">
+                    <field name="name"/>
+                    <field name="order_configuration_id"/>
+                    <field name="currency_id"/>
+                    <field name="orders_pending_validation_count"/>
+                    <field name="orders_pending_validation_amount"/>
+                    <field name="orders_pending_shipment_count"/>
+                    <field name="orders_pending_shipment_amount"/>
+                    <field name="kanban_dashboard_graph"/>
+                    <field name="color"/>
+                    <field name="dark_mode"/>
+                    <templates>
+                        <t t-name="menu">
+                            <div class="container-fluid my-channable-menu-container" style="min-width: 180px; padding: 12px;">
+                                <!-- View Section -->
+                                <div class="mb-2 text-start">
+                                    <div class="my_menu_header mb-1" style="color: #ced4da !important; font-weight: bold !important; font-size: 0.75rem !important; text-transform: uppercase !important; letter-spacing: 0.8px !important;">View</div>
+                                    <a type="object" name="action_view_orders" class="dropdown-item py-1 px-2 rounded small" style="cursor: pointer; transition: background-color 0.2s; display: block; color: #ffffff !important; font-size: 0.88rem !important; font-weight: 500 !important;">
+                                        Orders
+                                    </a>
+                                    <a type="object" name="action_view_errors" class="dropdown-item py-1 px-2 rounded small" style="cursor: pointer; transition: background-color 0.2s; display: block; color: #ffffff !important; font-size: 0.88rem !important; font-weight: 500 !important;">
+                                        Errors
+                                    </a>
+                                </div>
+                                
+                                <hr class="my-2" style="border-top: 1px solid #495057 !important; opacity: 1 !important;"/>
+                                
+                                <!-- Color Picker Grid -->
+                                <div class="mb-2 text-start">
+                                    <div class="my_menu_header mb-2" style="color: #ced4da !important; font-weight: bold !important; font-size: 0.75rem !important; text-transform: uppercase !important; letter-spacing: 0.8px !important;">Color</div>
+                                    <div t-if="widget.editable" class="o_kanban_card_manage_settings row m-0 g-1">
+                                        <field name="color" widget="kanban_color_picker" class="col-12 p-0"/>
+                                    </div>
+                                </div>
+                                
+                                <hr class="my-2" style="border-top: 1px solid #495057 !important; opacity: 1 !important;"/>
+                                
+                                <!-- Configuration Section -->
+                                <div class="text-center pt-1">
+                                    <a type="open" class="my_menu_config dropdown-item py-1 px-2 rounded text-center" style="cursor: pointer; display: block; color: #bfaeff !important; font-weight: bold !important; font-size: 0.95rem !important;">
+                                        Configuration
+                                    </a>
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-name="card">
+                            <!-- Injected styled CSS for exact dashboard grid matching & brand colors -->
+                            <style>
+                                .o_kanban_dashboard .o_kanban_record {
+                                    width: calc(50% - 24px) !important;
+                                    flex: 0 0 calc(50% - 24px) !important;
+                                    min-width: 300px !important;
+                                    margin: 12px !important;
+                                    padding: 0 !important;
+                                    background: transparent !important;
+                                    border: none !important;
+                                    box-shadow: none !important;
+                                }
+                                .o_kanban_dashboard .o_kanban_group {
+                                    display: flex !important;
+                                    flex-flow: row wrap !important;
+                                    width: 100% !important;
+                                }
+                                /* Enforce dark premium theme on the OWL manage dropdown pane */
+                                .o_kanban_dashboard .o_kanban_card_manage_pane,
+                                .dropdown-menu:has(.my-channable-menu-container) {
+                                    background-color: #343a40 !important;
+                                    border: 1px solid #454d55 !important;
+                                }                                 
+                                .my-channable-menu-container .dropdown-item {
+                                     color: #ffffff !important;
+                                     font-size: 0.88rem !important;
+                                     font-weight: 500 !important;
+                                 }
+                                 .my-channable-menu-container .dropdown-item:hover {
+                                     background-color: #495057 !important;
+                                     color: #ffffff !important;
+                                 }
+                                 .my-channable-menu-container .my_menu_header {
+                                     color: #ced4da !important;
+                                     font-weight: bold !important;
+                                     font-size: 0.75rem !important;
+                                     text-transform: uppercase !important;
+                                     letter-spacing: 0.8px !important;
+                                 }
+                                 .my-channable-menu-container .my_menu_config {
+                                     color: #bfaeff !important;
+                                     font-weight: bold !important;
+                                     font-size: 0.95rem !important;
+                                     transition: color 0.2s;
+                                 }
+                                 .my-channable-menu-container .my_menu_config:hover {
+                                     color: #ffffff !important;
+                                     background-color: transparent !important;
+                                 }
+                                .o_kanban_dashboard .my_dashboard_btn {
+                                    background: linear-gradient(135deg, #71639e, #5c4f82) !important;
+                                    color: #ffffff !important;
+                                    border: none !important;
+                                    border-radius: 6px !important;
+                                    font-weight: 600 !important;
+                                    padding: 6px 16px !important;
+                                    display: inline-block !important;
+                                    text-align: center !important;
+                                    vertical-align: middle !important;
+                                    cursor: pointer !important;
+                                    font-size: 0.85rem !important;
+                                    margin-bottom: 8px !important;
+                                    text-decoration: none !important;
+                                    box-shadow: 0 2px 6px rgba(113, 99, 158, 0.15);
+                                    transition: all 0.2s ease;
+                                }
+                                .o_kanban_dashboard .my_dashboard_btn:hover {
+                                    background: linear-gradient(135deg, #8172b3, #6a5c96) !important;
+                                    transform: translateY(-1px);
+                                    box-shadow: 0 4px 12px rgba(113, 99, 158, 0.25);
+                                    color: #ffffff !important;
+                                }
+                                .o_kanban_dashboard .my_dashboard_btn:active {
+                                    transform: translateY(0);
+                                }
+                                .o_kanban_dashboard .my_dashboard_link {
+                                    color: #71639e !important;
+                                    font-size: 0.85rem !important;
+                                    font-weight: 600 !important;
+                                    cursor: pointer !important;
+                                    text-decoration: none !important;
+                                    display: inline-block !important;
+                                    transition: color 0.2s, transform 0.2s;
+                                }
+                                .o_kanban_dashboard .my_dashboard_link:hover {
+                                    color: #5c4f82 !important;
+                                    text-decoration: none !important;
+                                    transform: translateX(2px);
+                                }
+                                .o_kanban_dashboard .my_stat_label {
+                                    color: #7C628C !important;
+                                    font-size: 0.88rem !important;
+                                    font-weight: 500 !important;
+                                    text-decoration: none !important;
+                                    cursor: pointer !important;
+                                    display: block !important;
+                                    margin-bottom: 2px !important;
+                                    transition: color 0.2s, transform 0.2s;
+                                }
+                                .o_kanban_dashboard .my_stat_label:hover {
+                                    color: #5c4f82 !important;
+                                    text-decoration: none !important;
+                                    transform: translateX(2px);
+                                }
+                                .o_kanban_dashboard .my_stat_amount {
+                                    color: #1a1a1a !important;
+                                    font-weight: 700 !important;
+                                    font-size: 1.25rem !important;
+                                    display: block !important;
+                                    margin-bottom: 8px !important;
+                                    font-family: "Outfit", "Inter", "Segoe UI", sans-serif !important;
+                                }
+                                .o_kanban_dashboard .my_marketplace_name {
+                                    color: #71639e !important;
+                                    font-weight: 700 !important;
+                                    font-size: 1.35rem !important;
+                                    display: inline-block !important;
+                                    cursor: default !important;
+                                    font-family: "Outfit", "Inter", "Segoe UI", sans-serif !important;
+                                }
+                                .o_kanban_dashboard .o_dropdown_kanban,
+                                .o_kanban_dashboard .o_kanban_manage_toggle_button {
+                                    color: #212529 !important;
+                                    font-size: 1.3rem !important;
+                                    opacity: 1 !important;
+                                    visibility: visible !important;
+                                    display: inline-flex !important;
+                                    align-items: center !important;
+                                    justify-content: center !important;
+                                    cursor: pointer !important;
+                                    padding: 16px 24px !important;
+                                    margin: -10px -20px !important;
+                                    transition: color 0.2s;
+                                }
+                                .o_kanban_dashboard .o_dropdown_kanban:hover,
+                                .o_kanban_dashboard .o_kanban_manage_toggle_button:hover {
+                                    color: #71639e !important;
+                                }
+                                @media (max-width: 767.98px) {
+                                    .o_kanban_dashboard .o_kanban_record {
+                                        width: calc(100% - 24px) !important;
+                                        flex: 0 0 calc(100% - 24px) !important;
+                                    }
+                                }
+                                /* Dashboard Card Dark Mode styling overrides */
+                                .o_kanban_dashboard .my-kanban-card {
+                                    border-radius: 8px !important;
+                                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+                                    border: 1px solid #e2e8f0 !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode {
+                                    background: linear-gradient(145deg, #1f2226, #181a1d) !important;
+                                    color: #f8f9fa !important;
+                                    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+                                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .my_marketplace_name {
+                                    color: #bfaeff !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .my_stat_label {
+                                    color: #ced4da !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .my_stat_label:hover {
+                                    color: #ffffff !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .my_stat_amount {
+                                    color: #ffffff !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .my_dashboard_link {
+                                    color: #bfaeff !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .my_dashboard_link:hover {
+                                    color: #ffffff !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .my_stat_divider {
+                                    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .o_dropdown_kanban,
+                                .o_kanban_dashboard .my-kanban-dark-mode .o_kanban_manage_toggle_button {
+                                    color: #e9ecef !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .o_dropdown_kanban:hover,
+                                .o_kanban_dashboard .my-kanban-dark-mode .o_kanban_manage_toggle_button:hover {
+                                    color: #bfaeff !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .o_dashboard_graph {
+                                    filter: invert(0.88) hue-rotate(180deg) brightness(1.2) contrast(0.9) !important;
+                                    opacity: 0.9;
+                                    mix-blend-mode: screen;
+                                }
+                                .o_kanban_dashboard .my_dark_mode_label {
+                                    color: #6c757d !important;
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .my_dark_mode_label {
+                                    color: #ced4da !important;
+                                }
+                                .o_kanban_dashboard .my-switch {
+                                    position: relative;
+                                    z-index: 105 !important;
+                                    display: inline-block;
+                                    width: 32px;
+                                    height: 18px;
+                                    background-color: #ccc !important;
+                                    border-radius: 9px;
+                                    transition: background-color 0.2s;
+                                    cursor: pointer;
+                                    vertical-align: middle;
+                                }
+                                .o_kanban_dashboard .my-switch-dot {
+                                    position: absolute;
+                                    height: 14px;
+                                    width: 14px;
+                                    left: 2px;
+                                    bottom: 2px;
+                                    background-color: white;
+                                    border-radius: 50%;
+                                    transition: transform 0.2s;
+                                }
+                                .o_kanban_dashboard .my-switch-active {
+                                    background-color: #71639e !important;
+                                }
+                                .o_kanban_dashboard .my-switch-active .my-switch-dot {
+                                    transform: translateX(14px);
+                                }
+                                .o_kanban_dashboard .my-kanban-dark-mode .my-switch-active {
+                                    background-color: #bfaeff !important;
+                                }
+                            </style>
+
+                            <!-- Dynamic border color accent matching the marketplace color index, with fallback branding -->
+                            <t t-set="border_color" t-value="'#714B67'"/>
+                            <t t-if="record.color.raw_value == 1" t-set="border_color" t-value="'#FF4D4D'"/>
+                            <t t-if="record.color.raw_value == 2" t-set="border_color" t-value="'#FF9900'"/>
+                            <t t-if="record.color.raw_value == 3" t-set="border_color" t-value="'#FFD700'"/>
+                            <t t-if="record.color.raw_value == 4" t-set="border_color" t-value="'#3CB4C4'"/>
+                            <t t-if="record.color.raw_value == 5" t-set="border_color" t-value="'#71639e'"/>
+                            <t t-if="record.color.raw_value == 6" t-set="border_color" t-value="'#FF476C'"/>
+                            <t t-if="record.color.raw_value == 7" t-set="border_color" t-value="'#00A896'"/>
+                            <t t-if="record.color.raw_value == 8" t-set="border_color" t-value="'#0064D2'"/>
+                            <t t-if="record.color.raw_value == 9" t-set="border_color" t-value="'#E60012'"/>
+                            <t t-if="record.color.raw_value == 10" t-set="border_color" t-value="'#2ECC71'"/>
+                            <t t-if="record.color.raw_value == 11" t-set="border_color" t-value="'#A569BD'"/>
+                            <t t-if="record.color.raw_value == 0">
+                                <t t-if="record.name.raw_value.toLowerCase().includes('ebay')" t-set="border_color" t-value="'#0064D2'"/>
+                                <t t-if="record.name.raw_value.toLowerCase().includes('amazon')" t-set="border_color" t-value="'#FF9900'"/>
+                                <t t-if="record.name.raw_value.toLowerCase().includes('manomano')" t-set="border_color" t-value="'#3CB4C4'"/>
+                                <t t-if="record.name.raw_value.toLowerCase().includes('aliexpress')" t-set="border_color" t-value="'#E60012'"/>
+                            </t>
+
+                            <div t-attf-class="h-100 d-flex flex-column p-0 overflow-hidden position-relative my-kanban-card #{record.dark_mode.raw_value ? 'my-kanban-dark-mode' : ''}" 
+                                 t-attf-style="border-left: 4px solid #{border_color} !important; background-color: #ffffff; width: 100% !important;">
+                                
+                                <!-- Card Header -->
+                                <div class="d-flex align-items-center justify-content-between p-3 pb-2">
+                                    <div class="o_primary fs-4 fw-normal">
+                                        <span class="my_marketplace_name">
+                                            <field name="name"/>
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2" style="margin-right: 24px;">
+                                        <span class="my_dark_mode_label small" style="font-size: 0.72rem; font-weight: 500; letter-spacing: 0.3px;"><i class="fa fa-moon-o"></i> Dark Mode</span>
+                                         <div t-attf-class="my-dark-mode-toggle my-switch #{record.dark_mode.raw_value ? 'my-switch-active' : ''}"
+                                              t-att-data-record-id="record.id.raw_value"
+                                              style="cursor: pointer; flex-shrink: 0; position: relative; z-index: 105 !important;">
+                                             <span class="my-switch-dot"/>
+                                         </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card Body split into Left and Right Columns -->
+                                <div class="container-fluid px-3 py-2 flex-grow-1">
+                                    <div class="row align-items-start m-0">
+                                        
+                                        <!-- Left Column: Primary & Secondary Actions -->
+                                        <div class="col-5 p-0 d-flex flex-column align-items-start justify-content-start">
+                                            <a class="my_dashboard_btn"
+                                               name="action_sync_orders"
+                                               type="object">
+                                                Sync Orders
+                                            </a>
+                                            <a class="my_dashboard_link"
+                                               name="action_sync_orders_shipment"
+                                               type="object">
+                                                Sync Orders Shipment
+                                            </a>
+                                            <a class="my_dashboard_link mt-1"
+                                               name="action_push_product_stock"
+                                               type="object">
+                                                Push Product Stock
+                                            </a>
+                                        </div>
+
+                                        <!-- Right Column: Validation & Shipping statistics -->
+                                        <div class="col-7 ps-3 pe-0 text-start my_stat_divider" style="border-left: 1px solid #dee2e6;">
+                                            
+                                            <!-- Orders pending to validation -->
+                                            <div class="mb-3">
+                                                <a name="action_view_pending_validation" type="object" 
+                                                   class="my_stat_label">
+                                                    <field name="orders_pending_validation_count"/> Orders pending to validation
+                                                </a>
+                                                <div class="my_stat_amount">
+                                                    <field name="orders_pending_validation_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                                </div>
+                                            </div>
+
+                                            <!-- Orders pending to be ship -->
+                                            <t t-if="record.orders_pending_shipment_count.raw_value &gt; 0">
+                                                <div>
+                                                    <a name="action_view_pending_delivery" type="object" 
+                                                       class="my_stat_label">
+                                                        <field name="orders_pending_shipment_count"/> Orders pending to be ship
+                                                    </a>
+                                                    <div class="my_stat_amount">
+                                                        <field name="orders_pending_shipment_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Line Graph stretched full width at the bottom -->
+                                <div class="w-100 mt-auto p-0" style="overflow: hidden;">
+                                    <field name="kanban_dashboard_graph" graph_type="line" widget="dashboard_graph"/>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <record id="action_channable_marketplace" model="ir.actions.act_window">
+            <field name="name">Marketplaces</field>
+            <field name="res_model">channable.marketplace</field>
+            <field name="view_mode">kanban,list,form</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ── Channable Orders under Sales > Orders ───────────────────────── -->
+        <menuitem id="menu_channable_orders"
+                  name="Channable Orders"
+                  parent="sale.sale_order_menu"
+                  sequence="20"
+                  action="action_channable_orders"
+                  groups="cr_channable_connector.group_channable_user_read"/>
+
+        <!-- ── Top-level config entry under Sales > Configuration ─────────── -->
+        <menuitem id="menu_channable_config"
+                  name="Channable Connector"
+                  parent="sale.menu_sale_config"
+                  sequence="100"
+                  groups="cr_channable_connector.group_channable_administrator"/>
+
+        <menuitem id="menu_channable_connections"
+                  name="Connections"
+                  parent="menu_channable_config"
+                  sequence="10"
+                  action="action_channable_connection"
+                  groups="cr_channable_connector.group_channable_administrator"/>
+
+        <menuitem id="menu_channable_projects"
+                  name="Projects"
+                  parent="menu_channable_config"
+                  sequence="20"
+                  action="action_channable_project"
+                  groups="cr_channable_connector.group_channable_administrator"/>
+
+        <menuitem id="menu_channable_marketplaces"
+                  name="Marketplaces"
+                  parent="menu_channable_config"
+                  sequence="30"
+                  action="action_channable_marketplace"
+                  groups="cr_channable_connector.group_channable_administrator"/>
+
+        <!-- ── Sync Errors under Sales > Orders ───────────────────────────── -->
+        <menuitem id="menu_channable_sync_errors"
+                  name="Channable Sync Errors"
+                  parent="sale.sale_order_menu"
+                  sequence="25"
+                  action="action_channable_sync_error"
+                  groups="cr_channable_connector.group_channable_user_manage"/>
+    </data>
+</odoo>

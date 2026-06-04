@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_channable_sync_orders_wizard_form" model="ir.ui.view">
+        <field name="name">channable.sync.orders.wizard.form</field>
+        <field name="model">channable.sync.orders.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Sync Orders from Channable">
+                <sheet>
+                    <group>
+                        <field name="marketplace_id" readonly="1"/>
+                    </group>
+                    <group string="Filter">
+                        <field name="import_by_id"/>
+                        <field name="order_ids_str"
+                               invisible="not import_by_id"
+                               placeholder="e.g. 123456, 789012"/>
+                    </group>
+                    <group invisible="import_by_id">
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                        <group string="Import Orders Status">
+                            <group>
+                                <field name="status_not_shipped"/>
+                                <field name="status_shipped"/>
+                                <field name="status_waiting"/>
+                            </group>
+                            <group>
+                                <field name="status_pending_shipment"/>
+                                <field name="status_pending_cancellation"/>
+                                <field name="status_cancelled"/>
+                            </group>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Import Orders"
+                            name="action_import_orders"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

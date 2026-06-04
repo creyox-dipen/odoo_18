@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ── Inherit sale.order form ─────────────────────────────────────── -->
+        <record id="view_order_form_inherit_channable" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.channable</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+
+                <!-- Buttons in the header status bar -->
+                <xpath expr="//header" position="inside">
+                    <button name="action_channable_sync_state"
+                            string="Sync State"
+                            type="object"
+                            invisible="not channable_marketplace_id"/>
+                    <button name="action_channable_sync_order"
+                            string="Sync Order"
+                            type="object"
+                            invisible="not channable_marketplace_id"/>
+                    <button name="action_channable_sync_attachments"
+                            string="Sync Attachments"
+                            type="object"
+                            invisible="not channable_marketplace_id"/>
+                    <button name="action_channable_notify_shipped"
+                            string="Notify as Shipped"
+                            type="object"
+                            invisible="not channable_marketplace_id"/>
+                    <button name="action_channable_cancel_order"
+                            string="Cancel in Channable"
+                            type="object"
+                            invisible="state != 'cancel' or not channable_marketplace_id"/>
+                </xpath>
+
+                <!-- Stat button: Sync Errors -->
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button class="oe_stat_button"
+                            icon="fa-exclamation-triangle"
+                            name="action_view_channable_errors"
+                            type="object"
+                            invisible="channable_error_count == 0">
+                        <field name="channable_error_count" widget="statinfo" string="Errors"/>
+                    </button>
+                    <button class="oe_stat_button"
+                            icon="fa-external-link"
+                            name="action_view_in_channable"
+                            type="object"
+                            invisible="not channable_order_id">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Channable Order</span>
+                        </div>
+                    </button>
+                </xpath>
+
+                <!-- Channable tab in the notebook -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Channable"
+                          name="channable_info"
+                          invisible="not channable_marketplace_id">
+                        <group>
+                            <group string="Marketplace Info">
+                                <field name="channable_marketplace_id" readonly="1"/>
+                                <field name="channable_status" readonly="1"/>
+                            </group>
+                            <group string="References">
+                                <field name="channable_market_ref" readonly="1"/>
+                                <field name="channable_order_id" readonly="1"/>
+                            </group>
+                        </group>
+                        <separator string="Sync Errors"/>
+                        <field name="channable_error_ids"
+                               readonly="1"
+                               invisible="not channable_error_ids">
+                            <list>
+                                <field name="reference"/>
+                                <field name="name"/>
+                                <field name="action_attempted"/>
+                                <field name="moment"/>
+                            </list>
+                        </field>
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- ── Action: Channable Orders list ──────────────────────────────── -->
+        <record id="action_channable_orders" model="ir.actions.act_window">
+            <field name="name">Channable Orders</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_mode">list,kanban,form,calendar,pivot,graph,activity</field>
+            <field name="domain">[('channable_marketplace_id', '!=', False)]</field>
+            <field name="context">{
+                'default_channable_marketplace_id': context.get('default_channable_marketplace_id', False)
+            }</field>
+        </record>
+    </data>
+</odoo>
