@@ -1,0 +1,85 @@
+/* ============================================================
+ * cr_draw_io - Stylesheet
+ * ============================================================ */
+
+/* ── iframe inside the Odoo Dialog ──────────────────────────── */
+.o_drawio_iframe {
+    width: 100%;
+    height: 100vh;
+    border: none;
+    display: block;
+}
+
+/* 🚀 METHOD 2: FIXED OVERLAY FORCE */
+/* This makes the dialog float ABOVE everything else in Odoo */
+
+.modal.show:has(.o_drawio_iframe) {
+    z-index: 10005 !important; /* Above Odoo Navbar */
+    background: #fff !important;
+}
+
+.modal.show:has(.o_drawio_iframe) .modal-dialog {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+}
+
+.modal.show:has(.o_drawio_iframe) .modal-content {
+    height: 100vh !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+.modal.show:has(.o_drawio_iframe) .modal-body {
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* ── Diagram container in the HTML editor ────────────────────── */
+.o_drawio_diagram {
+    display: inline-block;
+    position: relative;
+    border: 2px dashed transparent;
+    margin: 4px 0;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.o_drawio_diagram:hover {
+    border-color: #0d6efd;
+    border-radius: 4px;
+}
+
+/* The PNG image of the diagram */
+.o_drawio_diagram img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ── "Click to Edit" hover badge ─────────────────────────────── */
+/* Hidden by default, appears when hovering the diagram */
+.o_drawio_diagram::after {
+    content: "✏️ Click to Edit";
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(13, 110, 253, 0.85);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.o_drawio_diagram:hover::after {
+    opacity: 1;
+}

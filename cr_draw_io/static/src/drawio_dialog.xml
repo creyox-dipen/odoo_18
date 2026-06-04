@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!--
+        DrawioDialog Template
+        ─────────────────────────────────────────────────────────────────────
+        Uses Odoo's standard <Dialog> shell.
+
+        Draw.io URL parameters explained:
+          embed=1     → enables postMessage API communication
+          proto=json  → use JSON format for all messages (required)
+          spin=1      → shows a loading spinner while the editor loads
+
+        NOTE: We do NOT use saveAndExit=1 because that fires an "exit" event
+        instead of "save", which breaks our export flow.
+        The default Draw.io UI has a Save button (cloud icon) that fires
+        the "save" event correctly.
+        ─────────────────────────────────────────────────────────────────────
+    -->
+    <t t-name="cr_draw_io.DrawioDialog">
+        <Dialog title="'Draw.io Diagram Editor'" size="'fs'" footer="false" header="false">
+            <iframe
+                t-ref="iframe"
+                class="o_drawio_iframe"
+                src="https://embed.diagrams.net/?embed=1&amp;proto=json&amp;spin=1"
+            />
+        </Dialog>
+    </t>
+
+</templates>
