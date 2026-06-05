@@ -64,6 +64,14 @@
                         <span>Google Calendar is <b>not yet authorized</b>. Click <b>Authorize with Google</b> to connect.</span>
                     </div>
 
+                    <!-- Live Sync Progress Banner -->
+                    <div class="alert alert-info d-flex align-items-center mb-3"
+                         invisible="sync_status != 'syncing'">
+                        <i class="fa fa-refresh fa-spin me-2"/>
+                        <span>Calendar synchronization in progress: </span>
+                        <field name="sync_progress" readonly="1" class="ms-1 fw-bold"/>
+                    </div>
+
                     <group>
                         <group string="Connection">
                             <field name="server_type"
@@ -101,6 +109,8 @@
                         </group>
                     </group>
                     <group string="Sync Status" name="sync_status">
+                        <field name="sync_status"/>
+                        <field name="sync_progress" invisible="sync_status != 'syncing'"/>
                         <field name="last_sync" readonly="1"/>
                         <field name="last_ctag" readonly="1" string="Last CTag (internal)" invisible="1"/>
                         <field name="active"/>

@@ -169,6 +169,20 @@ class CalDAVAccount(models.Model):
         copy=False,
         help="Timestamp of the last successful synchronisation.",
     )
+    sync_status = fields.Selection(
+        selection=[
+            ("idle", "Idle"),
+            ("syncing", "Syncing..."),
+        ],
+        string="Sync Status",
+        default="idle",
+        readonly=True,
+    )
+    sync_progress = fields.Char(
+        string="Sync Progress",
+        readonly=True,
+        help="Progress description of the current sync run.",
+    )
     active = fields.Boolean(string="Active", default=True)
     event_map_ids = fields.One2many(
         "caldav.event.map",

@@ -6,7 +6,7 @@
         <field name="name">caldav.sync.log.list</field>
         <field name="model">caldav.sync.log</field>
         <field name="arch" type="xml">
-            <list string="Sync Logs" create="false" edit="false" decoration-danger="status == 'failed'" decoration-warning="status == 'partial'" decoration-success="status == 'success'">
+            <list string="Sync Logs" create="false" edit="false" decoration-danger="status == 'failed' or status == 'interrupted'" decoration-warning="status == 'partial'" decoration-success="status == 'success'" decoration-info="status == 'running'">
                 <field name="sync_date"/>
                 <field name="account_id"/>
                 <field name="pushed"/>
@@ -14,7 +14,7 @@
                 <field name="deleted"/>
                 <field name="failed" sum="Total Failures"/>
                 <field name="duration" sum="Total Duration"/>
-                <field name="status" widget="badge" decoration-danger="status == 'failed'" decoration-warning="status == 'partial'" decoration-success="status == 'success'"/>
+                <field name="status" widget="badge" decoration-danger="status == 'failed' or status == 'interrupted'" decoration-warning="status == 'partial'" decoration-success="status == 'success'" decoration-info="status == 'running'"/>
             </list>
         </field>
     </record>
@@ -26,7 +26,7 @@
         <field name="arch" type="xml">
             <form string="Sync Log" create="false" edit="false">
                 <header>
-                    <field name="status" widget="statusbar" statusbar_visible="success,partial,failed"/>
+                    <field name="status" widget="statusbar" statusbar_visible="running,success,partial,failed,interrupted"/>
                 </header>
                 <sheet>
                     <group>

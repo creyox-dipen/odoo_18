@@ -55,9 +55,11 @@ class CalDAVSyncLog(models.Model):
     )
     status = fields.Selection(
         selection=[
+            ("running", "Running"),
             ("success", "Success"),
             ("partial", "Partial Failure"),
             ("failed", "Critical Failure"),
+            ("interrupted", "Interrupted"),
         ],
         string="Status",
         required=True,

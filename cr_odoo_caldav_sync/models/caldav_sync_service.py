@@ -8,7 +8,7 @@ import uuid
 import pytz
 from datetime import datetime, timedelta, timezone, date
 from odoo.tools import html2plaintext
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 
 _logger = logging.getLogger(__name__)
 
@@ -1014,6 +1014,32 @@ class CalDAVSyncService(models.AbstractModel):
         import time
         start_time = time.time()
         _logger.info("Starting sync for account: %s (id=%s)", account.name, account.id)
+
+        # 1. Mark any previously running logs for this account as interrupted
+        try:
+            running_logs = self.env["caldav.sync.log"].sudo().search([
+                ("account_id", "=", account.id),
+                ("status", "=", "running"),
+            ])
+            if running_logs:
+                running_logs.sudo().write({"status": "interrupted"})
+        except Exception as log_err:
+            _logger.warning("Could not mark old running logs as interrupted: %s", log_err)
+
+        # 2. Set account sync status to syncing and start progress message
+        account.sudo().write({
+            "sync_status": "syncing",
+            "sync_progress": _("Starting sync..."),
+        })
+
+        # 3. Pre-create the current sync log as running and commit
+        log_record = self.env["caldav.sync.log"].sudo().create({
+            "account_id": account.id,
+            "status": "running",
+            "sync_date": fields.Datetime.now(),
+        })
+        self.env.cr.commit()
+
         stats_log = {
             "account_id": account.id,
             "sync_date": fields.Datetime.now(),
@@ -1035,7 +1061,7 @@ class CalDAVSyncService(models.AbstractModel):
                     "Pulling changes from CalDAV for account %s.", account.name
                 )
                 pulled, deleted, pulled_ids, pull_failed, pull_details = (
-                    self._pull_caldav_changes(account)
+                    self._pull_caldav_changes(account, log_record=log_record)
                 )
                 stats_log["pulled"] = pulled
                 stats_log["deleted"] = deleted
@@ -1044,10 +1070,23 @@ class CalDAVSyncService(models.AbstractModel):
                     stats_log["details"] += f"--- PULL ERRORS ---\n{pull_details}\n"
                 pulled_event_ids = set(pulled_ids)
 
+                # Update progress after pull
+                account.sudo().write({
+                    "sync_progress": _("Pull completed. Starting push..."),
+                })
+                if log_record and log_record.exists():
+                    log_record.sudo().write({
+                        "pulled": pulled,
+                        "deleted": deleted,
+                        "failed": stats_log["failed"],
+                        "details": stats_log["details"],
+                    })
+                self.env.cr.commit()
+
             if account.sync_direction in ("bidirectional", "odoo_to_caldav"):
                 _logger.debug("Pushing changes to CalDAV for account %s.", account.name)
                 pushed, push_failed, push_details = self._push_odoo_changes(
-                    account, skip_ids=pulled_event_ids
+                    account, skip_ids=pulled_event_ids, log_record=log_record
                 )
                 stats_log["pushed"] += pushed
                 stats_log["failed"] += push_failed
@@ -1077,8 +1116,32 @@ class CalDAVSyncService(models.AbstractModel):
             stats_log["status"] = "failed"
             stats_log["details"] += f"CRITICAL FAILURE: {str(e)}\n"
         finally:
-            stats_log["duration"] = time.time() - start_time
-            self.env["caldav.sync.log"].sudo().create(stats_log)
+            duration = time.time() - start_time
+            if not getattr(self.env.cr, 'closed', False):
+                try:
+                    if log_record and log_record.exists():
+                        log_record.sudo().write({
+                            "pulled": stats_log["pulled"],
+                            "pushed": stats_log["pushed"],
+                            "deleted": stats_log["deleted"],
+                            "failed": stats_log["failed"],
+                            "duration": duration,
+                            "status": stats_log["status"],
+                            "details": stats_log["details"],
+                        })
+                    
+                    account_vals = {
+                        "sync_status": "idle",
+                    }
+                    if stats_log["status"] in ("success", "partial"):
+                        account_vals["sync_progress"] = _("Completed successfully.")
+                    else:
+                        details_summary = stats_log["details"][:100] + "..." if len(stats_log["details"]) > 100 else stats_log["details"]
+                        account_vals["sync_progress"] = _("Failed: %s") % details_summary
+                    account.sudo().write(account_vals)
+                    self.env.cr.commit()
+                except Exception as write_err:
+                    _logger.error("Failed to write final sync log stats: %s", write_err)
 
         return {
             "pushed": stats_log["pushed"],
@@ -1088,7 +1151,7 @@ class CalDAVSyncService(models.AbstractModel):
         }
 
     @api.model
-    def _pull_caldav_changes(self, account):
+    def _pull_caldav_changes(self, account, log_record=None):
         """Pull new and changed events from the CalDAV server into Odoo.
 
         For Nextcloud (and any server with large calendars) we commit every
@@ -1121,6 +1184,8 @@ class CalDAVSyncService(models.AbstractModel):
         server_etags = {
             account._resolve_href(href): etag for href, etag in raw_server_etags.items()
         }
+        total_events = len(server_etags)
+        current_idx = 0
 
         from urllib.parse import unquote
 
@@ -1150,6 +1215,7 @@ class CalDAVSyncService(models.AbstractModel):
             if getattr(self.env.cr, 'closed', False):
                 _logger.warning("[PULL] Database cursor is closed. Aborting sync loop.")
                 break
+            current_idx += 1
             norm_href = href.rstrip("/")
             if norm_href == base_url:
                 continue
@@ -1350,21 +1416,32 @@ class CalDAVSyncService(models.AbstractModel):
                 details.append(error_msg)
 
             # ---- batch commit every N events (Nextcloud large calendars) ---- #
-            if use_checkpoint:
-                _batch_counter += 1
-                if _batch_counter % self._BATCH_SIZE == 0:
-                    try:
-                        account.sudo().write({"sync_checkpoint": f"pull:{href}"})
-                        self.env.cr.commit()  # flush this batch to the DB
-                        _logger.info(
-                            "[NEXTCLOUD][PULL] Batch commit at item %s (href=%s).",
-                            _batch_counter,
-                            href,
-                        )
-                    except Exception as _ce:
-                        _logger.warning(
-                            "[NEXTCLOUD][PULL] Batch commit failed: %s", _ce
-                        )
+            _batch_counter += 1
+            if _batch_counter % self._BATCH_SIZE == 0:
+                try:
+                    progress_text = _("Pulling: %s of %s events") % (current_idx, total_events)
+                    vals = {"sync_progress": progress_text}
+                    if use_checkpoint:
+                        vals["sync_checkpoint"] = f"pull:{href}"
+                    account.sudo().write(vals)
+                    if log_record and log_record.exists():
+                        log_record.sudo().write({
+                            "pulled": pulled,
+                            "deleted": deleted,
+                            "failed": failed,
+                            "details": "\n".join(details),
+                        })
+                    self.env.cr.commit()  # flush this batch to the DB
+                    _logger.info(
+                        "[PULL] Batch commit at item %s (href=%s). Progress: %s",
+                        _batch_counter,
+                        href,
+                        progress_text,
+                    )
+                except Exception as _ce:
+                    _logger.warning(
+                        "[PULL] Batch commit/progress update failed: %s", _ce
+                    )
 
         server_hrefs = set(server_etags.keys())
         for href, map_rec in list(existing_maps.items()):
@@ -1413,7 +1490,7 @@ class CalDAVSyncService(models.AbstractModel):
         return pulled, deleted, pulled_ids, failed, "\n".join(details)
 
     @api.model
-    def _push_odoo_changes(self, account, skip_ids=None):
+    def _push_odoo_changes(self, account, skip_ids=None, log_record=None):
         """Push new, modified, and deleted Odoo events to the CalDAV server.
 
         For Nextcloud we commit every ``_BATCH_SIZE`` pushed events and store a
@@ -1790,23 +1867,31 @@ class CalDAVSyncService(models.AbstractModel):
                     )
 
                 # ---- batch commit every N events (Nextcloud large calendars) ---- #
-                if use_checkpoint:
-                    _push_batch_counter += 1
-                    if _push_batch_counter % self._BATCH_SIZE == 0:
-                        try:
-                            account.sudo().write(
-                                {"sync_checkpoint": f"push:{event.id}"}
-                            )
-                            self.env.cr.commit()
-                            _logger.info(
-                                "[NEXTCLOUD][PUSH] Batch commit at item %s (event_id=%s).",
-                                _push_batch_counter,
-                                event.id,
-                            )
-                        except Exception as _ce:
-                            _logger.warning(
-                                "[NEXTCLOUD][PUSH] Batch commit failed: %s", _ce
-                            )
+                _push_batch_counter += 1
+                if _push_batch_counter % self._BATCH_SIZE == 0:
+                    try:
+                        progress_text = _("Pushing: %s of %s events") % (_push_batch_counter, len(events))
+                        vals = {"sync_progress": progress_text}
+                        if use_checkpoint:
+                            vals["sync_checkpoint"] = f"push:{event.id}"
+                        account.sudo().write(vals)
+                        if log_record and log_record.exists():
+                            log_record.sudo().write({
+                                "pushed": pushed,
+                                "failed": failed,
+                                "details": "\n".join(details),
+                            })
+                        self.env.cr.commit()
+                        _logger.info(
+                            "[PUSH] Batch commit at item %s (event_id=%s). Progress: %s",
+                            _push_batch_counter,
+                            event.id,
+                            progress_text,
+                        )
+                    except Exception as _ce:
+                        _logger.warning(
+                            "[PUSH] Batch commit/progress update failed: %s", _ce
+                        )
             # FIXED CODE:
             except Exception as e:
                 msg = str(e)
