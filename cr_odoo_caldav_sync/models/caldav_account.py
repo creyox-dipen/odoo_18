@@ -858,21 +858,34 @@ class CalDAVAccount(models.Model):
         :rtype: dict
         """
         self.ensure_one()
-        service = self.env["caldav.sync.service"]
-        stats = service.sync_account(self)
-        msg = _(
-            "Sync complete — %(pushed)s pushed, %(pulled)s pulled, %(deleted)s deleted.",
-            pushed=stats.get("pushed", 0),
-            pulled=stats.get("pulled", 0),
-            deleted=stats.get("deleted", 0),
-        )
+        import threading
+        from odoo import api, registry
+
+        db_name = self.env.cr.dbname
+        uid = self.env.uid
+        context = self.env.context
+        account_id = self.id
+
+        def run_async():
+            db_registry = registry(db_name)
+            with db_registry.cursor() as new_cr:
+                try:
+                    new_env = api.Environment(new_cr, uid, context)
+                    account = new_env["caldav.account"].browse(account_id)
+                    if account.exists():
+                        new_env["caldav.sync.service"].sync_account(account)
+                except Exception as e:
+                    _logger.error("Background sync error for account %s: %s", account_id, e, exc_info=True)
+
+        threading.Thread(target=run_async, daemon=True).start()
+
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
                 "title": _("CalDAV Sync"),
-                "message": msg,
-                "type": "success",
+                "message": _("Sync started in the background. Refresh your calendar to see events as they sync."),
+                "type": "info",
                 "sticky": False,
             },
         }

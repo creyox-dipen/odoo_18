@@ -13,6 +13,7 @@
                 <field name="pulled"/>
                 <field name="deleted"/>
                 <field name="failed" sum="Total Failures"/>
+                <field name="duration" sum="Total Duration"/>
                 <field name="status" widget="badge" decoration-danger="status == 'failed'" decoration-warning="status == 'partial'" decoration-success="status == 'success'"/>
             </list>
         </field>
@@ -32,6 +33,7 @@
                         <group>
                             <field name="account_id"/>
                             <field name="sync_date"/>
+                            <field name="duration"/>
                         </group>
                         <group string="Statistics">
                             <field name="pushed"/>

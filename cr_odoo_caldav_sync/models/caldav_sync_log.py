@@ -47,6 +47,12 @@ class CalDAVSyncLog(models.Model):
         readonly=True,
         help="Number of events that failed to sync during this run.",
     )
+    duration = fields.Float(
+        string="Duration (Seconds)",
+        readonly=True,
+        digits=(16, 2),
+        help="Time taken to complete the sync in seconds.",
+    )
     status = fields.Selection(
         selection=[
             ("success", "Success"),

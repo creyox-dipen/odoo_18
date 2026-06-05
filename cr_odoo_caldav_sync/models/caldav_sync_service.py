@@ -35,6 +35,25 @@ def _is_date_only(dt_obj):
     return isinstance(dt_obj, date) and not isinstance(dt_obj, datetime)
 
 
+class CalDAVAccountExt(models.Model):
+    """Extends caldav.account with a batch-sync checkpoint field.
+
+    ``sync_checkpoint`` persists the last successfully committed position when
+    syncing large calendars (e.g. Nextcloud with 900+ events) so a mid-run
+    crash resumes from that position rather than restarting from the beginning.
+    Format: ``pull:<href>`` or ``push:<event_id>``; cleared on full-sync success.
+    """
+
+    _name = "caldav.account"
+    _inherit = "caldav.account"
+
+    sync_checkpoint = fields.Char(
+        string="Sync Checkpoint",
+        help="Internal: stores last committed sync position for resume-on-failure.",
+        copy=False,
+    )
+
+
 class CalDAVSyncService(models.AbstractModel):
     """Stateless service model that orchestrates CalDAV synchronisation."""
 
@@ -978,9 +997,22 @@ class CalDAVSyncService(models.AbstractModel):
                     exc_info=True,
                 )
 
+
+    # ---------------------------------------------------------------------------
+    # Batch / checkpoint constants
+    #   _BATCH_SIZE  – commit to DB every N processed items so the transaction
+    #                  doesn't stay open across all 900+ events.
+    #   The checkpoint field on caldav.account ("sync_checkpoint") stores the
+    #   last href (pull) or event-id (push) that was successfully committed so
+    #   a mid-run crash resumes from that position instead of restarting.
+    # ---------------------------------------------------------------------------
+    _BATCH_SIZE = 50
+
     @api.model
     def sync_account(self, account):
         """Perform a full incremental sync for one CalDAV account."""
+        import time
+        start_time = time.time()
         _logger.info("Starting sync for account: %s (id=%s)", account.name, account.id)
         stats_log = {
             "account_id": account.id,
@@ -989,6 +1021,7 @@ class CalDAVSyncService(models.AbstractModel):
             "pushed": 0,
             "deleted": 0,
             "failed": 0,
+            "duration": 0.0,
             "details": "",
             "status": "success",
         }
@@ -1022,10 +1055,12 @@ class CalDAVSyncService(models.AbstractModel):
                     stats_log["details"] += f"--- PUSH ERRORS ---\n{push_details}\n"
 
             new_ctag = account._get_server_ctag() or current_ctag
+            # Full sync completed successfully — clear any leftover checkpoint
             account.sudo().write(
                 {
                     "last_ctag": new_ctag,
                     "last_sync": fields.Datetime.now(),
+                    "sync_checkpoint": False,
                 }
             )
 
@@ -1042,6 +1077,7 @@ class CalDAVSyncService(models.AbstractModel):
             stats_log["status"] = "failed"
             stats_log["details"] += f"CRITICAL FAILURE: {str(e)}\n"
         finally:
+            stats_log["duration"] = time.time() - start_time
             self.env["caldav.sync.log"].sudo().create(stats_log)
 
         return {
@@ -1053,12 +1089,33 @@ class CalDAVSyncService(models.AbstractModel):
 
     @api.model
     def _pull_caldav_changes(self, account):
-        """Pull new and changed events from the CalDAV server into Odoo."""
+        """Pull new and changed events from the CalDAV server into Odoo.
+
+        For Nextcloud (and any server with large calendars) we commit every
+        ``_BATCH_SIZE`` processed items and store the last committed href as a
+        checkpoint on the account field ``sync_checkpoint``.  If the run is
+        interrupted the next invocation resumes from the checkpoint instead of
+        restarting from the beginning.
+        """
         pulled = 0
         deleted = 0
         failed = 0
         details = []
         pulled_ids = []
+
+        # ------------------------------------------------------------------ #
+        # Checkpoint / resume logic                                           #
+        # ------------------------------------------------------------------ #
+        use_checkpoint = account.server_type == "nextcloud"
+        resume_after_href = None
+        if use_checkpoint:
+            stored_cp = getattr(account, "sync_checkpoint", False) or ""
+            if stored_cp.startswith("pull:"):
+                resume_after_href = stored_cp[5:]
+                _logger.info(
+                    "[NEXTCLOUD][PULL] Resuming from checkpoint href: %s",
+                    resume_after_href,
+                )
 
         raw_server_etags = account._get_server_etags()
         server_etags = {
@@ -1087,12 +1144,23 @@ class CalDAVSyncService(models.AbstractModel):
                 existing_maps[href_key] = m
 
         base_url = account.url.rstrip("/")
+        _batch_counter = 0
+        _past_checkpoint = (resume_after_href is None)  # True = no resume needed
         for href, server_etag in server_etags.items():
+            if getattr(self.env.cr, 'closed', False):
+                _logger.warning("[PULL] Database cursor is closed. Aborting sync loop.")
+                break
             norm_href = href.rstrip("/")
             if norm_href == base_url:
                 continue
 
             if account.server_type == "icloud" and not href.endswith(".ics"):
+                continue
+
+            # ---- checkpoint resume: skip until we reach stored position ---- #
+            if not _past_checkpoint:
+                if href == resume_after_href:
+                    _past_checkpoint = True  # reached checkpoint; process from next
                 continue
 
             existing = existing_maps.get(href)
@@ -1281,6 +1349,23 @@ class CalDAVSyncService(models.AbstractModel):
                 _logger.error(error_msg, exc_info=True)
                 details.append(error_msg)
 
+            # ---- batch commit every N events (Nextcloud large calendars) ---- #
+            if use_checkpoint:
+                _batch_counter += 1
+                if _batch_counter % self._BATCH_SIZE == 0:
+                    try:
+                        account.sudo().write({"sync_checkpoint": f"pull:{href}"})
+                        self.env.cr.commit()  # flush this batch to the DB
+                        _logger.info(
+                            "[NEXTCLOUD][PULL] Batch commit at item %s (href=%s).",
+                            _batch_counter,
+                            href,
+                        )
+                    except Exception as _ce:
+                        _logger.warning(
+                            "[NEXTCLOUD][PULL] Batch commit failed: %s", _ce
+                        )
+
         server_hrefs = set(server_etags.keys())
         for href, map_rec in list(existing_maps.items()):
             if href not in server_hrefs:
@@ -1329,12 +1414,37 @@ class CalDAVSyncService(models.AbstractModel):
 
     @api.model
     def _push_odoo_changes(self, account, skip_ids=None):
-        """Push new, modified, and deleted Odoo events to the CalDAV server."""
+        """Push new, modified, and deleted Odoo events to the CalDAV server.
+
+        For Nextcloud we commit every ``_BATCH_SIZE`` pushed events and store a
+        checkpoint so a mid-run failure resumes from the last committed event
+        instead of restarting from the beginning.
+        """
         pushed = 0
         failed = 0
         details = []
         skip_ids = skip_ids or set()
         owner_partner = account.user_id.partner_id
+
+        # ------------------------------------------------------------------ #
+        # Checkpoint / resume logic for push                                  #
+        # ------------------------------------------------------------------ #
+        use_checkpoint = account.server_type == "nextcloud"
+        resume_after_event_id = None
+        if use_checkpoint:
+            stored_cp = getattr(account, "sync_checkpoint", False) or ""
+            if stored_cp.startswith("push:"):
+                try:
+                    resume_after_event_id = int(stored_cp[5:])
+                    _logger.info(
+                        "[NEXTCLOUD][PUSH] Resuming from checkpoint event_id: %s",
+                        resume_after_event_id,
+                    )
+                except ValueError:
+                    resume_after_event_id = None
+
+        _push_batch_counter = 0
+        _past_push_checkpoint = (resume_after_event_id is None)
 
         force_push_ids = set()
         if account.server_type in ("google", "zoho", "nextcloud"):
@@ -1621,6 +1731,9 @@ class CalDAVSyncService(models.AbstractModel):
         }
 
         for event in events:
+            if getattr(self.env.cr, 'closed', False):
+                _logger.warning("[PUSH] Database cursor is closed. Aborting sync loop.")
+                break
             if event.id in skip_ids:
                 _logger.debug(
                     '[PUSH] SKIP event id=%s "%s": in skip_ids (just pulled).',
@@ -1657,6 +1770,12 @@ class CalDAVSyncService(models.AbstractModel):
                             _diff_secs,
                         )
                         continue
+            # ---- checkpoint resume: skip until we reach stored position ---- #
+            if not _past_push_checkpoint:
+                if event.id == resume_after_event_id:
+                    _past_push_checkpoint = True  # resume from next event
+                continue
+
             _logger.info('[PUSH] WILL PUSH event id=%s "%s".', event.id, event.name)
             try:
                 with self.env.cr.savepoint():
@@ -1669,6 +1788,25 @@ class CalDAVSyncService(models.AbstractModel):
                         account.url,
                         etag,
                     )
+
+                # ---- batch commit every N events (Nextcloud large calendars) ---- #
+                if use_checkpoint:
+                    _push_batch_counter += 1
+                    if _push_batch_counter % self._BATCH_SIZE == 0:
+                        try:
+                            account.sudo().write(
+                                {"sync_checkpoint": f"push:{event.id}"}
+                            )
+                            self.env.cr.commit()
+                            _logger.info(
+                                "[NEXTCLOUD][PUSH] Batch commit at item %s (event_id=%s).",
+                                _push_batch_counter,
+                                event.id,
+                            )
+                        except Exception as _ce:
+                            _logger.warning(
+                                "[NEXTCLOUD][PUSH] Batch commit failed: %s", _ce
+                            )
             # FIXED CODE:
             except Exception as e:
                 msg = str(e)
@@ -4754,42 +4892,55 @@ class CalDAVSyncService(models.AbstractModel):
 
     @api.model
     def action_sync_current_user(self):
-        """Sync all active CalDAV accounts for the current user."""
+        """Sync all active CalDAV accounts for the current user in a background thread."""
         accounts = self.env["caldav.account"].search(
             [
                 ("user_id", "=", self.env.uid),
                 ("active", "=", True),
             ]
         )
-        total_pushed = total_pulled = total_deleted = 0
-        for account in accounts:
-            try:
-                stats = self.sync_account(account)
-                total_pushed += stats.get("pushed", 0)
-                total_pulled += stats.get("pulled", 0)
-                total_deleted += stats.get("deleted", 0)
-            except Exception as e:
-                _logger.error(
-                    "Sync error for account %s: %s", account.name, e, exc_info=True
-                )
-
         if not accounts:
-            message = "No active CalDAV accounts configured. Go to Settings → Calendar to add one."
-            msg_type = "warning"
-        else:
-            message = (
-                f"CalDAV Sync complete — {total_pushed} pushed, "
-                f"{total_pulled} pulled, {total_deleted} deleted."
-            )
-            msg_type = "success"
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": "CalDAV Sync",
+                    "message": "No active CalDAV accounts configured. Go to Settings → Calendar to add one.",
+                    "type": "warning",
+                    "sticky": False,
+                },
+            }
+
+        import threading
+        from odoo import api, registry
+
+        db_name = self.env.cr.dbname
+        uid = self.env.uid
+        context = self.env.context
+        account_ids = accounts.ids
+
+        def run_async():
+            db_registry = registry(db_name)
+            with db_registry.cursor() as new_cr:
+                try:
+                    new_env = api.Environment(new_cr, uid, context)
+                    for acc_id in account_ids:
+                        account = new_env["caldav.account"].browse(acc_id)
+                        if account.exists():
+                            new_env["caldav.sync.service"].sync_account(account)
+                except Exception as e:
+                    _logger.error("Background sync error for user %s: %s", uid, e, exc_info=True)
+
+        threading.Thread(target=run_async, daemon=True).start()
 
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
                 "title": "CalDAV Sync",
-                "message": message,
-                "type": msg_type,
+                "message": "Sync started in the background. Refresh your calendar to see events as they sync.",
+                "type": "info",
                 "sticky": False,
             },
         }
+    
