@@ -535,6 +535,76 @@ class CalDAVAccount(models.Model):
 
         return etag, data.decode("utf-8", errors="replace")
 
+    def _fetch_ical_multiget(self, hrefs):
+        """Fetch multiple iCal resources and their ETags in a single request.
+
+        :param list[str] hrefs: List of absolute or relative URLs to retrieve.
+        :return: Dict mapping absolute href to tuple (etag, ical_text).
+        :rtype: dict
+        """
+        self.ensure_one()
+        if not hrefs:
+            return {}
+
+        from urllib.parse import urlparse
+        
+        xml_parts = [
+            '<?xml version="1.0" encoding="utf-8" ?>',
+            '<C:calendar-multiget xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">',
+            '  <D:prop>',
+            '    <D:getetag/>',
+            '    <C:calendar-data/>',
+            '  </D:prop>'
+        ]
+        
+        def xml_escape(s):
+            return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&apos;")
+
+        for href in hrefs:
+            resolved = self._resolve_href(href)
+            path = urlparse(resolved).path
+            xml_parts.append(f'  <D:href>{xml_escape(path)}</D:href>')
+            
+        xml_parts.append('</C:calendar-multiget>')
+        body = '\n'.join(xml_parts).encode('utf-8')
+
+        headers = {
+            "Content-Type": "application/xml; charset=utf-8",
+            "Accept": "application/xml",
+        }
+        
+        status, resp_headers, data = self._do_request(
+            self.url, "REPORT", body=body, extra_headers=headers
+        )
+        
+        results = {}
+        if data:
+            root = ET.fromstring(data)
+            # Find all response elements in the DAV: namespace
+            for response in root.findall('.//{DAV:}response'):
+                href_node = response.find('.//{DAV:}href')
+                if href_node is None or not href_node.text:
+                    continue
+                resp_href = href_node.text.strip()
+                
+                # Check status
+                status_node = response.find('.//{DAV:}status')
+                if status_node is not None and status_node.text and "200" not in status_node.text:
+                    _logger.warning("Multiget failed for href %s: %s", resp_href, status_node.text)
+                    continue
+                
+                etag_node = response.find('.//{DAV:}getetag')
+                etag = (etag_node.text or "").strip('"') if etag_node is not None else ""
+                
+                data_node = response.find('.//{urn:ietf:params:xml:ns:caldav}calendar-data')
+                ical_text = data_node.text if data_node is not None else None
+                
+                if ical_text:
+                    results[self._resolve_href(resp_href)] = (etag, ical_text)
+                    
+        return results
+
+
     def _put_ical(self, href, ical_string, etag=None):
         """PUT (create or update) a single .ics resource on the server.
 

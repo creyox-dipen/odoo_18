@@ -1209,6 +1209,78 @@ class CalDAVSyncService(models.AbstractModel):
                 existing_maps[href_key] = m
 
         base_url = account.url.rstrip("/")
+
+        # Pre-pass: collect all hrefs that actually need to be fetched/pulled.
+        # This allows us to fetch them in batch using multiget REPORT.
+        hrefs_to_pull = []
+        _past_checkpoint_pre = (resume_after_href is None)
+        for href, server_etag in server_etags.items():
+            norm_href = href.rstrip("/")
+            if norm_href == base_url:
+                continue
+            if account.server_type == "icloud" and not href.endswith(".ics"):
+                continue
+            if not _past_checkpoint_pre:
+                if href == resume_after_href:
+                    _past_checkpoint_pre = True
+                continue
+            
+            existing = existing_maps.get(href)
+            if existing:
+                if existing.caldav_etag == server_etag:
+                    continue
+                if existing.event_id and not existing.event_id.active:
+                    continue
+                # Check for pending Odoo change
+                has_pending = False
+                if not existing.last_odoo_write:
+                    has_pending = True
+                else:
+                    has_pending = (
+                        existing.event_id.write_date - existing.last_odoo_write
+                    ).total_seconds() > 2
+                    if not has_pending and existing.event_id.recurrence_id:
+                        self.env.cr.execute(
+                            """
+                            SELECT 1 FROM calendar_event occ
+                            LEFT JOIN caldav_event_map map ON map.event_id = occ.id AND map.account_id = %s
+                            WHERE occ.recurrence_id = %s AND occ.active = true
+                              AND (
+                                  (map.id IS NOT NULL AND occ.write_date > map.last_odoo_write + interval '2 seconds')
+                                  OR
+                                  (map.id IS NULL AND occ.write_date > %s + interval '2 seconds')
+                              )
+                            LIMIT 1
+                        """,
+                            (
+                                account.id,
+                                existing.event_id.recurrence_id.id,
+                                existing.last_odoo_write,
+                            ),
+                        )
+                        if self.env.cr.fetchone():
+                            has_pending = True
+                if has_pending:
+                    continue
+            hrefs_to_pull.append(href)
+
+        # Batch fetch using multiget
+        fetched_data = {}
+        multiget_failed = False
+        # Do not use multiget for Zoho due to custom ETag logic and potential multiget quirks
+        if hrefs_to_pull and account.server_type != "zoho":
+            _logger.info("[MULTIGET] Starting batch fetch for %s hrefs", len(hrefs_to_pull))
+            chunk_size = 50
+            for i in range(0, len(hrefs_to_pull), chunk_size):
+                chunk = hrefs_to_pull[i:i + chunk_size]
+                try:
+                    chunk_results = account._fetch_ical_multiget(chunk)
+                    fetched_data.update(chunk_results)
+                except Exception as me:
+                    _logger.warning("[MULTIGET] Failed for chunk, falling back to individual fetches. Error: %s", me)
+                    multiget_failed = True
+                    break
+
         _batch_counter = 0
         _past_checkpoint = (resume_after_href is None)  # True = no resume needed
         for href, server_etag in server_etags.items():
@@ -1385,7 +1457,13 @@ class CalDAVSyncService(models.AbstractModel):
             try:
                 _logger.info("Pulling CalDAV event from %s", href)
                 with self.env.cr.savepoint():
-                    ical_text = account._fetch_ical(href)
+                    ical_text = None
+                    if not multiget_failed and href in fetched_data:
+                        _, ical_text = fetched_data[href]
+                    
+                    if not ical_text:
+                        ical_text = account._fetch_ical(href)
+
                     event = self._upsert_from_ical(
                         account, href, server_etag, ical_text, existing
                     )
