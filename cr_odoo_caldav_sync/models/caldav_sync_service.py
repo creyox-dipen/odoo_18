@@ -2506,7 +2506,11 @@ class CalDAVSyncService(models.AbstractModel):
 
         ctx_kwargs = {"dont_notify": True, "no_mail_to_attendees": True}
         if account.send_invitation_emails:
-            ctx_kwargs = {}
+            ctx_kwargs = {
+                "dont_notify": True,
+                "mail_create_nosubscribe": True,
+                "mail_create_nolog": True,
+            }
 
         for override_vevent in recurrence_id_vevents:
             rid_comp = getattr(override_vevent, "recurrence_id", None)
@@ -2621,7 +2625,11 @@ class CalDAVSyncService(models.AbstractModel):
 
         ctx_kwargs = {"dont_notify": True, "no_mail_to_attendees": True}
         if account.send_invitation_emails:
-            ctx_kwargs = {}
+            ctx_kwargs = {
+                "dont_notify": True,
+                "mail_create_nosubscribe": True,
+                "mail_create_nolog": True,
+            }
 
         for override_vevent in recurrence_id_vevents:
             rid_comp = getattr(override_vevent, "recurrence_id", None)
@@ -3160,7 +3168,11 @@ class CalDAVSyncService(models.AbstractModel):
 
         ctx_kwargs = {"dont_notify": True, "no_mail_to_attendees": True}
         if account.send_invitation_emails:
-            ctx_kwargs = {}
+            ctx_kwargs = {
+                "dont_notify": True,
+                "mail_create_nosubscribe": True,
+                "mail_create_nolog": True,
+            }
 
         for override_vevent in recurrence_id_vevents:
             rid_comp = getattr(override_vevent, "recurrence_id", None)
@@ -3597,9 +3609,12 @@ class CalDAVSyncService(models.AbstractModel):
         if not vals:
             return
 
-        ctx_kwargs = {}
+        ctx_kwargs = {
+            "dont_notify": True,
+            "mail_create_nosubscribe": True,
+            "mail_create_nolog": True,
+        }
         if not account.send_invitation_emails:
-            ctx_kwargs["dont_notify"] = True
             ctx_kwargs["no_mail_to_attendees"] = True
 
         CalEvent = self.env["calendar.event"].with_context(**ctx_kwargs).sudo()
