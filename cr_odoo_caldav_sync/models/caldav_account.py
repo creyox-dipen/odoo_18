@@ -433,6 +433,15 @@ class CalDAVAccount(models.Model):
         :raises UserError: If the server returns an unexpected status code.
         """
         self.ensure_one()
+        from urllib.parse import urlparse, urlunparse, quote, unquote
+        parsed = urlparse(url)
+        # Unquote first to prevent double-encoding, then quote to ensure proper URL formatting
+        unquoted_path = unquote(parsed.path)
+        quoted_path = quote(unquoted_path, safe='/')
+        unquoted_query = unquote(parsed.query)
+        quoted_query = quote(unquoted_query, safe='=&')
+        url = urlunparse((parsed.scheme, parsed.netloc, quoted_path, parsed.params, quoted_query, parsed.fragment))
+
         if expected_codes is None:
             expected_codes = [200, 201, 204, 207]
         req = self._build_request(url, method, body, extra_headers)
@@ -560,9 +569,10 @@ class CalDAVAccount(models.Model):
         def xml_escape(s):
             return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&apos;")
 
+        from urllib.parse import quote, unquote
         for href in hrefs:
             resolved = self._resolve_href(href)
-            path = urlparse(resolved).path
+            path = quote(unquote(urlparse(resolved).path), safe='/')
             xml_parts.append(f'  <D:href>{xml_escape(path)}</D:href>')
             
         xml_parts.append('</C:calendar-multiget>')
@@ -950,6 +960,13 @@ class CalDAVAccount(models.Model):
         context = self.env.context
         account_id = self.id
 
+        # Update status and progress immediately in the main thread and commit
+        self.sudo().write({
+            "sync_status": "syncing",
+            "sync_progress": _("Starting sync..."),
+        })
+        self.env.cr.commit()
+
         def run_async():
             db_registry = registry(db_name)
             with db_registry.cursor() as new_cr:
@@ -968,9 +985,13 @@ class CalDAVAccount(models.Model):
             "tag": "display_notification",
             "params": {
                 "title": _("CalDAV Sync"),
-                "message": _("Sync started in the background. Refresh your calendar to see events as they sync."),
+                "message": _("Sync started in the background."),
                 "type": "info",
                 "sticky": False,
+                "next": {
+                    "type": "ir.actions.client",
+                    "tag": "reload",
+                },
             },
         }
 

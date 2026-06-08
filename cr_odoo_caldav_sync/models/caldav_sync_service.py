@@ -1210,6 +1210,18 @@ class CalDAVSyncService(models.AbstractModel):
 
         base_url = account.url.rstrip("/")
 
+        # Check if the checkpoint href actually exists in server_etags (case-insensitively)
+        checkpoint_exists = False
+        if resume_after_href:
+            normalized_checkpoint = resume_after_href.lower()
+            for href in server_etags:
+                if href.lower() == normalized_checkpoint:
+                    checkpoint_exists = True
+                    break
+        if not checkpoint_exists and resume_after_href:
+            _logger.warning("[PULL] Checkpoint href %s not found in server events. Resuming from start.", resume_after_href)
+            resume_after_href = None
+
         # Pre-pass: collect all hrefs that actually need to be fetched/pulled.
         # This allows us to fetch them in batch using multiget REPORT.
         hrefs_to_pull = []
@@ -1221,7 +1233,7 @@ class CalDAVSyncService(models.AbstractModel):
             if account.server_type == "icloud" and not href.endswith(".ics"):
                 continue
             if not _past_checkpoint_pre:
-                if href == resume_after_href:
+                if href.lower() == resume_after_href.lower():
                     _past_checkpoint_pre = True
                 continue
             
@@ -1264,22 +1276,10 @@ class CalDAVSyncService(models.AbstractModel):
                     continue
             hrefs_to_pull.append(href)
 
-        # Batch fetch using multiget
+        # Batch fetch tracking variables
+        pending_pull_hrefs = hrefs_to_pull[:]
         fetched_data = {}
         multiget_failed = False
-        # Do not use multiget for Zoho due to custom ETag logic and potential multiget quirks
-        if hrefs_to_pull and account.server_type != "zoho":
-            _logger.info("[MULTIGET] Starting batch fetch for %s hrefs", len(hrefs_to_pull))
-            chunk_size = 50
-            for i in range(0, len(hrefs_to_pull), chunk_size):
-                chunk = hrefs_to_pull[i:i + chunk_size]
-                try:
-                    chunk_results = account._fetch_ical_multiget(chunk)
-                    fetched_data.update(chunk_results)
-                except Exception as me:
-                    _logger.warning("[MULTIGET] Failed for chunk, falling back to individual fetches. Error: %s", me)
-                    multiget_failed = True
-                    break
 
         _batch_counter = 0
         _past_checkpoint = (resume_after_href is None)  # True = no resume needed
@@ -1297,9 +1297,34 @@ class CalDAVSyncService(models.AbstractModel):
 
             # ---- checkpoint resume: skip until we reach stored position ---- #
             if not _past_checkpoint:
-                if href == resume_after_href:
+                if href.lower() == resume_after_href.lower():
                     _past_checkpoint = True  # reached checkpoint; process from next
                 continue
+
+            # If we need to pull this event and it's not cached yet, fetch the next batch of 50 on-demand using multiget
+            if href in hrefs_to_pull and not multiget_failed and href not in fetched_data:
+                try:
+                    idx = pending_pull_hrefs.index(href)
+                    chunk_to_fetch = pending_pull_hrefs[idx : idx + 50]
+                except ValueError:
+                    chunk_to_fetch = [href]
+
+                if chunk_to_fetch and account.server_type != "zoho":
+                    _logger.info(
+                        "[MULTIGET] On-demand batch fetch for %s hrefs (current_idx: %s/%s)",
+                        len(chunk_to_fetch),
+                        current_idx,
+                        total_events,
+                    )
+                    try:
+                        chunk_results = account._fetch_ical_multiget(chunk_to_fetch)
+                        fetched_data.update(chunk_results)
+                    except Exception as me:
+                        _logger.warning(
+                            "[MULTIGET] Failed for chunk, falling back to individual fetches. Error: %s",
+                            me,
+                        )
+                        multiget_failed = True
 
             existing = existing_maps.get(href)
 
@@ -1459,7 +1484,7 @@ class CalDAVSyncService(models.AbstractModel):
                 with self.env.cr.savepoint():
                     ical_text = None
                     if not multiget_failed and href in fetched_data:
-                        _, ical_text = fetched_data[href]
+                        fetched_etag, ical_text = fetched_data[href]
                     
                     if not ical_text:
                         ical_text = account._fetch_ical(href)
@@ -5074,6 +5099,13 @@ class CalDAVSyncService(models.AbstractModel):
                 },
             }
 
+        # Update status and progress immediately in the main thread and commit
+        accounts.sudo().write({
+            "sync_status": "syncing",
+            "sync_progress": "Starting sync...",
+        })
+        self.env.cr.commit()
+
         import threading
         from odoo import api, registry
 
@@ -5101,9 +5133,13 @@ class CalDAVSyncService(models.AbstractModel):
             "tag": "display_notification",
             "params": {
                 "title": "CalDAV Sync",
-                "message": "Sync started in the background. Refresh your calendar to see events as they sync.",
+                "message": "Sync started in the background.",
                 "type": "info",
                 "sticky": False,
+                "next": {
+                    "type": "ir.actions.client",
+                    "tag": "reload",
+                },
             },
         }
     
