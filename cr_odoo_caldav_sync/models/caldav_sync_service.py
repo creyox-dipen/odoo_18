@@ -1029,6 +1029,7 @@ class CalDAVSyncService(models.AbstractModel):
     @api.model
     def sync_account(self, account):
         """Perform a full incremental sync for one CalDAV account."""
+        self = self.with_context(caldav_partner_cache={})
         import time
         start_time = time.time()
         _logger.info("Starting sync for account: %s (id=%s)", account.name, account.id)
@@ -2505,7 +2506,7 @@ class CalDAVSyncService(models.AbstractModel):
 
         ctx_kwargs = {"dont_notify": True, "no_mail_to_attendees": True}
         if account.send_invitation_emails:
-            ctx_kwargs = {"mail_notify_force_send": True, "force_send": True}
+            ctx_kwargs = {}
 
         for override_vevent in recurrence_id_vevents:
             rid_comp = getattr(override_vevent, "recurrence_id", None)
@@ -2620,7 +2621,7 @@ class CalDAVSyncService(models.AbstractModel):
 
         ctx_kwargs = {"dont_notify": True, "no_mail_to_attendees": True}
         if account.send_invitation_emails:
-            ctx_kwargs = {"mail_notify_force_send": True, "force_send": True}
+            ctx_kwargs = {}
 
         for override_vevent in recurrence_id_vevents:
             rid_comp = getattr(override_vevent, "recurrence_id", None)
@@ -3159,7 +3160,7 @@ class CalDAVSyncService(models.AbstractModel):
 
         ctx_kwargs = {"dont_notify": True, "no_mail_to_attendees": True}
         if account.send_invitation_emails:
-            ctx_kwargs = {"mail_notify_force_send": True, "force_send": True}
+            ctx_kwargs = {}
 
         for override_vevent in recurrence_id_vevents:
             rid_comp = getattr(override_vevent, "recurrence_id", None)
@@ -3600,9 +3601,6 @@ class CalDAVSyncService(models.AbstractModel):
         if not account.send_invitation_emails:
             ctx_kwargs["dont_notify"] = True
             ctx_kwargs["no_mail_to_attendees"] = True
-        else:
-            ctx_kwargs["mail_notify_force_send"] = True
-            ctx_kwargs["force_send"] = True
 
         CalEvent = self.env["calendar.event"].with_context(**ctx_kwargs).sudo()
         event = None
@@ -5013,16 +5011,30 @@ class CalDAVSyncService(models.AbstractModel):
             partner_ids = []
             partner_ids.append(account.user_id.partner_id.id)
 
+            partner_cache = self.env.context.get("caldav_partner_cache")
+
             for att in attendee_components:
                 email_val = att.value
                 if email_val.lower().startswith("mailto:"):
                     email_val = email_val[7:]
-                partner = (
-                    self.env["res.partner"]
-                    .sudo()
-                    .search([("email", "=ilike", email_val)], limit=1)
-                )
-                if not partner and account.auto_create_contacts and email_val:
+                if not email_val:
+                    continue
+
+                partner = None
+                email_key = email_val.lower()
+
+                if partner_cache is not None and email_key in partner_cache:
+                    partner = partner_cache[email_key]
+                else:
+                    partner = (
+                        self.env["res.partner"]
+                        .sudo()
+                        .search([("email", "=ilike", email_val)], limit=1)
+                    )
+                    if partner_cache is not None:
+                        partner_cache[email_key] = partner
+
+                if not partner and account.auto_create_contacts:
                     cn = att.params.get("CN", [email_val])
                     cn = cn[0] if isinstance(cn, list) else cn
                     partner = (
@@ -5035,6 +5047,9 @@ class CalDAVSyncService(models.AbstractModel):
                             }
                         )
                     )
+                    if partner_cache is not None:
+                        partner_cache[email_key] = partner
+
                 if partner:
                     partner_ids.append(partner.id)
 
