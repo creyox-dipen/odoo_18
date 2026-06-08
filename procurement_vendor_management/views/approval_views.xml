@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="approval_history_view_tree" model="ir.ui.view">
+        <field name="name">approval.history.view.tree</field>
+        <field name="model">approval.history</field>
+        <field name="arch" type="xml">
+            <list string="Approval Timeline" create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="purchase_id"/>
+                <field name="user_id"/>
+                <field name="action"/>
+                <field name="remark"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="approval_history_view_search" model="ir.ui.view">
+        <field name="name">approval.history.view.search</field>
+        <field name="model">approval.history</field>
+        <field name="arch" type="xml">
+            <search string="Search Approval History">
+                <field name="purchase_id"/>
+                <field name="user_id"/>
+                <field name="action"/>
+                <group expand="0" string="Group By">
+                    <filter string="RFQ / Order" name="groupby_purchase" context="{'group_by': 'purchase_id'}"/>
+                    <filter string="User" name="groupby_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Action" name="groupby_action" context="{'group_by': 'action'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

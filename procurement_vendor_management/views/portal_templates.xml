@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. Extend Portal Home to display RFQs, Bids, and PO cards -->
+    <template id="portal_my_home_procurement" inherit_id="portal.portal_my_home" name="Portal Home: Bidding &amp; Procurement">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">My Bidding Requests (RFQs)</t>
+                <t t-set="url" t-value="'/my/hackathon/rfqs'"/>
+                <t t-set="placeholder_count" t-value="'rfq_count'"/>
+            </t>
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">My Submitted Bids</t>
+                <t t-set="url" t-value="'/my/hackathon/quotations'"/>
+                <t t-set="placeholder_count" t-value="'quotation_count'"/>
+            </t>
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="title">My Purchase Orders</t>
+                <t t-set="url" t-value="'/my/hackathon/purchase_orders'"/>
+                <t t-set="placeholder_count" t-value="'purchase_count'"/>
+            </t>
+        </xpath>
+    </template>
+
+     <!-- 2. Override Standard Purchase Portal Breadcrumbs -->
+    <template id="portal_my_home_menu_purchase_procurement" inherit_id="purchase.portal_my_home_menu_purchase" name="Portal layout: purchase menu entries override">
+        <!-- Define variables at the start of the breadcrumbs list -->
+        <xpath expr="//li[1]" position="before">
+            <t t-set="is_hackathon" t-value="bool('/my/hackathon/' in request.httprequest.path or (order and order.hackathon_state != 'draft'))"/>
+            <t t-set="from_submitted" t-value="request.params.get('from_submitted')"/>
+        </xpath>
+
+        <!-- Redirect Requests for Quotation & Bids to My Bidding Requests (RFQs) / My Submitted Bids -->
+        <xpath expr="//li[@t-if=&quot;page_name == 'rfq' or order and order.state == 'sent'&quot;]" position="replace">
+            <!-- RFQ Breadcrumb -->
+            <li t-if="page_name == 'rfq' or (order and (order.hackathon_state != 'po_created' if order.hackathon_state else order.state == 'sent'))" t-attf-class="breadcrumb-item #{'active' if not order else ''}">
+                <t t-if="is_hackathon">
+                    <t t-if="from_submitted">
+                        <a t-if="order" href="/my/hackathon/quotations">My Submitted Bids</a>
+                        <t t-else="">My Submitted Bids</t>
+                    </t>
+                    <t t-else="">
+                        <a t-if="order" href="/my/hackathon/rfqs">My Bidding Requests (RFQs)</a>
+                        <t t-else="">My Bidding Requests (RFQs)</t>
+                    </t>
+                </t>
+                <t t-else="">
+                    <a t-if="order" t-attf-href="/my/rfq?{{ keep_query() }}">Requests for Quotation</a>
+                    <t t-else="">Requests for Quotation</t>
+                </t>
+            </li>
+
+            <!-- Quotation Breadcrumb (Bids submitted) -->
+            <li t-if="page_name == 'quotation'" class="breadcrumb-item active">
+                My Submitted Bids
+            </li>
+        </xpath>
+
+
+
+        <!-- Redirect Purchase Orders to our custom Purchase Orders list, using My Purchase Orders as the category name -->
+        <xpath expr="//li[@t-if=&quot;page_name == 'purchase' or order and order.state != 'sent'&quot;]" position="replace">
+            <li t-if="page_name == 'purchase_order' or page_name == 'purchase' or (order and (order.hackathon_state == 'po_created' if order.hackathon_state else order.state != 'sent'))" t-attf-class="breadcrumb-item #{'active' if not order else ''}">
+                <t t-if="is_hackathon">
+                    <a t-if="order" href="/my/hackathon/purchase_orders">My Purchase Orders</a>
+                    <t t-else="">My Purchase Orders</t>
+                </t>
+                <t t-else="">
+                    <a t-if="order" t-attf-href="/my/purchase?{{ keep_query() }}">Purchase Orders</a>
+                    <t t-else="">Purchase Orders</t>
+                </t>
+            </li>
+        </xpath>
+
+        <!-- Override details sequence number / bid reference in breadcrumbs -->
+        <xpath expr="//li[@t-if=&quot;order&quot;]" position="replace">
+            <li t-if="order" class="breadcrumb-item active">
+                <t t-if="is_hackathon and from_submitted and existing_quotation">
+                    <t t-esc="existing_quotation.name"/>
+                </t>
+                <t t-else="">
+                    <t t-esc="order.name"/>
+                </t>
+            </li>
+        </xpath>
+    </template>
+
+
+    <!-- 3. Template: My RFQs List -->
+    <template id="portal_my_rfqs" name="My RFQs">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Requests for Quotations</t>
+            </t>
+            <div t-if="not rfqs" class="alert alert-warning mt-3">
+                There are currently no RFQs assigned to you.
+            </div>
+            <div t-if="rfqs" class="table-responsive card mt-3 shadow-sm border-0 rounded">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">RFQ Number</th>
+                            <th>RFQ Date</th>
+                            <th>Deadline</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="rfqs" t-as="rfq">
+                            <td class="ps-3">
+                                <a t-att-href="'/my/hackathon/rfqs/%s' % rfq.id" class="fw-bold text-decoration-none" style="color: #714B67;">
+                                    <span t-field="rfq.name"/>
+                                </a>
+                            </td>
+                            <td>
+                                <span t-field="rfq.date_order" t-options='{"widget": "date"}'/>
+                            </td>
+                            <td>
+                                <span t-field="rfq.date_planned" t-options='{"widget": "date"}'/>
+                            </td>
+                            <td>
+                                <span t-if="rfq.hackathon_state == 'pending_vendor_bid'" class="badge rounded-pill bg-info text-white">Pending Bid</span>
+                                <span t-if="rfq.hackathon_state == 'under_review'" class="badge rounded-pill bg-warning text-dark">Under Review</span>
+                                <span t-if="rfq.hackathon_state == 'pending_approval'" class="badge rounded-pill bg-primary">Pending Approval</span>
+                                <span t-if="rfq.hackathon_state == 'approved'" class="badge rounded-pill bg-success">Approved</span>
+                                <span t-if="rfq.hackathon_state == 'rejected'" class="badge rounded-pill bg-danger">Rejected</span>
+                                <span t-if="rfq.hackathon_state == 'po_created'" class="badge rounded-pill bg-success">PO Confirmed</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div t-if="pager" class="o_portal_pager d-flex justify-content-center mt-3">
+                <t t-call="portal.pager"/>
+            </div>
+        </t>
+    </template>
+
+    <!-- 4. Template: RFQ Detail and Bid Submission -->
+    <template id="portal_rfq_detail" name="RFQ Detail">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+                <!-- Notifications -->
+                <div t-if="request.params.get('success')" class="alert alert-success alert-dismissible fade show shadow-sm rounded mb-4" role="alert">
+                    <strong>Success!</strong> Your bid has been successfully submitted. We will review it shortly.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div t-if="request.params.get('error')" class="alert alert-danger alert-dismissible fade show shadow-sm rounded mb-4" role="alert">
+                    <strong>Error!</strong> Bid submission failed or this RFQ is no longer open for bidding.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <div class="row">
+                    <!-- Main RFQ Details Card -->
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm rounded mb-4">
+                            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0 fw-bold" style="color: #4a4a4a;">Request for Quotation <span t-field="order.name"/></h4>
+                                <span t-if="order.hackathon_state in ('pending_vendor_bid', 'under_review')" class="badge bg-info text-white rounded-pill px-3 py-2">Open for Bidding</span>
+                                <span t-if="order.hackathon_state not in ('pending_vendor_bid', 'under_review')" class="badge bg-secondary text-white rounded-pill px-3 py-2">Bidding Closed</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <p class="text-muted mb-1">Created By</p>
+                                        <h6 class="fw-bold"><span t-field="order.company_id.name"/></h6>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="text-muted mb-1">Required Delivery Date</p>
+                                        <h6 class="fw-bold"><span t-field="order.date_planned" t-options='{"widget": "date"}'/></h6>
+                                    </div>
+                                </div>
+
+                                <h5 class="fw-bold mb-3" style="color: #714B67;">Requested Products</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Product</th>
+                                                <th class="text-center" style="width: 120px;">Quantity</th>
+                                                <th class="text-end" style="width: 150px;">RFQ Price</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="order.order_line" t-as="line">
+                                                <td>
+                                                    <span t-field="line.name"/>
+                                                </td>
+                                                <td class="text-center fw-bold">
+                                                    <span t-field="line.product_qty"/> <span t-field="line.product_uom.name"/>
+                                                </td>
+                                                <td class="text-end fw-bold">
+                                                    <span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Attachments Section -->
+                                <div t-if="attachments" class="mt-4">
+                                    <h5 class="fw-bold mb-3" style="color: #714B67;">Attachments</h5>
+                                    <ul class="list-group">
+                                        <li t-foreach="attachments" t-as="att" class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span><i class="fa fa-file-text-o me-2 text-muted"></i> <span t-field="att.name"/></span>
+                                            <a t-att-href="'/web/content/%s?download=true' % att.id" class="btn btn-sm btn-outline-secondary"><i class="fa fa-download"></i> Download</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bid Submission Form / Existing Bid View -->
+                        <div t-if="order.hackathon_state in ('pending_vendor_bid', 'under_review') and not existing_quotation" class="card border-0 shadow-sm rounded mb-4">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h5 class="mb-0 fw-bold" style="color: #714B67;">Submit Your Price Quotation</h5>
+                            </div>
+                            <div class="card-body">
+                                <form t-att-action="'/my/hackathon/rfqs/%s/submit_quotation' % order.id" method="post">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="delivery_days" class="form-label fw-bold">Estimated Delivery Lead Time (Days)</label>
+                                            <input type="number" id="delivery_days" name="delivery_days" class="form-control" required="1" min="1" value="7"/>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="fw-bold mb-3 mt-4 text-secondary">Unit Price per Item (Currency: <span t-field="order.currency_id.name"/>)</h6>
+                                    <div class="table-responsive mb-4">
+                                        <table class="table table-bordered">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Product</th>
+                                                    <th>Quantity</th>
+                                                    <th class="text-end">RFQ Price</th>
+                                                    <th style="width: 200px;">Your Unit Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr t-foreach="order.order_line" t-as="line">
+                                                    <td><span t-field="line.name"/></td>
+                                                    <td><span t-field="line.product_qty"/> <span t-field="line.product_uom.name"/></td>
+                                                    <td class="text-end fw-bold"><span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/></td>
+                                                    <td>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text"><span t-field="order.currency_id.symbol"/></span>
+                                                            <input type="number" step="0.01" t-att-name="'price_unit_line_%s' % line.id" class="form-control" required="1" placeholder="0.00"/>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label for="notes" class="form-label fw-bold">Comments/Terms</label>
+                                        <textarea id="notes" name="notes" class="form-control" rows="4" placeholder="Enter any payment terms, warranty details, or remarks..."></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn text-white w-100 py-2 fw-bold" style="background-color: #714B67; font-size: 16px;">
+                                        Submit Price Quotation
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Existing Bid Information -->
+                        <div t-if="existing_quotation" class="card border-0 shadow-sm rounded mb-4" style="border-left: 5px solid #2e7d32 !important;">
+                            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0 fw-bold text-success">Your Submitted Bid</h5>
+                                <span class="badge bg-success rounded-pill px-3 py-2"><span t-field="existing_quotation.state"/></span>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">You submitted this bid on <span t-field="existing_quotation.submission_date" t-options='{"widget": "datetime"}'/>.</p>
+                                <table class="table table-bordered mb-3">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th class="text-center">Quantity</th>
+                                            <th class="text-end">Unit Price</th>
+                                            <th class="text-end">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="existing_quotation.line_ids" t-as="q_line">
+                                            <td><span t-field="q_line.product_name"/></td>
+                                            <td class="text-center"><span t-field="q_line.quantity"/></td>
+                                            <td class="text-end"><span t-field="q_line.price_unit" t-options='{"widget": "monetary", "display_currency": existing_quotation.currency_id}'/></td>
+                                            <td class="text-end fw-bold"><span t-field="q_line.subtotal" t-options='{"widget": "monetary", "display_currency": existing_quotation.currency_id}'/></td>
+                                        </tr>
+                                        <tr class="table-light fw-bold">
+                                            <td colspan="3" class="text-end">Total Bid Amount</td>
+                                            <td class="text-end text-success"><span t-field="existing_quotation.total_amount" t-options='{"widget": "monetary", "display_currency": existing_quotation.currency_id}'/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <div class="mb-3">
+                                    <span class="fw-bold">Delivery Lead Time:</span> <span t-field="existing_quotation.delivery_days"/> Days
+                                </div>
+                                <div t-if="existing_quotation.notes" class="mb-3">
+                                    <span class="fw-bold">Comments/Terms:</span>
+                                    <div class="p-3 bg-light rounded mt-1"><span t-field="existing_quotation.notes"/></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar: Contact Info -->
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm rounded mb-4">
+                            <div class="card-body">
+                                <h5 class="fw-bold mb-3" style="color: #4a4a4a;">Contact Buyer</h5>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="flex-shrink-0 bg-light p-3 rounded-circle me-3">
+                                        <i class="fa fa-user fa-lg text-muted"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold"><span t-field="order.user_id.name"/></h6>
+                                        <p class="text-muted mb-0 small">Procurement Representative</p>
+                                    </div>
+                                </div>
+                                <div t-if="order.user_id.email" class="mb-2">
+                                    <i class="fa fa-envelope me-2 text-muted"></i> <span t-field="order.user_id.email" class="small"/>
+                                </div>
+                                <div t-if="order.user_id.phone" class="mb-2">
+                                    <i class="fa fa-phone me-2 text-muted"></i> <span t-field="order.user_id.phone" class="small"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- 5. Template: My Submitted Bids (Quotations) List -->
+    <template id="portal_my_quotations" name="My Submitted Bids">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">My Submitted Bids</t>
+            </t>
+            <div t-if="not quotations" class="alert alert-warning mt-3">
+                You have not submitted any bids yet.
+            </div>
+            <div t-if="quotations" class="table-responsive card mt-3 shadow-sm border-0 rounded">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Bid Reference</th>
+                            <th>RFQ Reference</th>
+                            <th>Submission Date</th>
+                            <th>Lead Time</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="quotations" t-as="quote">
+                            <td class="ps-3">
+                                <a t-att-href="'/my/hackathon/rfqs/%s' % quote.sudo().purchase_id.id" class="fw-bold text-decoration-none" style="color: #714B67;">
+                                    <span t-field="quote.name"/>
+                                </a>
+                            </td>
+                            <td>
+                                <a t-att-href="'/my/hackathon/rfqs/%s' % quote.sudo().purchase_id.id" class="text-decoration-none text-muted">
+                                    <span t-field="quote.sudo().purchase_id.name"/>
+                                </a>
+                            </td>
+                            <td>
+                                <span t-field="quote.submission_date" t-options='{"widget": "datetime"}'/>
+                            </td>
+                            <td>
+                                <span t-field="quote.delivery_days"/> Days
+                            </td>
+                            <td class="fw-bold">
+                                <span t-field="quote.total_amount" t-options='{"widget": "monetary", "display_currency": quote.currency_id}'/>
+                            </td>
+                            <td>
+                                <span t-if="quote.state == 'draft'" class="badge rounded-pill bg-secondary text-white">Draft</span>
+                                <span t-if="quote.state == 'submitted'" class="badge rounded-pill bg-info text-white">Submitted</span>
+                                <span t-if="quote.state == 'accepted'" class="badge rounded-pill bg-success">Accepted</span>
+                                <span t-if="quote.state == 'rejected'" class="badge rounded-pill bg-danger">Rejected</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div t-if="pager" class="o_portal_pager d-flex justify-content-center mt-3">
+                <t t-call="portal.pager"/>
+            </div>
+        </t>
+    </template>
+
+    <!-- 6. Template: My Purchase Orders List -->
+    <template id="portal_my_purchase_orders" name="My Purchase Orders">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">My Purchase Orders</t>
+            </t>
+            <div t-if="not orders" class="alert alert-warning mt-3">
+                No purchase orders found for you.
+            </div>
+            <div t-if="orders" class="table-responsive card mt-3 shadow-sm border-0 rounded">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">PO Number</th>
+                            <th>Order Date</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="orders" t-as="order">
+                            <td class="ps-3">
+                                <a t-att-href="'/my/purchase/%s' % order.id" class="fw-bold text-decoration-none" style="color: #714B67;">
+                                    <span t-field="order.name"/>
+                                </a>
+                            </td>
+                            <td>
+                                <span t-field="order.date_order" t-options='{"widget": "date"}'/>
+                            </td>
+                            <td class="fw-bold">
+                                <span t-field="order.amount_total" t-options='{"widget": "monetary", "display_currency": order.currency_id}'/>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill bg-success">Confirmed</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div t-if="pager" class="o_portal_pager d-flex justify-content-center mt-3">
+                <t t-call="portal.pager"/>
+            </div>
+        </t>
+    </template>
+</odoo>

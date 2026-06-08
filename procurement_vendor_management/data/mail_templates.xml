@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- 1. RFQ Invitation to Vendor -->
+        <record id="email_template_rfq_invitation" model="mail.template">
+            <field name="name">RFQ: Vendor Invitation</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Invitation to Bid: Request for Quotation {{ object.name }}</field>
+            <field name="email_from">{{ (object.user_id.email_formatted or object.company_id.email_formatted or '') }}</field>
+            <field name="email_to">{{ ctx.get('email_to', '') }}</field>
+            <field name="partner_to">{{ ctx.get('partner_id', '') }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-family: 'Inter', sans-serif;">
+                    <p>Dear Partner,</p>
+                    <p>You are invited to submit a quotation for our Request for Quotation <strong>{{ object.name }}</strong>.</p>
+                    <p>Please review the details below:</p>
+                    <table style="width: 100%; max-width: 500px; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;">
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">RFQ Number:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.name }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Order Date:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.date_order.strftime('%Y-%m-%d') if object.date_order else 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Expected Date:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.date_planned.strftime('%Y-%m-%d') if object.date_planned else 'N/A' }}</td>
+                        </tr>
+                    </table>
+                    <p>You can view the details and submit your quotation directly on our portal by clicking the button below:</p>
+                    <div style="margin: 16px 0px 16px 0px;">
+                        <a t-att-href="'/my/hackathon/rfqs/%s' % object.id" style="background-color: #714B67; padding: 10px 16px; text-decoration: none; color: #fff; border-radius: 5px; font-size: 14px;">View RFQ &amp; Submit Bid</a>
+                    </div>
+                    <p>If you have any questions, feel free to reply to this email.</p>
+                    <p>Thank you,</p>
+                    <p>{{ object.company_id.name }}</p>
+                </div>
+            </field>
+        </record>
+
+        <!-- 2. Quotation Submitted to Officers/Managers -->
+        <record id="email_template_quotation_submitted" model="mail.template">
+            <field name="name">Quotation: Submitted Notification</field>
+            <field name="model_id" ref="model_vendor_quotation"/>
+            <field name="subject">New Vendor Quotation Submitted: {{ object.name }} for {{ object.purchase_id.name }}</field>
+            <field name="email_from">{{ (object.vendor_id.email_formatted or '') }}</field>
+            <field name="email_to">{{ ctx.get('email_to', '') }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-family: 'Inter', sans-serif;">
+                    <p>Hello Team,</p>
+                    <p>A new quotation has been submitted by vendor <strong>{{ object.vendor_id.name }}</strong> for RFQ <strong>{{ object.purchase_id.name }}</strong>.</p>
+                    <p>Quotation Details:</p>
+                    <table style="width: 100%; max-width: 500px; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;">
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Quotation Reference:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.name }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Vendor Rating:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.vendor_rating }} / 5.0</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Total Bid Amount:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; color: #2e7d32;">{{ object.total_amount }} {{ object.currency_id.symbol }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Delivery Timeline:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.delivery_days }} Days</td>
+                        </tr>
+                    </table>
+                    <p>Please log in to the ERP backend to compare vendor quotations and proceed with the workflow.</p>
+                    <p>Thank you,</p>
+                    <p>VendorBridge ERP Notification System</p>
+                </div>
+            </field>
+        </record>
+
+        <!-- 3. Approval Request to Managers -->
+        <record id="email_template_approval_request" model="mail.template">
+            <field name="name">RFQ: Approval Request</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Approval Required: RFQ {{ object.name }}</field>
+            <field name="email_from">{{ (object.user_id.email_formatted or '') }}</field>
+            <field name="email_to">{{ ctx.get('email_to', '') }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-family: 'Inter', sans-serif;">
+                    <p>Dear Manager,</p>
+                    <p>Procurement approval has been requested for RFQ <strong>{{ object.name }}</strong> by <strong>{{ object.user_id.name }}</strong>.</p>
+                    <p>Winning Vendor Selected:</p>
+                    <table style="width: 100%; max-width: 500px; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;">
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">RFQ Number:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.name }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Vendor Selected:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.selected_quotation_id.vendor_id.name }} (Rating: {{ object.selected_quotation_id.vendor_rating }}/5.0)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Bid Amount:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; color: #2e7d32;">{{ object.selected_quotation_id.total_amount }} {{ object.selected_quotation_id.currency_id.symbol }}</td>
+                        </tr>
+                    </table>
+                    <p>Please log in to Odoo to review the quotation details and record your approval/rejection remarks.</p>
+                    <p>Thank you,</p>
+                    <p>{{ object.company_id.name }}</p>
+                </div>
+            </field>
+        </record>
+
+        <!-- 4. Approval Approved to Officer -->
+        <record id="email_template_approval_approved" model="mail.template">
+            <field name="name">RFQ: Approval Approved</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Procurement Approved: RFQ {{ object.name }}</field>
+            <field name="email_from">{{ (object.company_id.email_formatted or '') }}</field>
+            <field name="email_to">{{ ctx.get('email_to', '') }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-family: 'Inter', sans-serif;">
+                    <p>Hello {{ object.user_id.name }},</p>
+                    <p>Your procurement request for RFQ <strong>{{ object.name }}</strong> has been <strong>APPROVED</strong> by the manager.</p>
+                    <p>Manager's Remarks:</p>
+                    <blockquote style="margin: 10px 0px; padding: 10px; border-left: 4px solid #4caf50; background-color: #f1f8e9;">
+                        {{ object.approval_remark }}
+                    </blockquote>
+                    <p>You can now generate the Purchase Order in the system.</p>
+                    <p>Thank you,</p>
+                    <p>{{ object.company_id.name }}</p>
+                </div>
+            </field>
+        </record>
+
+        <!-- 5. Approval Rejected to Officer -->
+        <record id="email_template_approval_rejected" model="mail.template">
+            <field name="name">RFQ: Approval Rejected</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Procurement Rejected: RFQ {{ object.name }}</field>
+            <field name="email_from">{{ (object.company_id.email_formatted or '') }}</field>
+            <field name="email_to">{{ ctx.get('email_to', '') }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-family: 'Inter', sans-serif;">
+                    <p>Hello {{ object.user_id.name }},</p>
+                    <p>Your procurement request for RFQ <strong>{{ object.name }}</strong> has been <strong>REJECTED</strong> by the manager.</p>
+                    <p>Manager's Remarks:</p>
+                    <blockquote style="margin: 10px 0px; padding: 10px; border-left: 4px solid #f44336; background-color: #ffebee;">
+                        {{ object.approval_remark }}
+                    </blockquote>
+                    <p>Please review the remarks and modify the RFQ or submit alternative quotes if required.</p>
+                    <p>Thank you,</p>
+                    <p>{{ object.company_id.name }}</p>
+                </div>
+            </field>
+        </record>
+
+        <!-- 6. PO Created/Confirmed to Vendor -->
+        <record id="email_template_po_created" model="mail.template">
+            <field name="name">PO: Created and Confirmed</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Purchase Order Confirmed: {{ object.name }}</field>
+            <field name="email_from">{{ (object.user_id.email_formatted or object.company_id.email_formatted or '') }}</field>
+            <field name="email_to">{{ ctx.get('email_to', '') }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-family: 'Inter', sans-serif;">
+                    <p>Dear {{ object.partner_id.name }},</p>
+                    <p>We are pleased to inform you that your quotation has been accepted, and Purchase Order <strong>{{ object.name }}</strong> has been confirmed.</p>
+                    <p>Order Summary:</p>
+                    <table style="width: 100%; max-width: 500px; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;">
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Order Reference:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.name }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Order Date:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ object.date_order.strftime('%Y-%m-%d') if object.date_order else 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Total Amount:</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; color: #2e7d32;">{{ object.amount_total }} {{ object.currency_id.symbol }}</td>
+                        </tr>
+                    </table>
+                    <p>You can view the formal Purchase Order and download the EDI documents on our portal by clicking the link below:</p>
+                    <div style="margin: 16px 0px 16px 0px;">
+                        <a t-att-href="'/my/purchase/%s' % object.id" style="background-color: #714B67; padding: 10px 16px; text-decoration: none; color: #fff; border-radius: 5px; font-size: 14px;">View Purchase Order</a>
+                    </div>
+                    <p>Please proceed with delivery as per the delivery schedule.</p>
+                    <p>Thank you for your partnership,</p>
+                    <p>{{ object.company_id.name }}</p>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

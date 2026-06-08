@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Security Groups -->
+        <record id="group_procurement_officer" model="res.groups">
+            <field name="name">Procurement Officer</field>
+            <field name="category_id" ref="base.module_category_inventory_purchase"/>
+            <field name="implied_ids" eval="[(4, ref('purchase.group_purchase_user'))]"/>
+        </record>
+
+        <record id="group_procurement_manager" model="res.groups">
+            <field name="name">Procurement Manager / Approver</field>
+            <field name="category_id" ref="base.module_category_inventory_purchase"/>
+            <field name="implied_ids" eval="[(4, ref('purchase.group_purchase_manager')), (4, ref('group_procurement_officer'))]"/>
+        </record>
+    </data>
+
+    <data noupdate="1">
+        <!-- Record Rules -->
+        <!-- Vendor: Can only see own RFQs/POs -->
+        <record id="rule_purchase_order_vendor" model="ir.rule">
+            <field name="name">Vendor: Own Purchase Orders / RFQs</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="domain_force">['|', ('partner_id', '=', user.partner_id.id), ('invited_vendor_ids', 'in', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Vendor: Can only see/manage own Vendor Quotations -->
+        <record id="rule_vendor_quotation_vendor" model="ir.rule">
+            <field name="name">Vendor: Own Quotations</field>
+            <field name="model_id" ref="model_vendor_quotation"/>
+            <field name="domain_force">[('vendor_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Vendor: Can only see own Quotation Lines -->
+        <record id="rule_vendor_quotation_line_vendor" model="ir.rule">
+            <field name="name">Vendor: Own Quotation Lines</field>
+            <field name="model_id" ref="model_vendor_quotation_line"/>
+            <field name="domain_force">[('quotation_id.vendor_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Officers / Managers: Can see all Quotations and Lines -->
+        <record id="rule_vendor_quotation_officer" model="ir.rule">
+            <field name="name">Procurement Officer/Manager: All Quotations</field>
+            <field name="model_id" ref="model_vendor_quotation"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_procurement_officer'))]"/>
+        </record>
+
+        <record id="rule_vendor_quotation_line_officer" model="ir.rule">
+            <field name="name">Procurement Officer/Manager: All Quotation Lines</field>
+            <field name="model_id" ref="model_vendor_quotation_line"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_procurement_officer'))]"/>
+        </record>
+    </data>
+</odoo>

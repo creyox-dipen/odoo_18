@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Window action for Vendor Quotations (Smart Button) -->
+    <record id="action_vendor_quotations_all" model="ir.actions.act_window">
+        <field name="name">Vendor Bids</field>
+        <field name="res_model">vendor.quotation</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('purchase_id', '=', active_id)]</field>
+    </record>
+
+    <!-- Inherit Purchase Order Form View -->
+    <record id="purchase_order_form_procurement_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.form.procurement.inherit</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Add workflow buttons to Header -->
+            <xpath expr="//header" position="inside">
+                <button name="action_send_rfq_custom" type="object" string="Send RFQ to Vendors" 
+                        class="oe_highlight" invisible="hackathon_state != 'draft'"
+                        groups="procurement_vendor_management.group_procurement_officer"/>
+                
+                <button name="action_request_approval" type="object" string="Request Approval" 
+                        class="oe_highlight" invisible="hackathon_state != 'under_review'"
+                        groups="procurement_vendor_management.group_procurement_officer"/>
+                
+                <button name="action_approve_wizard" type="object" string="Approve" 
+                        class="oe_highlight" invisible="hackathon_state != 'pending_approval'"
+                        groups="procurement_vendor_management.group_procurement_manager"/>
+                
+                <button name="action_reject_wizard" type="object" string="Reject" 
+                        class="btn-secondary" invisible="hackathon_state != 'pending_approval'"
+                        groups="procurement_vendor_management.group_procurement_manager"/>
+                
+                <button name="action_create_po_custom" type="object" string="Create PO" 
+                        class="oe_highlight" invisible="hackathon_state != 'approved'"
+                        groups="procurement_vendor_management.group_procurement_officer"/>
+            </xpath>
+
+            <!-- Add custom statusbar next to the standard one -->
+            <xpath expr="//header" position="inside">
+                <field name="hackathon_state" widget="statusbar" 
+                       statusbar_visible="draft,pending_vendor_bid,under_review,pending_approval,approved,po_created"/>
+            </xpath>
+
+            <!-- Add Smart Buttons -->
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="%(action_vendor_quotation_comparison_by_po)d" type="action" class="oe_stat_button" icon="fa-balance-scale">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">Compare</span>
+                        <span class="o_stat_text">Bids</span>
+                    </div>
+                </button>
+                <button name="%(action_vendor_quotations_all)d" type="action" class="oe_stat_button" icon="fa-pencil-square-o" context="{'search_default_purchase_id': id}">
+                    <field name="quotation_count" widget="statinfo" string="Vendor Bids"/>
+                </button>
+            </xpath>
+
+            <!-- Add Notebook Pages -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Procurement &amp; Bidding" name="procurement_bidding">
+                    <group>
+                        <group string="Bidding Scope">
+                            <field name="invited_vendor_ids" widget="many2many_tags" 
+                                   readonly="hackathon_state not in ('draft', 'pending_vendor_bid')"/>
+                            <field name="selected_quotation_id" 
+                                   readonly="hackathon_state not in ('under_review', 'approved')"/>
+                        </group>
+                        <group string="Approval Details">
+                            <field name="approved_vendor_id" readonly="1"/>
+                            <field name="approval_remark" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+                <page string="Approval History Timeline" name="approval_history_timeline">
+                    <field name="approval_history_ids" readonly="1">
+                        <list string="Approval History">
+                            <field name="date"/>
+                            <field name="user_id"/>
+                            <field name="action"/>
+                            <field name="remark"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,17 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vendor_quotation_portal,vendor.quotation.portal,model_vendor_quotation,base.group_portal,1,1,1,0
+access_vendor_quotation_officer,vendor.quotation.officer,model_vendor_quotation,group_procurement_officer,1,1,1,1
+access_vendor_quotation_manager,vendor.quotation.manager,model_vendor_quotation,group_procurement_manager,1,0,0,0
+access_vendor_quotation_line_portal,vendor.quotation.line.portal,model_vendor_quotation_line,base.group_portal,1,1,1,1
+access_vendor_quotation_line_officer,vendor.quotation.line.officer,model_vendor_quotation_line,group_procurement_officer,1,1,1,1
+access_vendor_quotation_line_manager,vendor.quotation.line.manager,model_vendor_quotation_line,group_procurement_manager,1,0,0,0
+access_approval_history_portal,approval.history.portal,model_approval_history,base.group_portal,1,0,0,0
+access_approval_history_officer,approval.history.officer,model_approval_history,group_procurement_officer,1,1,1,1
+access_approval_history_manager,approval.history.manager,model_approval_history,group_procurement_manager,1,1,1,1
+access_approval_remark_wizard_officer,approval.remark.wizard.officer,model_approval_remark_wizard,group_procurement_officer,1,1,1,1
+access_approval_remark_wizard_manager,approval.remark.wizard.manager,model_approval_remark_wizard,group_procurement_manager,1,1,1,1
+access_uom_uom_portal,uom.uom.portal,uom.model_uom_uom,base.group_portal,1,0,0,0
+access_product_product_portal,product.product.portal,product.model_product_product,base.group_portal,1,0,0,0
+access_product_template_portal,product.template.portal,product.model_product_template,base.group_portal,1,0,0,0
+
+

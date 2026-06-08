@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. Report Actions -->
+    <record id="action_report_quotation_comparison" model="ir.actions.report">
+        <field name="name">Quotation Comparison Report</field>
+        <field name="model">purchase.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">procurement_vendor_management.report_quotation_comparison</field>
+        <field name="report_file">procurement_vendor_management.report_quotation_comparison</field>
+        <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_vendor_performance" model="ir.actions.report">
+        <field name="name">Vendor Performance Report</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">procurement_vendor_management.report_vendor_performance</field>
+        <field name="report_file">procurement_vendor_management.report_vendor_performance</field>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_monthly_spend" model="ir.actions.report">
+        <field name="name">Monthly Spend Report</field>
+        <field name="model">purchase.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">procurement_vendor_management.report_monthly_spend</field>
+        <field name="report_file">procurement_vendor_management.report_monthly_spend</field>
+        <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_procurement_summary" model="ir.actions.report">
+        <field name="name">Procurement Summary Report</field>
+        <field name="model">purchase.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">procurement_vendor_management.report_procurement_summary</field>
+        <field name="report_file">procurement_vendor_management.report_procurement_summary</field>
+        <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- 2. QWeb Templates -->
+
+    <!-- Template: Quotation Comparison -->
+    <template id="report_quotation_comparison">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family: 'Helvetica', sans-serif;">
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2 class="fw-bold" style="color: #714B67;">Quotation Comparison Report</h2>
+                                <h4>RFQ: <span t-field="o.name"/></h4>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Date Created:</strong> <span t-field="o.date_order" t-options='{"widget": "date"}'/><br/>
+                                <strong>Expected Delivery Date:</strong> <span t-field="o.date_planned" t-options='{"widget": "date"}'/>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong>Created By:</strong> <span t-field="o.user_id.name"/><br/>
+                                <strong>Bidding Status:</strong> <span t-field="o.hackathon_state"/>
+                            </div>
+                        </div>
+
+                        <h4 class="mt-4 pb-2 border-bottom fw-bold" style="color: #714B67;">Comparison Matrix</h4>
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Vendor</th>
+                                    <th class="text-end">Total Bid Amount</th>
+                                    <th class="text-center">Lead Time (Days)</th>
+                                    <th class="text-center">Vendor Rating (0-5)</th>
+                                    <th>Submission Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.quotation_ids" t-as="q" t-att-class="'table-success' if q.is_lowest_price else ''">
+                                    <td>
+                                        <strong t-field="q.vendor_id.name"/><br/>
+                                        <span t-if="q.is_lowest_price" class="badge bg-success small">Lowest Price Indicator</span>
+                                        <span t-if="q.is_best_vendor" class="badge bg-info text-dark small">Best Vendor Indicator</span>
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <span t-field="q.total_amount" t-options='{"widget": "monetary", "display_currency": q.currency_id}'/>
+                                    </td>
+                                    <td class="text-center"><span t-field="q.delivery_days"/></td>
+                                    <td class="text-center">
+                                        <span t-field="q.vendor_rating"/> / 5.0
+                                    </td>
+                                    <td><span t-field="q.submission_date" t-options='{"widget": "date"}'/></td>
+                                    <td><span t-field="q.state"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div t-if="o.selected_quotation_id" class="mt-5 p-3 border rounded bg-light">
+                            <h5 class="fw-bold text-success">Winning Bid Selected</h5>
+                            <strong>Winning Vendor:</strong> <span t-field="o.selected_quotation_id.vendor_id.name"/><br/>
+                            <strong>Winning Bid:</strong> <span t-field="o.selected_quotation_id.name"/> / <span t-field="o.selected_quotation_id.total_amount" t-options='{"widget": "monetary", "display_currency": o.selected_quotation_id.currency_id}'/><br/>
+                            <strong>Approval Remarks:</strong> <span t-field="o.approval_remark"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Template: Vendor Performance -->
+    <template id="report_vendor_performance">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family: 'Helvetica', sans-serif;">
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2 class="fw-bold" style="color: #714B67;">Vendor Performance Report</h2>
+                                <h3><span t-field="o.name"/></h3>
+                            </div>
+                        </div>
+
+                        <div class="row mb-5">
+                            <div class="col-6">
+                                <strong>Contact Person:</strong> <span t-field="o.child_ids[0].name" t-if="o.child_ids"/><br/>
+                                <strong>Email:</strong> <span t-field="o.email"/><br/>
+                                <strong>Phone:</strong> <span t-field="o.phone"/>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong>Vendor Score:</strong> <span t-field="o.vendor_rating"/> / 5.0 Stars
+                            </div>
+                        </div>
+
+                        <h4 class="pb-2 border-bottom fw-bold" style="color: #714B67;">Performance Scorecard</h4>
+                        <div class="row my-4 text-center">
+                            <div class="col-4 border-end">
+                                <h1 class="fw-bold text-primary"><span t-field="o.delivery_score"/> / 100</h1>
+                                <p class="text-muted">Delivery Score</p>
+                            </div>
+                            <div class="col-4 border-end">
+                                <h1 class="fw-bold text-success"><span t-field="o.quality_score"/> / 100</h1>
+                                <p class="text-muted">Quality Score</p>
+                            </div>
+                            <div class="col-4">
+                                <h1 class="fw-bold text-info"><span t-field="o.on_time_percentage"/>%</h1>
+                                <p class="text-muted">On-time Delivery Rate</p>
+                            </div>
+                        </div>
+
+                        <h4 class="mt-5 pb-2 border-bottom fw-bold" style="color: #714B67;">Procurement Summary</h4>
+                        <table class="table table-striped">
+                            <tbody>
+                                <tr>
+                                    <td><strong>Total Completed Orders:</strong></td>
+                                    <td><span t-field="o.total_completed_orders"/> Orders</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Spend Value:</strong></td>
+                                    <td class="fw-bold text-success">
+                                        <span t-field="o.total_procurement_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Template: Monthly Spend -->
+    <template id="report_monthly_spend">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family: 'Helvetica', sans-serif;">
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2 class="fw-bold" style="color: #714B67;">Monthly Spend Report</h2>
+                                <h4>Period Reference: <span t-field="o.date_order" t-options='{"widget": "date"}'/></h4>
+                            </div>
+                        </div>
+
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>PO Reference</th>
+                                    <th>Vendor</th>
+                                    <th>Order Date</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Amount Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="docs" t-as="doc">
+                                    <td><span t-field="doc.name"/></td>
+                                    <td><span t-field="doc.partner_id.name"/></td>
+                                    <td><span t-field="doc.date_order" t-options='{"widget": "date"}'/></td>
+                                    <td><span t-field="doc.state"/></td>
+                                    <td class="text-end fw-bold"><span t-field="doc.amount_total" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Template: Procurement Summary -->
+    <template id="report_procurement_summary">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family: 'Helvetica', sans-serif;">
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2 class="fw-bold" style="color: #714B67;">Procurement Summary</h2>
+                                <h4>Request Reference: <span t-field="o.name"/></h4>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <strong>Procurement Officer:</strong> <span t-field="o.user_id.name"/><br/>
+                                <strong>Bidding Status:</strong> <span t-field="o.hackathon_state"/>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong>Date Raised:</strong> <span t-field="o.date_order" t-options='{"widget": "date"}'/><br/>
+                                <strong>Selected Winner:</strong> <span t-field="o.approved_vendor_id.name" t-if="o.approved_vendor_id"/>
+                            </div>
+                        </div>
+
+                        <h5 class="fw-bold mt-4" style="color: #714B67;">Procured Products</h5>
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.order_line" t-as="line">
+                                    <td><span t-field="line.product_id.display_name"/></td>
+                                    <td class="text-end"><span t-field="line.product_qty"/></td>
+                                    <td class="text-end"><span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    <td class="text-end fw-bold"><span t-field="line.price_subtotal" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                </tr>
+                                <tr class="fw-bold table-light">
+                                    <td colspan="3" class="text-end">Grand Total</td>
+                                    <td class="text-end text-success"><span t-field="o.amount_total" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="mt-5 p-3 border rounded bg-light">
+                            <h5 class="fw-bold" style="color: #714B67;">Workflow Approval Remark</h5>
+                            <p class="mb-0"><span t-field="o.approval_remark" t-if="o.approval_remark"/> <span t-if="not o.approval_remark" class="text-muted">No remarks recorded.</span></p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

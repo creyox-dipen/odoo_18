@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. Graph View: RFQ Status Distribution -->
+    <record id="purchase_order_view_graph_status" model="ir.ui.view">
+        <field name="name">purchase.order.view.graph.status</field>
+        <field name="model">purchase.order</field>
+        <field name="arch" type="xml">
+            <graph string="RFQ Status Distribution" type="pie">
+                <field name="hackathon_state"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- 2. Graph View: Top Vendors by Spend -->
+    <record id="purchase_order_view_graph_spend" model="ir.ui.view">
+        <field name="name">purchase.order.view.graph.spend</field>
+        <field name="model">purchase.order</field>
+        <field name="arch" type="xml">
+            <graph string="Top Vendors by Spend" type="bar">
+                <field name="partner_id"/>
+                <field name="amount_total" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- 3. Pivot View for Procurement Analytics -->
+    <record id="purchase_order_view_pivot_analytics" model="ir.ui.view">
+        <field name="name">purchase.order.view.pivot.analytics</field>
+        <field name="model">purchase.order</field>
+        <field name="arch" type="xml">
+            <pivot string="Procurement Spend &amp; Approval Analytics" display_quantity="true">
+                <field name="partner_id" type="row"/>
+                <field name="hackathon_state" type="col"/>
+                <field name="amount_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Window Action to open Dashboard (Graph View by default) -->
+    <record id="action_procurement_dashboard" model="ir.actions.act_window">
+        <field name="name">Procurement Analytics Dashboard</field>
+        <field name="res_model">purchase.order</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="view_id" ref="purchase_order_view_graph_status"/>
+        <field name="context">{'search_default_groupby_hackathon_state': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No procurement data available for analytics yet.
+            </p>
+            <p>
+                Launch RFQs and collect bids to see real-time spend analytics.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item for Dashboard -->
+    <menuitem id="menu_procurement_dashboard"
+              name="Procurement Dashboard"
+              parent="purchase.menu_purchase_root"
+              action="action_procurement_dashboard"
+              sequence="20"
+              groups="procurement_vendor_management.group_procurement_officer"/>
+</odoo>

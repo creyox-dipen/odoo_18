@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. Standard List View -->
+    <record id="vendor_quotation_view_tree" model="ir.ui.view">
+        <field name="name">vendor.quotation.view.list</field>
+        <field name="model">vendor.quotation</field>
+        <field name="arch" type="xml">
+            <list string="Vendor Bids" default_order="create_date desc">
+                <field name="name"/>
+                <field name="purchase_id"/>
+                <field name="vendor_id"/>
+                <field name="submission_date"/>
+                <field name="delivery_days"/>
+                <field name="total_amount" sum="Total Bid Amount" widget="monetary"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="state" widget="badge" decoration-success="state == 'accepted'" decoration-danger="state == 'rejected'" decoration-info="state == 'submitted'" decoration-muted="state == 'draft'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- 2. Quotation Comparison List View -->
+    <record id="vendor_quotation_comparison_tree" model="ir.ui.view">
+        <field name="name">vendor.quotation.comparison.list</field>
+        <field name="model">vendor.quotation</field>
+        <field name="arch" type="xml">
+            <!-- decoration-success: green for lowest price, decoration-info: blue for best vendor rating -->
+            <list string="Bids Comparison" 
+                  decoration-success="is_lowest_price" 
+                  decoration-info="is_best_vendor"
+                  create="false" 
+                  edit="false" 
+                  default_order="total_amount asc">
+                <field name="vendor_id"/>
+                <field name="purchase_id"/>
+                <field name="total_amount" widget="monetary"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="delivery_days"/>
+                <field name="vendor_rating"/>
+                <field name="on_time_percentage"/>
+                <field name="submission_date"/>
+                <field name="is_lowest_price" widget="boolean_toggle" readonly="1"/>
+                <field name="is_best_vendor" widget="boolean_toggle" readonly="1"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- 3. Form View -->
+    <record id="vendor_quotation_view_form" model="ir.ui.view">
+        <field name="name">vendor.quotation.view.form</field>
+        <field name="model">vendor.quotation</field>
+        <field name="arch" type="xml">
+            <form string="Vendor Bid">
+                <header>
+                    <button name="action_submit" type="object" string="Submit Bid" class="oe_highlight" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,accepted,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Procurement Request">
+                            <field name="purchase_id" readonly="state != 'draft'"/>
+                            <field name="vendor_id" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Bid Particulars">
+                            <field name="submission_date" readonly="1"/>
+                            <field name="delivery_days" readonly="state != 'draft'"/>
+                            <field name="currency_id" invisible="True"/>
+                            <field name="total_amount" readonly="1" widget="monetary"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Products &amp; Pricing" name="products_pricing">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <list string="Lines" editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="price_unit" widget="monetary"/>
+                                    <field name="subtotal" readonly="1" widget="monetary"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Vendor Notes" name="vendor_notes">
+                            <field name="notes" placeholder="Enter terms, conditions, or specific clarifications..." readonly="state != 'draft'"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="vendor_quotation_view_search" model="ir.ui.view">
+        <field name="name">vendor.quotation.view.search</field>
+        <field name="model">vendor.quotation</field>
+        <field name="arch" type="xml">
+            <search string="Search Bids">
+                <field name="name"/>
+                <field name="purchase_id"/>
+                <field name="vendor_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Submitted" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="Accepted" name="accepted" domain="[('state', '=', 'accepted')]"/>
+                <filter string="Rejected" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="RFQ Reference" name="groupby_purchase" context="{'group_by': 'purchase_id'}"/>
+                    <field name="purchase_id"/>
+                    <filter string="Vendor" name="groupby_vendor" context="{'group_by': 'vendor_id'}"/>
+                    <filter string="State" name="groupby_state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Actions -->
+    <record id="action_vendor_quotations_list" model="ir.actions.act_window">
+        <field name="name">Vendor Quotations</field>
+        <field name="res_model">vendor.quotation</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="vendor_quotation_view_search"/>
+    </record>
+
+    <!-- Smart Button Action (Referenced in purchase_order_views.xml) -->
+    <record id="action_vendor_quotation_comparison_by_po" model="ir.actions.act_window">
+        <field name="name">Compare Bids</field>
+        <field name="res_model">vendor.quotation</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="vendor_quotation_comparison_tree"/>
+        <field name="domain">[('purchase_id', '=', active_id)]</field>
+        <field name="context">{'create': False}</field>
+    </record>
+
+    <!-- General Comparison Action (Menu Item) -->
+    <record id="action_vendor_quotation_comparison" model="ir.actions.act_window">
+        <field name="name">Quotation Comparison</field>
+        <field name="res_model">vendor.quotation</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="vendor_quotation_comparison_tree"/>
+        <field name="search_view_id" ref="vendor_quotation_view_search"/>
+        <field name="context">{'search_default_groupby_purchase': 1, 'create': False}</field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_vendor_quotations_main"
+              name="Vendor Quotations"
+              parent="purchase.menu_purchase_root"
+              action="action_vendor_quotations_list"
+              sequence="12"
+              groups="procurement_vendor_management.group_procurement_officer"/>
+
+    <menuitem id="menu_vendor_quotation_comparison"
+              name="Quotation Comparison"
+              parent="purchase.menu_purchase_root"
+              action="action_vendor_quotation_comparison"
+              sequence="13"
+              groups="procurement_vendor_management.group_procurement_officer"/>
+</odoo>

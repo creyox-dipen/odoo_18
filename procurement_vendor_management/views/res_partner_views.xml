@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Partner Form View -->
+    <record id="view_partner_form_procurement_inherit" model="ir.ui.view">
+        <field name="name">res.partner.form.procurement.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Vendor Performance" name="vendor_performance" invisible="not is_company and parent_id">
+                    <group name="performance_metrics">
+                        <group string="Overall Ratings">
+                            <field name="vendor_rating" readonly="1"/>
+                            <field name="total_completed_orders" readonly="1"/>
+                            <field name="total_procurement_amount" readonly="1"/>
+                        </group>
+                        <group string="Performance Details">
+                            <field name="delivery_score" widget="progressbar" readonly="1"/>
+                            <field name="quality_score" widget="progressbar" readonly="1"/>
+                            <field name="on_time_percentage" widget="progressbar" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
