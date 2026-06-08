@@ -1009,6 +1009,24 @@ class CalDAVSyncService(models.AbstractModel):
     _BATCH_SIZE = 50
 
     @api.model
+    def _notify_sync_progress(self, account):
+        """Send a real-time notification to the user's bus channel."""
+        try:
+            partners = self.env['res.partner']
+            if account.user_id and account.user_id.partner_id:
+                partners |= account.user_id.partner_id
+            if self.env.user and self.env.user.partner_id:
+                partners |= self.env.user.partner_id
+            for partner in partners:
+                self.env['bus.bus']._sendone(
+                    partner,
+                    "caldav_sync_progress",
+                    {"account_id": account.id}
+                )
+        except Exception as e:
+            _logger.warning("Failed to send CalDAV sync progress notification: %s", e)
+
+    @api.model
     def sync_account(self, account):
         """Perform a full incremental sync for one CalDAV account."""
         import time
@@ -1039,6 +1057,7 @@ class CalDAVSyncService(models.AbstractModel):
             "sync_date": fields.Datetime.now(),
         })
         self.env.cr.commit()
+        self._notify_sync_progress(account)
 
         stats_log = {
             "account_id": account.id,
@@ -1082,6 +1101,7 @@ class CalDAVSyncService(models.AbstractModel):
                         "details": stats_log["details"],
                     })
                 self.env.cr.commit()
+                self._notify_sync_progress(account)
 
             if account.sync_direction in ("bidirectional", "odoo_to_caldav"):
                 _logger.debug("Pushing changes to CalDAV for account %s.", account.name)
@@ -1140,6 +1160,7 @@ class CalDAVSyncService(models.AbstractModel):
                         account_vals["sync_progress"] = _("Failed: %s") % details_summary
                     account.sudo().write(account_vals)
                     self.env.cr.commit()
+                    self._notify_sync_progress(account)
                 except Exception as write_err:
                     _logger.error("Failed to write final sync log stats: %s", write_err)
 
@@ -1535,6 +1556,7 @@ class CalDAVSyncService(models.AbstractModel):
                             "details": "\n".join(details),
                         })
                     self.env.cr.commit()  # flush this batch to the DB
+                    self._notify_sync_progress(account)
                     _logger.info(
                         "[PULL] Batch commit at item %s (href=%s). Progress: %s",
                         _batch_counter,
@@ -1985,6 +2007,7 @@ class CalDAVSyncService(models.AbstractModel):
                                 "details": "\n".join(details),
                             })
                         self.env.cr.commit()
+                        self._notify_sync_progress(account)
                         _logger.info(
                             "[PUSH] Batch commit at item %s (event_id=%s). Progress: %s",
                             _push_batch_counter,

@@ -70,6 +70,11 @@
         "views/menu.xml",
     ],
     "images": ["static/description/banner.png"],
+    "assets": {
+        "web.assets_backend": [
+            "cr_odoo_caldav_sync/static/src/js/sync_progress.js",
+        ],
+    },
     "installable": True,
     "application": True,
     "price": 179,
