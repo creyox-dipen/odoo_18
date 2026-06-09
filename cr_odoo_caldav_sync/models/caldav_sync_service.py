@@ -1362,9 +1362,10 @@ class CalDAVSyncService(models.AbstractModel):
                 except ValueError:
                     chunk_to_fetch = [href]
 
-                if chunk_to_fetch and account.server_type != "zoho":
+                if chunk_to_fetch:
                     _logger.info(
-                        "[MULTIGET] On-demand batch fetch for %s hrefs (current_idx: %s/%s)",
+                        "[MULTIGET][%s] On-demand batch fetch for %s hrefs (current_idx: %s/%s)",
+                        account.server_type.upper(),
                         len(chunk_to_fetch),
                         current_idx,
                         total_events,
@@ -1374,7 +1375,8 @@ class CalDAVSyncService(models.AbstractModel):
                         fetched_data.update(chunk_results)
                     except Exception as me:
                         _logger.warning(
-                            "[MULTIGET] Failed for chunk, falling back to individual fetches. Error: %s",
+                            "[MULTIGET][%s] Failed for chunk, falling back to individual fetches. Error: %s",
+                            account.server_type.upper(),
                             me,
                         )
                         multiget_failed = True
@@ -1383,7 +1385,12 @@ class CalDAVSyncService(models.AbstractModel):
 
             if account.server_type == "zoho":
                 try:
-                    zoho_ical_text = account._fetch_ical(href)
+                    # Use multiget-fetched body if available; fall back to individual GET
+                    if not multiget_failed and href in fetched_data:
+                        _zoho_etag, zoho_ical_text = fetched_data[href]
+                        _logger.debug("[ZOHO][MULTIGET] Using batch-fetched iCal for %s", href)
+                    else:
+                        zoho_ical_text = account._fetch_ical(href)
                     _prefixes = (
                         "SUMMARY",
                         "DTSTART",
@@ -3348,7 +3355,7 @@ class CalDAVSyncService(models.AbstractModel):
                         )
                         account._put_ical(base_map.caldav_href, step1_ical, etag=None)
 
-                        _, refreshed_ical = account._fetch_ical_with_etag(
+                        refreshed_etag, refreshed_ical = account._fetch_ical_with_etag(
                             base_map.caldav_href
                         )
                         step2_ical = self._build_google_ical_with_overrides(
