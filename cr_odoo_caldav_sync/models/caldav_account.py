@@ -1018,3 +1018,20 @@ class CalDAVAccount(models.Model):
             "view_mode": "form",
             "target": "current",
         }
+
+    def _register_hook(self):
+        super()._register_hook()
+        try:
+            stuck_accounts = self.sudo().search([("sync_status", "=", "syncing")])
+            if stuck_accounts:
+                stuck_accounts.write({
+                    "sync_status": "idle",
+                    "sync_progress": "Interrupted by server restart.",
+                })
+            stuck_logs = self.env["caldav.sync.log"].sudo().search([("status", "=", "running")])
+            if stuck_logs:
+                stuck_logs.write({
+                    "status": "interrupted",
+                })
+        except Exception as e:
+            _logger.warning("Could not reset stuck CalDAV accounts/logs on startup: %s", e)

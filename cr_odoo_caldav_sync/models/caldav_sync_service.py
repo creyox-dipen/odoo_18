@@ -19,13 +19,22 @@ except ImportError:
     _logger.warning("vobject is not available; CalDAV iCal parsing will be disabled.")
 
 
-def _to_utc_naive(dt_obj):
-    """Convert a timezone-aware or naive datetime to a UTC-naive datetime."""
+def _to_utc_naive(dt_obj, timezone_str=None):
+    """Convert a timezone-aware or naive datetime to a UTC-naive datetime.
+    If the datetime is naive (floating) and timezone_str is provided, it is
+    localized to that timezone before conversion to UTC.
+    """
     if dt_obj is None:
         return None
     if isinstance(dt_obj, datetime):
         if dt_obj.tzinfo is not None:
             return dt_obj.astimezone(timezone.utc).replace(tzinfo=None)
+        if timezone_str:
+            try:
+                tz = pytz.timezone(timezone_str)
+                return tz.localize(dt_obj).astimezone(timezone.utc).replace(tzinfo=None)
+            except Exception:
+                pass
         return dt_obj
     return datetime(dt_obj.year, dt_obj.month, dt_obj.day)
 
@@ -139,18 +148,12 @@ class CalDAVSyncService(models.AbstractModel):
                 )
 
         # Inject EXDATEs from the map if any
-        base_map = (
-            self.env["caldav.event.map"]
-            .sudo()
-            .search(
-                [
-                    ("account_id", "=", account.id),
-                    ("event_id", "=", base_event.id),
-                    ("caldav_uid", "=", base_event.caldav_uid),
-                ],
-                limit=1,
-            )
+        self.env.cr.execute(
+            "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s AND caldav_uid = %s LIMIT 1",
+            (account.id, base_event.id, base_event.caldav_uid)
         )
+        res_bm = self.env.cr.fetchone()
+        base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
         if base_map and base_map.google_exdates:
             for iso_dt in base_map.google_exdates.split(","):
                 iso_dt = iso_dt.strip()
@@ -430,16 +433,11 @@ class CalDAVSyncService(models.AbstractModel):
             ):
                 _rrule_str = server_base.rrule.value or ""
                 if "COUNT=" in _rrule_str.upper():
-                    _active_count = (
-                        self.env["calendar.event"]
-                        .sudo()
-                        .search_count(
-                            [
-                                ("recurrence_id", "=", base_event.recurrence_id.id),
-                                ("active", "=", True),
-                            ]
-                        )
+                    self.env.cr.execute(
+                        "SELECT COUNT(*) FROM calendar_event WHERE recurrence_id = %s AND active = true",
+                        (base_event.recurrence_id.id,)
                     )
+                    _active_count = self.env.cr.fetchone()[0]
                     if _active_count > 0:
                         _new_rrule = re.sub(
                             r"COUNT=\d+",
@@ -470,18 +468,12 @@ class CalDAVSyncService(models.AbstractModel):
                 )
 
         # Inject EXDATEs from the map if any
-        base_map = (
-            self.env["caldav.event.map"]
-            .sudo()
-            .search(
-                [
-                    ("account_id", "=", account.id),
-                    ("event_id", "=", base_event.id),
-                    ("caldav_uid", "=", base_event.caldav_uid),
-                ],
-                limit=1,
-            )
+        self.env.cr.execute(
+            "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s AND caldav_uid = %s LIMIT 1",
+            (account.id, base_event.id, base_event.caldav_uid)
         )
+        res_bm = self.env.cr.fetchone()
+        base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
         if base_map and base_map.google_exdates:
             # Determine reference date for filtering stale EXDATEs
             ref_dt = (
@@ -559,18 +551,11 @@ class CalDAVSyncService(models.AbstractModel):
 
         # Also collect from Odoo archived occurrences directly
         if base_event.recurrence_id:
-            archived_occs = (
-                self.env["calendar.event"]
-                .sudo()
-                .with_context(active_test=False)
-                .search(
-                    [
-                        ("recurrence_id", "=", base_event.recurrence_id.id),
-                        ("active", "=", False),
-                        ("id", "!=", base_event.id),
-                    ]
-                )
+            self.env.cr.execute(
+                "SELECT id FROM calendar_event WHERE recurrence_id = %s AND active = false AND id != %s",
+                (base_event.recurrence_id.id, base_event.id)
             )
+            archived_occs = self.env["calendar.event"].browse([r[0] for r in self.env.cr.fetchall()])
             for arch_occ in archived_occs:
                 orig = arch_occ.caldav_original_start or arch_occ.start
                 if orig:
@@ -827,18 +812,12 @@ class CalDAVSyncService(models.AbstractModel):
             raise RuntimeError("No base VEVENT found in Google iCal.")
 
         # Inject EXDATEs from the map if any
-        base_map = (
-            self.env["caldav.event.map"]
-            .sudo()
-            .search(
-                [
-                    ("account_id", "=", account.id),
-                    ("event_id", "=", base_event.id),
-                    ("caldav_uid", "=", base_event.caldav_uid),
-                ],
-                limit=1,
-            )
+        self.env.cr.execute(
+            "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s AND caldav_uid = %s LIMIT 1",
+            (account.id, base_event.id, base_event.caldav_uid)
         )
+        res_bm = self.env.cr.fetchone()
+        base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
         if base_map and base_map.google_exdates:
             for iso_dt in base_map.google_exdates.split(","):
                 iso_dt = iso_dt.strip()
@@ -1191,14 +1170,15 @@ class CalDAVSyncService(models.AbstractModel):
         # ------------------------------------------------------------------ #
         # Checkpoint / resume logic                                           #
         # ------------------------------------------------------------------ #
-        use_checkpoint = account.server_type == "nextcloud"
+        use_checkpoint = True
         resume_after_href = None
         if use_checkpoint:
             stored_cp = getattr(account, "sync_checkpoint", False) or ""
             if stored_cp.startswith("pull:"):
                 resume_after_href = stored_cp[5:]
                 _logger.info(
-                    "[NEXTCLOUD][PULL] Resuming from checkpoint href: %s",
+                    "[%s][PULL] Resuming from checkpoint href: %s",
+                    account.server_type.upper(),
                     resume_after_href,
                 )
 
@@ -1206,20 +1186,25 @@ class CalDAVSyncService(models.AbstractModel):
         server_etags = {
             account._resolve_href(href): etag for href, etag in raw_server_etags.items()
         }
+        base_url = account.url.rstrip("/")
+        # Filter server_etags to exclude base collection URL and non-ics files
+        filtered_etags = {}
+        for href, etag in server_etags.items():
+            norm_href = href.rstrip("/")
+            if norm_href == base_url:
+                continue
+            if account.server_type == "icloud" and not href.endswith(".ics"):
+                continue
+            filtered_etags[href] = etag
+        server_etags = filtered_etags
+
         total_events = len(server_etags)
         current_idx = 0
 
         from urllib.parse import unquote
 
-        all_maps = (
-            self.env["caldav.event.map"]
-            .sudo()
-            .search(
-                [
-                    ("account_id", "=", account.id),
-                ]
-            )
-        )
+        self.env.cr.execute("SELECT id FROM caldav_event_map WHERE account_id = %s", (account.id,))
+        all_maps = self.env["caldav.event.map"].browse([r[0] for r in self.env.cr.fetchall()])
         existing_maps = {}
         for m in all_maps:
             href_key = unquote(m.caldav_href)
@@ -1248,7 +1233,9 @@ class CalDAVSyncService(models.AbstractModel):
         # This allows us to fetch them in batch using multiget REPORT.
         hrefs_to_pull = []
         _past_checkpoint_pre = (resume_after_href is None)
-        for href, server_etag in server_etags.items():
+        sorted_hrefs = sorted(server_etags.keys())
+        for href in sorted_hrefs:
+            server_etag = server_etags[href]
             norm_href = href.rstrip("/")
             if norm_href == base_url:
                 continue
@@ -1261,8 +1248,13 @@ class CalDAVSyncService(models.AbstractModel):
             
             existing = existing_maps.get(href)
             if existing:
-                if existing.caldav_etag == server_etag:
-                    continue
+                if account.server_type == "zoho":
+                    stored_etag = existing.caldav_etag.split('|')[0] if existing.caldav_etag and '|' in existing.caldav_etag else existing.caldav_etag
+                    if stored_etag == server_etag:
+                        continue
+                else:
+                    if existing.caldav_etag == server_etag:
+                        continue
                 if existing.event_id and not existing.event_id.active:
                     continue
                 # Check for pending Odoo change
@@ -1305,11 +1297,44 @@ class CalDAVSyncService(models.AbstractModel):
 
         _batch_counter = 0
         _past_checkpoint = (resume_after_href is None)  # True = no resume needed
-        for href, server_etag in server_etags.items():
+        last_processed_href = None
+        for href in sorted_hrefs:
+            server_etag = server_etags[href]
             if getattr(self.env.cr, 'closed', False):
                 _logger.warning("[PULL] Database cursor is closed. Aborting sync loop.")
                 break
+
+            # ---- batch commit check at start of iteration ---- #
+            if current_idx > 0 and current_idx % self._BATCH_SIZE == 0:
+                try:
+                    progress_text = _("Pulling: %s of %s events") % (current_idx, total_events)
+                    vals = {"sync_progress": progress_text}
+                    if use_checkpoint and last_processed_href:
+                        vals["sync_checkpoint"] = f"pull:{last_processed_href}"
+                    account.sudo().write(vals)
+                    if log_record and log_record.exists():
+                        log_record.sudo().write({
+                            "pulled": pulled,
+                            "deleted": deleted,
+                            "failed": failed,
+                            "details": "\n".join(details),
+                        })
+                    self.env.cr.commit()  # flush this batch to the DB
+                    self._notify_sync_progress(account)
+                    _logger.info(
+                        "[PULL] Batch commit at item %s (href=%s). Progress: %s",
+                        current_idx,
+                        last_processed_href,
+                        progress_text,
+                    )
+                except Exception as _ce:
+                    _logger.warning(
+                        "[PULL] Batch commit/progress update failed: %s", _ce
+                    )
+
             current_idx += 1
+            last_processed_href = href
+
             norm_href = href.rstrip("/")
             if norm_href == base_url:
                 continue
@@ -1322,6 +1347,12 @@ class CalDAVSyncService(models.AbstractModel):
                 if href.lower() == resume_after_href.lower():
                     _past_checkpoint = True  # reached checkpoint; process from next
                 continue
+
+            existing = existing_maps.get(href)
+            if account.server_type == "zoho" and existing:
+                stored_etag = existing.caldav_etag.split('|')[0] if existing.caldav_etag and '|' in existing.caldav_etag else existing.caldav_etag
+                if stored_etag and stored_etag == server_etag:
+                    continue
 
             # If we need to pull this event and it's not cached yet, fetch the next batch of 50 on-demand using multiget
             if href in hrefs_to_pull and not multiget_failed and href not in fetched_data:
@@ -1393,7 +1424,15 @@ class CalDAVSyncService(models.AbstractModel):
                         "zoho_hash:" + hashlib.sha256(normalized.encode()).hexdigest()
                     )
 
-                    if existing and existing.caldav_etag == content_hash:
+                    stored_hash = ''
+                    if existing and existing.caldav_etag:
+                        if '|' in existing.caldav_etag:
+                            stored_hash = existing.caldav_etag.split('|')[1]
+                        elif existing.caldav_etag.startswith("zoho_hash:"):
+                            stored_hash = existing.caldav_etag
+
+                    if existing and stored_hash == content_hash:
+                        existing.sudo().write({"caldav_etag": f"{server_etag}|{content_hash}"})
                         continue
 
                     if existing and existing.event_id:
@@ -1439,12 +1478,12 @@ class CalDAVSyncService(models.AbstractModel):
                                     "[ZOHO] Skipping pull for %s: Pending Odoo change detected (Base or Occurrence).",
                                     href,
                                 )
-                                existing.sudo().write({"caldav_etag": content_hash})
+                                existing.sudo().write({"caldav_etag": f"{server_etag}|{content_hash}"})
                                 continue
 
                     with self.env.cr.savepoint():
                         event = self._upsert_from_ical(
-                            account, href, content_hash, zoho_ical_text, existing
+                            account, href, f"{server_etag}|{content_hash}", zoho_ical_text, existing
                         )
                         if event:
                             pulled_ids.append(event.id)
@@ -1540,34 +1579,7 @@ class CalDAVSyncService(models.AbstractModel):
                 _logger.error(error_msg, exc_info=True)
                 details.append(error_msg)
 
-            # ---- batch commit every N events (Nextcloud large calendars) ---- #
-            _batch_counter += 1
-            if _batch_counter % self._BATCH_SIZE == 0:
-                try:
-                    progress_text = _("Pulling: %s of %s events") % (current_idx, total_events)
-                    vals = {"sync_progress": progress_text}
-                    if use_checkpoint:
-                        vals["sync_checkpoint"] = f"pull:{href}"
-                    account.sudo().write(vals)
-                    if log_record and log_record.exists():
-                        log_record.sudo().write({
-                            "pulled": pulled,
-                            "deleted": deleted,
-                            "failed": failed,
-                            "details": "\n".join(details),
-                        })
-                    self.env.cr.commit()  # flush this batch to the DB
-                    self._notify_sync_progress(account)
-                    _logger.info(
-                        "[PULL] Batch commit at item %s (href=%s). Progress: %s",
-                        _batch_counter,
-                        href,
-                        progress_text,
-                    )
-                except Exception as _ce:
-                    _logger.warning(
-                        "[PULL] Batch commit/progress update failed: %s", _ce
-                    )
+
 
         server_hrefs = set(server_etags.keys())
         for href, map_rec in list(existing_maps.items()):
@@ -1585,20 +1597,11 @@ class CalDAVSyncService(models.AbstractModel):
                                 account.server_type not in ("icloud")
                                 and event.recurrence_id
                             ):
-                                all_occs = (
-                                    self.env["calendar.event"]
-                                    .sudo()
-                                    .search(
-                                        [
-                                            (
-                                                "recurrence_id",
-                                                "=",
-                                                event.recurrence_id.id,
-                                            ),
-                                            ("active", "=", True),
-                                        ]
-                                    )
+                                self.env.cr.execute(
+                                    "SELECT id FROM calendar_event WHERE recurrence_id = %s AND active = true",
+                                    (event.recurrence_id.id,)
                                 )
+                                all_occs = self.env["calendar.event"].browse([r[0] for r in self.env.cr.fetchall()])
                                 if all_occs:
                                     all_occs.with_context(no_sync=True).sudo().write(
                                         {"active": False}
@@ -1632,7 +1635,7 @@ class CalDAVSyncService(models.AbstractModel):
         # ------------------------------------------------------------------ #
         # Checkpoint / resume logic for push                                  #
         # ------------------------------------------------------------------ #
-        use_checkpoint = account.server_type == "nextcloud"
+        use_checkpoint = True
         resume_after_event_id = None
         if use_checkpoint:
             stored_cp = getattr(account, "sync_checkpoint", False) or ""
@@ -1640,13 +1643,16 @@ class CalDAVSyncService(models.AbstractModel):
                 try:
                     resume_after_event_id = int(stored_cp[5:])
                     _logger.info(
-                        "[NEXTCLOUD][PUSH] Resuming from checkpoint event_id: %s",
+                        "[%s][PUSH] Resuming from checkpoint event_id: %s",
+                        account.server_type.upper(),
                         resume_after_event_id,
                     )
                 except ValueError:
                     resume_after_event_id = None
 
         _push_batch_counter = 0
+        current_push_idx = 0
+        last_processed_event_id = None
         _past_push_checkpoint = (resume_after_event_id is None)
 
         force_push_ids = set()
@@ -1656,17 +1662,15 @@ class CalDAVSyncService(models.AbstractModel):
 
                 # Google-specific extra check for pending EXDATE maps
                 if account.server_type == "google":
-                    pending_exdate_maps = (
-                        self.env["caldav.event.map"]
-                        .sudo()
-                        .search(
-                            [
-                                ("account_id", "=", account.id),
-                                ("last_odoo_write", "=", False),
-                                ("event_id.active", "=", True),
-                            ]
-                        )
+                    self.env.cr.execute(
+                        """
+                        SELECT map.id FROM caldav_event_map map
+                        JOIN calendar_event event ON event.id = map.event_id
+                        WHERE map.account_id = %s AND map.last_odoo_write IS NULL AND event.active = true
+                        """,
+                        (account.id,)
                     )
+                    pending_exdate_maps = self.env["caldav.event.map"].browse([r[0] for r in self.env.cr.fetchall()])
                     for _m in pending_exdate_maps:
                         if _m.event_id:
                             force_push_ids.add(_m.event_id.id)
@@ -1684,15 +1688,8 @@ class CalDAVSyncService(models.AbstractModel):
                     exc_info=True,
                 )
 
-        all_maps = (
-            self.env["caldav.event.map"]
-            .sudo()
-            .search(
-                [
-                    ("account_id", "=", account.id),
-                ]
-            )
-        )
+        self.env.cr.execute("SELECT id FROM caldav_event_map WHERE account_id = %s", (account.id,))
+        all_maps = self.env["caldav.event.map"].browse([r[0] for r in self.env.cr.fetchall()])
         for map_rec in all_maps:
             event = map_rec.event_id
             if not event:
@@ -1731,16 +1728,8 @@ class CalDAVSyncService(models.AbstractModel):
                     continue
                 # ← existing code continues below
                 if event.recurrence_id:
-                    active_remaining = (
-                        self.env["calendar.event"]
-                        .sudo()
-                        .search_count(
-                            [
-                                ("recurrence_id", "=", event.recurrence_id.id),
-                                ("active", "=", True),
-                            ]
-                        )
-                    )
+                    self.env.cr.execute("SELECT COUNT(*) FROM calendar_event WHERE recurrence_id = %s AND active = true", (event.recurrence_id.id,))
+                    active_remaining = self.env.cr.fetchone()[0]
                     if active_remaining > 0:
                         _logger.info(
                             'Archived event "%s" (id=%s) still has %s active occurrences. '
@@ -1787,15 +1776,15 @@ class CalDAVSyncService(models.AbstractModel):
                 [
                     ("active", "=", True),
                     ("recurrence_id", "=", False),
+                    ("partner_ids", "in", [owner_partner_id]),
                 ]
             )
-            .filtered(lambda e: owner_partner_id in e.partner_ids.ids)
         )
-        recurrences = self.env["calendar.recurrence"].sudo().search([])
-        recurring_base_events = recurrences.mapped("base_event_id").filtered(
-            lambda e: e.active
-            and any(att.partner_id.id == owner_partner_id for att in e.attendee_ids)
-        )
+        recurrences = self.env["calendar.recurrence"].sudo().search([
+            ("base_event_id.active", "=", True),
+            ("base_event_id.partner_ids", "in", [owner_partner_id]),
+        ])
+        recurring_base_events = recurrences.mapped("base_event_id")
 
         events = non_recurring | recurring_base_events
 
@@ -1851,44 +1840,36 @@ class CalDAVSyncService(models.AbstractModel):
         radicale_force_push_ids = set()
         if account.server_type not in ("google", "zoho", "icloud"):
             try:
-                all_recurrences = self.env["calendar.recurrence"].sudo().search([])
+                self.env.cr.execute(
+                    """
+                    SELECT DISTINCT r.id FROM calendar_recurrence r
+                    JOIN calendar_event e ON e.id = r.base_event_id
+                    JOIN calendar_attendee a ON a.event_id = e.id
+                    WHERE e.active = true AND a.partner_id = %s
+                    """,
+                    (owner_partner_id,)
+                )
+                recurrence_ids = [r[0] for r in self.env.cr.fetchall()]
+                all_recurrences = self.env["calendar.recurrence"].browse(recurrence_ids)
                 for recurrence in all_recurrences:
                     base_event = recurrence.base_event_id
-                    if not base_event or not base_event.active:
-                        continue
-                    if not any(
-                        att.partner_id.id == owner_partner_id
-                        for att in base_event.attendee_ids
-                    ):
-                        continue
-                    base_map = (
-                        self.env["caldav.event.map"]
-                        .sudo()
-                        .search(
-                            [
-                                ("account_id", "=", account.id),
-                                ("event_id", "=", base_event.id),
-                            ],
-                            limit=1,
-                        )
+                    self.env.cr.execute(
+                        "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s LIMIT 1",
+                        (account.id, base_event.id)
                     )
+                    res_bm = self.env.cr.fetchone()
+                    base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
                     if not base_map:
                         continue  # new series not yet pushed — normal push will handle it
                     last_sync = base_map.last_odoo_write
                     if not last_sync:
                         continue  # already flagged for push
                     # Check all non-base occurrences for modifications
-                    other_occs = (
-                        self.env["calendar.event"]
-                        .sudo()
-                        .search(
-                            [
-                                ("recurrence_id", "=", recurrence.id),
-                                ("active", "=", True),
-                                ("id", "!=", base_event.id),
-                            ]
-                        )
+                    self.env.cr.execute(
+                        "SELECT id FROM calendar_event WHERE recurrence_id = %s AND active = true AND id != %s",
+                        (recurrence.id, base_event.id)
                     )
+                    other_occs = self.env["calendar.event"].browse([r[0] for r in self.env.cr.fetchall()])
                     for occ in other_occs:
                         if occ.id in skip_ids:
                             continue
@@ -1921,22 +1902,53 @@ class CalDAVSyncService(models.AbstractModel):
             len(recurring_base_events),
         )
 
-        existing_maps = {
-            m.event_id.id: m
-            for m in self.env["caldav.event.map"]
-            .sudo()
-            .search(
-                [
-                    ("account_id", "=", account.id),
-                    ("event_id", "in", events.ids),
-                ]
+        existing_maps = {}
+        if events:
+            self.env.cr.execute(
+                "SELECT id, event_id FROM caldav_event_map WHERE account_id = %s AND event_id = ANY(%s)",
+                (account.id, events.ids)
             )
-        }
+            map_data = self.env.cr.fetchall()
+            if map_data:
+                map_ids = [r[0] for r in map_data]
+                maps = self.env["caldav.event.map"].browse(map_ids)
+                existing_maps = {m.event_id.id: m for m in maps}
 
         for event in events:
             if getattr(self.env.cr, 'closed', False):
                 _logger.warning("[PUSH] Database cursor is closed. Aborting sync loop.")
                 break
+
+            # ---- batch commit check at start of iteration ---- #
+            if current_push_idx > 0 and current_push_idx % self._BATCH_SIZE == 0:
+                try:
+                    progress_text = _("Pushing: %s of %s events") % (current_push_idx, len(events))
+                    vals = {"sync_progress": progress_text}
+                    if use_checkpoint and last_processed_event_id:
+                        vals["sync_checkpoint"] = f"push:{last_processed_event_id}"
+                    account.sudo().write(vals)
+                    if log_record and log_record.exists():
+                        log_record.sudo().write({
+                            "pushed": pushed,
+                            "failed": failed,
+                            "details": "\n".join(details),
+                        })
+                    self.env.cr.commit()
+                    self._notify_sync_progress(account)
+                    _logger.info(
+                        "[PUSH] Batch commit at item %s (event_id=%s). Progress: %s",
+                        current_push_idx,
+                        last_processed_event_id,
+                        progress_text,
+                    )
+                except Exception as _ce:
+                    _logger.warning(
+                        "[PUSH] Batch commit/progress update failed: %s", _ce
+                    )
+
+            current_push_idx += 1
+            last_processed_event_id = event.id
+
             if event.id in skip_ids:
                 _logger.debug(
                     '[PUSH] SKIP event id=%s "%s": in skip_ids (just pulled).',
@@ -1992,33 +2004,7 @@ class CalDAVSyncService(models.AbstractModel):
                         etag,
                     )
 
-                # ---- batch commit every N events (Nextcloud large calendars) ---- #
-                _push_batch_counter += 1
-                if _push_batch_counter % self._BATCH_SIZE == 0:
-                    try:
-                        progress_text = _("Pushing: %s of %s events") % (_push_batch_counter, len(events))
-                        vals = {"sync_progress": progress_text}
-                        if use_checkpoint:
-                            vals["sync_checkpoint"] = f"push:{event.id}"
-                        account.sudo().write(vals)
-                        if log_record and log_record.exists():
-                            log_record.sudo().write({
-                                "pushed": pushed,
-                                "failed": failed,
-                                "details": "\n".join(details),
-                            })
-                        self.env.cr.commit()
-                        self._notify_sync_progress(account)
-                        _logger.info(
-                            "[PUSH] Batch commit at item %s (event_id=%s). Progress: %s",
-                            _push_batch_counter,
-                            event.id,
-                            progress_text,
-                        )
-                    except Exception as _ce:
-                        _logger.warning(
-                            "[PUSH] Batch commit/progress update failed: %s", _ce
-                        )
+
             # FIXED CODE:
             except Exception as e:
                 msg = str(e)
@@ -2171,15 +2157,10 @@ class CalDAVSyncService(models.AbstractModel):
             account.name,
         )
 
-        all_recurrences = self.env["calendar.recurrence"].sudo().search([])
-        relevant_recurrences = all_recurrences.filtered(
-            lambda r: r.base_event_id
-            and r.base_event_id.active
-            and any(
-                att.partner_id.id == owner_partner_id
-                for att in r.base_event_id.attendee_ids
-            )
-        )
+        relevant_recurrences = self.env["calendar.recurrence"].sudo().search([
+            ("base_event_id.active", "=", True),
+            ("base_event_id.partner_ids", "in", [owner_partner_id]),
+        ])
 
         for recurrence in relevant_recurrences:
             base_event = recurrence.base_event_id
@@ -2487,17 +2468,9 @@ class CalDAVSyncService(models.AbstractModel):
         self, recurrence_id_vevents, uid_value, account, href, server_etag
     ):
         """Apply RECURRENCE-ID overrides from iCloud into the corresponding Odoo occurrences."""
-        base_map = (
-            self.env["caldav.event.map"]
-            .sudo()
-            .search(
-                [
-                    ("account_id", "=", account.id),
-                    ("caldav_uid", "=", uid_value),
-                ],
-                limit=1,
-            )
-        )
+        self.env.cr.execute("SELECT id FROM caldav_event_map WHERE account_id = %s AND caldav_uid = %s LIMIT 1", (account.id, uid_value))
+        res_bm = self.env.cr.fetchone()
+        base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
         if not base_map or not base_map.event_id:
             return
         base_event = base_map.event_id
@@ -2537,26 +2510,21 @@ class CalDAVSyncService(models.AbstractModel):
             else:
                 window_start = rid_dt - _td(minutes=1)
                 window_end = rid_dt + _td(minutes=1)
-            occurrence = (
-                self.env["calendar.event"]
-                .sudo()
-                .search(
-                    [
-                        ("recurrence_id", "=", base_event.recurrence_id.id),
-                        ("active", "=", True),
-                        "|",
-                        "&",
-                        ("caldav_original_start", ">=", window_start),
-                        ("caldav_original_start", "<=", window_end),
-                        "&",
-                        ("caldav_original_start", "=", False),
-                        "&",
-                        ("start", ">=", window_start),
-                        ("start", "<=", window_end),
-                    ],
-                    limit=1,
-                )
+            self.env.cr.execute(
+                """
+                SELECT id FROM calendar_event
+                WHERE recurrence_id = %s AND active = true
+                  AND (
+                      (caldav_original_start >= %s AND caldav_original_start <= %s)
+                      OR
+                      (caldav_original_start IS NULL AND start >= %s AND start <= %s)
+                  )
+                LIMIT 1
+                """,
+                (base_event.recurrence_id.id, window_start, window_end, window_start, window_end)
             )
+            res_occ = self.env.cr.fetchone()
+            occurrence = self.env["calendar.event"].browse(res_occ[0]) if res_occ else self.env["calendar.event"]
 
             tag = account.server_type.upper()
             if not occurrence:
@@ -2597,17 +2565,9 @@ class CalDAVSyncService(models.AbstractModel):
         self, recurrence_id_vevents, uid_value, account, href, server_etag
     ):
         """Apply RECURRENCE-ID overrides pulled from Zoho into the corresponding Odoo occurrences."""
-        base_map = (
-            self.env["caldav.event.map"]
-            .sudo()
-            .search(
-                [
-                    ("account_id", "=", account.id),
-                    ("caldav_uid", "=", uid_value),
-                ],
-                limit=1,
-            )
-        )
+        self.env.cr.execute("SELECT id FROM caldav_event_map WHERE account_id = %s AND caldav_uid = %s LIMIT 1", (account.id, uid_value))
+        res_bm = self.env.cr.fetchone()
+        base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
         if not base_map or not base_map.event_id:
             _logger.warning(
                 "[ZOHO] No base map found for UID %s; cannot apply RECURRENCE-ID overrides.",
@@ -2650,39 +2610,37 @@ class CalDAVSyncService(models.AbstractModel):
                 # For all-day events, match by the exact date.
                 rid_date = rid_dt.date()
                 rid_dt_end = rid_dt + timedelta(days=1)
-                domain = [
-                    ("recurrence_id", "=", base_event.recurrence_id.id),
-                    ("active", "=", True),
-                    "|",
-                    "&",
-                    ("caldav_original_start", ">=", rid_dt),
-                    ("caldav_original_start", "<", rid_dt_end),
-                    "&",
-                    ("caldav_original_start", "=", False),
-                    "|",
-                    ("start_date", "=", rid_date),
-                    "&",
-                    ("start", ">=", rid_dt),
-                    ("start", "<", rid_dt_end),
-                ]
+                self.env.cr.execute(
+                    """
+                    SELECT id FROM calendar_event
+                    WHERE recurrence_id = %s AND active = true
+                      AND (
+                          (caldav_original_start >= %s AND caldav_original_start < %s)
+                          OR
+                          (caldav_original_start IS NULL AND (start_date = %s OR (start >= %s AND start < %s)))
+                      )
+                    LIMIT 1
+                    """,
+                    (base_event.recurrence_id.id, rid_dt, rid_dt_end, rid_date, rid_dt, rid_dt_end)
+                )
             else:
                 window_start = rid_dt - timedelta(minutes=1)
                 window_end = rid_dt + timedelta(minutes=1)
-                domain = [
-                    ("recurrence_id", "=", base_event.recurrence_id.id),
-                    ("active", "=", True),
-                    "|",
-                    "&",
-                    ("caldav_original_start", ">=", window_start),
-                    ("caldav_original_start", "<=", window_end),
-                    "&",
-                    ("caldav_original_start", "=", False),
-                    "&",
-                    ("start", ">=", window_start),
-                    ("start", "<=", window_end),
-                ]
-
-            occurrence = self.env["calendar.event"].sudo().search(domain, limit=1)
+                self.env.cr.execute(
+                    """
+                    SELECT id FROM calendar_event
+                    WHERE recurrence_id = %s AND active = true
+                      AND (
+                          (caldav_original_start >= %s AND caldav_original_start <= %s)
+                          OR
+                          (caldav_original_start IS NULL AND start >= %s AND start <= %s)
+                      )
+                    LIMIT 1
+                    """,
+                    (base_event.recurrence_id.id, window_start, window_end, window_start, window_end)
+                )
+            res_occ = self.env.cr.fetchone()
+            occurrence = self.env["calendar.event"].browse(res_occ[0]) if res_occ else self.env["calendar.event"]
 
             if not occurrence:
                 _logger.warning(
@@ -2714,18 +2672,12 @@ class CalDAVSyncService(models.AbstractModel):
             # Use a slightly future timestamp (+1s) to ensure this sync's ORM writes
             # (which update write_date) are definitively considered "seen" by the
             # next push cycle, even if the DB clock and Odoo clock differ slightly.
-            occ_map_rec = (
-                self.env["caldav.event.map"]
-                .sudo()
-                .search(
-                    [
-                        ("account_id", "=", account.id),
-                        ("event_id", "=", occurrence.id),
-                        ("caldav_uid", "like", "%__occ_%"),
-                    ],
-                    limit=1,
-                )
+            self.env.cr.execute(
+                "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s AND caldav_uid LIKE %s LIMIT 1",
+                (account.id, occurrence.id, "%__occ_%")
             )
+            res_occ_map = self.env.cr.fetchone()
+            occ_map_rec = self.env["caldav.event.map"].browse(res_occ_map[0]) if res_occ_map else self.env["caldav.event.map"]
             pull_ts = fields.Datetime.now() + timedelta(seconds=1)
             if occ_map_rec:
                 occ_map_rec.sudo().write({"last_odoo_write": pull_ts})
@@ -2754,55 +2706,43 @@ class CalDAVSyncService(models.AbstractModel):
         skip_ids = skip_ids or set()
         owner_partner_id = account.user_id.partner_id.id
 
-        all_recurrences = self.env["calendar.recurrence"].sudo().search([])
+        self.env.cr.execute(
+            """
+            SELECT DISTINCT r.id FROM calendar_recurrence r
+            JOIN calendar_event e ON e.id = r.base_event_id
+            JOIN calendar_attendee a ON a.event_id = e.id
+            WHERE e.active = true AND a.partner_id = %s
+            """,
+            (owner_partner_id,)
+        )
+        recurrence_ids = [r[0] for r in self.env.cr.fetchall()]
+        all_recurrences = self.env["calendar.recurrence"].browse(recurrence_ids)
         for recurrence in all_recurrences:
             base_event = recurrence.base_event_id
-            if not base_event or not base_event.active:
-                continue
-            if not any(
-                att.partner_id.id == owner_partner_id for att in base_event.attendee_ids
-            ):
-                continue
-            base_map = (
-                self.env["caldav.event.map"]
-                .sudo()
-                .search(
-                    [
-                        ("account_id", "=", account.id),
-                        ("event_id", "=", base_event.id),
-                    ],
-                    limit=1,
-                )
+            self.env.cr.execute(
+                "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s LIMIT 1",
+                (account.id, base_event.id)
             )
+            res_bm = self.env.cr.fetchone()
+            base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
             if not base_map:
                 continue
-            occurrences = (
-                self.env["calendar.event"]
-                .sudo()
-                .search(
-                    [
-                        ("recurrence_id", "=", recurrence.id),
-                        ("active", "=", True),
-                        ("id", "!=", base_event.id),
-                    ]
-                )
+            self.env.cr.execute(
+                "SELECT id FROM calendar_event WHERE recurrence_id = %s AND active = true AND id != %s",
+                (recurrence.id, base_event.id)
             )
+            occurrences = self.env["calendar.event"].browse([r[0] for r in self.env.cr.fetchall()])
 
             modified_occs = []
             for occ in occurrences:
                 if occ.id in skip_ids:
                     continue
-                occ_map = (
-                    self.env["caldav.event.map"]
-                    .sudo()
-                    .search(
-                        [
-                            ("account_id", "=", account.id),
-                            ("event_id", "=", occ.id),
-                        ],
-                        limit=1,
-                    )
+                self.env.cr.execute(
+                    "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s LIMIT 1",
+                    (account.id, occ.id)
                 )
+                res_occ_map = self.env.cr.fetchone()
+                occ_map = self.env["caldav.event.map"].browse(res_occ_map[0]) if res_occ_map else self.env["caldav.event.map"]
                 if occ_map:
                     if (
                         occ_map.last_odoo_write
@@ -2919,45 +2859,37 @@ class CalDAVSyncService(models.AbstractModel):
         pushed_count = 0
         owner_partner_id = account.user_id.partner_id.id
 
-        all_recurrences = self.env["calendar.recurrence"].sudo().search([])
+        self.env.cr.execute(
+            """
+            SELECT DISTINCT r.id FROM calendar_recurrence r
+            JOIN calendar_event e ON e.id = r.base_event_id
+            JOIN calendar_attendee a ON a.event_id = e.id
+            WHERE e.active = true AND a.partner_id = %s
+            """,
+            (owner_partner_id,)
+        )
+        recurrence_ids = [r[0] for r in self.env.cr.fetchall()]
+        all_recurrences = self.env["calendar.recurrence"].browse(recurrence_ids)
         for recurrence in all_recurrences:
             base_event = recurrence.base_event_id
-            if not base_event or not base_event.active:
-                continue
 
-            if not any(
-                att.partner_id.id == owner_partner_id for att in base_event.attendee_ids
-            ):
-                continue
-
-            base_map = (
-                self.env["caldav.event.map"]
-                .sudo()
-                .search(
-                    [
-                        ("account_id", "=", account.id),
-                        ("event_id", "=", base_event.id),
-                    ],
-                    limit=1,
-                )
+            self.env.cr.execute(
+                "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s LIMIT 1",
+                (account.id, base_event.id)
             )
+            res_bm = self.env.cr.fetchone()
+            base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
             if not base_map:
                 continue
 
             # Search for ALL occurrences (active or recently archived)
             # Archived ones must be included so they can be recorded as EXDATEs
             # and their stale RECURRENCE-ID overrides purged on the server.
-            occurrences = (
-                self.env["calendar.event"]
-                .sudo()
-                .with_context(active_test=False)
-                .search(
-                    [
-                        ("recurrence_id", "=", recurrence.id),
-                        ("id", "!=", base_event.id),
-                    ]
-                )
+            self.env.cr.execute(
+                "SELECT id FROM calendar_event WHERE recurrence_id = %s AND id != %s",
+                (recurrence.id, base_event.id)
             )
+            occurrences = self.env["calendar.event"].browse([r[0] for r in self.env.cr.fetchall()])
 
             # Determine if base event needs a push
             base_needs_push = (base_event.id not in skip_ids) and (
@@ -2974,17 +2906,12 @@ class CalDAVSyncService(models.AbstractModel):
                 if occ.id in skip_ids:
                     continue
 
-                occ_map = (
-                    self.env["caldav.event.map"]
-                    .sudo()
-                    .search(
-                        [
-                            ("account_id", "=", account.id),
-                            ("event_id", "=", occ.id),
-                        ],
-                        limit=1,
-                    )
+                self.env.cr.execute(
+                    "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s LIMIT 1",
+                    (account.id, occ.id)
                 )
+                res_occ_map = self.env.cr.fetchone()
+                occ_map = self.env["caldav.event.map"].browse(res_occ_map[0]) if res_occ_map else self.env["caldav.event.map"]
 
                 is_deletion = occ_map and occ_map.last_odoo_write is False
                 differs = occ.active and self._occurrence_differs_from_base(
@@ -3149,17 +3076,9 @@ class CalDAVSyncService(models.AbstractModel):
         self, recurrence_id_vevents, uid_value, account, href, server_etag
     ):
         """Apply RECURRENCE-ID overrides from Google Calendar into Odoo occurrences."""
-        base_map = (
-            self.env["caldav.event.map"]
-            .sudo()
-            .search(
-                [
-                    ("account_id", "=", account.id),
-                    ("caldav_uid", "=", uid_value),
-                ],
-                limit=1,
-            )
-        )
+        self.env.cr.execute("SELECT id FROM caldav_event_map WHERE account_id = %s AND caldav_uid = %s LIMIT 1", (account.id, uid_value))
+        res_bm = self.env.cr.fetchone()
+        base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
         if not base_map or not base_map.event_id:
             return
         base_event = base_map.event_id
@@ -3208,26 +3127,21 @@ class CalDAVSyncService(models.AbstractModel):
                 window_end,
             )
 
-            occurrence = (
-                self.env["calendar.event"]
-                .sudo()
-                .search(
-                    [
-                        ("recurrence_id", "=", base_event.recurrence_id.id),
-                        ("active", "=", True),
-                        "|",
-                        "&",
-                        ("caldav_original_start", ">=", window_start),
-                        ("caldav_original_start", "<=", window_end),
-                        "&",
-                        ("caldav_original_start", "=", False),
-                        "&",
-                        ("start", ">=", window_start),
-                        ("start", "<=", window_end),
-                    ],
-                    limit=1,
-                )
+            self.env.cr.execute(
+                """
+                SELECT id FROM calendar_event
+                WHERE recurrence_id = %s AND active = true
+                  AND (
+                      (caldav_original_start >= %s AND caldav_original_start <= %s)
+                      OR
+                      (caldav_original_start IS NULL AND start >= %s AND start <= %s)
+                  )
+                LIMIT 1
+                """,
+                (base_event.recurrence_id.id, window_start, window_end, window_start, window_end)
             )
+            res_occ = self.env.cr.fetchone()
+            occurrence = self.env["calendar.event"].browse(res_occ[0]) if res_occ else self.env["calendar.event"]
 
             if not occurrence:
                 # Check if RECURRENCE-ID targets the base event itself
@@ -3302,41 +3216,33 @@ class CalDAVSyncService(models.AbstractModel):
         owner_partner_id = account.user_id.partner_id.id
         pushed_count = 0
         handled_base_ids = set()  # ← ADD THIS LINE
-        all_recurrences = self.env["calendar.recurrence"].sudo().search([])
-
+        self.env.cr.execute(
+            """
+            SELECT DISTINCT r.id FROM calendar_recurrence r
+            JOIN calendar_event e ON e.id = r.base_event_id
+            JOIN calendar_attendee a ON a.event_id = e.id
+            WHERE e.active = true AND a.partner_id = %s
+            """,
+            (owner_partner_id,)
+        )
+        recurrence_ids = [r[0] for r in self.env.cr.fetchall()]
+        all_recurrences = self.env["calendar.recurrence"].browse(recurrence_ids)
         for recurrence in all_recurrences:
             base_event = recurrence.base_event_id
-            if not base_event or not base_event.active:
-                continue
-            if not any(
-                att.partner_id.id == owner_partner_id for att in base_event.attendee_ids
-            ):
-                continue
-            base_map = (
-                self.env["caldav.event.map"]
-                .sudo()
-                .search(
-                    [
-                        ("account_id", "=", account.id),
-                        ("event_id", "=", base_event.id),
-                    ],
-                    limit=1,
-                )
+            self.env.cr.execute(
+                "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s LIMIT 1",
+                (account.id, base_event.id)
             )
+            res_bm = self.env.cr.fetchone()
+            base_map = self.env["caldav.event.map"].browse(res_bm[0]) if res_bm else self.env["caldav.event.map"]
             if not base_map:
                 continue
 
-            occurrences = (
-                self.env["calendar.event"]
-                .sudo()
-                .search(
-                    [
-                        ("recurrence_id", "=", recurrence.id),
-                        ("active", "=", True),
-                        ("id", "!=", base_event.id),
-                    ]
-                )
+            self.env.cr.execute(
+                "SELECT id FROM calendar_event WHERE recurrence_id = %s AND active = true AND id != %s",
+                (recurrence.id, base_event.id)
             )
+            occurrences = self.env["calendar.event"].browse([r[0] for r in self.env.cr.fetchall()])
 
             base_needs_direct_push = False
             if base_event.id not in skip_ids:
@@ -3361,17 +3267,12 @@ class CalDAVSyncService(models.AbstractModel):
                 # was a "self_only" (Only this event) edit, so the base event itself is an override!
                 unchanged_other_occs_differ = False
                 for occ in occurrences:
-                    occ_map = (
-                        self.env["caldav.event.map"]
-                        .sudo()
-                        .search(
-                            [
-                                ("account_id", "=", account.id),
-                                ("event_id", "=", occ.id),
-                            ],
-                            limit=1,
-                        )
+                    self.env.cr.execute(
+                        "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s LIMIT 1",
+                        (account.id, occ.id)
                     )
+                    res_occ_map = self.env.cr.fetchone()
+                    occ_map = self.env["caldav.event.map"].browse(res_occ_map[0]) if res_occ_map else self.env["caldav.event.map"]
                     last_sync = occ_map.last_odoo_write if occ_map else base_map.last_odoo_write
                     is_unchanged = last_sync and occ.write_date and occ.write_date <= last_sync
                     if is_unchanged and self._occurrence_differs_from_base(occ, base_event):
@@ -3392,17 +3293,12 @@ class CalDAVSyncService(models.AbstractModel):
                 if occ.id in skip_ids:
                     continue
 
-                occ_map = (
-                    self.env["caldav.event.map"]
-                    .sudo()
-                    .search(
-                        [
-                            ("account_id", "=", account.id),
-                            ("event_id", "=", occ.id),
-                        ],
-                        limit=1,
-                    )
+                self.env.cr.execute(
+                    "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s LIMIT 1",
+                    (account.id, occ.id)
                 )
+                res_occ_map = self.env.cr.fetchone()
+                occ_map = self.env["caldav.event.map"].browse(res_occ_map[0]) if res_occ_map else self.env["caldav.event.map"]
 
                 last_sync = (
                     occ_map.last_odoo_write if occ_map else base_map.last_odoo_write
@@ -3621,20 +3517,17 @@ class CalDAVSyncService(models.AbstractModel):
         event = None
 
         if not existing_map and account.server_type == "zoho":
-            existing_event = CalEvent.search([("caldav_uid", "=", uid_value)], limit=1)
+            self.env.cr.execute("SELECT id FROM calendar_event WHERE caldav_uid = %s LIMIT 1", (uid_value,))
+            res = self.env.cr.fetchone()
+            existing_event = self.env["calendar.event"].browse(res[0]) if res else self.env["calendar.event"]
             if existing_event:
                 event = existing_event
-                map_rec = (
-                    self.env["caldav.event.map"]
-                    .sudo()
-                    .search(
-                        [
-                            ("account_id", "=", account.id),
-                            ("event_id", "=", event.id),
-                        ],
-                        limit=1,
-                    )
+                self.env.cr.execute(
+                    "SELECT id FROM caldav_event_map WHERE account_id = %s AND event_id = %s LIMIT 1",
+                    (account.id, event.id)
                 )
+                res_map = self.env.cr.fetchone()
+                map_rec = self.env["caldav.event.map"].browse(res_map[0]) if res_map else self.env["caldav.event.map"]
                 if map_rec:
                     map_rec.write({"caldav_href": href, "caldav_etag": server_etag})
                     existing_map = map_rec
@@ -3939,16 +3832,11 @@ class CalDAVSyncService(models.AbstractModel):
                                 existing_map.sudo().write({"event_id": new_base.id})
                             event = new_base
 
-                        all_occs = (
-                            self.env["calendar.event"]
-                            .sudo()
-                            .search(
-                                [
-                                    ("recurrence_id", "=", event.recurrence_id.id),
-                                    ("active", "=", True),
-                                ]
-                            )
+                        self.env.cr.execute(
+                            "SELECT id FROM calendar_event WHERE recurrence_id = %s AND active = true",
+                            (event.recurrence_id.id,)
                         )
+                        all_occs = self.env["calendar.event"].browse([r[0] for r in self.env.cr.fetchall()])
                         locked_count = 0
                         for occ in all_occs:
                             if not occ.caldav_original_start:
@@ -3972,17 +3860,11 @@ class CalDAVSyncService(models.AbstractModel):
                         # recurrence_update='all_events' replaces all occurrence IDs;
                         # old maps now point to archived events and trigger spurious
                         # CalDAV DELETEs in the push phase.
-                        stale_occ_maps = (
-                            self.env["caldav.event.map"]
-                            .sudo()
-                            .search(
-                                [
-                                    ("account_id", "=", account.id),
-                                    ("caldav_href", "=", href),
-                                    ("caldav_uid", "like", "%__occ_%"),
-                                ]
-                            )
+                        self.env.cr.execute(
+                            "SELECT id FROM caldav_event_map WHERE account_id = %s AND caldav_href = %s AND caldav_uid LIKE %s",
+                            (account.id, href, "%__occ_%")
                         )
+                        stale_occ_maps = self.env["caldav.event.map"].browse([r[0] for r in self.env.cr.fetchall()])
                         if stale_occ_maps:
                             _logger.info(
                                 "[GOOGLE][PULL] Cleaning up %s stale occurrence map(s) "
@@ -4080,16 +3962,11 @@ class CalDAVSyncService(models.AbstractModel):
                             existing_map.sudo().write({"event_id": new_base.id})
                         event = new_base
 
-                    all_occs = (
-                        self.env["calendar.event"]
-                        .sudo()
-                        .search(
-                            [
-                                ("recurrence_id", "=", event.recurrence_id.id),
-                                ("active", "=", True),
-                            ]
-                        )
+                    self.env.cr.execute(
+                        "SELECT id FROM calendar_event WHERE recurrence_id = %s AND active = true",
+                        (event.recurrence_id.id,)
                     )
+                    all_occs = self.env["calendar.event"].browse([r[0] for r in self.env.cr.fetchall()])
                     locked_count = 0
                     for occ in all_occs:
                         if not occ.caldav_original_start:
@@ -4109,17 +3986,11 @@ class CalDAVSyncService(models.AbstractModel):
 
                     # Same stale map cleanup as Location 1 — guards against
                     # spurious DELETEs if pinned occ maps existed before promotion.
-                    stale_occ_maps = (
-                        self.env["caldav.event.map"]
-                        .sudo()
-                        .search(
-                            [
-                                ("account_id", "=", account.id),
-                                ("caldav_href", "=", href),
-                                ("caldav_uid", "like", "%__occ_%"),
-                            ]
-                        )
+                    self.env.cr.execute(
+                        "SELECT id FROM caldav_event_map WHERE account_id = %s AND caldav_href = %s AND caldav_uid LIKE %s",
+                        (account.id, href, "%__occ_%")
                     )
+                    stale_occ_maps = self.env["caldav.event.map"].browse([r[0] for r in self.env.cr.fetchall()])
                     if stale_occ_maps:
                         _logger.info(
                             "[GOOGLE][PULL] CASE-C Cleaning up %s stale occurrence map(s) "
@@ -4660,17 +4531,11 @@ class CalDAVSyncService(models.AbstractModel):
             uid_for_overrides = event.caldav_uid or str(uuid.uuid4())
             base_start_naive = _to_utc_naive(event.start)
 
-            all_occs = (
-                self.env["calendar.event"]
-                .sudo()
-                .search(
-                    [
-                        ("recurrence_id", "=", event.recurrence_id.id),
-                        ("active", "=", True),
-                        ("id", "!=", event.id),  # exclude base event itself
-                    ]
-                )
+            self.env.cr.execute(
+                "SELECT id FROM calendar_event WHERE recurrence_id = %s AND active = true AND id != %s",
+                (event.recurrence_id.id, event.id)
             )
+            all_occs = self.env["calendar.event"].browse([r[0] for r in self.env.cr.fetchall()])
 
             for occ in all_occs:
                 # Determine if this occurrence meaningfully differs from the base.
@@ -4898,18 +4763,18 @@ class CalDAVSyncService(models.AbstractModel):
                             end_date.year, end_date.month, end_date.day, 18, 0, 0
                         )
                     else:
-                        vals["stop"] = _to_utc_naive(dtend_val)
+                        vals["stop"] = _to_utc_naive(dtend_val, account.user_id.tz)
                 else:
                     vals["stop"] = datetime(
                         dtstart_val.year, dtstart_val.month, dtstart_val.day, 18, 0, 0
                     )
             else:
-                start_utc = _to_utc_naive(dtstart_val)
+                start_utc = _to_utc_naive(dtstart_val, account.user_id.tz)
                 if start_utc is None:
                     return {}
                 vals["start"] = start_utc
                 if dtend_comp and dtend_comp.value:
-                    stop_val = _to_utc_naive(dtend_comp.value)
+                    stop_val = _to_utc_naive(dtend_comp.value, account.user_id.tz)
                     vals["stop"] = stop_val or (start_utc + timedelta(hours=1))
                 elif duration_comp and duration_comp.value:
                     dur = duration_comp.value
