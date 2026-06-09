@@ -161,15 +161,20 @@ class CalDAVSyncService(models.AbstractModel):
                     continue
                 try:
                     ex_dt_naive = datetime.strptime(iso_dt, "%Y%m%dT%H%M%SZ")
+                    if base_event.allday:
+                        ex_cmp = ex_dt_naive.date()
+                    else:
+                        ex_cmp = ex_dt_naive
+
+                    if ex_cmp in updating_starts_utc:
+                        # If we are pushing an override for this date, do NOT also exdate it!
+                        continue
+
                     ex_dt = pytz.utc.localize(ex_dt_naive)
                     if base_event.allday:
                         ex_val = ex_dt.date()
                     else:
                         ex_val = ex_dt
-
-                    if ex_val in updating_starts_utc:
-                        # If we are pushing an override for this date, do NOT also exdate it!
-                        continue
 
                     if hasattr(server_base, "exdate"):
                         if ex_val not in server_base.exdate.value:
@@ -413,16 +418,26 @@ class CalDAVSyncService(models.AbstractModel):
             # is correctly anchored on the server.
             if base_event.allday:
                 server_base.dtstart.value = base_event.start.date()
+                if not hasattr(server_base.dtstart, "params"):
+                    server_base.dtstart.params = {}
+                server_base.dtstart.params["VALUE"] = ["DATE"]
                 if hasattr(server_base, "dtend"):
                     server_base.dtend.value = base_event.stop.date() + timedelta(days=1)
+                    if not hasattr(server_base.dtend, "params"):
+                        server_base.dtend.params = {}
+                    server_base.dtend.params["VALUE"] = ["DATE"]
             else:
                 server_base.dtstart.value = _to_utc_naive(base_event.start).replace(
                     tzinfo=pytz.utc
                 )
+                if hasattr(server_base.dtstart, "params"):
+                    server_base.dtstart.params.pop("VALUE", None)
                 if hasattr(server_base, "dtend"):
                     server_base.dtend.value = _to_utc_naive(base_event.stop).replace(
                         tzinfo=pytz.utc
                     )
+                    if hasattr(server_base.dtend, "params"):
+                        server_base.dtend.params.pop("VALUE", None)
                 elif hasattr(server_base, "duration"):
                     server_base.duration.value = base_event.stop - base_event.start
 
@@ -489,28 +504,33 @@ class CalDAVSyncService(models.AbstractModel):
                 try:
                     ex_dt_naive = datetime.strptime(iso_dt, "%Y%m%dT%H%M%SZ")
                     if base_event.allday:
-                        ex_val = ex_dt_naive.date()
+                        ex_cmp = ex_dt_naive.date()
                     else:
-                        ex_val = ex_dt_naive  # Naive UTC
+                        ex_cmp = ex_dt_naive
 
                     # Skip EXDATEs that fall BEFORE the new series anchor (DTSTART).
                     # When the old base occurrence is deleted and the series is
                     # re-anchored at the next occurrence, the deleted slot is
                     # already excluded by DTSTART — adding an EXDATE before
                     # DTSTART causes Zoho to reject or corrupt the payload.
-                    if ex_val < ref_dt:
+                    if ex_cmp < ref_dt:
                         _logger.info(
                             "[ZOHO] Skipping stale EXDATE %s (before new DTSTART %s) "
                             "for series '%s'.",
-                            ex_val,
+                            ex_cmp,
                             ref_dt,
                             base_event.name,
                         )
                         continue
 
-                    if ex_val in updating_starts_utc:
+                    if ex_cmp in updating_starts_utc:
                         # If we are pushing an override for this date, do NOT also exdate it!
                         continue
+
+                    if base_event.allday:
+                        ex_val = ex_dt_naive.date()
+                    else:
+                        ex_val = pytz.utc.localize(ex_dt_naive)
 
                     if hasattr(server_base, "exdate"):
                         _ex_list = server_base.exdate.value
@@ -2937,9 +2957,9 @@ class CalDAVSyncService(models.AbstractModel):
                 # their stale RECURRENCE-ID blocks and ensure they are EXDATEd.
                 if is_deletion or (differs and modified):
                     modified_occs.append((occ, occ_map))
-                elif occ.active:
-                    # Active occurrences that don't differ are also included
-                    # to prevent Zoho from reverting them to base series data.
+                elif occ.active and differs:
+                    # Active occurrences that differ but weren't modified in this sync
+                    # are also included to prevent Zoho from reverting them to base series data.
                     differing_occs.append((occ, occ_map))
 
             if modified_occs or base_needs_push:
