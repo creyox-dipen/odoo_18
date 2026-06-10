@@ -16,6 +16,20 @@ from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
+# Cache SSL context at module level to avoid loading system certificates on Windows repeatedly
+_cached_ssl_context = None
+
+
+def _get_ssl_context():
+    global _cached_ssl_context
+    if _cached_ssl_context is None:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        _cached_ssl_context = ctx
+    return _cached_ssl_context
+
+
 # CalDAV XML namespaces
 NS = {
     "D": "DAV:",
@@ -445,10 +459,7 @@ class CalDAVAccount(models.Model):
         if expected_codes is None:
             expected_codes = [200, 201, 204, 207]
         req = self._build_request(url, method, body, extra_headers)
-        ctx = ssl.create_default_context()
-        # Allow self-signed certs for on-premise servers
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
+        ctx = _get_ssl_context()
         try:
             with urllib.request.urlopen(req, context=ctx, timeout=30) as resp:
                 status = resp.status

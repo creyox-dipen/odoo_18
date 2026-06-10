@@ -1393,6 +1393,52 @@ class CalDAVSyncService(models.AbstractModel):
                     try:
                         chunk_results = account._fetch_ical_multiget(chunk_to_fetch)
                         fetched_data.update(chunk_results)
+
+                        # --- Pre-populate partner cache for this batch of events ---
+                        partner_cache = self.env.context.get("caldav_partner_cache")
+                        if partner_cache is not None and chunk_results:
+                            batch_emails = set()
+                            for _href, (_etag, ical_text) in chunk_results.items():
+                                if ical_text:
+                                    # Regex to find all mailto: emails
+                                    for m in re.findall(
+                                        r"mailto:([^;:\r\n\s>]+)",
+                                        ical_text,
+                                        re.IGNORECASE,
+                                    ):
+                                        email_clean = m.strip().strip('"').strip("'")
+                                        if "@" in email_clean:
+                                            batch_emails.add(email_clean.lower())
+                                    # Regex to find EMAIL= parameters
+                                    for m in re.findall(
+                                        r"EMAIL=([^;:\r\n]+)",
+                                        ical_text,
+                                        re.IGNORECASE,
+                                    ):
+                                        email_clean = m.strip().strip('"').strip("'")
+                                        if email_clean.lower().startswith("mailto:"):
+                                            email_clean = email_clean[7:]
+                                        if "@" in email_clean:
+                                            batch_emails.add(email_clean.lower())
+
+                            emails_to_search = [
+                                email
+                                for email in batch_emails
+                                if email not in partner_cache
+                            ]
+                            if emails_to_search:
+                                partners = (
+                                    self.env["res.partner"]
+                                    .sudo()
+                                    .search([("email", "in", emails_to_search)])
+                                )
+                                for partner in partners:
+                                    if partner.email:
+                                        partner_cache[partner.email.lower()] = partner
+                                # Cache negative hits as empty recordset to avoid querying again
+                                for email in emails_to_search:
+                                    if email not in partner_cache:
+                                        partner_cache[email] = self.env["res.partner"]
                     except Exception as me:
                         _logger.warning(
                             "[MULTIGET][%s] Failed for chunk, falling back to individual fetches. Error: %s",
