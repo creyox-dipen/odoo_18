@@ -328,15 +328,29 @@
                                 <img src="images/10.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <li>Whenever a <b>Refund</b> occurs in Stripe.</li>
+                                <li>
+                                    To process a <b>Refund</b>, create a credit note for the invoice and then register the refund payment against that credit note.
+                                </li>
+                                <img src="images/credit_note_creation.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                     loading="lazy"
+                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                     <img src="images/credit_note_payment.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                     loading="lazy"
+                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <li>
+                                    Whenever a refund is processed in Stripe for that transaction, a refund statement line and a fee reversal line will be automatically created and reconciled with the corresponding credit note.
+                                </li>
                                 <img src="images/11.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <li>A corresponding statement will be created for the <b>Refund</b>.</li>
-                                <img src="images/12.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <li>
+                                <img src="images/refund_statment_line.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <img src="images/13.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                <li>
+                                    You can see that the <b>Credit Note</b> will be automatically marked as <b>Paid</b> after the refund is successfully processed and reconciled.
+                                </li>
+                                <img src="images/credit_note_paid.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
                                      loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>

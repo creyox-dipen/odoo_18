@@ -16,6 +16,14 @@ export const caldavProgressService = {
                 else if (controller.props.resModel === "calendar.event") {
                     action.doAction("soft_reload");
                 }
+                // Reload project task, FSM order, maintenance request views to show partial batch saves
+                else if (
+                    controller.props.resModel === "project.task" ||
+                    controller.props.resModel === "fsm.order" ||
+                    controller.props.resModel === "maintenance.request"
+                ) {
+                    action.doAction("soft_reload");
+                }
             }
         });
     }

@@ -31,6 +31,27 @@ class CalDAVEventMap(models.Model):
         index=True,
         help="The Odoo calendar event linked to this CalDAV resource.",
     )
+    task_id = fields.Many2one(
+        "project.task",
+        string="Odoo Task",
+        ondelete="cascade",
+        index=True,
+        help="The Odoo project task linked to this CalDAV resource.",
+    )
+    fsm_order_id = fields.Many2one(
+        "fsm.order",
+        string="Field Service Order",
+        ondelete="cascade",
+        index=True,
+        help="The Odoo Field Service order linked to this CalDAV resource.",
+    )
+    maintenance_request_id = fields.Many2one(
+        "maintenance.request",
+        string="Maintenance Request",
+        ondelete="cascade",
+        index=True,
+        help="The Odoo Maintenance request linked to this CalDAV resource.",
+    )
     caldav_uid = fields.Char(
         string="CalDAV UID",
         required=True,

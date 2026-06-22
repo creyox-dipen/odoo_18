@@ -29,6 +29,15 @@
                                 </div>
                             </button>
                             <button class="oe_stat_button"
+                                    icon="fa-history"
+                                    name="action_view_sync_logs"
+                                    type="object">
+                                <div class="o_field_widget o_stat_info">
+                                    <span class="o_stat_value"><field name="sync_log_count"/></span>
+                                    <span class="o_stat_text">Sync Logs</span>
+                                </div>
+                            </button>
+                            <button class="oe_stat_button"
                                     icon="fa-exclamation-triangle"
                                     name="action_view_errors"
                                     type="object">
@@ -62,6 +71,197 @@
                             </h1>
                         </div>
 
+                        <!-- Progress Bar for sync -->
+                        <style>
+                            .channable_progress_alert {
+                                border-radius: 12px !important;
+                                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                                background: linear-gradient(135deg, #71639e 0%, #5c4f82 100%) !important;
+                                padding: 18px 24px !important;
+                                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+                                margin-bottom: 24px !important;
+                                transition: all 0.3s ease !important;
+                            }
+                            .channable_progress_alert .fa-spin {
+                                font-size: 1.7rem !important;
+                                color: #ffffff !important;
+                            }
+                            .channable_progress_alert strong {
+                                color: #ffffff !important;
+                                font-size: 1.2rem !important;
+                                font-weight: 700 !important;
+                                letter-spacing: 0.3px !important;
+                            }
+                            .channable_progress_alert .channable_progress_text {
+                                color: #ffffff !important;
+                                font-size: 0.98rem !important;
+                                font-weight: 600 !important;
+                            }
+                            .channable_progress_alert .channable_progress_text * {
+                                color: #ffffff !important;
+                            }
+                            .channable-progress-container {
+                                display: flex !important;
+                                align-items: center !important;
+                                gap: 12px !important;
+                                width: 100% !important;
+                            }
+                            .channable-progress-track {
+                                flex-grow: 1 !important;
+                                height: 10px !important;
+                                background-color: rgba(255, 255, 255, 0.2) !important;
+                                border-radius: 8px !important;
+                                overflow: hidden !important;
+                            }
+                            .channable-progress-bar-fill {
+                                height: 100% !important;
+                                background: linear-gradient(90deg, #bfaeff, #ffffff) !important;
+                                border-radius: 8px !important;
+                                width: 0%;
+                                transition: width 0.4s ease !important;
+                            }
+                            .channable-progress-percent-label {
+                                color: #ffffff !important;
+                                font-size: 0.98rem !important;
+                                font-weight: 700 !important;
+                                min-width: 48px !important;
+                                text-align: right !important;
+                            }
+                            .channable-progress-percent-label * {
+                                color: #ffffff !important;
+                            }
+                            .channable_sync_stats_card {
+                                border-radius: 12px !important;
+                                border: 1px solid rgba(0, 0, 0, 0.08) !important;
+                                background: #fdfdfd !important;
+                                padding: 18px 24px !important;
+                                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+                                margin-bottom: 24px !important;
+                                transition: all 0.3s ease !important;
+                            }
+                            [data-theme='dark'] .channable_sync_stats_card {
+                                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                                background: #23222a !important;
+                                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+                            }
+                            .channable_sync_stats_card strong {
+                                color: #333333 !important;
+                                font-size: 1.15rem !important;
+                                font-weight: 700 !important;
+                                letter-spacing: 0.3px !important;
+                            }
+                            [data-theme='dark'] .channable_sync_stats_card strong {
+                                color: #ffffff !important;
+                            }
+                            .channable_stats_grid {
+                                border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+                                padding-top: 12px !important;
+                            }
+                            [data-theme='dark'] .channable_stats_grid {
+                                border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+                            }
+                            .channable_stat_item {
+                                display: flex !important;
+                                align-items: center !important;
+                                font-size: 0.95rem !important;
+                            }
+                            .channable_stat_label {
+                                color: #666666 !important;
+                                font-weight: 500 !important;
+                                margin-right: 6px !important;
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                vertical-align: middle !important;
+                                line-height: 1.2 !important;
+                            }
+                            [data-theme='dark'] .channable_stat_label {
+                                color: #b1b1b1 !important;
+                            }
+                            .channable_stat_value {
+                                color: #111111 !important;
+                                font-weight: 700 !important;
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                vertical-align: middle !important;
+                                line-height: 1.2 !important;
+                            }
+                            [data-theme='dark'] .channable_stat_value {
+                                color: #ffffff !important;
+                            }
+                            .channable_stat_value * {
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                vertical-align: middle !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                line-height: 1.2 !important;
+                            }
+                            .channable_icon_purple {
+                                color: #71639e !important;
+                                font-size: 1.1rem !important;
+                                display: inline-flex !important;
+                                align-items: center !important;
+                                vertical-align: middle !important;
+                            }
+                            [data-theme='dark'] .channable_icon_purple {
+                                color: #a394db !important;
+                            }
+                        </style>
+
+                        <div class="channable_progress_alert d-flex align-items-center mb-3" 
+                             invisible="not sync_in_progress">
+                            <div class="d-flex align-items-center gap-3 w-100">
+                                <span class="fa fa-refresh fa-spin"></span>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <strong>Importing Orders...</strong>
+                                        <span class="channable_progress_text">
+                                            <field name="sync_processed_orders" class="fw-bold" readonly="1"/> / <field name="sync_total_orders" class="fw-bold" readonly="1"/> orders processed.
+                                        </span>
+                                    </div>
+                                    <div class="channable-progress-container">
+                                        <div class="channable-progress-track">
+                                            <div class="channable-progress-bar-fill" style="width: 0%;"></div>
+                                        </div>
+                                        <span class="channable-progress-percent-label">
+                                            <field name="sync_progress_percentage" readonly="1"/>%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Last Sync Statistics Card -->
+                        <div class="channable_sync_stats_card d-flex align-items-center mb-3" 
+                             invisible="sync_in_progress or not last_sync_date">
+                            <div class="w-100">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <strong>Last Synchronization Statistics</strong>
+                                    <field name="last_sync_status" readonly="1" widget="badge" 
+                                           decoration-success="last_sync_status == 'success'" 
+                                           decoration-warning="last_sync_status == 'partial'" 
+                                           decoration-danger="last_sync_status == 'failed'"/>
+                                </div>
+                                <div class="channable_stats_grid d-flex flex-wrap gap-4 mt-2">
+                                    <div class="channable_stat_item">
+                                        <span class="fa fa-calendar me-2 channable_icon_purple"></span>
+                                        <span class="channable_stat_label">Sync Time: </span>
+                                        <span class="channable_stat_value"><field name="last_sync_date" readonly="1"/></span>
+                                    </div>
+                                    <div class="channable_stat_item">
+                                        <span class="fa fa-clock-o me-2 channable_icon_purple"></span>
+                                        <span class="channable_stat_label">Duration: </span>
+                                        <span class="channable_stat_value"><field name="last_sync_duration" readonly="1"/></span>
+                                    </div>
+                                    <div class="channable_stat_item">
+                                        <span class="fa fa-shopping-cart me-2 channable_icon_purple"></span>
+                                        <span class="channable_stat_label">Orders Synced: </span>
+                                        <span class="channable_stat_value"><field name="last_sync_orders_count" readonly="1"/></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <group>
                             <group string="Basic Configuration">
                                 <field name="active" invisible="1"/>
@@ -73,7 +273,7 @@
                             <group string="Logistics">
                                 <field name="warehouse_id"/>
                                 <field name="carrier_id"/>
-                                <field name="notify_shipped_auto"/>
+                                <!-- <field name="notify_shipped_auto"/> -->
                             </group>
                             <group string="Accounting &amp; Sales">
                                 <field name="pricelist_id"/>
@@ -92,7 +292,7 @@
                             </group>
                             <group string="Synchronisation Rules">
                                 <field name="sync_product_field"/>
-                                <field name="valid_states"/>
+                                <field name="valid_states" invisible="1"/>
                                 <field name="saving_attachments"/>
                                 <field name="auto_validate_quotations"/>
                                 <field name="auto_validate_orders"/>
@@ -100,6 +300,18 @@
                                        invisible="not auto_validate_orders"/>
                                 <field name="difference_threshold"/>
                                 <field name="feed_url" widget="CopyClipboardChar" readonly="1"/>
+                            </group>
+                            <group string="Import Orders Status" colspan="2">
+                                <group>
+                                    <field name="status_not_shipped"/>
+                                    <field name="status_shipped"/>
+                                    <field name="status_waiting"/>
+                                </group>
+                                <group>
+                                    <field name="status_pending_shipment"/>
+                                    <field name="status_pending_cancellation"/>
+                                    <field name="status_cancelled"/>
+                                </group>
                             </group>
                         </group>
                         <notebook>

@@ -165,7 +165,7 @@ class SaleOrder(models.Model):
                         order.message_post(body=_("Channable Status updated: %s &rarr; %s", old_status, new_status))
                         if new_status in ['canceled', 'cancelled'] and order.state != 'cancel':
                             try:
-                                order.action_cancel()
+                                order.with_context(disable_cancel_warning=True).action_cancel()
                                 order.message_post(body=_("Order automatically cancelled in Odoo due to Channable cancellation."))
                                 order._channable_create_credit_notes()
                             except Exception as cancel_err:
@@ -195,7 +195,7 @@ class SaleOrder(models.Model):
                         order.message_post(body=_("Channable Status updated: %s &rarr; %s", old_status, new_status))
                         if new_status in ['canceled', 'cancelled'] and order.state != 'cancel':
                             try:
-                                order.action_cancel()
+                                order.with_context(disable_cancel_warning=True).action_cancel()
                                 order.message_post(body=_("Order automatically cancelled in Odoo due to Channable cancellation."))
                                 order._channable_create_credit_notes()
                             except Exception as cancel_err:

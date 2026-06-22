@@ -40,7 +40,16 @@ class ChannableSyncOrdersWizard(models.TransientModel):
         marketplace_id = res.get('marketplace_id') or self._context.get('default_marketplace_id')
         if marketplace_id:
             marketplace = self.env['channable.marketplace'].browse(marketplace_id)
-            if marketplace.valid_states:
+            # If any status checkbox is True on the marketplace, copy them directly
+            status_fields = ['status_not_shipped', 'status_shipped', 'status_waiting', 
+                             'status_pending_shipment', 'status_pending_cancellation', 'status_cancelled']
+            has_checked = any(getattr(marketplace, f) for f in status_fields)
+            if has_checked:
+                for field_name in status_fields:
+                    if field_name in fields_list or field_name in self._fields:
+                        res[field_name] = getattr(marketplace, field_name)
+            elif marketplace.valid_states:
+                # Fallback to the old comma-separated field
                 raw_states = [s.strip() for s in marketplace.valid_states.split(',') if s.strip()]
                 for state in raw_states:
                     api_state = 'cancelled' if state == 'canceled' else state
@@ -61,13 +70,24 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             'detailed_description': str(description),
         })
 
-    def _get_or_create_partner(self, billing_data, marketplace):
+    def _get_or_create_partner(self, billing_data, marketplace, country_cache=None, state_cache=None, partner_cache=None):
         """
         Find an existing res.partner by e-mail or create a new one.
         Returns a res.partner record (invoice / billing address).
         """
+        if country_cache is None:
+            country_cache = {}
+        if state_cache is None:
+            state_cache = {}
+        if partner_cache is None:
+            partner_cache = {}
+
         Partner = self.env['res.partner']
         email = (billing_data.get('email') or '').strip().lower()
+
+        # Check in-memory cache first
+        if email and email in partner_cache:
+            return partner_cache[email]
 
         # ── Search existing partner ──────────────────────────────────────────
         partner = False
@@ -84,15 +104,29 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             state = False
             country_code = billing_data.get('country_code') or billing_data.get('country', '')
             if country_code:
-                country = self.env['res.country'].search(
-                    [('code', '=ilike', country_code[:2])], limit=1
-                )
+                country_code_upper = country_code[:2].upper()
+                if country_code_upper in country_cache:
+                    country = country_cache[country_code_upper]
+                else:
+                    country = self.env['res.country'].search(
+                        [('code', '=ilike', country_code[:2])], limit=1
+                    )
+                    if country:
+                        country_cache[country_code_upper] = country
+
             state_code = billing_data.get('state_code') or billing_data.get('state', '')
             if country and state_code:
-                state = self.env['res.country.state'].search([
-                    ('country_id', '=', country.id),
-                    ('code', '=ilike', state_code),
-                ], limit=1)
+                state_code_upper = state_code.strip().upper()
+                state_key = (country.id, state_code_upper)
+                if state_key in state_cache:
+                    state = state_cache[state_key]
+                else:
+                    state = self.env['res.country.state'].search([
+                        ('country_id', '=', country.id),
+                        ('code', '=ilike', state_code),
+                    ], limit=1)
+                    if state:
+                        state_cache[state_key] = state
 
             fname = billing_data.get('first_name', '').strip()
             lname = billing_data.get('last_name', '').strip()
@@ -125,16 +159,29 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             if marketplace.tag_ids:
                 partner_vals['category_id'] = [(6, 0, marketplace.tag_ids.ids)]
 
-            partner = Partner.create(partner_vals)
+            partner = Partner.with_context(
+                mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
+            ).create(partner_vals)
+
+        # Save to cache
+        if email and partner:
+            partner_cache[email] = partner
 
         return partner
 
-    def _get_or_create_shipping_partner(self, shipping_data, invoice_partner, marketplace):
+    def _get_or_create_shipping_partner(self, shipping_data, invoice_partner, marketplace, country_cache=None, state_cache=None, shipping_partner_cache=None):
         """
         Return a shipping address partner.
         - If the shipping address matches the billing address, reuse invoice_partner.
         - Otherwise create (or find) a child 'delivery' address linked to invoice_partner.
         """
+        if country_cache is None:
+            country_cache = {}
+        if state_cache is None:
+            state_cache = {}
+        if shipping_partner_cache is None:
+            shipping_partner_cache = {}
+
         Partner = self.env['res.partner']
 
         ship_street = (shipping_data.get('street') or '').strip()
@@ -147,20 +194,39 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 and ship_zip == (invoice_partner.zip or '').strip()):
             return invoice_partner
 
+        # Check in-memory cache first
+        cache_key = (invoice_partner.id, ship_street, ship_city, ship_zip)
+        if cache_key in shipping_partner_cache:
+            return shipping_partner_cache[cache_key]
+
         # Resolve country/state for shipping
         country = False
         state = False
         country_code = shipping_data.get('country_code') or shipping_data.get('country', '')
         if country_code:
-            country = self.env['res.country'].search(
-                [('code', '=ilike', country_code[:2])], limit=1
-            )
+            country_code_upper = country_code[:2].upper()
+            if country_code_upper in country_cache:
+                country = country_cache[country_code_upper]
+            else:
+                country = self.env['res.country'].search(
+                    [('code', '=ilike', country_code[:2])], limit=1
+                )
+                if country:
+                    country_cache[country_code_upper] = country
+
         state_code = shipping_data.get('state_code') or shipping_data.get('state', '')
         if country and state_code:
-            state = self.env['res.country.state'].search([
-                ('country_id', '=', country.id),
-                ('code', '=ilike', state_code),
-            ], limit=1)
+            state_code_upper = state_code.strip().upper()
+            state_key = (country.id, state_code_upper)
+            if state_key in state_cache:
+                state = state_cache[state_key]
+            else:
+                state = self.env['res.country.state'].search([
+                    ('country_id', '=', country.id),
+                    ('code', '=ilike', state_code),
+                ], limit=1)
+                if state:
+                    state_cache[state_key] = state
 
         fname = shipping_data.get('first_name', '').strip()
         lname = shipping_data.get('last_name', '').strip()
@@ -191,7 +257,12 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 ship_vals['country_id'] = country.id
             if state:
                 ship_vals['state_id'] = state.id
-            shipping_partner = Partner.create(ship_vals)
+            shipping_partner = Partner.with_context(
+                mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
+            ).create(ship_vals)
+
+        # Cache the result
+        shipping_partner_cache[cache_key] = shipping_partner
 
         return shipping_partner
 
@@ -200,56 +271,127 @@ class ChannableSyncOrdersWizard(models.TransientModel):
     def action_import_orders(self):
         self.ensure_one()
         _logger.warning("[Channable] action_import_orders CALLED - import_by_id=%s, order_ids_str=%s", self.import_by_id, self.order_ids_str)
-        marketplace = self.marketplace_id
-        connection = marketplace.project_id.connection_id
-
-        headers = {
-            'Authorization': f'Bearer {connection.api_token.strip()}',
-            'Content-Type': 'application/json',
-        }
-        # Use v2 endpoint – the v1 endpoint is deprecated and returns 404
-        # when status + date range parameters are combined.
-        url = (
-            f'https://api.channable.com/v2/companies/{connection.company_id_num}'
-            f'/projects/{marketplace.project_id.channable_identifier}/orders'
-        )
-
-        params = {}
-        if self.import_by_id and self.order_ids_str:
-            params['order_ids'] = self.order_ids_str.strip()
-        elif not self.import_by_id:
-            params['start_date'] = self.date_start.strftime('%Y-%m-%dT%H:%M:%S')
-            params['end_date'] = self.date_end.strftime('%Y-%m-%dT%H:%M:%S')
-
-        # Build the list of statuses to filter on.
-        # If any of the status boolean fields are checked, use them.
-        # Otherwise fall back to the marketplace's valid_states (comma-separated).
-        statuses = []
-        if not self.import_by_id:
-            if self.status_not_shipped:
-                statuses.append('not_shipped')
-            if self.status_shipped:
-                statuses.append('shipped')
-            if self.status_waiting:
-                statuses.append('waiting')
-            if self.status_pending_shipment:
-                statuses.append('pending_shipment')
-            if self.status_pending_cancellation:
-                statuses.append('pending_cancellation')
-            if self.status_cancelled:
-                statuses.append('cancelled')
+        
+        # If running synchronously (e.g. cron or when explicitly requested)
+        if self._context.get('sync_synchronously'):
+            self._execute_import(self.marketplace_id)
+            return {'type': 'ir.actions.act_window_close'}
             
-            # If no check-box is checked, fallback to valid_states on marketplace
-            if not statuses and marketplace.valid_states:
-                raw_states = [s.strip() for s in marketplace.valid_states.split(',') if s.strip()]
-                # Normalise 'canceled' (single-l Odoo spelling) → 'cancelled' (API spelling)
-                statuses = ['cancelled' if s == 'canceled' else s for s in raw_states]
+        # Otherwise, run in a background thread to prevent UI blocking
+        import threading
+        
+        wizard_vals = {
+            'marketplace_id': self.marketplace_id.id,
+            'import_by_id': self.import_by_id,
+            'order_ids_str': self.order_ids_str,
+            'date_start': self.date_start,
+            'date_end': self.date_end,
+            'status_not_shipped': self.status_not_shipped,
+            'status_shipped': self.status_shipped,
+            'status_waiting': self.status_waiting,
+            'status_pending_shipment': self.status_pending_shipment,
+            'status_pending_cancellation': self.status_pending_cancellation,
+            'status_cancelled': self.status_cancelled,
+        }
+        
+        # Mark sync as in progress in main thread so UI shows it immediately
+        self.marketplace_id.write({
+            'sync_in_progress': True,
+            'sync_total_orders': 0,
+            'sync_processed_orders': 0,
+        })
+        self.env.cr.commit()
 
-        orders_data = []
+        # We start a thread using Odoo registry
+        registry = self.env.registry
+        user_id = self.env.user.id
+        ctx = dict(self.env.context)
+        
+        def run_sync():
+            with registry.cursor() as cr:
+                env = api.Environment(cr, user_id, ctx)
+                try:
+                    marketplace_new = env['channable.marketplace'].browse(wizard_vals['marketplace_id'])
+                    # Create a temporary wizard in the new cursor environment
+                    wizard_new = env['channable.sync.orders.wizard'].with_context(default_marketplace_id=False).create(wizard_vals)
+                    wizard_new._execute_import(marketplace_new)
+                except Exception as threaded_err:
+                    _logger.exception("Background order sync failed: %s", str(threaded_err))
+
+        t = threading.Thread(target=run_sync)
+        t.daemon = True
+        t.start()
+        
+        # Return a non-blocking toast action that closes the wizard and reloads the view
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Order Sync Started'),
+                'message': _('Importing orders in the background. You can track progress on the Marketplace form view.'),
+                'type': 'info',
+                'sticky': False,
+                'next': {
+                    'type': 'ir.actions.client',
+                    'tag': 'reload',
+                }
+            }
+        }
+
+    def _execute_import(self, marketplace):
+        start_time = datetime.datetime.now()
+        
+        orders_count = 0
+        total_synced = 0
+        total_skipped = 0
+        status = 'success'
+        notes = ''
+
         try:
+            # Initialize in-memory caches to drastically reduce database round-trips
+            country_cache = {c.code.upper(): c for c in self.env['res.country'].search([]) if c.code}
+            state_cache = {(s.country_id.id, s.code.upper()): s for s in self.env['res.country.state'].search([]) if s.code and s.country_id}
+            partner_cache = {}
+            shipping_partner_cache = {}
+            connection = marketplace.project_id.connection_id
+            if not connection:
+                raise Exception(_("No connection configured for this project/marketplace."))
+
+            headers = {
+                'Authorization': f'Bearer {connection.api_token.strip()}',
+                'Content-Type': 'application/json',
+            }
+            # Use v2 endpoint – the v1 endpoint is deprecated and returns 404
+            # when status + date range parameters combined.
+            url = (
+                f'https://api.channable.com/v2/companies/{connection.company_id_num}'
+                f'/projects/{marketplace.project_id.channable_identifier}/orders'
+            )
+
+            params = {}
             if self.import_by_id and self.order_ids_str:
-                # Channable's list endpoint doesn't support filtering by order_ids query parameter.
-                # We must fetch each order individually via /orders/{order_id} and compile them.
+                params['order_ids'] = self.order_ids_str.strip()
+            elif not self.import_by_id:
+                params['start_date'] = self.date_start.strftime('%Y-%m-%dT%H:%M:%S')
+                params['end_date'] = self.date_end.strftime('%Y-%m-%dT%H:%M:%S')
+
+            statuses = []
+            if not self.import_by_id:
+                if self.status_not_shipped:
+                    statuses.append('not_shipped')
+                if self.status_shipped:
+                    statuses.append('shipped')
+                if self.status_waiting:
+                    statuses.append('waiting')
+                if self.status_pending_shipment:
+                    statuses.append('pending_shipment')
+                if self.status_pending_cancellation:
+                    statuses.append('pending_cancellation')
+                if self.status_cancelled:
+                    statuses.append('cancelled')
+                
+            orders_data = []
+            if self.import_by_id and self.order_ids_str:
                 order_ids = [oid.strip() for oid in self.order_ids_str.split(',') if oid.strip()]
                 _logger.warning("[Channable] Parsed IDs to fetch: %s", order_ids)
                 for oid in order_ids:
@@ -266,43 +408,159 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     order_obj = order_payload.get('order') or order_payload
                     if order_obj and order_obj.get('id'):
                         orders_data.append(order_obj)
-                        
+                            
             elif not self.import_by_id and statuses:
-                # v2 supports status as a repeated query param or array.
-                # We issue one request per status and deduplicate by Channable order id.
                 seen_order_ids = set()
-                for status in statuses:
+                for status_filter in statuses:
+                    offset = 0
+                    limit = 100
+                    while True:
+                        req_params = params.copy()
+                        req_params['status'] = status_filter
+                        req_params['offset'] = offset
+                        req_params['limit'] = limit
+                        response = requests.get(url, headers=headers, params=req_params, timeout=30)
+                        response.raise_for_status()
+                        data = response.json()
+                        page_orders = data.get('orders', [])
+                        _logger.warning(
+                            "[Channable] Raw API response | status=%s | offset=%d | URL: %s\nFetched %d orders",
+                            status_filter, offset, response.url, len(page_orders)
+                        )
+                        for o in page_orders:
+                            o_id = o.get('id')
+                            if o_id and o_id not in seen_order_ids:
+                                seen_order_ids.add(o_id)
+                                orders_data.append(o)
+                        if len(page_orders) < limit:
+                            break
+                        offset += limit
+            else:
+                offset = 0
+                limit = 100
+                while True:
                     req_params = params.copy()
-                    req_params['status'] = status
+                    req_params['offset'] = offset
+                    req_params['limit'] = limit
                     response = requests.get(url, headers=headers, params=req_params, timeout=30)
                     response.raise_for_status()
                     data = response.json()
+                    page_orders = data.get('orders', [])
                     _logger.warning(
-                        "[Channable] Raw API response | status=%s | URL: %s\n%s",
-                        status, response.url, data
+                        "[Channable] Raw API response | offset=%d | URL: %s\nFetched %d orders",
+                        offset, response.url, len(page_orders)
                     )
-                    for o in data.get('orders', []):
-                        o_id = o.get('id')
-                        if o_id and o_id not in seen_order_ids:
-                            seen_order_ids.add(o_id)
-                            orders_data.append(o)
+                    for o in page_orders:
+                        orders_data.append(o)
+                    if len(page_orders) < limit:
+                        break
+                    offset += limit
+
+            orders_count = len(orders_data)
+            
+            if not orders_data:
+                notes = _("No orders fetched from the API.")
+                return
+
+            marketplace.write({
+                'sync_in_progress': True,
+                'sync_total_orders': orders_count,
+                'sync_processed_orders': 0,
+            })
+            self.env.cr.commit()
+
+            # Batch orders
+            batch_size = 50
+            for i in range(0, orders_count, batch_size):
+                batch = orders_data[i:i + batch_size]
+                try:
+                    batch_result = self._process_order_batch(
+                        batch,
+                        marketplace,
+                        country_cache=country_cache,
+                        state_cache=state_cache,
+                        partner_cache=partner_cache,
+                        shipping_partner_cache=shipping_partner_cache
+                    )
+                    total_synced += batch_result.get('synced', 0)
+                    total_skipped += batch_result.get('skipped', 0)
+                    # Commit progress after successfully processing the batch
+                    marketplace.write({
+                        'sync_processed_orders': min(i + batch_size, orders_count),
+                    })
+                    self.env.cr.commit()
+                except Exception as batch_err:
+                    self.env.cr.rollback()
+                    _logger.exception("Error processing order batch starting at index %d: %s", i, str(batch_err))
+                    # Update processed count anyway to move forward
+                    try:
+                        marketplace.write({
+                            'sync_processed_orders': min(i + batch_size, orders_count),
+                        })
+                        self.env.cr.commit()
+                    except Exception:
+                        pass
+            
+            # Determine sync status
+            attempted_new = orders_count - total_skipped
+            if attempted_new > 0:
+                if total_synced == attempted_new:
+                    status = 'success'
+                elif total_synced > 0:
+                    status = 'partial'
+                else:
+                    status = 'failed'
             else:
-                response = requests.get(url, headers=headers, params=params, timeout=30)
-                response.raise_for_status()
-                data = response.json()
-                _logger.warning(
-                    "[Channable] Raw API response | URL: %s\n%s",
-                    response.url, data
-                )
-                orders_data = data.get('orders', [])
+                status = 'success'
+
+            notes = _(
+                "Successfully executed sync.\n"
+                "Total orders fetched from API: %d\n"
+                "New orders imported: %d\n"
+                "Existing orders skipped: %d"
+            ) % (orders_count, total_synced, total_skipped)
+
         except Exception as e:
-            self._log_error('API Fetch Error', 'sync_order', e)
-            return {'type': 'ir.actions.act_window_close'}
+            status = 'failed'
+            notes = f"Sync failed with error: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            _logger.exception("Error during _execute_import: %s", str(e))
+            self._log_error('Sync Execution Error', 'sync_order', e)
 
-        if not orders_data:
-            return {'type': 'ir.actions.act_window_close'}
+        finally:
+            end_time = datetime.datetime.now()
+            duration = (end_time - start_time).total_seconds()
+            
+            # Write to channable.sync.log
+            log_name = f"Sync - {start_time.strftime('%Y-%m-%d %H:%M:%S')}"
+            try:
+                self.env['channable.sync.log'].create({
+                    'name': log_name,
+                    'marketplace_id': marketplace.id,
+                    'start_datetime': start_time,
+                    'end_datetime': end_time,
+                    'duration': duration,
+                    'orders_count': orders_count,
+                    'synced_count': total_synced,
+                    'status': status,
+                    'notes': notes,
+                })
+            except Exception as log_err:
+                _logger.error("Failed to create channable.sync.log: %s", str(log_err))
 
+            # Update latest sync metrics on the marketplace
+            try:
+                marketplace.write({
+                    'sync_in_progress': False,
+                    'last_sync_date': start_time,
+                    'last_sync_duration': f"{duration:.2f}s",
+                    'last_sync_orders_count': total_synced,
+                    'last_sync_status': status,
+                })
+                self.env.cr.commit()
+            except Exception as mp_err:
+                _logger.error("Failed to update marketplace sync statistics: %s", str(mp_err))
 
+    def _process_order_batch(self, orders_data, marketplace, country_cache=None, state_cache=None, partner_cache=None, shipping_partner_cache=None):
         SaleOrder = self.env['sale.order']
         new_orders = self.env['sale.order']
 
@@ -313,8 +571,13 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
         channable_ids = [str(o.get('id', '')) for o in orders_data if o.get('id')]
         _logger.debug("Found %d orders from Channable API", len(channable_ids))
-        existing_orders = SaleOrder.search([('channable_order_id', 'in', channable_ids)])
-        existing_channable_ids = set(existing_orders.mapped('channable_order_id'))
+        existing_channable_ids = set()
+        if channable_ids:
+            self.env.cr.execute(
+                "SELECT channable_order_id FROM sale_order WHERE channable_order_id IN %s",
+                (tuple(channable_ids),)
+            )
+            existing_channable_ids = {r[0] for r in self.env.cr.fetchall() if r[0]}
         _logger.debug("Existing orders in Odoo: %s", existing_channable_ids)
 
         # ── Bulk Fetch Existing Products ───────────────────────────────────────
@@ -327,16 +590,64 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     product_refs.append(ref)
         product_refs = list(set(product_refs))
 
-        existing_products = self.env['product.product'].search([
-            (marketplace.sync_product_field, 'in', product_refs)
-        ])
-        _logger.debug("Existing products found in Odoo matching refs %s: %s", product_refs, existing_products.mapped(marketplace.sync_product_field))
-        product_dict = {
-            getattr(p, marketplace.sync_product_field): p
-            for p in existing_products if getattr(p, marketplace.sync_product_field)
+        product_dict = {}
+        if product_refs:
+            sync_field = marketplace.sync_product_field
+            if sync_field in ['default_code', 'barcode']:
+                self.env.cr.execute(
+                    f"SELECT id, {sync_field} FROM product_product WHERE {sync_field} IN %s AND active = true",
+                    (tuple(product_refs),)
+                )
+                product_rows = self.env.cr.fetchall()
+                product_ids = [row[0] for row in product_rows]
+                products = self.env['product.product'].browse(product_ids)
+                product_dict = {getattr(p, sync_field): p for p in products if getattr(p, sync_field)}
+        _logger.debug("Existing products found in Odoo matching refs %s: %s", product_refs, list(product_dict.keys()))
+
+        # ── Bulk Fetch Existing Partners and Shipping Partners ──────────────────
+        if partner_cache is None:
+            partner_cache = {}
+        if shipping_partner_cache is None:
+            shipping_partner_cache = {}
+
+        emails = {
+            (o.get('data', {}).get('billing', {}).get('email') or '').strip().lower()
+            for o in orders_data
+            if o.get('data', {}).get('billing', {}).get('email')
         }
+        emails.discard('')
+
+        if emails:
+            existing_partners = self.env['res.partner'].with_context(
+                mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
+            ).search([
+                ('email', 'in', list(emails)),
+                ('type', 'in', ['contact', False]),
+            ])
+            for p in existing_partners:
+                if p.email:
+                    partner_cache[p.email.strip().lower()] = p
+
+            parent_partner_ids = existing_partners.ids
+            if parent_partner_ids:
+                existing_delivery_partners = self.env['res.partner'].with_context(
+                    mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
+                ).search([
+                    ('parent_id', 'in', parent_partner_ids),
+                    ('type', '=', 'delivery'),
+                ])
+                for dp in existing_delivery_partners:
+                    cache_key = (
+                        dp.parent_id.id,
+                        (dp.street or '').strip(),
+                        (dp.city or '').strip(),
+                        (dp.zip or '').strip()
+                    )
+                    shipping_partner_cache[cache_key] = dp
 
         channable_totals = {}
+        orders_vals_list = []
+        orders_mapping = []
 
         for order_data in orders_data:
             channable_id = str(order_data.get('id', ''))
@@ -357,9 +668,20 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
             # ── Partners ─────────────────────────────────────────────────────
             try:
-                invoice_partner = self._get_or_create_partner(billing_data, marketplace)
+                invoice_partner = self._get_or_create_partner(
+                    billing_data,
+                    marketplace,
+                    country_cache=country_cache,
+                    state_cache=state_cache,
+                    partner_cache=partner_cache
+                )
                 shipping_partner = self._get_or_create_shipping_partner(
-                    shipping_data, invoice_partner, marketplace
+                    shipping_data,
+                    invoice_partner,
+                    marketplace,
+                    country_cache=country_cache,
+                    state_cache=state_cache,
+                    shipping_partner_cache=shipping_partner_cache
                 )
             except Exception as e:
                 self._log_error(
@@ -428,7 +750,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                         elif marketplace.sync_product_field == 'barcode':
                             tmpl_vals['barcode'] = product_ref
 
-                        product_tmpl = self.env['product.template'].create(tmpl_vals)
+                        product_tmpl = self.env['product.template'].with_context(
+                            mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
+                        ).create(tmpl_vals)
                         product = product_tmpl.product_variant_ids[:1] if product_tmpl.product_variant_ids else False
                         _logger.debug("Created product_tmpl: %s, product_variant: %s", product_tmpl, product)
                         if not product:
@@ -458,11 +782,11 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     'name': title,
                     'product_uom_qty': qty,
                     'price_unit': price,
-                    'tax_ids': [(5, 0, 0)],
+                    'tax_id': [(5, 0, 0)],
                 }
                 
                 if uom_id:
-                    line_vals['product_uom_id'] = uom_id
+                    line_vals['product_uom'] = uom_id
                 _logger.debug("Appending line %s for order %s", line_vals, channable_id)
                 order_lines.append((0, 0, line_vals))
 
@@ -504,7 +828,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                         'name': carrier.name or _('Shipping'),
                         'product_uom_qty': 1,
                         'price_unit': shipping_cost,
-                        'tax_ids': [(5, 0, 0)], 
+                        'tax_id': [(5, 0, 0)],
                     }))
 
             # ── Order note / memo ─────────────────────────────────────────────
@@ -540,126 +864,241 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             if carrier:
                 order_vals['carrier_id'] = carrier.id
 
+            ch_total = float(order_data.get('price', 0.0))
+            if not ch_total:
+                ch_total = sum(float(item.get('price', 0.0)) * float(item.get('quantity', 1)) for item in products_data) + shipping_cost
+
+            orders_vals_list.append(order_vals)
+            orders_mapping.append((channable_id, ch_total))
+
+        # ── Bulk Sales Order Creation with Fallback ──────────────────────────
+        if orders_vals_list:
             try:
-                _logger.debug("Attempting to create sale.order with vals: %s", order_vals)
-                new_order = SaleOrder.create(order_vals)
-                _logger.info("Created sale.order %s for Channable order %s", new_order.name, channable_id)
-                new_orders |= new_order
+                _logger.info("Attempting optimistic batch creation of %d orders", len(orders_vals_list))
+                created_orders = SaleOrder.with_context(
+                    mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
+                ).create(orders_vals_list)
+                new_orders |= created_orders
                 
-                ch_total = float(order_data.get('price', 0.0))
-                if not ch_total:
-                    ch_total = sum(float(item.get('price', 0.0)) * float(item.get('quantity', 1)) for item in products_data) + shipping_cost
-                channable_totals[new_order.id] = ch_total
-                
-            except Exception as e:
-                err_trace = traceback.format_exc()
-                self._log_error(
-                    f'Order insertion failed: {channable_id}',
-                    'create_order',
-                    f'Could not create order {channable_id}.\nError: {e}\nTraceback: {err_trace}'
-                )
-                continue
+                # Map created orders back to their totals
+                for order, (_, ch_total) in zip(created_orders, orders_mapping):
+                    channable_totals[order.id] = ch_total
+                    
+            except Exception as batch_err:
+                _logger.warning("Batch creation failed: %s. Falling back to single order creation.", str(batch_err))
+                # Fallback to creating each order individually to isolate any errors
+                for order_vals, (channable_id, ch_total) in zip(orders_vals_list, orders_mapping):
+                    try:
+                        order = SaleOrder.with_context(
+                            mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
+                        ).create(order_vals)
+                        new_orders |= order
+                        channable_totals[order.id] = ch_total
+                    except Exception as single_err:
+                        err_trace = traceback.format_exc()
+                        self._log_error(
+                            f'Order insertion failed: {channable_id}',
+                            'create_order',
+                            f'Could not create order {channable_id}.\nError: {single_err}\nTraceback: {err_trace}'
+                        )
 
         # ── Post-creation flow ────────────────────────────────────────────────
         self._post_create_flow(new_orders, marketplace, channable_totals)
-
-        return {'type': 'ir.actions.act_window_close'}
+        return {
+            'synced': len(new_orders),
+            'skipped': len(existing_channable_ids),
+        }
 
     def _post_create_flow(self, new_orders, marketplace, channable_totals=None):
-        """Confirm, invoice, and register payment based on marketplace settings."""
+        """Confirm, invoice, and register payment based on marketplace settings.
+
+        Operations are batched where possible and wrapped with mail/tracking
+        bypass context to eliminate thousands of unnecessary chatter messages,
+        follower subscriptions, and field-tracking writes during bulk import.
+        Each batch falls back to per-order processing on failure so that a
+        single bad order never blocks the rest.
+        """
         if not new_orders:
             return
 
         channable_totals = channable_totals or {}
 
-        for order in new_orders:
-            order.message_post(body=_("Order successfully imported from Channable. Market ID: %s", order.channable_order_id))
+        # Context flags to suppress mail/tracking overhead on every ORM call
+        _bypass_ctx = {
+            'mail_create_nosubscribe': True,
+            'mail_create_nolog': True,
+            'mail_notrack': True,
+            'tracking_disable': True,
+        }
 
-            # If order status is canceled or cancelled, cancel it immediately in Odoo and skip confirmation/invoicing/pickings
-            if order.channable_status in ['canceled', 'cancelled']:
-                try:
-                    order.action_cancel()
-                    order.message_post(body=_("Order automatically cancelled in Odoo during import due to Channable status: %s", order.channable_status))
-                except Exception as e:
-                    self._log_error('Order Auto-Cancellation Error', 'cancel_order', e, order.id)
-                continue
+        # ── 0. Handle cancelled orders ────────────────────────────────────────
+        cancelled_orders = new_orders.filtered(
+            lambda o: o.channable_status in ('canceled', 'cancelled')
+        )
+        for order in cancelled_orders:
+            try:
+                order.with_context(disable_cancel_warning=True, **_bypass_ctx).action_cancel()
+                order.message_post(
+                    body=_("Order automatically cancelled in Odoo during import "
+                           "due to Channable status: %s", order.channable_status)
+                )
+            except Exception as e:
+                self._log_error('Order Auto-Cancellation Error', 'cancel_order', e, order.id)
 
-            # 1. Confirm quotation → sale order
-            confirmed = False
-            if marketplace.auto_validate_quotations or marketplace.auto_validate_orders:
-                # Check difference threshold
+        active_orders = new_orders - cancelled_orders
+        if not active_orders:
+            return
+
+        # ── 1. Batch confirm quotations → sale orders ─────────────────────────
+        confirmable_orders = self.env['sale.order']
+        if marketplace.auto_validate_quotations or marketplace.auto_validate_orders:
+            for order in active_orders:
                 ch_total = channable_totals.get(order.id, 0.0)
                 confirm_allowed = True
                 if ch_total > 0.0 and marketplace.difference_threshold > 0.0:
                     diff = abs(order.amount_total - ch_total)
                     if diff > marketplace.difference_threshold:
                         self._log_error(
-                            'Total Difference Threshold Exceeded', 
-                            'confirm_order', 
-                            f"Order {order.name} total ({order.amount_total}) differs from Channable total ({ch_total}) "
-                            f"by {diff}, which exceeds the threshold of {marketplace.difference_threshold}. "
+                            'Total Difference Threshold Exceeded',
+                            'confirm_order',
+                            f"Order {order.name} total ({order.amount_total}) differs from "
+                            f"Channable total ({ch_total}) by {diff}, which exceeds the "
+                            f"threshold of {marketplace.difference_threshold}. "
                             "The order has intentionally not been confirmed.",
-                            order.id
+                            order.id,
                         )
                         confirm_allowed = False
-                
                 if confirm_allowed:
-                    try:
-                        order.action_confirm()
-                        confirmed = True
-                    except Exception as e:
-                        self._log_error('Order Confirmation Error', 'confirm_order', e, order.id)
-            # 2. Validate stock picking automatically if the order is already marked as shipped in Channable
-            if confirmed and order.channable_status == 'shipped':
-                deliveries = order.picking_ids.filtered(lambda p: p.state not in ['done', 'cancel'])
-                for delivery in deliveries:
-                    try:
-                        delivery.action_assign()
-                        for move in delivery.move_ids:
-                            if move.state not in ['done', 'cancel']:
-                                move.quantity = move.product_uom_qty
-                        # Set sync status to done and bypass api trigger since it is already shipped on Channable
-                        delivery.channable_sync_status = 'done'
-                        delivery.with_context(skip_channable_shipment_notify=True).button_validate()
-                    except Exception as e:
-                        self._log_error('Delivery Auto-Validation Error', 'validate_picking', e, order.id)
+                    confirmable_orders |= order
 
-            # 3. Create & post invoice
-            if confirmed and marketplace.auto_validate_orders and marketplace.auto_validate_invoices:
+            if confirmable_orders:
                 try:
-                    invoices = order._create_invoices()
-                    invoices.action_post()
+                    confirmable_orders.with_context(**_bypass_ctx).action_confirm()
+                except Exception:
+                    _logger.warning(
+                        "Batch confirmation failed, falling back to per-order.",
+                        exc_info=True,
+                    )
+                    failed = self.env['sale.order']
+                    for order in confirmable_orders:
+                        try:
+                            order.with_context(**_bypass_ctx).action_confirm()
+                        except Exception as e:
+                            self._log_error(
+                                'Order Confirmation Error', 'confirm_order', e, order.id
+                            )
+                            failed |= order
+                    confirmable_orders -= failed
 
-                    # 4. Register payment via the configured journal
-                    if marketplace.payment_journal_id and invoices:
-                        self._register_invoice_payment(invoices, order, marketplace)
+        # Only orders that actually reached 'sale' state count as confirmed
+        confirmed_orders = confirmable_orders.filtered(lambda o: o.state == 'sale')
 
+        # ── 2. Validate stock pickings for shipped orders ─────────────────────
+        # Per-order because we must set move quantities individually
+        shipped_orders = confirmed_orders.filtered(
+            lambda o: o.channable_status == 'shipped'
+        )
+        for order in shipped_orders:
+            deliveries = order.picking_ids.filtered(
+                lambda p: p.state not in ('done', 'cancel')
+            )
+            for delivery in deliveries:
+                try:
+                    delivery.with_context(**_bypass_ctx).action_assign()
+                    for move in delivery.move_ids:
+                        if move.state not in ('done', 'cancel'):
+                            move.quantity = move.product_uom_qty
+                    # Set sync status to done and bypass api trigger since
+                    # it is already shipped on Channable
+                    delivery.channable_sync_status = 'done'
+                    delivery.with_context(
+                        skip_channable_shipment_notify=True,
+                        **_bypass_ctx,
+                    ).button_validate()
                 except Exception as e:
                     self._log_error(
-                        'Order Invoice / Payment Error', 'confirm_order', e, order.id
+                        'Delivery Auto-Validation Error', 'validate_picking', e, order.id
                     )
 
-    def _register_invoice_payment(self, invoices, order, marketplace):
+        # ── 3. Create & post invoices ───────────────────────────────────
+        if confirmed_orders and marketplace.auto_validate_orders and marketplace.auto_validate_invoices:
+            all_invoices = self.env['account.move']
+            # Create draft invoices individually to prevent Odoo from grouping multiple orders
+            # under the same customer into a single combined invoice.
+            for order in confirmed_orders:
+                try:
+                    inv = order.with_context(**_bypass_ctx)._create_invoices()
+                    all_invoices |= inv
+                except Exception as e:
+                    self._log_error(
+                        'Order Invoice Creation Error', 'create_invoice', e, order.id
+                    )
+
+            # Post all created invoices in batch
+            if all_invoices:
+                try:
+                    all_invoices.with_context(**_bypass_ctx).action_post()
+                except Exception:
+                    _logger.warning(
+                        "Batch invoice posting failed, falling back to per-invoice.",
+                        exc_info=True,
+                    )
+                    for invoice in all_invoices:
+                        try:
+                            invoice.with_context(**_bypass_ctx).action_post()
+                        except Exception as e:
+                            order_id = False
+                            if hasattr(invoice, 'invoice_origin') and invoice.invoice_origin:
+                                order = self.env['sale.order'].search(
+                                    [('name', '=', invoice.invoice_origin)], limit=1
+                                )
+                                order_id = order.id if order else False
+                            self._log_error(
+                                'Invoice Posting Error', 'post_invoice', e, order_id
+                            )
+
+            # ── 4. Batch register payments ────────────────────────────────────
+            if marketplace.payment_journal_id and all_invoices:
+                self._register_invoice_payment(all_invoices, marketplace, _bypass_ctx)
+
+    def _register_invoice_payment(self, invoices, marketplace, bypass_ctx=None):
         """
         Register payment on posted invoices using account.payment.register wizard,
         which is the standard Odoo way since v15.
         """
-        for invoice in invoices.filtered(lambda inv: inv.state == 'posted'
-                                         and inv.payment_state != 'paid'):
+        bypass_ctx = bypass_ctx or {}
+        payable = invoices.filtered(
+            lambda inv: inv.state == 'posted' and inv.payment_state != 'paid'
+        )
+        if not payable:
+            return
+
+        today = fields.Date.today()
+        journal_id = marketplace.payment_journal_id.id
+        PayReg = self.env['account.payment.register']
+
+        for invoice in payable:
             try:
-                # Use the built-in payment register wizard
-                ctx = {
+                pay_ctx = {
                     'active_model': 'account.move',
                     'active_ids': invoice.ids,
                 }
-                pay_wiz = self.env['account.payment.register'].with_context(**ctx).create({
-                    'journal_id': marketplace.payment_journal_id.id,
-                    'payment_date': fields.Date.today(),
+                pay_ctx.update(bypass_ctx)
+                pay_wiz = PayReg.with_context(**pay_ctx).create({
+                    'journal_id': journal_id,
+                    'payment_date': today,
                     'amount': invoice.amount_residual,
                     'currency_id': invoice.currency_id.id,
                 })
                 pay_wiz.action_create_payments()
             except Exception as e:
+                # Try to find the related sale order for error logging
+                order_id = False
+                if hasattr(invoice, 'invoice_origin') and invoice.invoice_origin:
+                    order = self.env['sale.order'].search(
+                        [('name', '=', invoice.invoice_origin)], limit=1
+                    )
+                    order_id = order.id if order else False
                 self._log_error(
-                    'Payment Registration Error', 'confirm_order', e, order.id
+                    'Payment Registration Error', 'confirm_order', e, order_id
                 )

@@ -97,6 +97,24 @@ class CalDAVAccount(models.Model):
         default="other",
         required=True,
     )
+    sync_model = fields.Selection(
+        selection=[
+            ("calendar.event", "Calendar Events"),
+            ("project.task", "Project Tasks"),
+            ("fsm.order", "Field Service Orders"),
+            ("maintenance.request", "Maintenance Requests"),
+        ],
+        string="Sync Model",
+        default="calendar.event",
+        required=True,
+        help="Select the Odoo model whose events/records should be synced with this account.",
+    )
+    auto_create_users = fields.Boolean(
+        string="Auto-create Users",
+        default=False,
+        help="When pulling a task or maintenance request from Nextcloud, if an attendee email does not exist as an Odoo user, create it automatically.",
+    )
+
 
     google_client_id = fields.Char(
         string="Google Client ID",
@@ -169,6 +187,22 @@ class CalDAVAccount(models.Model):
         help=(
             "When enabled, new contacts are automatically created for unknown "
             "attendee email addresses found in CalDAV events."
+        ),
+    )
+    auto_create_persons = fields.Boolean(
+        string="Auto-create Persons",
+        default=False,
+        help=(
+            "Field Service Orders only: when pulling from CalDAV, if an attendee email "
+            "does not match an existing FSM Worker (fsm.person), create one automatically."
+        ),
+    )
+    auto_create_locations = fields.Boolean(
+        string="Auto-create Locations",
+        default=False,
+        help=(
+            "Field Service Orders only: when pulling from CalDAV, if the LOCATION string "
+            "does not match any existing FSM Location (fsm.location), create one automatically."
         ),
     )
     last_ctag = fields.Char(
@@ -655,7 +689,17 @@ class CalDAVAccount(models.Model):
             )
             raw_etag = headers.get("ETag", headers.get("etag", ""))
 
-            if self.server_type == "zoho":
+            if not raw_etag and self.sync_model != "calendar.event":
+                # If the server doesn't return an ETag on PUT, fetch it now to avoid conflict/false pull on next sync
+                _logger.info(
+                    "[%s] No ETag returned on PUT. Fetching fresh ETag now for url: %s",
+                    self.server_type, url
+                )
+                try:
+                    raw_etag, _ = self._fetch_ical_with_etag(url)
+                except Exception as fetch_ex:
+                    _logger.warning("Failed to fetch fresh ETag after PUT: %s", fetch_ex)
+            elif self.server_type == "zoho":
                 body_str = data.decode("utf-8", errors="replace") if data else "<empty>"
                 _logger.info(
                     "[ZOHO] PUT attempt results: Status=%s, ETag=%s, Body=%s",
@@ -663,14 +707,8 @@ class CalDAVAccount(models.Model):
                     raw_etag,
                     body_str[:500],
                 )
-                if not raw_etag:
-                    # If Zoho doesn't return an ETag on PUT, fetch it now to avoid conflict on next sync
-                    _logger.warning(
-                        "[ZOHO] No ETag returned on PUT. Fetching fresh ETag now."
-                    )
-                    raw_etag, _ = self._fetch_ical_with_etag(url) or ("", None)
 
-            return raw_etag.strip('"')
+            return (raw_etag or "").strip('"')
 
         try:
             return _attempt(etag)

@@ -77,6 +77,9 @@
                             <field name="server_type"
                                    widget="selection"
                                    options="{'horizontal': true}"/>
+                            <field name="sync_model"
+                                   invisible="server_type != 'nextcloud'"/>
+
                             <!-- Basic Auth fields — shown for all non-Google types -->
                             <field name="url"
                                    placeholder="https://nextcloud.example.com/remote.php/dav/calendars/user/personal/"
@@ -104,8 +107,20 @@
                         </group>
                         <group string="Sync Options">
                             <field name="sync_direction"/>
-                            <field name="send_invitation_emails"/>
-                            <field name="auto_create_contacts"/>
+                            <field name="send_invitation_emails"
+                                   invisible="sync_model != 'calendar.event'"/>
+                            <!-- Auto-create Users: for project tasks and maintenance requests -->
+                            <field name="auto_create_users"
+                                   invisible="sync_model not in ('project.task', 'maintenance.request') or server_type != 'nextcloud'"/>
+                            <!-- Auto-create Contacts: only relevant for Calendar Events -->
+                            <field name="auto_create_contacts"
+                                   invisible="sync_model != 'calendar.event'"/>
+                            <!-- Auto-create Persons: FSM Workers — only for Field Service Orders -->
+                            <field name="auto_create_persons"
+                                   invisible="sync_model != 'fsm.order' or server_type != 'nextcloud'"/>
+                            <!-- Auto-create Locations: FSM Locations — only for Field Service Orders -->
+                            <field name="auto_create_locations"
+                                   invisible="sync_model != 'fsm.order' or server_type != 'nextcloud'"/>
                         </group>
                     </group>
                     <group string="Sync Status" name="sync_status">
@@ -119,7 +134,11 @@
                         <page string="Event Mappings" name="event_mappings">
                             <field name="event_map_ids" readonly="1">
                                 <list>
-                                    <field name="event_id" string="Event Name"/>
+                                    <field name="event_id" string="Event" invisible="not event_id"/>
+                                    <field name="task_id" string="Task" invisible="not task_id"/>
+                                    <field name="fsm_order_id" string="Field Service Order" invisible="not fsm_order_id"/>
+                                    <field name="maintenance_request_id" string="Maintenance Request" invisible="not maintenance_request_id"/>
+                                    <field name="caldav_uid" string="CalDAV UID"/>
                                     <field name="last_odoo_write"/>
                                 </list>
                             </field>

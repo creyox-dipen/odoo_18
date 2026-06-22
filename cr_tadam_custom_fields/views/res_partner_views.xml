@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_inherit_tadam" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.tadam</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='l10n_in_pan']" position="after">
+                <field name="x_tadam_user_id"/>
+                <field name="x_supplier_approved"/>
+                <field name="x_kyc_verified_at"/>
+                <field name="x_user_suspended"/>
+                <field name="x_user_banned"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_tree_inherit_tadam" model="ir.ui.view">
+        <field name="name">res.partner.list.inherit.tadam</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field name="x_tadam_user_id" optional="show"/>
+                <field name="x_supplier_approved" optional="show"/>
+                <field name="x_kyc_verified_at" optional="show"/>
+                <field name="x_user_suspended" optional="show"/>
+                <field name="x_user_banned" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="payment_transaction_form_inherit_tadam" model="ir.ui.view">
+        <field name="name">payment.transaction.form.inherit.tadam</field>
+        <field name="model">payment.transaction</field>
+        <field name="inherit_id" ref="payment.payment_transaction_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_post_processed']" position="after">
+                <field name="x_tranzila_transaction_id"/>
+                <field name="x_tranzila_transaction_url"/>
+                <field name="x_payment_cc_last4"/>
+                <field name="x_payment_cc_type"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_lang']" position="after">
+                <field name="x_payment_amount"/>
+                <field name="x_payment_currency"/>
+                <field name="x_payment_status"/>
+                <field name="x_payment_error_code"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="payment_transaction_list_inherit_tadam" model="ir.ui.view">
+        <field name="name">payment.transaction.list.inherit.tadam</field>
+        <field name="model">payment.transaction</field>
+        <field name="inherit_id" ref="payment.payment_transaction_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field name="x_tranzila_transaction_id" optional="show"/>
+                <field name="x_tranzila_transaction_url" optional="show"/>
+                <field name="x_payment_cc_last4" optional="show"/>
+                <field name="x_payment_cc_type" optional="show"/>
+                <field name="x_payment_amount" optional="show"/>
+                <field name="x_payment_currency" optional="show"/>
+                <field name="x_payment_status" optional="show"/>
+                <field name="x_payment_error_code" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

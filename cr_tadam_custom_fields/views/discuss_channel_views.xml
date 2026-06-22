@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="discuss_channel_view_form_inherit_tadam" model="ir.ui.view">
+        <field name="name">discuss.channel.form.inherit.tadam</field>
+        <field name="model">discuss.channel</field>
+        <field name="inherit_id" ref="mail.discuss_channel_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='description']" position="after">
+                <field name="x_tadam_ticket_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="discuss_channel_view_tree_inherit_tadam" model="ir.ui.view">
+        <field name="name">discuss.channel.list.inherit.tadam</field>
+        <field name="model">discuss.channel</field>
+        <field name="inherit_id" ref="mail.discuss_channel_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="x_tadam_ticket_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

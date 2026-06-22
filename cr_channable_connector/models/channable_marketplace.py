@@ -62,6 +62,12 @@ class ChannableMarketplace(models.Model):
         string='Valid States',
         help='Comma-separated statuses to filter when importing orders (e.g. shipped, not_shipped)'
     )
+    status_not_shipped = fields.Boolean(string='Not Shipped', default=True)
+    status_shipped = fields.Boolean(string='Shipped')
+    status_waiting = fields.Boolean(string='Waiting')
+    status_pending_shipment = fields.Boolean(string='Pending Shipment')
+    status_pending_cancellation = fields.Boolean(string='Pending Cancellation')
+    status_cancelled = fields.Boolean(string='Cancelled')
     notify_shipped_auto = fields.Boolean(string='Notify as Shipped Automatically')
     saving_attachments = fields.Selection([
         ('url', 'Save URL'),
@@ -99,6 +105,43 @@ class ChannableMarketplace(models.Model):
         string='Shipping Mappings'
     )
     dark_mode = fields.Boolean(string='Dashboard Dark Mode', default=False)
+    sync_in_progress = fields.Boolean(string='Sync In Progress', default=False)
+    sync_total_orders = fields.Integer(string='Sync Total Orders', default=0)
+    sync_processed_orders = fields.Integer(string='Sync Processed Orders', default=0)
+    sync_progress_percentage = fields.Integer(
+        string='Sync Progress Percentage',
+        compute='_compute_sync_progress_percentage'
+    )
+    sync_log_ids = fields.One2many('channable.sync.log', 'marketplace_id', string='Sync Logs')
+    sync_log_count = fields.Integer(string='Sync Log Count', compute='_compute_sync_log_count')
+    last_sync_date = fields.Datetime(string='Last Sync Date')
+    last_sync_duration = fields.Char(string='Last Sync Duration')
+    last_sync_orders_count = fields.Integer(string='Last Sync Orders Count')
+    last_sync_status = fields.Selection([
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+        ('partial', 'Partial')
+    ], string='Last Sync Status')
+
+    def _compute_sync_log_count(self):
+        if self.ids:
+            self.env.cr.execute(
+                "SELECT marketplace_id, COUNT(*) FROM channable_sync_log WHERE marketplace_id IN %s GROUP BY marketplace_id",
+                (tuple(self.ids),)
+            )
+            counts = dict(self.env.cr.fetchall())
+        else:
+            counts = {}
+        for mp in self:
+            mp.sync_log_count = counts.get(mp.id, 0)
+
+    @api.depends('sync_total_orders', 'sync_processed_orders')
+    def _compute_sync_progress_percentage(self):
+        for mp in self:
+            if mp.sync_total_orders > 0:
+                mp.sync_progress_percentage = int((mp.sync_processed_orders / mp.sync_total_orders) * 100)
+            else:
+                mp.sync_progress_percentage = 0
 
     _sql_constraints = [
         ('marketplace_identifier_name_uniq', 'unique(order_configuration_id, name)',
@@ -312,7 +355,10 @@ class ChannableMarketplace(models.Model):
         """Cron: auto-import orders for all active marketplaces."""
         for marketplace in self.search([('active', '=', True)]):
             try:
-                wizard = self.env['channable.sync.orders.wizard'].create({
+                wizard = self.env['channable.sync.orders.wizard'].with_context(
+                    sync_synchronously=True,
+                    default_marketplace_id=marketplace.id
+                ).create({
                     'marketplace_id': marketplace.id,
                 })
                 wizard.action_import_orders()
@@ -380,4 +426,15 @@ class ChannableMarketplace(models.Model):
                 ('state', 'not in', ['done', 'cancel']),
                 ('picking_type_code', '=', 'outgoing'),
             ],
+        }
+
+    def action_view_sync_logs(self):
+        self.ensure_one()
+        return {
+            'name': _('Sync Logs'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'channable.sync.log',
+            'view_mode': 'list,form',
+            'domain': [('marketplace_id', '=', self.id)],
+            'context': {'default_marketplace_id': self.id},
         }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_inherit_tadam" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.tadam</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="x_tadam_booking_id"/>
+                <field name="x_booking_status"/>
+                <field name="x_invoice_status"/>
+                <field name="x_payment_status"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']//field[@name='product_template_id']" position="after">
+                <field name="x_line_category"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_order_tree_inherit_tadam" model="ir.ui.view">
+        <field name="name">sale.order.list.inherit.tadam</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.sale_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="x_tadam_booking_id" optional="show"/>
+                <field name="x_booking_status" optional="show"/>
+                <field name="x_invoice_status" optional="show"/>
+                <field name="x_payment_status" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

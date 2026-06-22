@@ -129,11 +129,13 @@
         'views/stock_picking_views.xml',
         'views/delivery_carrier_views.xml',
         'views/channable_sync_error_views.xml',
+        'views/channable_sync_log_views.xml',
         'views/menus.xml',
     ],
     'assets': {
         'web.assets_backend': [
             'cr_channable_connector/static/src/js/dark_mode_toggle.js',
+            'cr_channable_connector/static/src/js/sync_progress_polling.js',
         ],
     },
     'installable': True,
