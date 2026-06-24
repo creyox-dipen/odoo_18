@@ -11,12 +11,20 @@
     <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
           integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
-    <link href=https://apps.odoocdn.com/web/content/7247337-184ae0e/1/web.assets_frontend.css" rel="stylesheet">
-
+    <link href="https://apps.odoocdn.com/web/content/7247337-184ae0e/1/web.assets_frontend.css" rel="stylesheet">
+    <style>
+        .btn-hover-zoom {
+            transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out !important;
+        }
+        .btn-hover-zoom:hover {
+            transform: translateY(-2px) scale(1.02) !important;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
+        }
+    </style>
 </head>
 
 <body>
-<main class="container" style="border-radius:20px;">
+<main class="container rounded-4">
     <header class="py-2">
         <div class="row align-items-center" style="margin-top: 20px;">
             <div class="col-12 col-md-12 text-right">
@@ -32,84 +40,50 @@
     </header>
 
     <!-- <center><span style="font-size: 28px;" class="text-success">We are offering a 20% discount on any odoo service.</span></center> -->
-    <div class="px-md-5 py-md-4 p-2 mb-4 bg-white shadow " style="border-radius:20px; font-family:'system-ui'">
-        <center>
-            <div class="oe_container" style="margin-left:calc(-42vw + 50%); width:84vw">
-
-                <!--                <div class="row o_equal_col_sm">-->
-
-                <!--                    <div class="" style="display:block; margin:0 auto;width:100%">-->
-                <!--                        <span style="width:100%; display:inline-block">-->
-                <!--                            -->
-                <!--                            <img class="img img-responsive mt24 mb8"-->
-                <!--                                 src="static_img/odoo_learning_partner_rgb-imageonline.co-merged.png"-->
-                <!--                                 style="display:block; margin:0 auto; width: 800px;">-->
-                <!--                            -->
-                <!--                        </span>-->
-                <!--                    </div>-->
-
-                <!--                </div>-->
-                <!-- </center> -->
-            </div>
-        </center>
-        <div class="position-relative mb-4" style="border-radius:10px">
-            <img alt="" class="w-100 h-100 position-absolute img-fluid left_0" loading="lazy"
-                 src="static_img/main_bg.jpg" style="border-radius: 25px;">
-            <div class="p-lg-5 p-3 position-relative">
-                <div class="row py-4 py-lg-0">
-                    <div class="col-md-12">
-                        <h1
-                                style="font-family:'system-ui'; font-style:normal; font-weight:bold; font-size:calc(2.06rem + 1vw); line-height:120%; text-align:center; text-transform:capitalize">
-                                <span style="font-family:system-ui; color:#10488A; font-size:calc(2.06rem + 1vw)">GET
-                                    PERSONALIZED DEMO</span>
-                        </h1>
-                    </div>
-                    <div class="col-md-12 py-2">
-                        <p
-                                style="font-family:system-ui; font-weight:500; font-size:18px; line-height:150% !important; text-align:center; letter-spacing:-0.02em; color:#4F4F4F">
-                            Please send your inquiry on email or skype to know more about this application.
-                        </p>
-                    </div>
-                    <div class="col-md-12 py-2 text-center ">
-                        <a href="mailto:support@creyox.com" target="_blank"
-                           style="background-color:#091E42; border-radius:12px; display:inline-block; padding:7px 33px; border:1px solid #091E42"
-                           class="mx-1 mb-2 deep-1 deep_hover">
-                            <img class="img" style="width:30px" src="static_img/email.png">
-                            <span class="pl-2" style="color:#fff; font-size:16px; vertical-align:middle">
-                                    Email Us
-                                </span>
-                        </a>
-                        <a href="skype:live:.cid.d7506ede68fce23e?chat" target="_blank"
-                           style="background-color:#091E42; border-radius:12px; display:inline-block; padding:7px 33px; border:1px solid #091E42"
-                           class="mx-1 mb-2 deep-1 deep_hover">
-                            <img class="img" style="width:27px" src="static_img/skype.png">
-                            <span class="pl-2" style="color:#fff; font-size:16px; vertical-align:middle">
-                                    Skype Us
-                                </span>
-                        </a>
-                    </div>
+    <div class="p-lg-5 p-4 mb-4 rounded-5 text-center shadow-lg d-flex flex-column align-items-center justify-content-center"
+         style="background-color: #0b1329; font-family:'Montserrat', sans-serif">
+        <h1 class="fw-extrabold mb-3 text-uppercase" style="font-family:'Montserrat', sans-serif; font-size:calc(1.8rem + 1vw); font-weight:800; letter-spacing: 0.5px; line-height: 1.2;">
+            <span style="color: #ffffff;">GET </span>
+            <span style="color: #3b82f6;">PERSONALIZED </span>
+            <span style="color: #ffffff;">DEMO</span>
+        </h1>
+        <p class="mb-4 fs-6" style="color: #94a3b8 !important; font-family:'Montserrat', sans-serif; font-weight: 500; max-width: 600px;">
+            Direct connection to our engineering team for a customized walkthrough.
+        </p>
+        <div class="d-flex flex-wrap align-items-center justify-content-center gap-3">
+            <a href="mailto:support@creyox.com" target="_blank"
+               style="background-color: #3b82f6 !important; border: none; color: #ffffff !important; font-family: 'Montserrat', sans-serif; font-size: 16px;"
+               class="px-4 py-2 d-inline-flex align-items-center rounded-pill text-decoration-none fw-bold shadow-sm btn-hover-zoom">
+                <img class="img me-2" style="width:20px; height: auto;" src="static_img/email.png">
+                Email Our Team
+            </a>
+            <a href="https://creyox.com/helpdesk" target="_blank"
+               style="background-color: #ffffff !important; border: none; color: #0b1329 !important; font-family: 'Montserrat', sans-serif; font-size: 16px;"
+               class="px-4 py-2 d-inline-flex align-items-center rounded-pill text-decoration-none fw-bold shadow-sm btn-hover-zoom">
+                <div class="d-flex align-items-center justify-content-center rounded-circle me-2" style="width: 22px; height: 22px; background-color: #3b82f6;">
+                    <i class="fa fa-user text-white" style="font-size: 11px;"></i>
                 </div>
-            </div>
+                https://creyox.com/helpdesk
+            </a>
         </div>
     </div>
 
-    <div class="px-md-5 py-md-4 p-2 mb-4 bg-white shadow " style="border-radius:20px; font-family:'system-ui'">
-        <div class="position-relative mb-4" style="border-radius:10px">
-            <img alt="" class="w-100 h-100 position-absolute img-fluid left_0" loading="lazy"
-                 src="static_img/main_bg.jpg" style="border-radius: 25px;">
-            <div class="p-lg-5 p-3 position-relative">
-                <div class="row py-4 py-lg-0">
-                    <div class="col-md-12">
-                        <h1
-                                style="font-family:'system-ui'; font-style:normal; font-weight:bold; font-size:calc(2.06rem + 1vw); line-height:120%; text-align:center;">
-                            <span style="font-family:system-ui; color:#10488A; font-size:calc(2.06rem + 1vw)">Ultimate Channable Odoo Sync</span>
-                        </h1>
-                    </div>
-                    <div class="col-md-12 py-2 text-center">
-                        <a class="btn btn-primary btn-lg mt8" target="_blank" style="color: #FFFFFF !important;"
-                           href="https://youtu.be/PBVqTAuiZ3Y">
-                            <i class="fa fa-check-square"></i> Watch Video </a>
-                    </div>
+    <div class="position-relative mb-4 rounded-5 overflow-hidden border border-purple-subtle shadow-sm" style="font-family:'Montserrat', sans-serif">
+        <img alt="" class="w-100 h-100 position-absolute img-fluid left_0 rounded-5" loading="lazy"
+             src="static_img/main_bg.jpg">
+        <div class="p-lg-5 p-3 position-relative rounded-5" style="background-image: linear-gradient(135deg, rgba(245, 243, 255, 0.96) 0%, rgba(238, 242, 255, 0.96) 100%);">
+            <div class="row py-4 py-lg-0 text-center">
+                <div class="col-md-12">
+                    <h1
+                            style="font-family:'Montserrat'; font-style:normal; font-weight:bold; font-size:calc(2.06rem + 1vw); line-height:120%; text-align:center;">
+                        <span style="font-family:'Montserrat'; color:#10488A; font-size:calc(2.06rem + 1vw); font-weight:800; letter-spacing: -0.5px;">Ultimate Channable Odoo Sync</span>
+                    </h1>
+                </div>
+                <div class="col-md-12 py-2 text-center m-4">
+                    <a class="mx-1 mb-2 px-5 py-3 btn-hover-zoom d-inline-flex align-items-center shadow rounded-pill text-decoration-none text-white fw-bold border-0" 
+                       target="_blank" style="background-color:#565069;"
+                       href="https://youtu.be/PBVqTAuiZ3Y">
+                        <i class="fa fa-youtube-play me-2 fs-5 text-danger"></i> Watch Video </a>
                 </div>
             </div>
         </div>
@@ -117,231 +91,344 @@
 
     <div class="mb-4 bg-white shadow" style="border-radius:20px; font-family:'system-ui'; font-weight:400">
         <div class="tab-content p-md-5 p-2 py-3" id="myTabContent">
-            <div class="card shadow"
-                 style="background-color:#FFFAFA !important; border-color:#dfdfdf; border-radius:10px">
-                <br/>
-                <div class="row mb-5">
-                    <div class="col-12 col-md-12 text-center text-md-left">
-                        <center>
-                            <h1 style="color: #000099;">Overview</h1>
-                        </center>
+            <div class="card border border-light-subtle rounded-3 shadow-sm mb-4"
+                 style="background-color: #f8fafc !important; font-family: 'Montserrat', sans-serif;">
+                <div class="p-4 p-md-5">
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="fa fa-info-circle fs-2 me-3" style="color: #10488A;"></span>
+                        <h2 class="mb-0 fw-bold" style="color: #10488A; letter-spacing: -0.5px;">Overview</h2>
                     </div>
-                </div>
-                <div class="row align-items-center mb-4" style="margin-top:-25px">
-                    <div class="row align-items-center mb-4" style="margin-top:-25px">
-                        <div class="col-12 col-md-12">
-                            <div class="col-10 col-md-12" style="padding-left: 30px;">
-                                <p style="font-size: 20px; text-align: justify;">
-                                    The Channable Connector for Odoo provides a seamless integration between Odoo and
-                                    the Channable marketplace platform. Automate your marketplace order lifecycle by
-                                    importing
-                                    orders directly into Odoo, synchronizing shipping statuses, and managing
-                                    cancellations. Optimized for high-volume performance, it ensures your multi-channel
-                                    sales data remains
-                                    accurate and up-to-date.
-                                </p>
-                                <br/>
-                            </div>
-                        </div>
-                    </div>
+                    <p class="text-dark fs-5 mb-0 text-start" style="line-height: 1.7; font-weight: 500;">
+                        The Channable Connector for Odoo provides a seamless integration between Odoo and
+                        the Channable marketplace platform. Automate your marketplace order lifecycle by
+                        importing orders directly into Odoo, synchronizing shipping statuses, and managing
+                        cancellations. It ensures your multi-channel sales data remains accurate and up-to-date.
+                    </p>
                 </div>
             </div>
             <br/>
             <br/>
-            <section id="cr_hot_feature" style="padding-top:30px; background-color:transparent">
+            <section id="cr_hot_feature" class="py-4" style="background-color:transparent">
                 <div class="container">
                     <div class="text-center mb-5">
-                        <h1 style="font-size:35px; color:#000099; margin-bottom:10px">
+                        <h1 class="fw-extrabold" style="font-family:'Montserrat', sans-serif; font-size:35px; color:#10488A; margin-bottom:10px; font-weight:800; letter-spacing:-0.5px;">
                             Hot Features</h1>
                     </div>
                     <div class="row">
-                        <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
-                            <div class="d-flex justify-content-center align-items-center rounded shadow"
-                                 style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
-                                    <span
-                                            style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                        One Click Order Import
-                                    </span>
+                        <!-- Card 1 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #10b981 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #e6f4ea;">
+                                    <i class="fa fa-bolt fs-4" style="color: #10b981;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    One Click Order Import
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Sync and import marketplace orders from Channable into Odoo sale orders instantly with a single click.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
-                            <div class="d-flex justify-content-center align-items-center rounded shadow"
-                                 style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
-                                    <span
-                                            style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                        Shipping & Tracking Sync
-                                    </span>
+
+                        <!-- Card 2 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #f59e0b !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #fef3c7;">
+                                    <i class="fa fa-truck fs-4" style="color: #f59e0b;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Shipping & Tracking Sync
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Automatically synchronize shipping statuses, carrier details, and tracking numbers from Odoo to Channable.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
-                            <div class="d-flex justify-content-center align-items-center rounded shadow"
-                                 style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
-                                    <span
-                                            style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                        Order Cancellation Sync
-                                    </span>
+
+                        <!-- Card 3 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #3b82f6 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #dbeafe;">
+                                    <i class="fa fa-dashboard fs-4" style="color: #3b82f6;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Interactive Kanban Dashboard
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Track live statistics, monitor pending order metrics, and toggle the custom Dark Mode interface directly.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
-                            <div class="d-flex justify-content-center align-items-center rounded shadow"
-                                 style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
-                                    <span
-                                            style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                        High-Volume Optimization
-                                    </span>
+
+                        <!-- Card 4 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #ef4444 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #fee2e2;">
+                                    <i class="fa fa-rss fs-4" style="color: #ef4444;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    XML Product Feed Engine
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Generate dynamic, secure XML product feeds with custom product attribute and category tag mappings.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
-                            <div class="d-flex justify-content-center align-items-center rounded shadow"
-                                 style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
-                                    <span
-                                            style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                       Detailed Sync Error Logging
-                                    </span>
+
+                        <!-- Card 5 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #8b5cf6 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #ede9fe;">
+                                    <i class="fa fa-exchange fs-4" style="color: #8b5cf6;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Dynamic Carrier Mapping
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Map Channable transporters and carriers dynamically to matching Odoo delivery methods on import.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
-                            <div class="d-flex justify-content-center align-items-center rounded shadow"
-                                 style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
-                                    <span
-                                            style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                        Secure API Integration
-                                    </span>
+
+                        <!-- Card 6 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #ec4899 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #fce7f3;">
+                                    <i class="fa fa-user-plus fs-4" style="color: #ec4899;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Auto Customer Lookup
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Intelligently lookup matching customers by VAT or email, or auto-create Odoo contact records.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
-                            <div class="d-flex justify-content-center align-items-center rounded shadow"
-                                 style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
-                                    <span
-                                            style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                        Instant Data Refresh
-                                    </span>
+
+                        <!-- Card 7 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #06b6d4 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #ecfeff;">
+                                    <i class="fa fa-check-square-o fs-4" style="color: #06b6d4;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Billing & Order Automation
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Configure settings to auto-validate quotations, confirm sales orders, create invoices, and register payments.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
-                            <div class="d-flex justify-content-center align-items-center rounded shadow"
-                                 style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
-                                    <span
-                                            style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                        Payment creation
-                                    </span>
+
+                        <!-- Card 8 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #6366f1 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #e0e7ff;">
+                                    <i class="fa fa-undo fs-4" style="color: #6366f1;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Cancellation & Refund Sync
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Keep order states in sync automatically with auto-generation of credit notes and refund handling.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-lg-4 col-md-6 col-sm-12 col-12 mb-2">
-                            <div class="d-flex justify-content-center align-items-center rounded shadow"
-                                 style="padding:15px; border:1px solid #9ebdfb; border-bottom:4px solid #9ebdfb; background-color:#f8fffc; border-radius:0.25rem !important">
-                                    <span
-                                            style="color:#212121; font-weight:600; vertical-align:middle; padding-left:10px; text-align:center">
-                                        Quick API Key Setup
-                                    </span>
+
+                        <!-- Card 9 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #eab308 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #fef9c3;">
+                                    <i class="fa fa-globe fs-4" style="color: #eab308;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Multi-Marketplace Support
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Manage multiple Channable connections, projects, and marketplaces/channels from a single Odoo database instance.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Card 10 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #64748b !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #f1f5f9;">
+                                    <i class="fa fa-sliders fs-4" style="color: #64748b;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Dynamic Field Mapping
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Configure custom mappings to sync Channable order values and marketplace attributes directly into Odoo fields.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Card 11 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #14b8a6 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #ccfbf1;">
+                                    <i class="fa fa-external-link fs-4" style="color: #14b8a6;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Smart Direct Redirect
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Access Channable order details directly via smart links embedded directly on Odoo Sales Orders.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Card 12 -->
+                        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                            <div class="card h-100 shadow-sm border border-light-subtle rounded-5 p-4 d-flex flex-column align-items-center text-center"
+                                 style="border-top: 6px solid #84cc16 !important; background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-4 mb-4"
+                                     style="width: 56px; height: 56px; background-color: #f0fdf4;">
+                                    <i class="fa fa-tasks fs-4" style="color: #84cc16;"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3 fs-5" style="color: #0f172a; font-family: 'Montserrat', sans-serif; letter-spacing: -0.3px;">
+                                    Sync Progress Monitor
+                                </h3>
+                                <p class="mb-0 fs-6" style="color: #64748b !important; line-height: 1.6; font-weight: 500; font-family: 'Montserrat', sans-serif;">
+                                    Real-time progress bars and synchronization indicators represent processing status during batch runs.
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
             <br/>
-            <br/>
+            <br/> 
             <div class="row mb-5">
-                <div class="col-12 col-md-12 text-center text-md-left">
+                <div class="col-12 col-md-12">
                     <center>
-                        <h1 style="color: #000099;">Features</h1>
+                        <h1 class="fw-extrabold" style="font-family:'Montserrat', sans-serif; font-size:35px; color:#10488A; font-weight:800; letter-spacing:-0.5px;">
+                            Features
+                        </h1>
                     </center>
                 </div>
             </div>
             <div class="row align-items-center mb-4" style="margin-top:-25px">
                 <div class="col-12 col-md-12">
-                    <div class="container position-relative mt-4 shadow rounded"
-                         style="background-color:#f8fffc; border-radius:10px; border-color:#dfdfdf; border:1px solid #dfdfdf; padding:15px ">
-                        <div style="display:inline">
-                                <span class="fa fa-arrow-right"
-                                      style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
-                            <span
-                                    style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                    Sync Marketplace Orders From Channable Directly Into Odoo Sale Orders.
-                                </span>
-                        </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Sync Marketplace Orders From Channable Directly Into Odoo Sale Orders.
+                        </span>
                     </div>
-                    <div class="container position-relative mt-4 shadow rounded"
-                         style="background-color:#f8fffc; border-radius:10px; border-color:#dfdfdf; border:1px solid #dfdfdf; padding:15px ">
-                        <div style="display:inline">
-                                <span class="fa fa-arrow-right"
-                                      style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
-                            <span
-                                    style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                    Maintain Consistent Order States By Syncing Cancellations Between Odoo And Channable.
-                                </span>
-                        </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Maintain Consistent Order States By Syncing Cancellations Between Odoo And Channable.
+                        </span>
                     </div>
-                    <div class="container position-relative mt-4 shadow rounded"
-                         style="background-color:#f8fffc; border-radius:10px; border-color:#dfdfdf; border:1px solid #dfdfdf; padding:15px ">
-                        <div style="display:inline">
-                                <span class="fa fa-arrow-right"
-                                      style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
-                            <span
-                                    style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                    Easy Configuration Using Channable API tokens.
-                                </span>
-                        </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Generate Dynamic, Secure XML Product Feeds From Odoo With Custom Tag Mappings.
+                        </span>
                     </div>
-                    <div class="container position-relative mt-4 shadow rounded"
-                         style="background-color:#f8fffc; border-radius:10px; border-color:#dfdfdf; border:1px solid #dfdfdf; padding:15px ">
-                        <div style="display:inline">
-                                <span class="fa fa-arrow-right"
-                                      style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
-                            <span
-                                    style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                    Synchronize Orders From Channable Directly In Your Odoo. Easily Import Orders And Ship Them With The Channable Connector.
-                                </span>
-                        </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Auto-Resolve Delivery Methods By Mapping Channable Transporters Dynamically.
+                        </span>
                     </div>
-                    <div class="container position-relative mt-4 shadow rounded"
-                         style="background-color:#f8fffc; border-radius:10px; border-color:#dfdfdf; border:1px solid #dfdfdf; padding:15px ">
-                        <div style="display:inline">
-                                <span class="fa fa-arrow-right"
-                                      style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
-                            <span
-                                    style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                    Manage Multiple Projects And Marketplaces From A Single Odoo Instance.
-                                </span>
-                        </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Manage Multiple Connections, Projects, And Marketplace Channels From A Single Odoo Instance.
+                        </span>
                     </div>
-                    <div class="container position-relative mt-4 shadow rounded"
-                         style="background-color:#f8fffc; border-radius:10px; border-color:#dfdfdf; border:1px solid #dfdfdf; padding:15px ">
-                        <div style="display:inline">
-                                <span class="fa fa-arrow-right"
-                                      style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
-                            <span
-                                    style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                    Automated Data Mapping Like Map Channable Project Data To Odoo Sales Teams, Warehouses, And Delivery Carriers.
-                                </span>
-                        </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Automated Data Mapping For Odoo Sales Teams, Warehouses, Taxes, and Pricelists.
+                        </span>
                     </div>
-                    <div class="container position-relative mt-4 shadow rounded"
-                         style="background-color:#f8fffc; border-radius:10px; border-color:#dfdfdf; border:1px solid #dfdfdf; padding:15px ">
-                        <div style="display:inline">
-                                <span class="fa fa-arrow-right"
-                                      style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
-                            <span
-                                    style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                    Detailed Sync Error Logging So You Can Monitor And Resolve Synchronization Issues With A Dedicated Error Tracking Dashboard.
-                                </span>
-                        </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Intelligently Match Customer Records By VAT or Email, or Create New Odoo Contacts.
+                        </span>
                     </div>
-                    <div class="container position-relative mt-4 shadow rounded"
-                         style="background-color:#f8fffc; border-radius:10px; border-color:#dfdfdf; border:1px solid #dfdfdf; padding:15px ">
-                        <div style="display:inline">
-                                <span class="fa fa-arrow-right"
-                                      style="color:#000099; font-weight:600; font-size:18px; padding-right:10px"></span>
-                            <span
-                                    style="font-size:18px; font-weight:500; color:#212529; text-transform:capitalize; padding-left:10px">
-                                     High-Volume Optimization to Efficiently Process Up To 1 Million Records.
-                                </span>
-                        </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Automated Billing: Validate Quotations, Confirm Orders, Create Invoices, and Register Payments Automatically.
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Auto-Validate Outgoing Stock Pickings for Pre-Shipped Marketplace Orders.
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Interactive Kanban Card Dashboards With Order Analytics Trends and a Visual Dark Mode Toggle.
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Direct External Link Redirection Buttons Placed On Sales Orders for Quick Verification.
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Batch Progress Indicators With Real-Time Percentage Tracking to Prevent Sync Mismatches.
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center position-relative mt-3 shadow-sm rounded-3 border border-light-subtle p-3"
+                         style="background-color:#f8fafc;">
+                        <i class="fa fa-arrow-circle-right fs-5 me-3" style="color:#10488A;"></i>
+                        <span style="font-size:17px; font-weight:600; color:#0f172a; font-family:'Montserrat', sans-serif;">
+                            Centralized Synchronization Logging, Tracking Exceptions and Auto-Assigning Errors to Users.
+                        </span>
                     </div>
                 </div>
             </div>
             <br/>
-            <br/>
+
 
             <ul class="nav nav-tabs justify-content-center bg-transparent" id="nav-tab" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -405,17 +492,24 @@
                                      class="img img-fluid shadow-lg mx-auto mt-4 mb-5" loading="lazy"
                                      style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>
-
+                            <ul style="font-size: 22px;">
+                                <li>
+                                    You can also view the marketplace dashboard in Kanban view, where you can see the number of orders pending validation and shipment. The dashboard also allows you to switch between dark and light themes and provides quick access to synchronization actions.
+                                </li>
+                                <img src="images/marketplace_kanban_view.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Cancel Channable Orders from Odoo"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            </ul>
                             <ul style="font-size: 22px;">
                                 <li>
                                     Order Configuration ID: The unique ID for the specific marketplace channel in
                                     Channable.
                                 </li>
 
+                                <img src="images/channable_odoo_order_id_configuration.png" class="img shadow-lg mx-auto mt-4 mb-5" alt="Channable Order ID Settings"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                                 <img src="images/channable_odoo_project_mapping.png"
                                      class="img shadow-lg mx-auto mt-4 mb-5" alt="Odoo Channable Project Mapping"
-                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
-                                <img src="images/channable_odoo_order_id_configuration.png" class="img shadow-lg mx-auto mt-4 mb-5" alt="Channable Order ID Settings"
                                      style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
 
                             </ul>
@@ -433,6 +527,19 @@
                             </ul>
                             <ul style="font-size: 22px;">
                                 <li>
+                                    <b>Import Order Status</b>: Select the order statuses that you want to import from
+                                    Channable. These statuses will be automatically selected in the synchronization
+                                    wizard, and orders with the selected statuses will also be imported when the
+                                    scheduled synchronization runs.
+                                </li>
+
+                                <img src="images/import_order_status_selection.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Channable Odoo Order Automation"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+
+                            </ul>
+                            <ul style="font-size: 22px;">
+                                <li>
                                     Now you can sync orders by clicking on button <b>sync orders</b>.
                                 </li>
                                 <img src="images/channable_odoo_order_synchronization.png"
@@ -440,14 +547,14 @@
                                      style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
 
                                 <li>
-                                    Now in the popup wizard
-                                    Select a Start Date and End Date to pull orders from a specific range.
-                                    Alternatively, check Import Orders by ID and provide a comma-separated list of
-                                    Channable Order IDs.
-                                    Then Click Import Orders.
+                                    In the popup wizard, select a <b>Start Date</b> and <b>End Date</b> to import orders within a specific date range. You can also modify the selected <b>Import Order Status</b> values before starting the synchronization.
                                 </li>
                                 <img src="images/channable_odoo_import_orders_wizard.png" class="img shadow-lg mx-auto mt-4 mb-5" alt="Channable Order Import Wizard"
-                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                
+                                <li>
+                                    Alternatively, enable <b>Import Orders by ID</b> if you want to import specific orders. Enter a comma-separated list of <b>Channable Order IDs</b>, then click <b>Import Orders</b> to start the import process.
+                                </li>
                                 <img src="images/channable_odoo_import_by_order_id.png"
                                      class="img shadow-lg mx-auto mt-4 mb-5" alt="Import Channable Orders by ID in Odoo"
                                      style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
@@ -478,10 +585,87 @@
 
                             <ul style="font-size: 22px;">
                                 <li>
-                                    You can also cancel the order from Odoo to Channable.
+                                    You can cancel an order from Odoo and click <b>Cancel in Channable</b>. The order will also be cancelled in Channable, if it has not already been shipped.
                                 </li>
                                 <img src="images/channable_odoo_order_cancellation_sync.png"
                                      class="img shadow-lg mx-auto mt-4 mb-5" alt="Cancel Channable Orders from Odoo"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <img src="images/channable_cancelled_order.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Cancel Channable Orders from Odoo"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            </ul>
+
+                            <ul style="font-size: 22px;">
+                                <li>
+                                    If you validate a delivery in Odoo for an order that is not yet marked as shipped, the order will be automatically marked as shipped and the tracking number will be updated in Channable.
+                                </li>
+                                <img src="images/validate_button_for_delivery.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <img src="images/shipped_order_in_channable.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Cancel Channable Orders from Odoo"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            </ul>
+
+                            <ul style="font-size: 22px;">
+                                <li>
+                                    From the Sale Order, you can navigate directly to the related Channable Order by clicking on <b>Channable Order</b> smart button.
+                                </li>
+                                <img src="images/channable_order_smart_button.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            </ul>
+
+                            <ul style="font-size: 22px;">
+                                <li>
+                                    By clicking <b>Sync Order</b> sale order form, you can synchronize the order details from Channable to Odoo. By clicking <b>Sync State</b>, you can synchronize the order status from Channable to Odoo. If an order is cancelled in Channable and you perform a sync, the order will also be cancelled in Odoo.
+                                </li>
+                                <img src="images/sync_cancelled_order_channable.png"
+                                    class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
+                                    style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <img src="images/sync_order_smart_button.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <img src="images/cancelled_sale_order_in_odoo.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            </ul>
+
+                            <ul style="font-size: 22px;">
+                                <li>
+                                    You can also configure product fields and attributes with custom XML tags under the <b>Attribute Mappings</b> section of the marketplace. These mappings are used when exporting product data from Odoo to Channable.
+                                </li>
+                                <li>
+                                    copy the <b>Product Feed URL</b> to export the products to Channable.  
+                                </li>
+                                <img src="images/attribute_mapping_for_product_feed_url.png"
+                                    class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
+                                    style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <li>
+                                    Now navigate to <b>Setup</b> >> <b>Import</b> and select the <b>XML</b> option in channable.
+                                </li>
+                                <img src="images/xml_import_setup_channable.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <li>
+                                    Paste the product feed URL into the <b>XML file url</b> field then click on <b>Run Import</b> button.
+                                </li>
+                                <img src="images/channable_xml_import_product_feed_url.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                                <li>
+                                    You can see the mapping of standard product fields and custom fields along with the custom XML tags you configured. Map these fields to the corresponding Channable fields and then import the products.
+                                </li>
+                                <img src="images/channable_field_mapping.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
+                                     style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            </ul>
+                            <ul style="font-size: 22px;">
+                                <li>
+                                    You can also configure shipping method mappings with Odoo delivery carriers. When an order is synchronized, the carrier mapped to the corresponding Channable shipping method will be automatically assigned to the sale order.
+                                </li>
+                                <img src="images/shipping_method_carrier_mapping.png"
+                                     class="img shadow-lg mx-auto mt-4 mb-5" alt="Order Shipped Sync from Odoo to Channable"
                                      style="width: 1000px; border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             </ul>
                         </div>
