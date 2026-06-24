@@ -6211,6 +6211,7 @@ class CalDAVSyncService(models.AbstractModel):
             ("account_id", "=", account.id),
             (map_fk, "!=", False),
         ])
+        active_maps = self.env["caldav.event.map"].sudo()
         for m in maps:
             record = getattr(m, map_fk)
             if not record or not record.exists():
@@ -6220,11 +6221,31 @@ class CalDAVSyncService(models.AbstractModel):
                     m.unlink()
                     pushed += 1
                 except Exception as ex:
-                    _logger.warning("Failed to delete server resource %s: %s", m.caldav_href, ex)
+                    _logger.info("Failed to delete server resource %s: %s", m.caldav_href, ex)
                     m.unlink()  # clean up map anyway
+            else:
+                # Check if the record has been unscheduled (dates cleared) - Project Tasks only
+                has_dates = True
+                if model_name == "project.task":
+                    start_val = getattr(record, meta["f_start"])
+                    end_val = getattr(record, meta["f_end"]) if meta["f_end"] else None
+                    if not start_val and not end_val:
+                        has_dates = False
+                
+                if not has_dates:
+                    try:
+                        _logger.info("[%s][PUSH] Deleting server resource %s due to record being unscheduled (no dates).", model_name, m.caldav_href)
+                        account._delete_event(m.caldav_href, etag=m.caldav_etag)
+                        m.unlink()
+                        pushed += 1
+                    except Exception as ex:
+                        _logger.info("Failed to delete server resource %s: %s", m.caldav_href, ex)
+                        m.unlink()  # clean up map anyway
+                else:
+                    active_maps |= m
 
         # Cache existing maps for performance optimization (avoids N+1 query inside loop)
-        mapped_records = {getattr(m, map_fk).id: m for m in maps if getattr(m, map_fk)}
+        mapped_records = {getattr(m, map_fk).id: m for m in active_maps if getattr(m, map_fk)}
 
         # 2. Search for Odoo records
         domain = []
