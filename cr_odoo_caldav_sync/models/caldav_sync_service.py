@@ -6357,6 +6357,12 @@ class CalDAVSyncService(models.AbstractModel):
                 is_deleted = True
             elif model_name == "maintenance.request" and "archive" in record._fields and record.archive:
                 is_deleted = True
+            elif model_name == "fsm.order" and record.stage_id:
+                cancel_stage = self.env.ref("fieldservice.fsm_stage_cancelled", raise_if_not_found=False)
+                if cancel_stage and record.stage_id.id == cancel_stage.id:
+                    is_deleted = True
+                elif record.stage_id.name and record.stage_id.name.lower().strip() == "cancelled":
+                    is_deleted = True
 
             if is_deleted:
                 try:
@@ -6378,6 +6384,11 @@ class CalDAVSyncService(models.AbstractModel):
                 elif model_name == "maintenance.request":
                     start_val = getattr(record, meta["f_start"])
                     if not start_val:
+                        has_dates = False
+                elif model_name == "fsm.order":
+                    start_val = getattr(record, meta["f_start"])
+                    end_val = getattr(record, meta["f_end"]) if meta["f_end"] else None
+                    if not start_val or not end_val:
                         has_dates = False
                 
                 if not has_dates:
@@ -6454,7 +6465,17 @@ class CalDAVSyncService(models.AbstractModel):
             if rec.id in skip_ids:
                 continue
 
-
+            if model_name == "fsm.order" and rec.stage_id:
+                cancel_stage = self.env.ref("fieldservice.fsm_stage_cancelled", raise_if_not_found=False)
+                is_cancelled = False
+                if cancel_stage and rec.stage_id.id == cancel_stage.id:
+                    is_cancelled = True
+                elif rec.stage_id.name and rec.stage_id.name.lower().strip() == "cancelled":
+                    is_cancelled = True
+                
+                if is_cancelled:
+                    _logger.info("[%s][PUSH] Skipping record id=%s because it is in the cancelled stage.", model_name, rec.id)
+                    continue
 
             _logger.info("[%s][PUSH] Processing record id=%s, Name=%s", model_name, rec.id, getattr(rec, meta["f_name"]))
 
@@ -6553,17 +6574,19 @@ class CalDAVSyncService(models.AbstractModel):
                 end_val = getattr(rec, meta["f_end"])
 
             # Fallbacks for missing dates
-            if not start_val:
-                if end_val:
-                    # Fallback to 1 hour before deadline
-                    start_val = end_val - timedelta(hours=1)
-                    _logger.info("[%s][PUSH] Start date missing for record id=%s. Using deadline - 1 hour: %s", model_name, rec.id, start_val)
-                elif model == "fsm.order" and getattr(rec, "request_early", False):
-                    start_val = getattr(rec, "request_early")
-                    _logger.info("[%s][PUSH] Start date missing for order id=%s. Using request_early: %s", model_name, rec.id, start_val)
-                else:
-                    _logger.info("[%s][PUSH] Skipping record id=%s: no start date and no fallback available.", model_name, rec.id)
+            if model == "fsm.order":
+                if not start_val or not end_val:
+                    _logger.info("[%s][PUSH] Skipping record id=%s: FSM order must have both start and end scheduled dates set.", model_name, rec.id)
                     continue
+            else:
+                if not start_val:
+                    if end_val:
+                        # Fallback to 1 hour before deadline
+                        start_val = end_val - timedelta(hours=1)
+                        _logger.info("[%s][PUSH] Start date missing for record id=%s. Using deadline - 1 hour: %s", model_name, rec.id, start_val)
+                    else:
+                        _logger.info("[%s][PUSH] Skipping record id=%s: no start date and no fallback available.", model_name, rec.id)
+                        continue
 
             vevent.add("dtstart").value = pytz.utc.localize(start_val)
 
