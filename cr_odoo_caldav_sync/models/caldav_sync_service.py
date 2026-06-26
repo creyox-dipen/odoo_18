@@ -6200,9 +6200,15 @@ class CalDAVSyncService(models.AbstractModel):
         active_maps = self.env["caldav.event.map"].sudo()
         for m in maps:
             record = getattr(m, map_fk)
+            is_deleted = False
             if not record or not record.exists():
+                is_deleted = True
+            elif model_name == "maintenance.request" and "archive" in record._fields and record.archive:
+                is_deleted = True
+
+            if is_deleted:
                 try:
-                    _logger.info("[%s][PUSH] Deleting server resource %s due to local deletion.", model_name, m.caldav_href)
+                    _logger.info("[%s][PUSH] Deleting server resource %s due to local deletion/archival.", model_name, m.caldav_href)
                     account._delete_event(m.caldav_href, etag=m.caldav_etag)
                     m.unlink()
                     pushed += 1
@@ -6210,7 +6216,7 @@ class CalDAVSyncService(models.AbstractModel):
                     _logger.info("Failed to delete server resource %s: %s", m.caldav_href, ex)
                     m.unlink()  # clean up map anyway
             else:
-                # Check if the record has been unscheduled (dates cleared)
+                # Check if the record has been unscheduled (dates cleared) or is in a non-syncable state
                 has_dates = True
                 if model_name == "project.task":
                     start_val = getattr(record, meta["f_start"])
@@ -6224,7 +6230,7 @@ class CalDAVSyncService(models.AbstractModel):
                 
                 if not has_dates:
                     try:
-                        _logger.info("[%s][PUSH] Deleting server resource %s due to record being unscheduled (no dates).", model_name, m.caldav_href)
+                        _logger.info("[%s][PUSH] Deleting server resource %s due to record being unscheduled or in new request state.", model_name, m.caldav_href)
                         account._delete_event(m.caldav_href, etag=m.caldav_etag)
                         m.unlink()
                         pushed += 1
@@ -6295,6 +6301,8 @@ class CalDAVSyncService(models.AbstractModel):
 
             if rec.id in skip_ids:
                 continue
+
+
 
             _logger.info("[%s][PUSH] Processing record id=%s, Name=%s", model_name, rec.id, getattr(rec, meta["f_name"]))
 
