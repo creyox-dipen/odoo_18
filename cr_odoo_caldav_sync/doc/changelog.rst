@@ -14,3 +14,21 @@
 - customization for client
 - Enabled batch-wise sync for Project Tasks, Maintenance Requests, and Field Service Orders.
 - Automatically delete synced Nextcloud events when a Project Task is unscheduled (dates cleared) in Odoo.
+
+18.0.0.3(Date: 26th June,2026)
+------------------------------
+
+For Maintenance sync:
+- add Equipment name to the calendar event subject
+- add Technician to the calendar event description
+- canceled/deleted maintenance tasks are not removed from the synced calendar
+ 
+For Field Service:
+- add order type to calendar event subject
+- add location address instead of location name to calendar event address
+- add description to calendar event description
+- add team to calendar event description
+- add assigned technician to calendar event description
+- add URL of order to calendar event description
+- canceled/deleted orders are not removed from the synced calendar
+

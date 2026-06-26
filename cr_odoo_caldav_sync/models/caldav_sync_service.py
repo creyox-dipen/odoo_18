@@ -5906,6 +5906,8 @@ class CalDAVSyncService(models.AbstractModel):
                                     record_exists = True
                             if record_exists:
                                 vals.pop(meta["f_name"], None)
+                            else:
+                                vals[meta["f_name"]] = "New"
                             _logger.info("Matched event title '%s' exactly to FSM order type ID %s", summary_val, ot.id)
                             break
 
@@ -6507,8 +6509,8 @@ class CalDAVSyncService(models.AbstractModel):
             summary_val = getattr(rec, meta["f_name"]) or "Unnamed"
             if model == "maintenance.request" and rec.equipment_id:
                 summary_val = f"{rec.equipment_id.name} - {summary_val}"
-            elif model == "fsm.order" and rec.type:
-                summary_val = f"{rec.type.name} - {summary_val}"
+            elif model == "fsm.order":
+                summary_val = rec.type.name if rec.type else "Unnamed"
             vevent.add("summary").value = summary_val
 
             if model == "maintenance.request":
