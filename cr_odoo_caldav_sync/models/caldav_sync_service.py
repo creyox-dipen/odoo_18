@@ -6034,6 +6034,10 @@ class CalDAVSyncService(models.AbstractModel):
                         clean_desc_lower = clean_desc_val.lower()
                         desc_tag = "description :"
                         desc_tag_idx = clean_desc_lower.find(desc_tag)
+                        if desc_tag_idx == -1:
+                            desc_tag = "discription :"
+                            desc_tag_idx = clean_desc_lower.find(desc_tag)
+
                         if desc_tag_idx != -1:
                             desc_content = clean_desc_val[desc_tag_idx + len(desc_tag):].strip()
                         else:
@@ -6494,11 +6498,11 @@ class CalDAVSyncService(models.AbstractModel):
                 _fsm_desc = html2plaintext(getattr(rec, "description") or "").strip()
                 desc_parts = []
                 if _fsm_desc:
-                    desc_parts.append(f"description :\n{_fsm_desc}")
+                    desc_parts.append(f"Discription :\n{_fsm_desc}")
                 if rec.location_id:
                     loc = rec.location_id
                     loc_parts = [
-                        "location :",
+                        "Location :",
                         f"street 1 : {loc.street or ''}",
                         f"street 2 : {loc.street2 or ''}",
                         f"city : {loc.city or ''}",
