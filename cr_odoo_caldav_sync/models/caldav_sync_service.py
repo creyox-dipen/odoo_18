@@ -6001,13 +6001,16 @@ class CalDAVSyncService(models.AbstractModel):
                             team_tag = "team:"
                             team_tag_idx = desc_lower.find(team_tag)
 
+                        tech_tag = "assigned technician :"
+                        tech_tag_idx = desc_lower.find(tech_tag)
+                        if tech_tag_idx == -1:
+                            tech_tag = "assigned technician:"
+                            tech_tag_idx = desc_lower.find(tech_tag)
+
                         split_idx = -1
-                        if loc_tag_idx != -1 and team_tag_idx != -1:
-                            split_idx = min(loc_tag_idx, team_tag_idx)
-                        elif loc_tag_idx != -1:
-                            split_idx = loc_tag_idx
-                        elif team_tag_idx != -1:
-                            split_idx = team_tag_idx
+                        indices = [idx for idx in [loc_tag_idx, team_tag_idx, tech_tag_idx] if idx != -1]
+                        if indices:
+                            split_idx = min(indices)
 
                         if loc_tag_idx != -1:
                             loc_block_text = desc_val[loc_tag_idx:]
@@ -6511,6 +6514,12 @@ class CalDAVSyncService(models.AbstractModel):
                         email = p.email or ""
                         team_lines.append(f"{name} {email}".strip())
                     desc_parts.append("\n".join(team_lines))
+                if rec.person_id:
+                    tech_lines = [
+                        "Assigned Technician :",
+                        f"{rec.person_id.name or ''} {rec.person_id.email or ''}".strip()
+                    ]
+                    desc_parts.append("\n".join(tech_lines))
                 description_text = "\n\n".join(desc_parts) if desc_parts else ""
 
             else:
