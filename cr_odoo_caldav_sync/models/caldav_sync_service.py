@@ -5721,6 +5721,15 @@ class CalDAVSyncService(models.AbstractModel):
 
         # Process pulled items
         total_to_pull = len(hrefs_to_fetch)
+
+        equipments_map = {}
+        if model_name == "maintenance.request":
+            equipments = self.env["maintenance.equipment"].sudo().search([])
+            _logger.info("Fetched %s maintenance equipments for sync mapping", len(equipments))
+            for eq in equipments:
+                if eq.name:
+                    equipments_map[eq.name.lower().strip()] = eq
+
         current_idx = 0
         last_processed_href = None
         for href in hrefs_to_fetch:
@@ -5813,6 +5822,22 @@ class CalDAVSyncService(models.AbstractModel):
                     meta["f_name"]: summary_val,
                     "caldav_uid": uid_value,
                 }
+
+                if model == "maintenance.request":
+                    title_lower = summary_val.lower().strip()
+                    if title_lower in equipments_map:
+                        vals["equipment_id"] = equipments_map[title_lower].id
+                        _logger.info("Matched event title '%s' to equipment ID %s", summary_val, equipments_map[title_lower].id)
+                    else:
+                        for eq_name, eq in equipments_map.items():
+                            prefix = eq_name + " -"
+                            if title_lower.startswith(prefix):
+                                vals["equipment_id"] = eq.id
+                                raw_name = summary_val[len(eq_name):].lstrip(" -")
+                                if raw_name:
+                                    vals[meta["f_name"]] = raw_name
+                                _logger.info("Matched event prefix to equipment ID %s, extracted name '%s'", eq.id, raw_name)
+                                break
 
                 # --- FSM: parse LOCATION iCal property → location_id ---
                 if model == "fsm.order":
@@ -6333,7 +6358,10 @@ class CalDAVSyncService(models.AbstractModel):
             cal = vobject.iCalendar()
             vevent = cal.add("vevent")
             vevent.add("uid").value = rec_uid
-            vevent.add("summary").value = getattr(rec, meta["f_name"]) or "Unnamed"
+            summary_val = getattr(rec, meta["f_name"]) or "Unnamed"
+            if model == "maintenance.request" and rec.equipment_id:
+                summary_val = f"{rec.equipment_id.name} - {summary_val}"
+            vevent.add("summary").value = summary_val
 
             if model == "maintenance.request":
                 notes_html = getattr(rec, "description") or ""
