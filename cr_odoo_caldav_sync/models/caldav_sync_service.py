@@ -5731,12 +5731,36 @@ class CalDAVSyncService(models.AbstractModel):
                     equipments_map[eq.name.lower().strip()] = eq
 
         order_types_map = {}
+        states_map = {}
+        countries_map = {}
+        orders_map = {}
         if model_name == "fsm.order":
             order_types = self.env["fsm.order.type"].sudo().search([])
             _logger.info("Fetched %s FSM order types for sync mapping", len(order_types))
             for ot in order_types:
                 if ot.name:
                     order_types_map[ot.name.lower().strip()] = ot
+
+            all_states = self.env["res.country.state"].sudo().search([])
+            _logger.info("Fetched %s states for sync mapping", len(all_states))
+            for s in all_states:
+                if s.name:
+                    states_map[s.name.lower().strip()] = s.id
+                if s.code:
+                    states_map[s.code.lower().strip()] = s.id
+
+            all_countries = self.env["res.country"].sudo().search([])
+            _logger.info("Fetched %s countries for sync mapping", len(all_countries))
+            for c in all_countries:
+                if c.name:
+                    countries_map[c.name.lower().strip()] = c.id
+                if c.code:
+                    countries_map[c.code.lower().strip()] = c.id
+
+            all_orders = self.env["fsm.order"].sudo().search([("caldav_uid", "!=", False)])
+            _logger.info("Fetched %s FSM orders for sync mapping", len(all_orders))
+            for o in all_orders:
+                orders_map[o.caldav_uid] = o.location_id.id
 
         current_idx = 0
         last_processed_href = None
@@ -5962,15 +5986,79 @@ class CalDAVSyncService(models.AbstractModel):
 
                 elif model == "fsm.order":
                     desc_content = ""
+                    loc_address = None
                     if desc_val:
                         desc_lower = desc_val.lower()
-                        tag = "description :"
-                        tag_idx = desc_lower.find(tag)
-                        if tag_idx != -1:
-                            desc_content = desc_val[tag_idx + len(tag):].strip()
+                        loc_tag = "location :"
+                        loc_tag_idx = desc_lower.find(loc_tag)
+                        if loc_tag_idx == -1:
+                            loc_tag = "location:"
+                            loc_tag_idx = desc_lower.find(loc_tag)
+
+                        if loc_tag_idx != -1:
+                            loc_block_text = desc_val[loc_tag_idx:]
+                            clean_desc_val = desc_val[:loc_tag_idx].strip()
+                            
+                            loc_address = {}
+                            lines = loc_block_text.split('\n')
+                            keys = ["street 1", "street 2", "city", "state", "zip", "country"]
+                            for line in lines:
+                                line_stripped = line.strip()
+                                if ":" in line_stripped:
+                                    parts = line_stripped.split(":", 1)
+                                    k = parts[0].strip().lower()
+                                    v = parts[1].strip()
+                                    if k in keys:
+                                        loc_address[k] = v
                         else:
-                            desc_content = desc_val.strip()
+                            clean_desc_val = desc_val.strip()
+
+                        clean_desc_lower = clean_desc_val.lower()
+                        desc_tag = "description :"
+                        desc_tag_idx = clean_desc_lower.find(desc_tag)
+                        if desc_tag_idx != -1:
+                            desc_content = clean_desc_val[desc_tag_idx + len(desc_tag):].strip()
+                        else:
+                            desc_content = clean_desc_val.strip()
+
                     vals["description"] = f"<p>{desc_content.replace(chr(10), '<br/>')}</p>" if desc_content else False
+
+                    # Retrieve location_id from vals or map/existing record to check address changes
+                    loc_id = vals.get("location_id")
+                    if not loc_id and m:
+                        rec_inst = getattr(m, map_fk)
+                        if rec_inst and rec_inst.exists():
+                            loc_id = rec_inst.location_id.id
+                    if not loc_id:
+                        loc_id = orders_map.get(uid_value)
+
+                    if loc_id and loc_address:
+                        fsm_loc = self.env["fsm.location"].sudo().browse(loc_id)
+                        if fsm_loc.exists():
+                            loc_write_vals = {}
+                            if "street 1" in loc_address and (fsm_loc.street or "") != loc_address["street 1"]:
+                                loc_write_vals["street"] = loc_address["street 1"]
+                            if "street 2" in loc_address and (fsm_loc.street2 or "") != loc_address["street 2"]:
+                                loc_write_vals["street2"] = loc_address["street 2"]
+                            if "city" in loc_address and (fsm_loc.city or "") != loc_address["city"]:
+                                loc_write_vals["city"] = loc_address["city"]
+                            if "zip" in loc_address and (fsm_loc.zip or "") != loc_address["zip"]:
+                                loc_write_vals["zip"] = loc_address["zip"]
+                            
+                            if "state" in loc_address:
+                                state_name_lower = loc_address["state"].lower().strip()
+                                target_state_id = states_map.get(state_name_lower, False)
+                                if target_state_id != (fsm_loc.state_id.id or False):
+                                    loc_write_vals["state_id"] = target_state_id
+                            if "country" in loc_address:
+                                country_name_lower = loc_address["country"].lower().strip()
+                                target_country_id = countries_map.get(country_name_lower, False)
+                                if target_country_id != (fsm_loc.country_id.id or False):
+                                    loc_write_vals["country_id"] = target_country_id
+
+                            if loc_write_vals:
+                                _logger.info("[fsm.order][PULL] Updating location address for fsm.location id=%s: %s", fsm_loc.id, loc_write_vals)
+                                fsm_loc.write(loc_write_vals)
                 else:
                     vals[meta["f_desc"]] = desc_val
                 if meta["f_end"]:
@@ -6386,10 +6474,22 @@ class CalDAVSyncService(models.AbstractModel):
 
             elif model == "fsm.order":
                 _fsm_desc = html2plaintext(getattr(rec, "description") or "").strip()
+                desc_parts = []
                 if _fsm_desc:
-                    description_text = f"description :\n{_fsm_desc}"
-                else:
-                    description_text = ""
+                    desc_parts.append(f"description :\n{_fsm_desc}")
+                if rec.location_id:
+                    loc = rec.location_id
+                    loc_parts = [
+                        "location :",
+                        f"street 1 : {loc.street or ''}",
+                        f"street 2 : {loc.street2 or ''}",
+                        f"city : {loc.city or ''}",
+                        f"state : {loc.state_id.name or ''}",
+                        f"zip : {loc.zip or ''}",
+                        f"country : {loc.country_id.name or ''}"
+                    ]
+                    desc_parts.append("\n".join(loc_parts))
+                description_text = "\n\n".join(desc_parts) if desc_parts else ""
 
             else:
                 description_text = getattr(rec, meta["f_desc"]) or ""
