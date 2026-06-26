@@ -5825,19 +5825,37 @@ class CalDAVSyncService(models.AbstractModel):
 
                 if model == "maintenance.request":
                     title_lower = summary_val.lower().strip()
-                    if title_lower in equipments_map:
-                        vals["equipment_id"] = equipments_map[title_lower].id
-                        _logger.info("Matched event title '%s' to equipment ID %s", summary_val, equipments_map[title_lower].id)
-                    else:
-                        for eq_name, eq in equipments_map.items():
-                            prefix = eq_name + " -"
-                            if title_lower.startswith(prefix):
-                                vals["equipment_id"] = eq.id
-                                raw_name = summary_val[len(eq_name):].lstrip(" -")
+                    matched_eq = None
+                    for eq_name, eq in equipments_map.items():
+                        if title_lower == eq_name:
+                            matched_eq = eq
+                            vals["equipment_id"] = eq.id
+                            # If it's an exact match on equipment name, do NOT update Odoo request name
+                            m = existing_maps.get(href)
+                            record_exists = False
+                            if m and getattr(m, map_fk) and getattr(m, map_fk).exists():
+                                record_exists = True
+                            else:
+                                existing_rec = self.env[meta["model"]].sudo().search([("caldav_uid", "=", uid_value)], limit=1)
+                                if existing_rec:
+                                    record_exists = True
+                            if record_exists:
+                                vals.pop(meta["f_name"], None)
+                            _logger.info("Matched event title '%s' exactly to equipment ID %s", summary_val, eq.id)
+                            break
+
+                        pattern = r'^' + re.escape(eq_name) + r'\s*-\s*(.*)$'
+                        match = re.match(pattern, title_lower)
+                        if match:
+                            matched_eq = eq
+                            vals["equipment_id"] = eq.id
+                            dash_idx = title_lower.find('-', len(eq_name))
+                            if dash_idx != -1:
+                                raw_name = summary_val[dash_idx + 1:].strip()
                                 if raw_name:
                                     vals[meta["f_name"]] = raw_name
-                                _logger.info("Matched event prefix to equipment ID %s, extracted name '%s'", eq.id, raw_name)
-                                break
+                            _logger.info("Matched event prefix to equipment ID %s, extracted name '%s'", eq.id, vals.get(meta["f_name"]))
+                            break
 
                 # --- FSM: parse LOCATION iCal property → location_id ---
                 if model == "fsm.order":
@@ -5885,43 +5903,16 @@ class CalDAVSyncService(models.AbstractModel):
                                 location_str,
                             )
                 if model == "maintenance.request":
-                    notes_val = ""
-                    instruction_val = ""
                     if desc_val:
-                        desc_lower = desc_val.lower()
-                        
-                        notes_tag = "notes :"
-                        notes_idx = desc_lower.find(notes_tag)
-                        if notes_idx == -1:
-                            notes_tag = "note :"
-                            notes_idx = desc_lower.find(notes_tag)
-                        
-                        inst_tag = "instruction :"
-                        inst_idx = desc_lower.find(inst_tag)
-                        if inst_idx == -1:
-                            inst_tag = "instructions :"
-                            inst_idx = desc_lower.find(inst_tag)
-                        
-                        if notes_idx != -1 or inst_idx != -1:
-                            if notes_idx != -1 and inst_idx != -1:
-                                if notes_idx < inst_idx:
-                                    notes_val = desc_val[notes_idx + len(notes_tag):inst_idx].strip()
-                                    instruction_val = desc_val[inst_idx + len(inst_tag):].strip()
-                                else:
-                                    instruction_val = desc_val[inst_idx + len(inst_tag):notes_idx].strip()
-                                    notes_val = desc_val[notes_idx + len(notes_tag):].strip()
-                            elif notes_idx != -1:
-                                notes_val = desc_val[notes_idx + len(notes_tag):].strip()
-                            else:
-                                instruction_val = desc_val[inst_idx + len(inst_tag):].strip()
-                        else:
-                            notes_val = desc_val.strip()
-                    
-                    vals["description"] = f"<p>{notes_val.replace(chr(10), '<br/>')}</p>" if notes_val else False
-                    # OdooModel is not yet defined here; use self.env[meta["model"]] to check fields
-                    # Technical field name is 'instruction_text' (Html field on maintenance.request)
-                    if "instruction_text" in self.env[meta["model"]]._fields:
-                        vals["instruction_text"] = f"<p>{instruction_val.replace(chr(10), '<br/>')}</p>" if instruction_val else False
+                        emails = re.findall(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', desc_val)
+                        if emails:
+                            email = emails[0].lower().strip()
+                            user = self.env["res.users"].sudo().search([
+                                "|", ("login", "=ilike", email), ("partner_id.email", "=ilike", email)
+                            ], limit=1)
+                            if user:
+                                vals["user_id"] = user.id
+                                _logger.info("Found responsible user %s for email %s in calendar description", user.name, email)
 
                 elif model == "fsm.order":
                     # FSM orders merge: description, instructions (todo), resolution, location directions
@@ -6056,36 +6047,6 @@ class CalDAVSyncService(models.AbstractModel):
                                 "[fsm.order][PULL] Matched %s attendee(s) → person_id=%s, person_ids=%s",
                                 len(found_persons), found_persons[0].id, found_persons.ids,
                             )
-
-                    elif model == "maintenance.request":
-                        found_users = self.env["res.users"]
-                        for email in attendee_emails:
-                            users = self.env["res.users"].sudo().search([
-                                "|", ("login", "=ilike", email), ("partner_id.email", "=ilike", email)
-                            ])
-                            if users:
-                                found_users |= users
-
-                        if account.auto_create_users:
-                            existing_logins = {u.login.lower() for u in found_users if u.login}
-                            existing_emails = {u.partner_id.email.lower() for u in found_users if u.partner_id.email}
-
-                            for email, cn in attendee_info.items():
-                                if email not in existing_logins and email not in existing_emails:
-                                    try:
-                                        # Create Odoo user
-                                        new_user = self.env["res.users"].sudo().with_context(no_reset_password=True).create({
-                                            "name": cn,
-                                            "login": email,
-                                            "email": email,
-                                        })
-                                        found_users |= new_user
-                                        _logger.info("[maintenance.request][PULL] Auto-created user %r (login=%s) for Nextcloud attendee.", cn, email)
-                                    except Exception as cue:
-                                        _logger.warning("[maintenance.request][PULL] Failed to auto-create user for email %s: %s", email, cue)
-
-                        if found_users:
-                            vals["user_id"] = found_users[0].id
 
                 # Perform write / create
                 m = existing_maps.get(href)
@@ -6364,21 +6325,14 @@ class CalDAVSyncService(models.AbstractModel):
             vevent.add("summary").value = summary_val
 
             if model == "maintenance.request":
-                notes_html = getattr(rec, "description") or ""
-                # Use parentheses to ensure correct operator precedence:
-                # check field existence BEFORE accessing it
-                # Technical field name is 'instruction_text' (Html field on maintenance.request)
-                instruction_html = (getattr(rec, "instruction_text") or "") if "instruction_text" in rec._fields else ""
-
-                notes_text = html2plaintext(notes_html).strip() if notes_html else ""
-                instruction_text = html2plaintext(instruction_html).strip() if instruction_html else ""
-
                 desc_parts = []
-                if notes_text:
-                    desc_parts.append(f"notes :\n{notes_text}")
-                if instruction_text:
-                    desc_parts.append(f"instruction :\n{instruction_text}")
-                description_text = "\n\n".join(desc_parts)
+                if rec.user_id:
+                    if rec.user_id.name:
+                        desc_parts.append(rec.user_id.name.strip())
+                    email_val = rec.user_id.email or rec.user_id.login
+                    if email_val:
+                        desc_parts.append(email_val.strip())
+                description_text = "\n".join(desc_parts)
 
             elif model == "fsm.order":
                 # Merge: description, todo (Instructions), resolution, location_directions
