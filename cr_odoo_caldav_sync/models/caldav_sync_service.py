@@ -5961,26 +5961,16 @@ class CalDAVSyncService(models.AbstractModel):
                                 _logger.info("Found responsible user %s for email %s in calendar description", user.name, email)
 
                 elif model == "fsm.order":
-                    # FSM orders merge: description, instructions (todo), resolution, location directions
-                    # All are labelled sections in one DESCRIPTION block.
-                    # Ordered tags (must match push order exactly):
-                    _FSM_TAGS = [
-                        ("description :",       "description"),
-                        ("instructions :",      "todo"),
-                        ("resolution :",        "resolution"),
-                        ("location directions :", "location_directions"),
-                    ]
-                    _fsm_sections = self._parse_tagged_sections(desc_val, _FSM_TAGS)
-                    for _field, _content in _fsm_sections.items():
-                        if _field == "location_directions":
-                            # Char field — store plain text
-                            vals[_field] = _content or False
+                    desc_content = ""
+                    if desc_val:
+                        desc_lower = desc_val.lower()
+                        tag = "description :"
+                        tag_idx = desc_lower.find(tag)
+                        if tag_idx != -1:
+                            desc_content = desc_val[tag_idx + len(tag):].strip()
                         else:
-                            # Html field
-                            vals[_field] = f"<p>{_content.replace(chr(10), '<br/>')}</p>" if _content else False
-                    # If no tags found at all, put everything into description
-                    if not any(_fsm_sections.values()) and desc_val.strip():
-                        vals["description"] = f"<p>{desc_val.strip().replace(chr(10), '<br/>')}</p>"
+                            desc_content = desc_val.strip()
+                    vals["description"] = f"<p>{desc_content.replace(chr(10), '<br/>')}</p>" if desc_content else False
                 else:
                     vals[meta["f_desc"]] = desc_val
                 if meta["f_end"]:
@@ -6395,22 +6385,11 @@ class CalDAVSyncService(models.AbstractModel):
                 description_text = "\n".join(desc_parts)
 
             elif model == "fsm.order":
-                # Merge: description, todo (Instructions), resolution, location_directions
-                _fsm_desc   = html2plaintext(getattr(rec, "description") or "").strip()
-                _fsm_todo   = html2plaintext(getattr(rec, "todo") or "").strip()
-                _fsm_res    = html2plaintext(getattr(rec, "resolution") or "").strip()
-                _fsm_locdir = (getattr(rec, "location_directions") or "").strip()  # Char, not Html
-
-                desc_parts = []
+                _fsm_desc = html2plaintext(getattr(rec, "description") or "").strip()
                 if _fsm_desc:
-                    desc_parts.append(f"description :\n{_fsm_desc}")
-                if _fsm_todo:
-                    desc_parts.append(f"instructions :\n{_fsm_todo}")
-                if _fsm_res:
-                    desc_parts.append(f"resolution :\n{_fsm_res}")
-                if _fsm_locdir:
-                    desc_parts.append(f"location directions :\n{_fsm_locdir}")
-                description_text = "\n\n".join(desc_parts)
+                    description_text = f"description :\n{_fsm_desc}"
+                else:
+                    description_text = ""
 
             else:
                 description_text = getattr(rec, meta["f_desc"]) or ""
