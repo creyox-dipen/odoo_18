@@ -5995,10 +5995,22 @@ class CalDAVSyncService(models.AbstractModel):
                             loc_tag = "location:"
                             loc_tag_idx = desc_lower.find(loc_tag)
 
+                        team_tag = "team :"
+                        team_tag_idx = desc_lower.find(team_tag)
+                        if team_tag_idx == -1:
+                            team_tag = "team:"
+                            team_tag_idx = desc_lower.find(team_tag)
+
+                        split_idx = -1
+                        if loc_tag_idx != -1 and team_tag_idx != -1:
+                            split_idx = min(loc_tag_idx, team_tag_idx)
+                        elif loc_tag_idx != -1:
+                            split_idx = loc_tag_idx
+                        elif team_tag_idx != -1:
+                            split_idx = team_tag_idx
+
                         if loc_tag_idx != -1:
                             loc_block_text = desc_val[loc_tag_idx:]
-                            clean_desc_val = desc_val[:loc_tag_idx].strip()
-                            
                             loc_address = {}
                             lines = loc_block_text.split('\n')
                             keys = ["street 1", "street 2", "city", "state", "zip", "country"]
@@ -6010,6 +6022,9 @@ class CalDAVSyncService(models.AbstractModel):
                                     v = parts[1].strip()
                                     if k in keys:
                                         loc_address[k] = v
+
+                        if split_idx != -1:
+                            clean_desc_val = desc_val[:split_idx].strip()
                         else:
                             clean_desc_val = desc_val.strip()
 
@@ -6489,6 +6504,13 @@ class CalDAVSyncService(models.AbstractModel):
                         f"country : {loc.country_id.name or ''}"
                     ]
                     desc_parts.append("\n".join(loc_parts))
+                if rec.person_ids:
+                    team_lines = ["Team :"]
+                    for p in rec.person_ids:
+                        name = p.name or ""
+                        email = p.email or ""
+                        team_lines.append(f"{name} {email}".strip())
+                    desc_parts.append("\n".join(team_lines))
                 description_text = "\n\n".join(desc_parts) if desc_parts else ""
 
             else:
