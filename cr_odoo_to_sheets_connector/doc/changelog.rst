@@ -7,3 +7,13 @@
 -------------------------------
 
 - [UPD] resolved issue of unexpected token
+
+18.2(Date: 8th Jan,2026)
+-------------------------------
+
+- [UPD] showed rec_name or name for relational fields
+
+18.3(Date: 8th Jan,2026)
+-------------------------------
+
+- [Fix] fixed multi language export in char/text/html fields

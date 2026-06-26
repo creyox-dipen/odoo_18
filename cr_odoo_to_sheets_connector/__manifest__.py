@@ -24,7 +24,7 @@
     	the power of Odoo’s ERP system.
         """,
     "license": "OPL-1",
-    "version": "18.2",
+    "version": "18.0.0.3",
     "description": """
     	<h1>Odoo to Google Sheets Connector – Two-Way Data Sync & Automated Reporting</h1>
         <p>
@@ -43,6 +43,10 @@
             <li>Notifications for successful updates or errors</li>
             <li>Powerful analytics for better decision-making</li>
             <li>Continuous synchronization to keep data up-to-date</li>
+            <li>Set up automatic import refresh and export refresh for multiple tables, each with its own hourly interval</li>
+            <li>Refresh selected sheets in real time to immediately fetch data from Odoo into Google Sheets</li>
+            <li>Relational fields display the record name (_rec_name) if defined, otherwise the related record’s name field</li>
+            <li>Search and select specific fields to import or export data from Odoo into Google Sheets</li>
         </ul>
         
         <h2>Benefits</h2>
@@ -79,16 +83,16 @@
             Read our blog post, visit <a href="https://creyox.com/blog/odoo-meets-google-sheets-easy-data-export-34/odoo-meets-google-sheets-easy-data-export-32">Odoo to Google Sheets Integration</a>
         </p>
         """,
-    "depends": ["base", 'web','mail',],
-    'data': [
-        'security/ir.model.access.csv',
-        'views/sheet_configuration.xml',
-        'views/logs.xml',
+    "depends": ["base", "web", "mail"],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/sheet_configuration.xml",
+        "views/logs.xml",
     ],
     "installable": True,
     "auto_install": False,
     "application": True,
-    "images": ["static/description/christmas_banner.gif"],
-    "price": 275,
+    "images": ["static/description/banner.png"],
+    "price": 345,
     "currency": "USD",
 }
