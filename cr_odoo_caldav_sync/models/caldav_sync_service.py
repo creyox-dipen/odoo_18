@@ -6007,8 +6007,14 @@ class CalDAVSyncService(models.AbstractModel):
                             tech_tag = "assigned technician:"
                             tech_tag_idx = desc_lower.find(tech_tag)
 
+                        url_tag = "order url :"
+                        url_tag_idx = desc_lower.find(url_tag)
+                        if url_tag_idx == -1:
+                            url_tag = "order url:"
+                            url_tag_idx = desc_lower.find(url_tag)
+
                         split_idx = -1
-                        indices = [idx for idx in [loc_tag_idx, team_tag_idx, tech_tag_idx] if idx != -1]
+                        indices = [idx for idx in [loc_tag_idx, team_tag_idx, tech_tag_idx, url_tag_idx] if idx != -1]
                         if indices:
                             split_idx = min(indices)
 
@@ -6524,6 +6530,14 @@ class CalDAVSyncService(models.AbstractModel):
                         f"{rec.person_id.name or ''} {rec.person_id.email or ''}".strip()
                     ]
                     desc_parts.append("\n".join(tech_lines))
+                
+                base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
+                order_url = f"{base_url.rstrip('/')}/web#id={rec.id}&model=fsm.order&view_type=form"
+                url_lines = [
+                    "Order Url :",
+                    order_url
+                ]
+                desc_parts.append("\n".join(url_lines))
                 description_text = "\n\n".join(desc_parts) if desc_parts else ""
 
             else:
