@@ -5730,6 +5730,14 @@ class CalDAVSyncService(models.AbstractModel):
                 if eq.name:
                     equipments_map[eq.name.lower().strip()] = eq
 
+        order_types_map = {}
+        if model_name == "fsm.order":
+            order_types = self.env["fsm.order.type"].sudo().search([])
+            _logger.info("Fetched %s FSM order types for sync mapping", len(order_types))
+            for ot in order_types:
+                if ot.name:
+                    order_types_map[ot.name.lower().strip()] = ot
+
         current_idx = 0
         last_processed_href = None
         for href in hrefs_to_fetch:
@@ -5855,6 +5863,44 @@ class CalDAVSyncService(models.AbstractModel):
                                 if raw_name:
                                     vals[meta["f_name"]] = raw_name
                             _logger.info("Matched event prefix to equipment ID %s, extracted name '%s'", eq.id, vals.get(meta["f_name"]))
+                            break
+
+                elif model == "fsm.order":
+                    title_lower = summary_val.lower().strip()
+                    matched_type = None
+                    for ot_name, ot in order_types_map.items():
+                        if title_lower == ot_name:
+                            matched_type = ot
+                            vals["type"] = ot.id
+                            m = existing_maps.get(href)
+                            record_exists = False
+                            if m and getattr(m, map_fk) and getattr(m, map_fk).exists():
+                                record_exists = True
+                            else:
+                                existing_rec = self.env[meta["model"]].sudo().search([("caldav_uid", "=", uid_value)], limit=1)
+                                if existing_rec:
+                                    record_exists = True
+                            if record_exists:
+                                vals.pop(meta["f_name"], None)
+                            _logger.info("Matched event title '%s' exactly to FSM order type ID %s", summary_val, ot.id)
+                            break
+
+                        pattern = r'^' + re.escape(ot_name) + r'\s*-\s*(.*)$'
+                        match = re.match(pattern, title_lower)
+                        if match:
+                            matched_type = ot
+                            vals["type"] = ot.id
+                            m = existing_maps.get(href)
+                            record_exists = False
+                            if m and getattr(m, map_fk) and getattr(m, map_fk).exists():
+                                record_exists = True
+                            else:
+                                existing_rec = self.env[meta["model"]].sudo().search([("caldav_uid", "=", uid_value)], limit=1)
+                                if existing_rec:
+                                    record_exists = True
+                            if record_exists:
+                                vals.pop(meta["f_name"], None)
+                            _logger.info("Matched event prefix to FSM order type ID %s", ot.id)
                             break
 
                 # --- FSM: parse LOCATION iCal property → location_id ---
@@ -6334,6 +6380,8 @@ class CalDAVSyncService(models.AbstractModel):
             summary_val = getattr(rec, meta["f_name"]) or "Unnamed"
             if model == "maintenance.request" and rec.equipment_id:
                 summary_val = f"{rec.equipment_id.name} - {summary_val}"
+            elif model == "fsm.order" and rec.type:
+                summary_val = f"{rec.type.name} - {summary_val}"
             vevent.add("summary").value = summary_val
 
             if model == "maintenance.request":
