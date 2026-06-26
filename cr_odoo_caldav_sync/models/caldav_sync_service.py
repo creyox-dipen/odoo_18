@@ -6210,12 +6210,16 @@ class CalDAVSyncService(models.AbstractModel):
                     _logger.info("Failed to delete server resource %s: %s", m.caldav_href, ex)
                     m.unlink()  # clean up map anyway
             else:
-                # Check if the record has been unscheduled (dates cleared) - Project Tasks only
+                # Check if the record has been unscheduled (dates cleared)
                 has_dates = True
                 if model_name == "project.task":
                     start_val = getattr(record, meta["f_start"])
                     end_val = getattr(record, meta["f_end"]) if meta["f_end"] else None
                     if not start_val and not end_val:
+                        has_dates = False
+                elif model_name == "maintenance.request":
+                    start_val = getattr(record, meta["f_start"])
+                    if not start_val:
                         has_dates = False
                 
                 if not has_dates:
@@ -6370,15 +6374,11 @@ class CalDAVSyncService(models.AbstractModel):
                     # Fallback to 1 hour before deadline
                     start_val = end_val - timedelta(hours=1)
                     _logger.info("[%s][PUSH] Start date missing for record id=%s. Using deadline - 1 hour: %s", model_name, rec.id, start_val)
-                elif model == "maintenance.request" and getattr(rec, "request_date", False):
-                    req_date = getattr(rec, "request_date")
-                    start_val = datetime.combine(req_date, datetime.min.time())
-                    _logger.info("[%s][PUSH] Start date missing for request id=%s. Using request_date: %s", model_name, rec.id, start_val)
                 elif model == "fsm.order" and getattr(rec, "request_early", False):
                     start_val = getattr(rec, "request_early")
                     _logger.info("[%s][PUSH] Start date missing for order id=%s. Using request_early: %s", model_name, rec.id, start_val)
                 else:
-                    _logger.warning("[%s][PUSH] Skipping record id=%s: no start date and no fallback available.", model_name, rec.id)
+                    _logger.info("[%s][PUSH] Skipping record id=%s: no start date and no fallback available.", model_name, rec.id)
                     continue
 
             vevent.add("dtstart").value = pytz.utc.localize(start_val)
