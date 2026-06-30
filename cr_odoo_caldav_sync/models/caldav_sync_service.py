@@ -5911,9 +5911,11 @@ class CalDAVSyncService(models.AbstractModel):
                             _logger.info("Matched event title '%s' exactly to FSM order type ID %s", summary_val, ot.id)
                             break
 
-                        pattern = r'^' + re.escape(ot_name) + r'\s*-\s*(.*)$'
-                        match = re.match(pattern, title_lower)
-                        if match:
+                        pattern1 = r'^' + re.escape(ot_name) + r'\s*-\s*(.*)$'
+                        pattern2 = r'^(.*)\s*-\s*' + re.escape(ot_name) + r'$'
+                        match1 = re.match(pattern1, title_lower)
+                        match2 = re.match(pattern2, title_lower)
+                        if match1 or match2:
                             matched_type = ot
                             vals["type"] = ot.id
                             m = existing_maps.get(href)
@@ -5926,7 +5928,11 @@ class CalDAVSyncService(models.AbstractModel):
                                     record_exists = True
                             if record_exists:
                                 vals.pop(meta["f_name"], None)
-                            _logger.info("Matched event prefix to FSM order type ID %s", ot.id)
+                            else:
+                                extracted_name = match1.group(1) if match1 else match2.group(1)
+                                if extracted_name:
+                                    vals[meta["f_name"]] = extracted_name.strip()
+                            _logger.info("Matched event prefix/suffix to FSM order type ID %s", ot.id)
                             break
 
                 # --- FSM: parse LOCATION iCal property → location_id ---
@@ -6510,7 +6516,10 @@ class CalDAVSyncService(models.AbstractModel):
             if model == "maintenance.request" and rec.equipment_id:
                 summary_val = f"{rec.equipment_id.name} - {summary_val}"
             elif model == "fsm.order":
-                summary_val = rec.type.name if rec.type else "Unnamed"
+                if rec.type:
+                    summary_val = f"{rec.name} - {rec.type.name}" if rec.name else rec.type.name
+                else:
+                    summary_val = rec.name or "Unnamed"
             vevent.add("summary").value = summary_val
 
             if model == "maintenance.request":
@@ -6527,7 +6536,7 @@ class CalDAVSyncService(models.AbstractModel):
                 _fsm_desc = html2plaintext(getattr(rec, "description") or "").strip()
                 desc_parts = []
                 if _fsm_desc:
-                    desc_parts.append(f"Discription :\n{_fsm_desc}")
+                    desc_parts.append(f"Description :\n{_fsm_desc}")
                 if rec.location_id:
                     loc = rec.location_id
                     loc_parts = [

@@ -32,3 +32,6 @@ For Field Service:
 - add URL of order to calendar event description
 - canceled/deleted orders are not removed from the synced calendar
 
+18.0.0.4(Date: 30th June,2026)
+------------------------------
+- sync fsm order and set event title in order_name - order_type format
