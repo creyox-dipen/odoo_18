@@ -5,7 +5,8 @@
     "name": "Odoo to Google Sheets Connector | Two-Way Data Sync & Automated Reporting",
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
-    "support": "support@creyox.com",
+    "support": "https://www.creyox.com/helpdesk",
+    "live_test_url": "https://www.creyox.com/helpdesk?module_tech_name=cr_odoo_to_sheets_connector&version=18.0",
     "category": "Extra Tools",
     "summary": """
     	The Odoo to Google Sheets Connector seamlessly integrates Odoo with Google Sheets, 
@@ -24,7 +25,7 @@
     	the power of Odoo’s ERP system.
         """,
     "license": "OPL-1",
-    "version": "18.0.0.3",
+    "version": "18.0.0.4",
     "description": """
     	<h1>Odoo to Google Sheets Connector – Two-Way Data Sync & Automated Reporting</h1>
         <p>

@@ -8,7 +8,8 @@
                 <sheet>
                     <group>
                         <field name="cr_connector_url"/>
-                        <field name="cr_access_token" />
+                        <field name="cr_access_token"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
                         <button string="Generate Token" type="object" name="generate_token" class="oe_highlight"/>
                         <button string="Generate App Script" type="object" name="generate_app_script" class="oe_highlight"/>
                     </group>
@@ -25,6 +26,7 @@
             <list>
                 <field name="cr_connector_url"/>
                 <field name="cr_access_token"/>
+                <field name="company_id" groups="base.group_multi_company"/>
             </list>
         </field>
     </record>

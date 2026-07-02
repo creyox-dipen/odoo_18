@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Part of Creyox Technologies
+# Part of Creyox Technologies.
 
 import json
 import logging
@@ -21,9 +21,37 @@ BATCH_CACHE_TTL = 5  # 5 seconds
 
 class OdooDataController(http.Controller):
 
+    def _get_config_or_error(self):
+        """Get config record for token or return None, error_response."""
+        token = request.httprequest.headers.get("X-Odoo-Access-Token")
+        if not token:
+            _logger.info("Access denied: Token missing")
+            return None, Response(
+                json.dumps({"error": "Unauthorized: Token missing"}),
+                content_type="application/json",
+                status=401,
+            )
+
+        config = request.env["cr.google.sheet.connector.config"].sudo().search(
+            [("cr_access_token", "=", token.strip())], limit=1
+        )
+        if not config:
+            _logger.info("Access denied: Invalid Token")
+            return None, Response(
+                json.dumps({"error": "Unauthorized: Invalid Token"}),
+                content_type="application/json",
+                status=401,
+            )
+
+        return config, None
+
     @http.route("/ht", auth="public", type="http", methods=["GET"])
     def fetch_data(self):
         """Fetches the list of available models and returns them as a JSON response."""
+        config, error_resp = self._get_config_or_error()
+        if error_resp:
+            return error_resp
+
         start_time = datetime.now()
         method_start_time = time.time()
 
@@ -100,6 +128,10 @@ class OdooDataController(http.Controller):
     )
     def get_model_fields(self, **params):
         """Fetches the list of ACTUAL STORED fields that can be fetched from the database."""
+        config, error_resp = self._get_config_or_error()
+        if error_resp:
+            return error_resp
+
         start_time = datetime.now()
         method_start_time = time.time()
         model_name = None
@@ -274,6 +306,10 @@ class OdooDataController(http.Controller):
     )
     def fetch_table_data(self, table):
         """Optimized table data fetching with direct SQL queries and caching."""
+        config, error_resp = self._get_config_or_error()
+        if error_resp:
+            return error_resp
+
         method_start_time = time.time()
         initiated_at = datetime.now()
 
@@ -315,7 +351,7 @@ class OdooDataController(http.Controller):
 
             # Fetch using optimized SQL
             result = self._fetch_optimized_data(
-                table, target_fields, limit, offset, initiated_at
+                table, target_fields, limit, offset, initiated_at, config.company_id.id
             )
 
             # Check if result is an error
@@ -421,7 +457,7 @@ class OdooDataController(http.Controller):
 
             return Response(json.dumps({"error": str(e)}), status=500)
 
-    def _fetch_optimized_data(self, table, target_fields, limit, offset, initiated_at):
+    def _fetch_optimized_data(self, table, target_fields, limit, offset, initiated_at, company_id=None):
         """Fetch data using direct SQL queries - ONLY uses fields that exist in DB."""
         start_time = time.time()
         cr = request.env.cr
@@ -471,17 +507,19 @@ class OdooDataController(http.Controller):
             # Only include columns that exist in BOTH database AND Odoo metadata
             valid_columns = [col for col in db_columns if col in column_types]
 
+            has_company = "company_id" in db_columns
             _model_columns_cache[column_cache_key] = (
                 valid_columns,
                 column_types,
                 relational_fields,
+                has_company,
             )
             columns_duration = time.time() - columns_start
             _logger.info(
                 f"  Column cache built in {columns_duration:.2f}s - {len(valid_columns)} valid columns"
             )
         else:
-            valid_columns, column_types, relational_fields = _model_columns_cache[
+            valid_columns, column_types, relational_fields, has_company = _model_columns_cache[
                 column_cache_key
             ]
             _logger.info(f"  Using cached column info - {len(valid_columns)} columns")
@@ -516,16 +554,31 @@ class OdooDataController(http.Controller):
         columns_sql = sql.SQL(", ").join(map(sql.Identifier, column_names))
 
         fetch_start = time.time()
-        query = sql.SQL(
+        if has_company and company_id:
+            _logger.info(
+                f"  Filtering table {table} by company ID {company_id}"
+            )
+            query = sql.SQL(
+                """
+                SELECT {}
+                FROM {}
+                WHERE company_id = %s OR company_id IS NULL
+                ORDER BY id
+                LIMIT %s OFFSET %s
             """
-            SELECT {}
-            FROM {}
-            ORDER BY id
-            LIMIT %s OFFSET %s
-        """
-        ).format(columns_sql, sql.Identifier(table_name_db))
+            ).format(columns_sql, sql.Identifier(table_name_db))
+            cr.execute(query, [company_id, limit, offset])
+        else:
+            query = sql.SQL(
+                """
+                SELECT {}
+                FROM {}
+                ORDER BY id
+                LIMIT %s OFFSET %s
+            """
+            ).format(columns_sql, sql.Identifier(table_name_db))
+            cr.execute(query, [limit, offset])
 
-        cr.execute(query, [limit, offset])
         rows = cr.fetchall()
         fetch_duration = time.time() - fetch_start
         _logger.info(f"  SQL fetch: {fetch_duration:.2f}s ({len(rows)} rows)")
@@ -734,6 +787,10 @@ class OdooDataController(http.Controller):
     @http.route("/send_data", auth="public", type="http", csrf=False, methods=["POST"])
     def fetch_table_odoo_data(self, **params):
         """Handle data import from Google Sheets with column-wise fallback and detailed logging."""
+        config, error_resp = self._get_config_or_error()
+        if error_resp:
+            return error_resp
+
         start_time = time.time()
         data = json.loads(request.httprequest.data.decode("utf-8"))
         initiated_at = datetime.now()
@@ -769,12 +826,40 @@ class OdooDataController(http.Controller):
         partial_count = 0
         detailed_errors = []
 
+        has_company = "company_id" in model._fields
+        company_id = config.company_id.id if has_company else None
+
         for idx, row in enumerate(records_data[1:], 1):
             record_data = {headers[i]: value for i, value in enumerate(row)}
             processed_data, translations = self._prepare_data(record_data, model)
             record_id = (
                 int(processed_data.get("id")) if processed_data.get("id") else None
             )
+
+            existing_record = (
+                model.search([("id", "=", record_id)], limit=1) if record_id else None
+            )
+
+            # Security check: do not allow modifying records from other companies
+            if existing_record and has_company and existing_record.company_id and existing_record.company_id.id != company_id:
+                failed_count += 1
+                error_detail = {
+                    "row": idx,
+                    "record_id": record_id,
+                    "operation": "update",
+                    "error": f"Security: Record belongs to another company ({existing_record.company_id.name})"
+                }
+                detailed_errors.append(error_detail)
+                _logger.info(f"Security block: Tried to update record ID {record_id} belonging to another company")
+                continue
+
+            # Multi-company enforcement for create/write
+            if has_company:
+                if existing_record:
+                    # Never modify the company of an existing record
+                    processed_data.pop("company_id", None)
+                else:
+                    processed_data["company_id"] = company_id
 
             # Create a savepoint before attempting the operation
             savepoint_name = f'record_{record_id or "new"}_{idx}'
@@ -848,7 +933,6 @@ class OdooDataController(http.Controller):
                 try:
                     new_record = model.create(processed_data)
                     self._apply_translations(new_record, translations)
-
                     success_count += 1
                     request.env.cr.execute(f"RELEASE SAVEPOINT {savepoint_name}")
                     _logger.debug(f"✓ Successfully created new record (row {idx})")
@@ -1028,7 +1112,7 @@ class OdooDataController(http.Controller):
     def _parse_translation_dict(self, value):
         """
         Detect and parse a translation dict from a raw value.
-        Handles both actual dicts and their string representations.
+        Handles both dicts and their string representations.
         Returns the parsed dict if it looks like {lang_code: translation},
         or None if it is a plain value.
         """

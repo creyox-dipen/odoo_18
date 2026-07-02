@@ -31,6 +31,9 @@
                     <field name="status" widget="statusbar" statusbar_visible="success,partial,failure"/>
                 </header>
                 <sheet> 
+                    <field name="message" invisible="1"/>
+                    <field name="error_message" invisible="1"/>
+                    <field name="detailed_errors" invisible="1"/>
                     
                     <div class="oe_title">
                         <h1>
