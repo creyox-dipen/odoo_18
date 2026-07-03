@@ -87,9 +87,16 @@
                                    invisible="server_type == 'google'"/>
                             <field name="username"
                                    invisible="server_type == 'google'"/>
-                            <field name="password"
-                                   password="True"
-                                   invisible="server_type == 'google'"/>
+                            <label for="password" invisible="server_type == 'google'"/>
+                            <div class="o_row" invisible="server_type == 'google'">
+                                <field name="password"
+                                       password="True"
+                                       readonly="id and not change_password"
+                                       required="not id or change_password"/>
+                                <field name="change_password"
+                                       invisible="not id"/>
+                                <span invisible="not id">Tick to change the password</span>
+                            </div>
                             <!-- Google fields — shown only for Google type -->
                             <field name="url"
                                    placeholder="https://apidata.googleusercontent.com/caldav/v2/you@gmail.com/events/"

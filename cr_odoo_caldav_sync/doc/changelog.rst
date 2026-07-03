@@ -35,3 +35,8 @@ For Field Service:
 18.0.0.4(Date: 30th June,2026)
 ------------------------------
 - sync fsm order and set event title in order_name - order_type format
+
+18.0.0.5(Date: 3rd July,2026)
+-----------------------------
+- Secure CalDAV passwords with symmetric database encryption.
+- allowing password updates via confirmation checkbox.
