@@ -40,3 +40,4 @@ For Field Service:
 -----------------------------
 - Secure CalDAV passwords with symmetric database encryption.
 - allowing password updates via confirmation checkbox.
+- added translation po file

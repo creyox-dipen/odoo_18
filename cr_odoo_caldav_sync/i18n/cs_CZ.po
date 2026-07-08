@@ -1,0 +1,1117 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* cr_odoo_caldav_sync
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0+e\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-08 10:05+0000\n"
+"PO-Revision-Date: 2026-07-08 10:05+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "%s/%s synced"
+msgstr "%s/%s synchronizováno"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid ""
+"<i class=\"fa fa-check-circle me-2\"/>\n"
+"                        <span>Google Calendar is authorized. </span>"
+msgstr "<i class=\"fa fa-check-circle me-2\"/>\n"
+"                        <span>Kalendář Google je autorizován. </span>"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid ""
+"<i class=\"fa fa-exclamation-triangle me-2\"/>\n"
+"                        <span>Google Calendar is <b>not yet authorized</b>. Click <b>Authorize with Google</b> to connect.</span>"
+msgstr ""
+"<i class=\"fa fa-exclamation-triangle me-2\"/>\n"
+"                        <span>Kalendář Google není <b>ještě autorizován</b>. Klikněte na <b>Autorizovat s Google</b> pro připojení.</span>"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid ""
+"<i class=\"fa fa-refresh fa-spin me-2\"/>\n"
+"                        <span>Calendar synchronization in progress: </span>"
+msgstr "<i class=\"fa fa-refresh fa-spin me-2\"/>\n"
+"                        <span>Synchronizace kalendáře probíhá: </span>"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "<span invisible=\"not id\">Tick to change the password</span>"
+msgstr "<span invisible=\"not id\">Zaškrtněte pro změnu hesla</span>"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.constraint,message:cr_odoo_caldav_sync.constraint_caldav_event_map_unique_account_uid
+msgid "A UID can only appear once per CalDAV account."
+msgstr "Jedno UID se může objevit pouze jednou na účet CalDAV."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__name
+msgid "A descriptive label for this CalDAV connection."
+msgstr "Popisný štítek pro toto připojení CalDAV."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_event_map__caldav_href
+msgid "Absolute or server-relative URL path to the .ics resource."
+msgstr "Absolutní nebo serverem relativní URL cesta k .ics zdroji."
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_search
+msgid "Account"
+msgstr "Účet"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__name
+msgid "Account Name"
+msgstr "Jméno účtu"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__active
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_search
+msgid "Active"
+msgstr "Aktivní"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.actions.act_window,help:cr_odoo_caldav_sync.action_caldav_account
+msgid "Add your first CalDAV account!"
+msgstr "Přidejte svůj první CalDAV účet!"
+
+#. module: cr_odoo_caldav_sync
+#: model:res.groups,name:cr_odoo_caldav_sync.group_caldav_admin
+msgid "Admin"
+msgstr "Administrátor"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__server_type__other
+msgid "Apple iCloud"
+msgstr ""
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_search
+msgid "Archived"
+msgstr "Archivováno"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Authorize with Google"
+msgstr "Autorizovat s Google"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid ""
+"Authorized Redirect URI: <code class=\"bg-"
+"light\">/caldav/google/callback</code>"
+msgstr ""
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__auto_create_contacts
+msgid "Auto-create Contacts"
+msgstr "Automaticky vytvářet kontakty"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__auto_create_locations
+msgid "Auto-create Locations"
+msgstr "Automaticky vytvářet místa"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__auto_create_persons
+msgid "Auto-create Persons"
+msgstr "Automaticky vytvářet osoby"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__auto_create_users
+msgid "Auto-create Users"
+msgstr "Automaticky vytvářet uživatele"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.res_config_settings_view_form_caldav
+msgid ""
+"Automatically sync calendar events with your CalDAV server every 15 minutes."
+msgstr "Automaticky synchronizujte události kalendáře se svým serverem CalDAV každých 15 minut."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__sync_direction__bidirectional
+msgid "Bidirectional"
+msgstr "Obousměrný"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__last_ctag
+msgid ""
+"Cached CTag from the last successful sync. Used to detect server changes "
+"quickly."
+msgstr ""
+"CMezipaměťovaná hodnota CTag z poslední úspěšné synchronizace. Používá se k detekci změn na serveru."
+"rychle."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model,name:cr_odoo_caldav_sync.model_caldav_account
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__account_id
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__account_id
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "CalDAV Account"
+msgstr "Účet CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.actions.act_window,name:cr_odoo_caldav_sync.action_caldav_account
+#: model:ir.ui.menu,name:cr_odoo_caldav_sync.menu_caldav_accounts
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_list
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_search
+msgid "CalDAV Accounts"
+msgstr "Účty CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.actions.server,name:cr_odoo_caldav_sync.ir_cron_caldav_sync_ir_actions_server
+msgid "CalDAV Calendar Sync"
+msgstr "Synchronizace kalendáře CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.res_config_settings_view_form_caldav
+msgid "CalDAV Calendar Synchronisation"
+msgstr "Synchronizace kalendáře CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__url
+msgid "CalDAV Calendar URL"
+msgstr "URL kalendáře CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__caldav_href
+msgid "CalDAV Href"
+msgstr "CalDAV Href"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_calendar_event__caldav_original_start
+msgid "CalDAV Original Start"
+msgstr "Původní start CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+#: model:ir.module.category,name:cr_odoo_caldav_sync.module_category_caldav
+#: model:ir.ui.menu,name:cr_odoo_caldav_sync.menu_caldav_root
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.res_config_settings_view_form_caldav
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_calendar_event_list_caldav
+msgid "CalDAV Sync"
+msgstr "Synchronizace CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.actions.server,name:cr_odoo_caldav_sync.action_caldav_sync_current_user
+msgid "CalDAV Sync (Current User)"
+msgstr "Synchronizace CalDAV (aktuální uživatel)"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model,name:cr_odoo_caldav_sync.model_caldav_sync_log
+msgid "CalDAV Sync Log"
+msgstr "Protokol synchronizace CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model,name:cr_odoo_caldav_sync.model_caldav_sync_service
+msgid "CalDAV Sync Service"
+msgstr "Služba synchronizace CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__caldav_uid
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_calendar_event__caldav_uid
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_fsm_order__caldav_uid
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_maintenance_request__caldav_uid
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_project_task__caldav_uid
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "CalDAV UID"
+msgstr "CalDAV UID"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid ""
+"CalDAV server returned HTTP %(code)s for %(method)s %(url)s:\n"
+"%(body)s"
+msgstr ""
+"CalDAV server vrátil HTTP %(code)s pro %(method)s %(url)s:\n"
+"%(body)s"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__sync_direction__caldav_to_odoo
+msgid "CalDAV → Odoo only"
+msgstr "Jen CalDAV → Odoo"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model,name:cr_odoo_caldav_sync.model_caldav_event_map
+msgid "CalDAV ↔ Odoo Event Mapping"
+msgstr "Mapování událostí CalDAV ↔ Odoo"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model,name:cr_odoo_caldav_sync.model_calendar_event
+msgid "Calendar Event"
+msgstr "Událost kalendáře"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__sync_model__calendar_event
+msgid "Calendar Events"
+msgstr "Události kalendáře"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid ""
+"Cannot connect to CalDAV server at %(url)s:\n"
+"%(reason)s"
+msgstr ""
+"Nelze se připojit k serveru CalDAV na adrese %(url)s:\n"
+"%(reason)s"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Click to sign in with your Google Account and authorize calendar sync."
+msgstr "Kliknutím se přihlaste pomocí svého účtu Google a autorizujte synchronizaci kalendáře."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__google_client_id
+msgid "Client ID from Google Cloud Console for OAuth 2.0."
+msgstr "ID klienta z konzole Google Cloud pro OAuth 2.0."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__google_client_secret
+msgid "Client Secret from Google Cloud Console for OAuth 2.0."
+msgstr ""
+"Tajný klíč klienta z konzole Google Cloud pro OAuth 2.0."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_event_map__google_exdates
+msgid ""
+"Comma-separated ISO 8601 UTC datetimes of deleted occurrences (Google only)."
+" These are injected as EXDATE lines in the next iCal push so Google hides "
+"only those specific occurrences without deleting the entire series."
+msgstr ""
+"Oddělené čárkami daty ve formátu ISO 8601 UTC smazaných výskytů (pouze Google)."
+"Tyto jsou vloženy jako řádky EXDATE do dalšího push iCal, takže Google skryje "
+"pouze tyto konkrétní výskyty bez smazání celé řady."
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Completed successfully."
+msgstr "Úspěšně dokončeno."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model,name:cr_odoo_caldav_sync.model_res_config_settings
+msgid "Config Settings"
+msgstr "Konfigurační nastavení"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Configure the interval for background synchronisation."
+msgstr "Nastavte interval pro automatickou synchronizaci."
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.actions.act_window,help:cr_odoo_caldav_sync.action_caldav_account
+msgid ""
+"Connect Odoo to Google Calendar, Nextcloud, Synology, Radicale and more.\n"
+"                Events sync automatically — no manual effort needed."
+msgstr ""
+"Spojte Odoo s Google Kalendářem, Nextcloud, Synology, Radicale a dalšími.\n"
+"                Události se synchronizují automaticky — není nutná žádná manuální práce."
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Connection"
+msgstr "Spojení"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid "Connection Successful"
+msgstr "Spojení úspěšné"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid "Connection test failed: %s"
+msgstr "Test spojení selhal: %s"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__sync_direction
+msgid "Controls the direction of calendar synchronisation."
+msgstr "Řídí směr synchronizace kalendáře."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__create_uid
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__create_uid
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__create_uid
+msgid "Created by"
+msgstr "Vytvořil"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__create_date
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__create_date
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__create_date
+msgid "Created on"
+msgstr "Vytvořeno"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_sync_log__status__failed
+msgid "Critical Failure"
+msgstr "Kritické selhání"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_search
+msgid "Date"
+msgstr "Datum"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_form
+msgid "Details"
+msgstr "Podrobnosti"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__display_name
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__display_name
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__display_name
+msgid "Display Name"
+msgstr "Zobrazované jméno"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__duration
+msgid "Duration (Seconds)"
+msgstr "Doba trvání (sekundy)"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__caldav_etag
+msgid "ETag"
+msgstr "ETag"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_res_config_settings__caldav_sync_enabled
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.res_config_settings_view_form_caldav
+msgid "Enable CalDAV Sync"
+msgstr "Povolit synchronizaci CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__password_encrypted
+msgid "Encrypted Password"
+msgstr "Zašifrované heslo"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Event"
+msgstr "Událost"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__event_map_ids
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Event Mappings"
+msgstr "Mapování událostí"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__deleted
+msgid "Events Deleted"
+msgstr "Smazané události"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__pulled
+msgid "Events Pulled"
+msgstr "Události importovány"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__pushed
+msgid "Events Pushed"
+msgstr "Události exportovány"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid "Failed to refresh Google authentication token: %s"
+msgstr "Neplatné Google ověření tokenu: %s"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid "Failed to refresh Google token. Please re-authorize the account."
+msgstr "Neplatné Google ověření tokenu. Prosím, znovu autorizujte účet."
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Failed: %s"
+msgstr "Selhalo: %s"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__failed
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_search
+msgid "Failures"
+msgstr "Selhání"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model,name:cr_odoo_caldav_sync.model_fsm_order
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__fsm_order_id
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Field Service Order"
+msgstr "Objednávka Field Service"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__sync_model__fsm_order
+msgid "Field Service Orders"
+msgstr "Objednávky Field Service"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__auto_create_persons
+msgid ""
+"Field Service Orders only: when pulling from CalDAV, if an attendee email "
+"does not match an existing FSM Worker (fsm.person), create one "
+"automatically."
+msgstr ""
+"Pouze objednávky Field Service: při importu z CalDAV, pokud e-mail účastníka "
+"neodpovídá existujícímu FSM Workerovi (fsm.person), automaticky ho vytvořte."
+"vytvořte."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__auto_create_locations
+msgid ""
+"Field Service Orders only: when pulling from CalDAV, if the LOCATION string "
+"does not match any existing FSM Location (fsm.location), create one "
+"automatically."
+msgstr ""
+"Pouze objednávky Field Service: při importu z CalDAV, pokud string LOCATION "
+"neodpovídá žádnému existujícímu FSM Location (fsm.location), automaticky ho "
+"vytvořte."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__url
+msgid ""
+"Full URL to the CalDAV calendar collection. Example: "
+"https://nextcloud.example.com/remote.php/dav/calendars/user/personal/"
+msgstr ""
+"Úplná URL adresa kalendářové kolekce CalDAV. Příklad: "
+"https://nextcloud.example.com/remote.php/dav/calendars/user/personal/"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__google_access_token
+msgid "Google Access Token"
+msgstr "Google Access Token"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__google_auth_status
+msgid "Google Auth Status"
+msgstr "Google Auth Status"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__server_type__google
+msgid "Google Calendar"
+msgstr "Google Kalendář"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__google_client_id
+msgid "Google Client ID"
+msgstr "ID klienta Google"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid ""
+"Google Client ID is not configured for this account. Please fill in the "
+"OAuth credentials in the account form."
+msgstr ""
+"ID klienta Google není pro tento účet nakonfigurováno. Vyplňte prosím"
+"Přihlašovací údaje OAuth ve formuláři účtu."
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid ""
+"Google Client ID or Secret is not configured for this account. Please fill "
+"in the OAuth credentials in the account form."
+msgstr ""
+"ID klienta Google nebo Secret není pro tento účet nakonfigurováno. Vyplňte "
+"v přihlašovacích údajích OAuth ve formuláři účtu."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__google_client_secret
+msgid "Google Client Secret"
+msgstr "Tajný klíč klienta Google"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__google_exdates
+msgid "Google EXDATEs"
+msgstr ""
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__google_refresh_token
+msgid "Google Refresh Token"
+msgstr "Obnovovací token Google"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_search
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_search
+msgid "Group By"
+msgstr ""
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__id
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__id
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__id
+msgid "ID"
+msgstr ""
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__sync_status__idle
+msgid "Idle"
+msgstr ""
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__sync_checkpoint
+msgid "Internal: stores last committed sync position for resume-on-failure."
+msgstr "Interní: ukládá poslední potvrzenou pozici synchronizace pro obnovení po selhání."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_sync_log__status__interrupted
+msgid "Interrupted"
+msgstr "Přerušeno"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__last_ctag
+msgid "Last CTag"
+msgstr "Poslední CTag"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Last CTag (internal)"
+msgstr "Poslední CTag (interní)"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__last_odoo_write
+msgid "Last Odoo Write"
+msgstr "Poslední zápis Odoo"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__last_sync
+msgid "Last Sync"
+msgstr "Poslední synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__write_uid
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__write_uid
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__write_uid
+msgid "Last Updated by"
+msgstr "Poslední aktualizováno"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__write_date
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__write_date
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__write_date
+msgid "Last Updated on"
+msgstr "Poslední aktualizace"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__log_count
+msgid "Log Count"
+msgstr "Počet záznamů"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__details
+msgid "Log Details"
+msgstr "Podrobnosti záznamu"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__password
+msgid "Login password for the CalDAV server."
+msgstr "Přihlašovací heslo pro CalDAV server."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__username
+msgid "Login username for the CalDAV server."
+msgstr "Přihlašovací jméno pro CalDAV server."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__google_refresh_token
+msgid "Long-lived OAuth 2.0 refresh token from Google."
+msgstr "Dlouhodobý OAuth 2.0 obnovovací token od Google."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model,name:cr_odoo_caldav_sync.model_maintenance_request
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__maintenance_request_id
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Maintenance Request"
+msgstr "Požadavek na údržbu"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__sync_model__maintenance_request
+msgid "Maintenance Requests"
+msgstr "Požadavky na údržbu"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.res_config_settings_view_form_caldav
+msgid "Manage CalDAV Accounts"
+msgstr "Spravovat CalDAV účty"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "My CalDAV Account"
+msgstr "Můj CalDAV účet"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__server_type__nextcloud
+msgid "Nextcloud"
+msgstr "Nextcloud"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_sync_log__failed
+msgid "Number of events that failed to sync during this run."
+msgstr "Počet událostí, které se během tohoto běhu nepodařilo synchronizovat."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_sync_log__deleted
+msgid "Number of successfully deleted events (server-side)."
+msgstr "Počet úspěšně smazaných událostí (na straně serveru)."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_sync_log__pulled
+msgid "Number of successfully pulled events from the CalDAV server."
+msgstr "Počet úspěšně stažených událostí z CalDAV serveru."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_sync_log__pushed
+msgid "Number of successfully pushed Odoo events to the CalDAV server."
+msgstr "Počet úspěšně odeslaných Odoo událostí na CalDAV server."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__event_id
+msgid "Odoo Event"
+msgstr "Odoo událost"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_event_map__task_id
+msgid "Odoo Task"
+msgstr "Odoo úkol"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__sync_direction__odoo_to_caldav
+msgid "Odoo → CalDAV only"
+msgstr "Pouze Odoo → CalDAV"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__user_id
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_search
+msgid "Owner"
+msgstr "Vlastník"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_sync_log__status__partial
+msgid "Partial Failure"
+msgstr "Částečné selhání"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__password
+msgid "Password"
+msgstr "Heslo"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__sync_progress
+msgid "Progress description of the current sync run."
+msgstr "Popis průběhu aktuálního spuštění synchronizace."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__sync_model__project_task
+msgid "Project Tasks"
+msgstr "Úkoly v projektu"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Pull completed. Starting push..."
+msgstr "Tažení dokončeno. Zahajuji odesílání..."
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Pulling: %s of %s events"
+msgstr "Tažení: %s z %s událostí"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Pushing: %s of %s events"
+msgstr "Odesílání: %s z %s událostí"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__server_type__radicale
+msgid "Radicale"
+msgstr "Radicale"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Run a manual sync for this account immediately."
+msgstr "Spustit manuální synchronizaci pro tento účet ihned."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_sync_log__status__running
+msgid "Running"
+msgstr "Běží"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid "Scheduled Action"
+msgstr "Naplánovaná akce"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_search
+msgid "Search Logs"
+msgstr "Hledat záznamy"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__sync_model
+msgid ""
+"Select the Odoo model whose events/records should be synced with this "
+"account."
+msgstr "Vyberte model Odoo, jehož události/záznamy by měly být synchronizovány s tímto účtem."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__send_invitation_emails
+msgid "Send Invitation Emails"
+msgstr "Odeslat e-mailové pozvánky"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__server_type
+msgid "Server Type"
+msgstr "Typ serveru"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__google_access_token
+msgid "Short-lived OAuth 2.0 access token (auto-refreshed)."
+msgstr "Krátkodobý přístupový token OAuth 2.0 (automaticky obnovován)."
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Starting sync..."
+msgstr "Zahajuji synchronizaci..."
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_form
+msgid "Statistics"
+msgstr "Statistiky"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__status
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_search
+msgid "Status"
+msgstr "Stav"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_sync_log__status__success
+msgid "Success"
+msgstr "Úspěch"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid "Successfully connected to the CalDAV server!"
+msgstr "Úspěšně připojeno k CalDAV serveru!"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_sync_log__details
+msgid "Summary of errors or specific event failure messages."
+msgstr "Souhrn chyb nebo zprávy o selhání konkrétní události."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__sync_checkpoint
+msgid "Sync Checkpoint"
+msgstr "Bod synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_sync_log__sync_date
+msgid "Sync Date"
+msgstr "Datum synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__sync_direction
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_search
+msgid "Sync Direction"
+msgstr "Směr synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_form
+msgid "Sync Log"
+msgstr "Záznam synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__log_ids
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_list
+msgid "Sync Logs"
+msgstr "Záznamy synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__sync_model
+msgid "Sync Model"
+msgstr "Model synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Sync Now"
+msgstr "Synchronizovat nyní"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Sync Options"
+msgstr "Nastavení synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__sync_progress
+msgid "Sync Progress"
+msgstr "Průběh synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Sync Schedule"
+msgstr "Plán synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__sync_status
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Sync Status"
+msgstr "Stav synchronizace"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid "Sync started in the background."
+msgstr "Synchronizace byla spuštěna na pozadí."
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_calendar_event_list_caldav
+msgid "Synchronise your calendar with CalDAV accounts now."
+msgstr "Synchronizujte svůj kalendář s CalDAV účty nyní."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__sync_status__syncing
+msgid "Syncing..."
+msgstr "Synchronizuji…"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model,name:cr_odoo_caldav_sync.model_project_task
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Task"
+msgstr "Úkol"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "Test Connection"
+msgstr "Testovat připojení"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid "The CalDAV Sync scheduled action could not be found."
+msgstr "Naplánovaná akce CalDAV Sync nebyla nalezena."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_event_map__caldav_etag
+msgid ""
+"The ETag returned by the server on the last successful GET/PUT. Used for "
+"optimistic locking and incremental change detection."
+msgstr "ETag vrácený serverem při posledním úspěšném GET/PUT. Používá se pro "
+"optimistické uzamykání a detekci změn v přírůstcích."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_event_map__fsm_order_id
+msgid "The Odoo Field Service order linked to this CalDAV resource."
+msgstr "Objednávka terénní služby Odoo propojená s tímto zdrojem CalDAV."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_event_map__maintenance_request_id
+msgid "The Odoo Maintenance request linked to this CalDAV resource."
+msgstr "Úkol údržby Odoo propojený s tímto zdrojem CalDAV."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_event_map__event_id
+msgid "The Odoo calendar event linked to this CalDAV resource."
+msgstr "Událost kalendáře Odoo propojená s tímto zdrojem CalDAV."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_event_map__task_id
+msgid "The Odoo project task linked to this CalDAV resource."
+msgstr "Úkol projektu Odoo propojený s tímto zdrojem CalDAV."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__user_id
+msgid "The Odoo user whose calendar is synced with this account."
+msgstr "Odoo uživatel, jehož kalendář je synchronizován s tímto účtem."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_event_map__caldav_uid
+msgid "The globally-unique UID from the iCal VEVENT (UID property)."
+msgstr "Globálně unikátní UID z iCal VEVENT (vlastnost UID)."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_calendar_event__caldav_original_start
+msgid ""
+"The original start datetime of this occurrence before it was modified. Used "
+"as the RECURRENCE-ID in CalDAV sync to identify which occurrence is being "
+"overridden."
+msgstr ""
+"Původní datum a čas zahájení této instance před jejím úpravou. Používá se jako"
+" RECURRENCE-ID v synchronizaci CalDAV k identifikaci, která instance je "
+"přepsána."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_event_map__last_odoo_write
+msgid ""
+"The write_date of the linked Odoo event at the time of the last push to the "
+"CalDAV server. Used to detect events modified in Odoo since the previous "
+"sync."
+msgstr ""
+"write_date spojené události Odoo v čase posledního odeslání na CalDAV "
+"server. Používá se k detekci událostí upravených v Odoo od předchozí "
+"synchronizace."
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_account.py:0
+msgid ""
+"This Google Calendar account has not been authorized yet. Please click "
+"\"Authorize with Google\" first."
+msgstr ""
+"Tento účet Google Calendar ještě nebyl autorizován. Nejprve klikněte na "
+"\"Autorizovat pomocí Google\""
+
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__change_password
+msgid "Tick to change the password"
+msgstr "Zaškrtněte pro změnu hesla"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_sync_log__duration
+msgid "Time taken to complete the sync in seconds."
+msgstr "Čas potřebný k dokončení synchronizace v sekundách."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__last_sync
+msgid "Timestamp of the last successful synchronisation."
+msgstr "Časové razítko poslední úspěšné synchronizace."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__google_access_token_expiry
+msgid "Token Expiry"
+msgstr "Vypršení tokenu"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_list
+msgid "Total Duration"
+msgstr "Celková doba"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_sync_log_list
+msgid "Total Failures"
+msgstr "Celkové selhání"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__google_access_token_expiry
+msgid "UTC expiry time of the current access token."
+msgstr "Vypršení tokenu v UTC"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_fsm_order__caldav_uid
+msgid "UUID used as the iCal UID for this FSM order. Generated automatically."
+msgstr "UUID použit jako iCal UID pro tuto objednávku FSM. Generováno automaticky."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_calendar_event__caldav_uid
+msgid "UUID used as the iCal UID for this event. Generated automatically."
+msgstr "UUID použito jako iCal UID pro tuto událost. Generováno automaticky."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_maintenance_request__caldav_uid
+msgid "UUID used as the iCal UID for this request. Generated automatically."
+msgstr "UUID použit jako iCal UID pro tuto žádost. Generováno automaticky."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_project_task__caldav_uid
+msgid "UUID used as the iCal UID for this task. Generated automatically."
+msgstr "UUID použit jako iCal UID pro tento úkol. Generováno automaticky."
+
+#. module: cr_odoo_caldav_sync
+#: model:res.groups,name:cr_odoo_caldav_sync.group_caldav_user
+msgid "User"
+msgstr "Uživatel"
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,field_description:cr_odoo_caldav_sync.field_caldav_account__username
+msgid "Username"
+msgstr "Uživatelské jméno"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid ""
+"Verify that Odoo can connect to the CalDAV server with the given "
+"credentials."
+msgstr ""
+"Ověřte, že se Odoo může připojit ke CalDAV serveru s danými "
+"přihlašovacími údaji."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_res_config_settings__caldav_sync_enabled
+msgid ""
+"When enabled, Odoo will automatically sync calendar events with configured "
+"CalDAV servers every 15 minutes."
+msgstr ""
+"Když je povoleno, Odoo automaticky synchronizuje události kalendáře s "
+"konfigurovanými CalDAV servery každých 15 minut."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__send_invitation_emails
+msgid ""
+"When enabled, Odoo will send meeting invitation emails to attendees when "
+"events are imported from CalDAV. Disabled by default to prevent unwanted "
+"notifications on incoming CalDAV events."
+msgstr ""
+"Když je povoleno, Odoo odešle e-maily s pozvánkou na schůzku účastníkům, když"
+"jsou události importovány z CalDAV. Ve výchozím nastavení zakázáno, aby se "
+"zabránilo nechtěným oznámením u příchozích událostí CalDAV."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__auto_create_contacts
+msgid ""
+"When enabled, new contacts are automatically created for unknown attendee "
+"email addresses found in CalDAV events."
+msgstr ""
+"Když je povoleno, nové kontakty jsou automaticky vytvořeny pro neznámé "
+"e-mailové adresy účastníků nalezené v událostech CalDAV."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields,help:cr_odoo_caldav_sync.field_caldav_account__auto_create_users
+msgid ""
+"When pulling a task or maintenance request from Nextcloud, if an attendee "
+"email does not exist as an Odoo user, create it automatically."
+msgstr ""
+"Při stahování úkolu nebo požadavku na údržbu z Nextcloudu, pokud e-mailová "
+"adresa účastníka neexistuje jako uživatel Odoo, vytvořte ji automaticky."
+
+#. module: cr_odoo_caldav_sync
+#: model:ir.model.fields.selection,name:cr_odoo_caldav_sync.selection__caldav_account__server_type__zoho
+msgid "Zoho Calendar"
+msgstr "Kalendář Zoho"
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "https://apidata.googleusercontent.com/caldav/v2/you@gmail.com/events/"
+msgstr ""
+
+#. module: cr_odoo_caldav_sync
+#: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
+msgid "https://nextcloud.example.com/remote.php/dav/calendars/user/personal/"
+msgstr ""

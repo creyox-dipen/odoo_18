@@ -5496,7 +5496,7 @@ class CalDAVSyncService(models.AbstractModel):
                 "type": "ir.actions.client",
                 "tag": "display_notification",
                 "params": {
-                    "title": "CalDAV Sync",
+                    "title": _("CalDAV Sync"),
                     "message": "No active CalDAV accounts configured. Go to Settings → Calendar to add one.",
                     "type": "warning",
                     "sticky": False,
@@ -5506,7 +5506,7 @@ class CalDAVSyncService(models.AbstractModel):
         # Update status and progress immediately in the main thread and commit
         accounts.sudo().write({
             "sync_status": "syncing",
-            "sync_progress": "Starting sync...",
+            "sync_progress": _("Starting sync..."),
         })
         self.env.cr.commit()
 
@@ -5536,8 +5536,8 @@ class CalDAVSyncService(models.AbstractModel):
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": "CalDAV Sync",
-                "message": "Sync started in the background.",
+                "title": _("CalDAV Sync"),
+                "message": _("Sync started in the background."),
                 "type": "info",
                 "sticky": False,
                 "next": {
