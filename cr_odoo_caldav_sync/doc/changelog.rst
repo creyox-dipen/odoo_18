@@ -41,3 +41,7 @@ For Field Service:
 - Secure CalDAV passwords with symmetric database encryption.
 - allowing password updates via confirmation checkbox.
 - added translation po file
+
+18.0.0.6(Date: 9th July,2026)
+-----------------------------
+- Make FSM Order calendar event description labels translatable.

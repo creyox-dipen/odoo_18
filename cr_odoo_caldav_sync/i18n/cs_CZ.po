@@ -1115,3 +1115,69 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:cr_odoo_caldav_sync.view_caldav_account_form
 msgid "https://nextcloud.example.com/remote.php/dav/calendars/user/personal/"
 msgstr ""
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Description :"
+msgstr "Popis :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Location :"
+msgstr "Místo :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "street 1 :"
+msgstr "ulice 1 :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "street 2 :"
+msgstr "ulice 2 :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "city :"
+msgstr "město :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "state :"
+msgstr "stát :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "zip :"
+msgstr "PSČ :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "country :"
+msgstr "země :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Team :"
+msgstr "Tým :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Assigned Technician :"
+msgstr "Přiřazený technik :"
+
+#. module: cr_odoo_caldav_sync
+#. odoo-python
+#: code:addons/cr_odoo_caldav_sync/models/caldav_sync_service.py:0
+msgid "Order Url :"
+msgstr "URL objednávky :"

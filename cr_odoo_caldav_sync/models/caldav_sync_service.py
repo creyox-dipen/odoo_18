@@ -1199,7 +1199,9 @@ class CalDAVSyncService(models.AbstractModel):
     @api.model
     def sync_account(self, account):
         """Perform a full incremental sync for one CalDAV account."""
-        self = self.with_context(caldav_partner_cache={})
+        lang = account.user_id.lang or 'en_US'
+        self = self.with_context(caldav_partner_cache={}, lang=lang)
+        account = account.with_context(lang=lang)
         import time
         start_time = time.time()
         _logger.info("Starting sync for account: %s (id=%s)", account.name, account.id)
@@ -6536,21 +6538,21 @@ class CalDAVSyncService(models.AbstractModel):
                 _fsm_desc = html2plaintext(getattr(rec, "description") or "").strip()
                 desc_parts = []
                 if _fsm_desc:
-                    desc_parts.append(f"Description :\n{_fsm_desc}")
+                    desc_parts.append(f"{_('Description :')}\n{_fsm_desc}")
                 if rec.location_id:
                     loc = rec.location_id
                     loc_parts = [
-                        "Location :",
-                        f"street 1 : {loc.street or ''}",
-                        f"street 2 : {loc.street2 or ''}",
-                        f"city : {loc.city or ''}",
-                        f"state : {loc.state_id.name or ''}",
-                        f"zip : {loc.zip or ''}",
-                        f"country : {loc.country_id.name or ''}"
+                        _("Location :"),
+                        f"{_('street 1 :')} {loc.street or ''}",
+                        f"{_('street 2 :')} {loc.street2 or ''}",
+                        f"{_('city :')} {loc.city or ''}",
+                        f"{_('state :')} {loc.state_id.name or ''}",
+                        f"{_('zip :')} {loc.zip or ''}",
+                        f"{_('country :')} {loc.country_id.name or ''}"
                     ]
                     desc_parts.append("\n".join(loc_parts))
                 if rec.person_ids:
-                    team_lines = ["Team :"]
+                    team_lines = [_("Team :")]
                     for p in rec.person_ids:
                         name = p.name or ""
                         email = p.email or ""
@@ -6558,7 +6560,7 @@ class CalDAVSyncService(models.AbstractModel):
                     desc_parts.append("\n".join(team_lines))
                 if rec.person_id:
                     tech_lines = [
-                        "Assigned Technician :",
+                        _("Assigned Technician :"),
                         f"{rec.person_id.name or ''} {rec.person_id.email or ''}".strip()
                     ]
                     desc_parts.append("\n".join(tech_lines))
@@ -6566,7 +6568,7 @@ class CalDAVSyncService(models.AbstractModel):
                 base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
                 order_url = f"{base_url.rstrip('/')}/web#id={rec.id}&model=fsm.order&view_type=form"
                 url_lines = [
-                    "Order Url :",
+                    _("Order Url :"),
                     order_url
                 ]
                 desc_parts.append("\n".join(url_lines))
