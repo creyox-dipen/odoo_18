@@ -60,21 +60,22 @@ class PaymentMethodFees(models.Model):
         """
         if self.default_method and self.payment_provider_id:
             # Check if another default exists (for preview in form)
-            other_defaults = self.search(
-                [
-                    ("payment_provider_id", "=", self.payment_provider_id.id),
+            provider_id = self.payment_provider_id._origin.id
+            if provider_id:
+                domain = [
+                    ("payment_provider_id", "=", provider_id),
                     ("default_method", "=", True),
-                    ("id", "!=", self.id),
-                ],
-                limit=1,
-            )
-            if other_defaults:
-                return {
-                    "warning": {
-                        "title": _("Warning"),
-                        "message": _(
-                            "Another payment method is already set as default for this provider. "
-                            "Saving this will replace it, but only one can be active."
-                        ),
+                ]
+                if self._origin.id:
+                    domain.append(("id", "!=", self._origin.id))
+                other_defaults = self.search(domain, limit=1)
+                if other_defaults:
+                    return {
+                        "warning": {
+                            "title": _("Warning"),
+                            "message": _(
+                                "Another payment method is already set as default for this provider. "
+                                "Saving this will replace it, but only one can be active."
+                            ),
+                        }
                     }
-                }

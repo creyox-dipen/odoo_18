@@ -2,6 +2,10 @@
 # Part of Creyox Technologies.
 from odoo import http
 from odoo.http import request
+from odoo.addons.payment.controllers.portal import PaymentPortal
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class PublicStripeInfo(http.Controller):
@@ -51,16 +55,24 @@ class PublicStripeInfo(http.Controller):
         return {"country_id": company.country_id.id if company.country_id else None}
 
     @http.route(
-        ["/custom/stripe/order_partner_country/<int:order_id>"],
+        [
+            "/custom/stripe/order_partner_country",
+            "/custom/stripe/order_partner_country/<int:order_id>",
+        ],
         type="json",
         auth="public",
         csrf=False,
     )
-    def get_order_partner_country(self, order_id):
-        order = request.env["sale.order"].sudo().browse(order_id)
+    def get_order_partner_country(self, order_id=None):
+        if order_id:
+            order = request.env["sale.order"].sudo().browse(order_id)
+        else:
+            order = request.website.sale_get_order()
         partner = (
-            order.partner_shipping_id
+            order.partner_shipping_id if order else None
         )  # Use billing partner to match backend transaction logic
+        if not partner:
+            partner = request.env.user.partner_id
         return {
             "country_id": (
                 partner.country_id.id if partner and partner.country_id else None
@@ -125,3 +137,32 @@ class PublicStripeInfo(http.Controller):
 
         # No token → new card entry
         return {"payment_method_code": "card"}
+
+
+class StripePaymentPortal(PaymentPortal):
+    @classmethod
+    def _validate_transaction_kwargs(cls, kwargs, additional_allowed_keys=()):
+        """Override to automatically whitelist stripe_card_brand kwarg in all payment transaction routes."""
+        additional_allowed_keys = list(additional_allowed_keys) + ['stripe_card_brand']
+        return super()._validate_transaction_kwargs(kwargs, additional_allowed_keys=tuple(additional_allowed_keys))
+
+    def _create_transaction(self, *args, **kwargs):
+        """Override _create_transaction to save stripe_card_brand and adjust amount/unlink old fees."""
+        stripe_card_brand = kwargs.get('stripe_card_brand')
+        tx_sudo = super()._create_transaction(*args, **kwargs)
+        if tx_sudo.provider_id.code == 'stripe':
+            if stripe_card_brand:
+                tx_sudo.stripe_card_brand = stripe_card_brand
+            so = tx_sudo.sale_order_ids[:1]
+            fees_product = tx_sudo.provider_id.fees_product
+            if so and fees_product:
+                existing_fee_lines = so.order_line.filtered(
+                    lambda line: line.product_id == fees_product.product_variant_id
+                )
+                if existing_fee_lines:
+                    _logger.info("Unlinking old fee lines from SO %s to correct transaction amount", so.id)
+                    existing_fee_lines.unlink()
+                    so._compute_amounts()
+                    so._compute_tax_totals()
+                    tx_sudo.amount = so.amount_total
+        return tx_sudo

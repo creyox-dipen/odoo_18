@@ -1,3 +1,46 @@
+/** @odoo-module **/
+
+function wrapStripe(StripeLib) {
+    return function (publishableKey, options) {
+        const stripeInstance = StripeLib(publishableKey, options);
+        if (!stripeInstance) {
+            return stripeInstance;
+        }
+        return new Proxy(stripeInstance, {
+            get(target, prop, receiver) {
+                if (prop === 'elements') {
+                    return function (elementsOptions) {
+                        if (elementsOptions && elementsOptions.mode === 'payment') {
+                            elementsOptions.paymentMethodCreation = 'manual';
+                        }
+                        return target.elements.call(target, elementsOptions);
+                    };
+                }
+                const value = Reflect.get(target, prop, receiver);
+                if (typeof value === 'function') {
+                    return value.bind(target);
+                }
+                return value;
+            }
+        });
+    };
+}
+
+if (window.Stripe) {
+    window.Stripe = wrapStripe(window.Stripe);
+} else {
+    let originalStripe = undefined;
+    Object.defineProperty(window, 'Stripe', {
+        get() {
+            return originalStripe;
+        },
+        set(val) {
+            originalStripe = wrapStripe(val);
+        },
+        configurable: true,
+    });
+}
+
 import paymentForm from '@payment/js/payment_form';
 import { rpc } from "@web/core/network/rpc";
 
@@ -7,6 +50,8 @@ paymentForm.include({
         if (providerCode !== 'stripe') {
             return;
         }
+        this.detectedBrand = null;
+
         // Handle both tokens and payment methods
         const radio = document.querySelector('input[name="o_payment_radio"]:checked');
         const paymentOptionType = radio?.dataset.paymentOptionType;
@@ -26,7 +71,8 @@ paymentForm.include({
         const { companyCountryId, partnerCountryId } = await this._fetchCountryData(providerData);
         // Calculate fees
         if (providerData.is_extra_fees == true) {
-            const baseAmount = parseFloat(this.paymentContext.amount || 0);
+            const rawAmount = this.el?.getAttribute('data-amount') || this.paymentContext.amount;
+            const baseAmount = this._parseAmount(rawAmount);
             const calculatedFees = this._calculateFees(
                 baseAmount,
                 providerData,
@@ -34,12 +80,60 @@ paymentForm.include({
                 partnerCountryId,
                 methodCode
             );
+
             if (paymentOptionType === 'token') {
-                // Handle saved token
+                // Handle saved token (brand is already known)
                 this._displayTokenFeeBadge(radio, calculatedFees, providerData);
-            } else {
-                // Handle payment method
+            } else if (paymentMethodCode !== 'card') {
+                // For non-card static payment methods (like ACH), display the badge immediately
                 this._displayPaymentMethodFeeBadge(radio, calculatedFees);
+            } else {
+                // For new cards, clear any initial default fee badge so it remains hidden initially
+                const inlineForm = this._getInlineForm(radio);
+                const stripeInlineForm = inlineForm?.querySelector('[name="o_stripe_element_container"]');
+                const existingBadge = stripeInlineForm?.querySelector('.stripe-fees-badge');
+                if (existingBadge) existingBadge.remove();
+
+                const paymentElement = this.stripeElements[paymentOptionId]?.getElement('payment');
+                if (paymentElement) {
+                    paymentElement.on('change', async (event) => {
+                        const currentRawAmount = this.el?.getAttribute('data-amount') || this.paymentContext.amount;
+                        const currentBaseAmount = this._parseAmount(currentRawAmount);
+
+                        if (event.complete) {
+                            try {
+                                const { error: submitError } = await this.stripeElements[paymentOptionId].submit();
+                                if (submitError) {
+                                    console.warn('[Stripe Badge] submit error:', submitError);
+                                    return;
+                                }
+                                const result = await this.stripeJS.createPaymentMethod({
+                                    elements: this.stripeElements[paymentOptionId],
+                                });
+                                if (result.paymentMethod && result.paymentMethod.card) {
+                                    const brand = (result.paymentMethod.card.brand || '').toLowerCase();
+                                    this.detectedBrand = brand;
+
+                                    const updatedFees = this._calculateFees(
+                                        currentBaseAmount,
+                                        providerData,
+                                        companyCountryId,
+                                        partnerCountryId,
+                                        brand
+                                    );
+                                    this._displayPaymentMethodFeeBadge(radio, updatedFees);
+                                }
+                            } catch (e) {
+                                console.error('[Stripe Badge] Error tokenizing card for brand detection:', e);
+                            }
+                        } else {
+                            // Reset if details are modified/incomplete
+                            this.detectedBrand = null;
+                            const badge = stripeInlineForm?.querySelector('.stripe-fees-badge');
+                            if (badge) badge.remove();
+                        }
+                    });
+                }
             }
         }
     },
@@ -103,18 +197,19 @@ paymentForm.include({
         }
         // Fetch partner (billing) country
         const orderId = this._extractOrderId();
-        if (orderId) {
-            try {
-                const response = await fetch(`/custom/stripe/order_partner_country/${orderId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({}),
-                });
-                const orderData = await response.json();
-                partnerCountryId = orderData.result?.country_id || null;
-            } catch (error) {
-                console.error('[Stripe Badge] Failed to fetch partner country:', error);
-            }
+        const url = orderId 
+            ? `/custom/stripe/order_partner_country/${orderId}` 
+            : `/custom/stripe/order_partner_country`;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+            });
+            const orderData = await response.json();
+            partnerCountryId = orderData.result?.country_id || null;
+        } catch (error) {
+            console.error('[Stripe Badge] Failed to fetch partner country:', error);
         }
         return { companyCountryId, partnerCountryId };
     },
@@ -125,10 +220,28 @@ paymentForm.include({
         }
         return null;
     },
+    _parseAmount(amount) {
+        if (amount === undefined || amount === null) {
+            return 0;
+        }
+        if (typeof amount === 'number') {
+            return amount;
+        }
+        let cleaned = String(amount).replace(/[^\d.,-]/g, '');
+        if (cleaned.includes(',') && cleaned.includes('.')) {
+            cleaned = cleaned.replace(/,/g, '');
+        } else if (cleaned.includes(',')) {
+            if (cleaned.match(/,\d{2}$/)) {
+                cleaned = cleaned.replace(/,/g, '.');
+            } else {
+                cleaned = cleaned.replace(/,/g, '');
+            }
+        }
+        const parsed = parseFloat(cleaned);
+        return isNaN(parsed) ? 0 : parsed;
+    },
     _calculateFees(baseAmount, providerData, companyCountryId, partnerCountryId, methodCode) {
         const isInternational = partnerCountryId && companyCountryId && partnerCountryId !== companyCountryId;
-        // Find matching fee line
-        // Normalize input
         const mcode = (methodCode || '').toLowerCase();
 
         // Try perfect match
@@ -176,6 +289,11 @@ paymentForm.include({
             return;
         }
 
+        if (calculatedFees <= 0) {
+            badgeContainer.classList.add('d-none');
+            return;
+        }
+
         const currencyId = parseInt(this.paymentContext.currencyId);
 
         rpc('/web/dataset/call_kw', {
@@ -218,6 +336,12 @@ paymentForm.include({
         // Remove existing badge
         const existingBadge = stripeInlineForm.querySelector('.stripe-fees-badge');
         if (existingBadge) existingBadge.remove();
+
+        if (calculatedFees <= 0) {
+            console.log('[Stripe Badge] Payment method badge skipped (fees <= 0):', calculatedFees);
+            return;
+        }
+
         // Get currency symbol
         const stripeInlineFormValues = JSON.parse(
             stripeInlineForm.dataset['stripeInlineFormValues']
@@ -243,4 +367,13 @@ paymentForm.include({
         updateBadgePosition();
         console.log('[Stripe Badge] Payment method badge displayed:', calculatedFees);
     },
+
+    _prepareTransactionRouteParams() {
+        const params = this._super(...arguments);
+        if (this.detectedBrand) {
+            params.stripe_card_brand = this.detectedBrand;
+        }
+        return params;
+    },
+
 });

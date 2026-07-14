@@ -11,8 +11,12 @@ class PaymentTransaction(models.Model):
     _inherit = "payment.transaction"
 
     fees = fields.Float(string="Fees")
+    stripe_card_brand = fields.Char(
+        string="Stripe Card Brand",
+    )
 
     def _stripe_prepare_payment_intent_payload(self):
+        """Prepare the payload for the Stripe PaymentIntent creation, including extra fees."""
         res = super()._stripe_prepare_payment_intent_payload()
         provider = self.provider_id
 
@@ -24,7 +28,12 @@ class PaymentTransaction(models.Model):
             total_percent_fees = 0.0
 
             # Determine if international fees should apply
-            partner_country = self.partner_id.country_id
+            sale_order = self.sale_order_ids[:1]
+            partner_country = (
+                sale_order.partner_shipping_id.country_id
+                if sale_order and sale_order.partner_shipping_id
+                else self.partner_id.country_id
+            )
             company_country = self.company_id.country_id
             is_international = (
                 partner_country
@@ -32,8 +41,9 @@ class PaymentTransaction(models.Model):
                 and partner_country.id != company_country.id
             )
 
+            card_brand = self.stripe_card_brand.lower() if self.stripe_card_brand else self.payment_method_code
             used_method = self.env["payment.method"].search(
-                [("code", "=", self.payment_method_code)], limit=1
+                [("code", "=", card_brand)], limit=1
             )
             fee_line = provider.line_ids.filtered(
                 lambda l: l.payment_method_id == used_method
@@ -80,7 +90,7 @@ class PaymentTransaction(models.Model):
     def _add_fee_line_to_sale_order(self):
         """
         Add a fee line to the associated sale order using the provider's fees_product
-        and the calculated fees amount. Ensures only one fee line per transaction.
+        and the calculated fees amount. Ensures only one fee line exists.
         """
         self.ensure_one()
         so = self.sale_order_ids
@@ -90,16 +100,17 @@ class PaymentTransaction(models.Model):
         if not so or not fees_product or not self.fees > 0:
             return
 
-        # Check if a fee line for this transaction already exists (prevent duplicates)
-        existing_fee_line = so.order_line.filtered(
-            lambda line: line.name
-            == f"Payment Fee - {provider.name} ({self.reference})"
+        # Remove any existing fee lines for this product on the sales order first
+        existing_fee_lines = so.order_line.filtered(
+            lambda line: line.product_id == fees_product.product_variant_id
         )
-        if existing_fee_line:
+        if existing_fee_lines:
             logger.info(
-                "Fee line already exists for transaction %s on SO %s", self.id, so.id
+                "Removing %s existing fee lines from SO %s before adding new one",
+                len(existing_fee_lines),
+                so.id,
             )
-            return
+            existing_fee_lines.unlink()
 
         fee_line_vals = {
             "order_id": so.id,
