@@ -5,7 +5,7 @@
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "https://www.creyox.com/helpdesk",
-    'live_test_url': 'https://www.creyox.com/helpdesk?module_tech_name=cr_stripe_advanced_fees&version=18.0',
+    "live_test_url": "https://www.creyox.com/helpdesk?module_tech_name=cr_stripe_advanced_fees&version=18.0",
     "category": "Accounting",
     "summary": """
     Automatically calculate Stripe payment fees in Odoo with advanced domestic 

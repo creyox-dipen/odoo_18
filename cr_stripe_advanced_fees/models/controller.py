@@ -143,14 +143,16 @@ class StripePaymentPortal(PaymentPortal):
     @classmethod
     def _validate_transaction_kwargs(cls, kwargs, additional_allowed_keys=()):
         """Override to automatically whitelist stripe_card_brand kwarg in all payment transaction routes."""
-        additional_allowed_keys = list(additional_allowed_keys) + ['stripe_card_brand']
-        return super()._validate_transaction_kwargs(kwargs, additional_allowed_keys=tuple(additional_allowed_keys))
+        additional_allowed_keys = list(additional_allowed_keys) + ["stripe_card_brand"]
+        return super()._validate_transaction_kwargs(
+            kwargs, additional_allowed_keys=tuple(additional_allowed_keys)
+        )
 
     def _create_transaction(self, *args, **kwargs):
         """Override _create_transaction to save stripe_card_brand and adjust amount/unlink old fees."""
-        stripe_card_brand = kwargs.get('stripe_card_brand')
+        stripe_card_brand = kwargs.get("stripe_card_brand")
         tx_sudo = super()._create_transaction(*args, **kwargs)
-        if tx_sudo.provider_id.code == 'stripe':
+        if tx_sudo.provider_id.code == "stripe":
             if stripe_card_brand:
                 tx_sudo.stripe_card_brand = stripe_card_brand
             so = tx_sudo.sale_order_ids[:1]
@@ -160,7 +162,10 @@ class StripePaymentPortal(PaymentPortal):
                     lambda line: line.product_id == fees_product.product_variant_id
                 )
                 if existing_fee_lines:
-                    _logger.info("Unlinking old fee lines from SO %s to correct transaction amount", so.id)
+                    _logger.info(
+                        "Unlinking old fee lines from SO %s to correct transaction amount",
+                        so.id,
+                    )
                     existing_fee_lines.unlink()
                     so._compute_amounts()
                     so._compute_tax_totals()

@@ -41,7 +41,11 @@ class PaymentTransaction(models.Model):
                 and partner_country.id != company_country.id
             )
 
-            card_brand = self.stripe_card_brand.lower() if self.stripe_card_brand else self.payment_method_code
+            card_brand = (
+                self.stripe_card_brand.lower()
+                if self.stripe_card_brand
+                else self.payment_method_code
+            )
             used_method = self.env["payment.method"].search(
                 [("code", "=", card_brand)], limit=1
             )
