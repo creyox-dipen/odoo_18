@@ -37,13 +37,36 @@ class BiometricDailySummaryReportWizard(models.TransientModel):
         )
         total_employees = len(all_employees)
 
-        # 2. Attendances for the day
-        attendances = self.env["hr.attendance"].search(
-            [("check_in", ">=", start_utc), ("check_in", "<=", end_utc)]
-        )
-        present_emp_ids = attendances.mapped("employee_id").ids
-        present_count = len(set(present_emp_ids))
-        absent_count = total_employees - present_count
+        # 2. Batch check statuses for this date
+        status_map = all_employees.get_attendance_statuses_for_date_batch(self.date, user_tz)
+
+        present_count = 0
+        absent_count = 0
+        on_leave_count = 0
+
+        absent_employees = []
+        on_leave_employees = []
+
+        for emp in all_employees:
+            status, reason = status_map.get(emp.id, ("absent", False))
+            emp_info = {
+                "name": emp.name,
+                "company": emp.company_id.name or "-",
+                "department": emp.department_id.name or "-",
+            }
+
+            if status == "present":
+                present_count += 1
+            elif status in ("leave", "holiday"):
+                on_leave_count += 1
+                emp_info["type"] = reason or _("On Leave")
+                on_leave_employees.append(emp_info)
+            elif status == "absent":
+                absent_count += 1
+                absent_employees.append(emp_info)
+            elif status == "weekend":
+                # Do not count weekend as present, absent or on leave
+                pass
 
         # 3. Late Arrivals and Early Departures
         late_count = self.env["hr.attendance"].search_count(
@@ -61,27 +84,17 @@ class BiometricDailySummaryReportWizard(models.TransientModel):
             ]
         )
 
-        # 4. List of Absent Employees
-        absent_employees = []
-        for emp in all_employees:
-            if emp.id not in present_emp_ids:
-                absent_employees.append(
-                    {
-                        "name": emp.name,
-                        "company": emp.company_id.name or "-",
-                        "department": emp.department_id.name or "-",
-                    }
-                )
-
         return {
             "date": self.date.strftime("%Y-%m-%d"),
             "day": self.date.strftime("%A"),
             "total_employees": total_employees,
             "present_count": present_count,
             "absent_count": absent_count,
+            "on_leave_count": on_leave_count,
             "late_count": late_count,
             "early_count": early_count,
             "absent_employees": absent_employees,
+            "on_leave_employees": on_leave_employees,
             "generated_on": pytz.utc.localize(datetime.utcnow())
             .astimezone(user_tz)
             .strftime("%Y-%m-%d %H:%M"),

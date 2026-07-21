@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_biometric_download_log_wizard_form" model="ir.ui.view">
+        <field name="name">biometric.download.log.wizard.form</field>
+        <field name="model">biometric.download.log.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Download Attendance Logs">
+                <field name="device_id" invisible="1"/>
+                <div class="alert alert-info" role="alert">
+                    Choose a date range to filter the downloaded logs. If left blank, Odoo will request <strong>all</strong> logs from the device.
+                </div>
+                <group>
+                    <group>
+                        <field name="download_from" widget="datetime"/>
+                    </group>
+                    <group>
+                        <field name="download_to" widget="datetime"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_download_logs" string="Download Logs" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_biometric_download_log_wizard" model="ir.actions.act_window">
+        <field name="name">Download Attendance Logs</field>
+        <field name="res_model">biometric.download.log.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

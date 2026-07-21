@@ -45,14 +45,12 @@ class BiometricAbsenceReportWizard(models.TransientModel):
                 .replace(tzinfo=None)
             )
 
-            # Find all attendances for this day
-            attendances = self.env["hr.attendance"].search(
-                [("check_in", ">=", start_utc), ("check_in", "<=", end_utc)]
-            )
-            present_emp_ids = attendances.mapped("employee_id").ids
+            # Batch check statuses for this date
+            status_map = employees.get_attendance_statuses_for_date_batch(current_date, user_tz)
 
             for emp in employees:
-                if emp.id not in present_emp_ids:
+                status, reason = status_map.get(emp.id, ("absent", False))
+                if status == "absent":
                     absent_data.append(
                         {
                             "employee": emp.name,

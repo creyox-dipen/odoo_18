@@ -95,6 +95,10 @@
                 background: rgba(9, 132, 227, 0.08) !important;
                 .card-icon, .card-value { color: #0984e3 !important; }
             }
+            &.on-leave { 
+                background: rgba(0, 206, 201, 0.08) !important;
+                .card-icon, .card-value { color: #008080 !important; }
+            }
         }
     }
 
@@ -178,6 +182,10 @@
         &.present-today { 
             background: linear-gradient(135deg, rgba(0, 184, 148, 0.1), rgba(0, 184, 148, 0.3));
             .card-icon, .card-value { color: #55efc4; }
+        }
+        &.on-leave { 
+            background: linear-gradient(135deg, rgba(0, 206, 201, 0.1), rgba(0, 206, 201, 0.3));
+            .card-icon, .card-value { color: #00cec9; }
         }
         &.absent-today { 
             background: linear-gradient(135deg, rgba(214, 48, 49, 0.1), rgba(214, 48, 49, 0.3));

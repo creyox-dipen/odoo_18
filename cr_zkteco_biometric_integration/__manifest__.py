@@ -19,7 +19,7 @@
     Robust automation through cron jobs ensures your biometric data is always up-to-date with minimal administrative effort.
     """,
     "license": "OPL-1",
-    "version": "18.0.0.0",
+    "version": "18.0.0.1",
     "description": """
     <h1>Smart ZKTeco Attendance System – Odoo Biometric & ADMS Live Sync Integration</h1>
     <p>
@@ -73,7 +73,7 @@
         Read our blog post, visit <a href="https://www.creyox.com/blog">Creyox Technologies Blogs</a>
     </p>
     """,
-    "depends": ["base", "mail", "hr_attendance"],
+    "depends": ["base", "mail", "hr_attendance", "hr_holidays"],
     "data": [
         "security/security.xml",
         "security/ir.model.access.csv",
@@ -91,6 +91,7 @@
         "wizard/daily_summary_report_wizard_view.xml",
         "wizard/absence_report_wizard_view.xml",
         "wizard/daily_attendance_report_wizard_view.xml",
+        "wizard/biometric_download_log_wizard_view.xml",
         "report/attendance_reports.xml",
     ],
     "assets": {

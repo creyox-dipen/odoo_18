@@ -14,12 +14,14 @@ export class BiometricDashboard extends Component {
                 total_employees: 0,
                 present_count: 0,
                 absent_count: 0,
+                leave_count: 0,
                 late_count: 0,
                 early_count: 0,
                 device_stats: [],
                 recent_punches: [],
                 presented_employees: [],
                 absented_employees: [],
+                leaved_employees: [],
             }
         });
 

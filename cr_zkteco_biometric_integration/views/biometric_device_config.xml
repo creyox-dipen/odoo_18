@@ -30,11 +30,11 @@
                             confirm="This will push all Odoo employees (with Biometric IDs) to the machine. It may overwrite existing names on the device. Do you want to proceed?"
                             help="Push all Odoo employees to this biometric device."/>
                     <button name="action_request_attlog"
-                            string="Download All Logs"
+                            string="Download Logs"
                             type="object"
                             invisible="state != 'confirmed'"
                             groups="hr_attendance.group_hr_attendance_manager"
-                            help="Forces the device to re-send all attendance logs."/>
+                            help="Opens a wizard to filter and download attendance logs by date range."/>
                     <button name="action_reboot"
                             string="Reboot Device"
                             type="object"
@@ -133,6 +133,14 @@
                         <div class="o_row" invisible="attendance_policy != 'calendar'">
                             <field name="grace_start_out"/> <span>mins early will be rounded up to shift end.</span>
                         </div>
+                    </group>
+
+                    <group string="Automated Email Alerts" name="absent_alerts">
+                        <group>
+                            <field name="enable_absent_alert" widget="boolean_toggle"/>
+                            <field name="absent_alert_delay" invisible="not enable_absent_alert"/>
+                            <field name="absent_alert_email" placeholder="e.g. admin@company.com" invisible="not enable_absent_alert" required="enable_absent_alert"/>
+                        </group>
                     </group>
 
                     <notebook>

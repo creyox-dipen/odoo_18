@@ -27,20 +27,27 @@
                     </div>
                 </div>
                 <div class="col-md-2">
+                    <div class="stat-card on-leave animate__animated animate__fadeInUp" style="animation-delay: 0.15s">
+                        <div class="card-icon"><i class="fa fa-calendar-times-o"></i></div>
+                        <div class="card-value"><t t-esc="state.data.leave_count"/></div>
+                        <div class="card-label">On Leave Today</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <div class="stat-card absent-today animate__animated animate__fadeInUp" style="animation-delay: 0.2s">
                         <div class="card-icon"><i class="fa fa-times-circle"></i></div>
                         <div class="card-value"><t t-esc="state.data.absent_count"/></div>
                         <div class="card-label">Absent Today</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="stat-card late-arrivals animate__animated animate__fadeInUp" style="animation-delay: 0.3s">
                         <div class="card-icon"><i class="fa fa-clock-o"></i></div>
                         <div class="card-value"><t t-esc="state.data.late_count"/></div>
                         <div class="card-label">Late Arrivals</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="stat-card early-leavings animate__animated animate__fadeInUp" style="animation-delay: 0.4s">
                         <div class="card-icon"><i class="fa fa-sign-out"></i></div>
                         <div class="card-value"><t t-esc="state.data.early_count"/></div>
@@ -54,7 +61,7 @@
                 <div class="col-md-8">
                     <div class="row">
                         <!-- Presented Employees -->
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-4 mb-4">
                             <div class="content-card presented-list">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <span class="title"><i class="fa fa-check-circle me-2 text-success"></i>Presented Today</span>
@@ -79,8 +86,34 @@
                             </div>
                         </div>
 
+                        <!-- On Leave Today -->
+                        <div class="col-md-4 mb-4">
+                            <div class="content-card leaved-list">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span class="title"><i class="fa fa-calendar-times-o me-2 text-info"></i>On Leave Today</span>
+                                    <span class="badge badge-circle bg-info"><t t-esc="state.data.leave_count"/></span>
+                                </div>
+                                <div class="card-body scrollable">
+                                    <div t-if="state.data.leaved_employees.length == 0" class="empty-state text-center py-5">
+                                        <i class="fa fa-calendar-o fa-3x text-muted mb-2"></i>
+                                        <p class="text-muted">No one is on leave today.</p>
+                                    </div>
+                                    <div t-foreach="state.data.leaved_employees" t-as="emp" t-key="emp.id" 
+                                         class="employee-item d-flex align-items-center p-2 mb-2 animate__animated animate__fadeIn clickable"
+                                         t-on-click="() => this.openEmployee(emp.id)">
+                                        <img t-if="emp.image" t-att-src="'data:image/png;base64,' + emp.image" class="emp-avatar me-3"/>
+                                        <div t-else="" class="emp-avatar-placeholder me-3"><t t-esc="emp.name[0]"/></div>
+                                        <div class="emp-info">
+                                            <div class="emp-name text-white"><t t-esc="emp.name"/></div>
+                                            <div class="emp-job text-muted small"><t t-esc="emp.details or emp.job"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Absented Employees -->
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-4 mb-4">
                             <div class="content-card absented-list">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <span class="title"><i class="fa fa-times-circle me-2 text-danger"></i>Absented Today</span>

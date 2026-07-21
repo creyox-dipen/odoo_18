@@ -627,3 +627,85 @@ class HrEmployeeExtend(models.Model):
                 # Ensure the check_out is later than check_in (sanity check)
                 if checkout_utc > att.check_in:
                     att.write({"check_out": checkout_utc})
+
+    def get_attendance_statuses_for_date_batch(self, check_date, user_tz):
+        """
+        Batch check attendance, leaves, and public holiday status for a recordset of employees on a single date.
+        Returns a dict mapping: employee_id -> (status_string, detail_reason)
+        Status string can be: 'present', 'leave', 'holiday', 'weekend', 'absent'
+        """
+        import pytz
+        from datetime import datetime, time
+
+        res = {}
+        if not self:
+            return res
+
+        # 1. Start and End of the check_date in UTC
+        start_utc = user_tz.localize(datetime.combine(check_date, time.min)).astimezone(pytz.utc).replace(tzinfo=None)
+        end_utc = user_tz.localize(datetime.combine(check_date, time.max)).astimezone(pytz.utc).replace(tzinfo=None)
+
+        attendances = self.env["hr.attendance"].sudo().search([
+            ("employee_id", "in", self.ids),
+            ("check_in", "<=", end_utc),
+            "|",
+            ("check_out", ">=", start_utc),
+            ("check_out", "=", False),
+        ])
+        present_ids = set(attendances.mapped("employee_id.id"))
+
+        # 2. Fetch approved leaves today
+        approved_leaves = set()
+        leave_reasons = {}
+        if self.env.registry.get("hr.leave"):
+            leaves = self.env["hr.leave"].sudo().search([
+                ("employee_id", "in", self.ids),
+                ("state", "=", "validate"),
+                ("date_from", "<=", end_utc),
+                ("date_to", ">=", start_utc),
+            ])
+            for leave in leaves:
+                eid = leave.employee_id.id
+                approved_leaves.add(eid)
+                leave_reasons[eid] = leave.holiday_status_id.name or _("Approved Leave")
+
+        # 3. Fetch public holidays and scheduled work today per calendar
+        calendar_working = {}
+        public_holidays = {}
+        unique_calendars = self.mapped("resource_calendar_id")
+
+        for cal in unique_calendars:
+            if not cal:
+                continue
+            # Check for public holiday
+            holiday_leaves = self.env["resource.calendar.leaves"].sudo().search([
+                ("calendar_id", "=", cal.id),
+                ("resource_id", "=", False),
+                ("date_from", "<=", datetime.combine(check_date, time.max)),
+                ("date_to", ">=", datetime.combine(check_date, time.min)),
+            ], limit=1)
+            if holiday_leaves:
+                public_holidays[cal.id] = holiday_leaves[0].name or _("Public Holiday")
+
+            # Check working day status
+            day_start = user_tz.localize(datetime.combine(check_date, time.min))
+            day_end = user_tz.localize(datetime.combine(check_date, time.max))
+            intervals = cal._attendance_intervals_batch(day_start, day_end)
+            # cal._attendance_intervals_batch returns a dict mapping resource_id -> list of tuples
+            calendar_working[cal.id] = bool(intervals.get(False) or intervals.get(None))
+
+        # 4. Map statuses
+        for emp in self:
+            if emp.id in present_ids:
+                res[emp.id] = ("present", False)
+            elif emp.id in approved_leaves:
+                res[emp.id] = ("leave", leave_reasons.get(emp.id))
+            elif emp.resource_calendar_id and emp.resource_calendar_id.id in public_holidays:
+                res[emp.id] = ("holiday", public_holidays.get(emp.resource_calendar_id.id))
+            elif emp.resource_calendar_id and emp.resource_calendar_id.id in calendar_working and not calendar_working.get(emp.resource_calendar_id.id):
+                res[emp.id] = ("weekend", False)
+            else:
+                res[emp.id] = ("absent", False)
+
+        return res
+

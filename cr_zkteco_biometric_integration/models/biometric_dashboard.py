@@ -26,24 +26,80 @@ class BiometricDashboard(models.AbstractModel):
         )
         today_end_utc = tz.localize(today_end).astimezone(pytz.utc).replace(tzinfo=None)
 
-        # 1. Total Employees
-        total_employees = self.env["hr.employee"].search_count(
+        # 1. Total Active Employees
+        all_employees = self.env["hr.employee"].search(
             [("active", "=", True), ("company_id", "=", company.id)]
         )
+        total_employees = len(all_employees)
 
-        # 2. Present Today (Employees who have at least one biometric log today)
-        present_employee_ids = self.env["biometric.attendance.log"].read_group(
-            [("timestamp", ">=", today_start_utc), ("timestamp", "<=", today_end_utc)],
-            ["employee_id"],
-            ["employee_id"],
-        )
-        present_count = len(present_employee_ids)
-        present_ids = [
-            res["employee_id"][0] for res in present_employee_ids if res["employee_id"]
-        ]
+        # 2. Batch check employee statuses (Present, Leave, Holiday, Weekend, Absent)
+        status_map = all_employees.get_attendance_statuses_for_date_batch(today, tz)
 
-        # 3. Absent Today
-        absent_count = total_employees - present_count
+        present_emps = []
+        leave_emps = []
+        absent_emps = []
+
+        for emp in all_employees:
+            status, reason = status_map.get(emp.id, ("absent", False))
+            if status == "present":
+                present_emps.append(emp)
+            elif status in ("leave", "holiday"):
+                leave_emps.append((emp, reason))
+            elif status == "absent":
+                absent_emps.append(emp)
+
+        present_count = len(present_emps)
+        leave_count = len(leave_emps)
+        absent_count = len(absent_emps)
+
+        # 3. Format Employee Lists for UI
+        presented_employees = []
+        for e in present_emps[:50]:
+            img = False
+            if e.image_128:
+                try:
+                    img = e.image_128.decode("utf-8")
+                except:
+                    img = e.image_128
+            presented_employees.append(
+                {
+                    "id": e.id,
+                    "name": e.name,
+                    "job": e.job_id.name or "",
+                    "image": img,
+                }
+            )
+
+        leaved_employees = []
+        for item in leave_emps[:50]:
+            e, reason = item
+            img = False
+            if e.image_128:
+                try:
+                    img = e.image_128.decode("utf-8")
+                except:
+                    img = e.image_128
+            leaved_employees.append(
+                {
+                    "id": e.id,
+                    "name": e.name,
+                    "job": e.job_id.name or "",
+                    "reason": reason or _("On Leave"),
+                    "image": img,
+                }
+            )
+
+        absented_employees = []
+        for e in absent_emps[:50]:
+            img = False
+            if e.image_128:
+                try:
+                    img = e.image_128.decode("utf-8")
+                except:
+                    img = e.image_128
+            absented_employees.append(
+                {"id": e.id, "name": e.name, "job": e.job_id.name or "", "image": img}
+            )
 
         # 4. Device Status
         devices = self.env["biometric.device"].search([])
@@ -52,7 +108,6 @@ class BiometricDashboard(models.AbstractModel):
             is_online = False
             last_seen_str = _("Never seen")
             if dev.last_seen:
-                # If seen in last 10 minutes, consider online
                 if (datetime.now() - dev.last_seen) < timedelta(minutes=10):
                     is_online = True
                 last_seen_str = dev.last_seen.strftime("%Y-%m-%d %H:%M:%S")
@@ -73,7 +128,6 @@ class BiometricDashboard(models.AbstractModel):
             [], order="timestamp desc", limit=10
         )
         for log in logs:
-            # Convert timestamp back to user timezone for display
             ts_utc = pytz.utc.localize(log.timestamp)
             ts_user = ts_utc.astimezone(tz)
 
@@ -88,48 +142,7 @@ class BiometricDashboard(models.AbstractModel):
                 }
             )
 
-        # 6. Employee Lists
-        presented_employees = []
-        if present_ids:
-            # Limit to 50 for performance
-            emps = self.env["hr.employee"].search([("id", "in", present_ids)], limit=50)
-            for e in emps:
-                img = False
-                if e.image_128:
-                    try:
-                        img = e.image_128.decode("utf-8")
-                    except:
-                        img = e.image_128  # already string?
-                presented_employees.append(
-                    {
-                        "id": e.id,
-                        "name": e.name,
-                        "job": e.job_id.name or "",
-                        "image": img,
-                    }
-                )
-
-        absented_employees = []
-        absent_emps = self.env["hr.employee"].search(
-            [
-                ("id", "not in", present_ids),
-                ("active", "=", True),
-                ("company_id", "=", company.id),
-            ],
-            limit=50,
-        )
-        for e in absent_emps:
-            img = False
-            if e.image_128:
-                try:
-                    img = e.image_128.decode("utf-8")
-                except:
-                    img = e.image_128
-            absented_employees.append(
-                {"id": e.id, "name": e.name, "job": e.job_id.name or "", "image": img}
-            )
-
-        # 7. Late/Early Counts
+        # 6. Late/Early Counts
         late_arrival_count = self.env["hr.attendance"].search_count(
             [
                 ("check_in", ">=", today_start_utc),
@@ -149,10 +162,12 @@ class BiometricDashboard(models.AbstractModel):
             "total_employees": total_employees,
             "present_count": present_count,
             "absent_count": absent_count,
+            "leave_count": leave_count,
             "late_count": late_arrival_count,
             "early_count": early_leaving_count,
             "device_stats": device_stats,
             "recent_punches": recent_punches,
             "presented_employees": presented_employees,
+            "leaved_employees": leaved_employees,
             "absented_employees": absented_employees,
         }

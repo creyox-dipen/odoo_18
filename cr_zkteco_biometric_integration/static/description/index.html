@@ -315,6 +315,37 @@
                         </div>
                     </div>
 
+                    <!-- Extended Feature Tiles: Row 5 (Latest Enhancements) -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-top: 10px solid #2563eb;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #eff6ff; border-radius: 20px; color: #2563eb; font-size: 30px;">
+                                    <i class="fa fa-download"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Download Logs Wizard</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Interactive wizard to filter and re-download attendance logs by date and time range.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-top: 10px solid #16a34a;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #f0fdf4; border-radius: 20px; color: #16a34a; font-size: 30px;">
+                                    <i class="fa fa-plane"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Time Off &amp; Holiday Sync</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Full integration with Odoo Time Off leaves and public holidays to exclude approved absences.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-top: 10px solid #ea580c;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #fff7ed; border-radius: 20px; color: #ea580c; font-size: 30px;">
+                                    <i class="fa fa-envelope-o"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Automated Email Alerts</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Automated cron alert emails sent to admin when employees miss check-in threshold times.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- ✨ HOW IT WORKS — 3-Step Visual Flow -->
                     <div class="my-5 py-2">
                         <div class="text-center mb-5">
@@ -709,6 +740,17 @@
                         </ul>
                         <ul style="font-size: 22px;">
                             <li>
+                                Go to <b>Attendances</b> >> <b>Dashboard</b>. There, you can view all the metric cards, such as <b>Total Employees</b>, <b>Present</b>, <b>On Leave</b>, <b>Absent</b>, <b>Late Arrivals</b>, <b>Early Leavings</b>, and more.
+                            </li>
+                            <li>
+                                If an employee has an approved leave or a public holiday assigned for the day, they will be excluded from the absent list and displayed under <b>On Leave</b>.
+                            </li>
+                            <img src="images/biometric dashboard.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                        </ul>
+                        <ul style="font-size: 22px;">
+                            <li>
                                 Go to <b>Attendances</b> >> <b>Biometric Configuration</b> >> <b>Devices</b> to view and manage all connected biometric devices in one place.
                             </li>
                             <img src="images/device menu.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
@@ -760,7 +802,10 @@
                                     loading="lazy"
                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             <li>
-                                By clicking <b>Download All Logs</b>, you can fetch and import all attendance logs from the device into Odoo.
+                                Click <b>Download Logs</b> to open a pop-up. Enter the date range for which you want to download attendance logs, or leave the dates empty to download all available logs.
+                            </li>
+                            <li>
+                                You can fetch and import attendance logs from the device into Odoo either for a specific date range or all available logs.
                             </li>
                         </ul>
                         <ul style="font-size: 22px;">
@@ -857,6 +902,21 @@
                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             <li>
                                 You can configure <b>Check-In Grace</b> and <b>Check-Out Grace</b> in minutes. For example, if an employee checks in 10 minutes late and the allowed grace period for check-in is 10 minutes, it will still be counted as on-time. Similarly, if an employee checks out 10 minutes early and the allowed grace period for check-out is 10 minutes, it will also be treated as an on-time checkout.
+                            </li>
+                        </ul>
+
+                        <ul style="font-size: 22px;">
+                            <img src="images/send absent mail section.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            <li>
+                                Enable <b>Enable Absent Email Alerts</b> and configure the <b>Alert Delay</b> and <b>Admin Alert Email</b>.
+                            </li>
+                            <img src="images/absent alert mail.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            <li>
+                                Every day, an email will be sent to the configured email address after the specified delay from the shift start time, listing employees who are absent for the day.
                             </li>
                         </ul>
 
@@ -966,6 +1026,9 @@
                             <li>
                                 By clicking on <b>Daily Summary Report</b>, you can download a summary PDF report for the selected date.
                             </li>
+                            <li>
+                                If an employee has an approved leave or a public holiday assigned for the day, they will be excluded from the absent list and displayed under <b>On Leave</b>.
+                            </li>
                         </ul>
                         <ul style="font-size: 22px;">
                             <img src="images/absence report menu.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
@@ -986,7 +1049,7 @@
                                     loading="lazy"
                                     style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
                             <li>
-                                By clicking on <b>Daily Attendnace Report</b>, you can download a summary PDF report for the selected date.
+                                By clicking on <b>Daily Attendnace Report</b>, you can download a Attendance PDF report for the selected date.
                             </li>
                         </ul>
                     </div>

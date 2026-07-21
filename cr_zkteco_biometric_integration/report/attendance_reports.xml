@@ -66,23 +66,59 @@
                         <table class="table table-bordered text-center" style="margin-bottom: 30px; border-collapse: collapse;">
                             <thead style="background-color: #6a4a6e; color: white;">
                                 <tr>
-                                    <th style="width: 20%;">Total Employees</th>
-                                    <th style="width: 20%;">Present</th>
-                                    <th style="width: 20%;">Absent</th>
-                                    <th style="width: 20%;">Late Arrivals</th>
-                                    <th style="width: 20%;">Early Departures</th>
+                                    <th style="width: 16.66%;">Total Employees</th>
+                                    <th style="width: 16.66%;">Present</th>
+                                    <th style="width: 16.66%;">On Leave</th>
+                                    <th style="width: 16.66%;">Absent</th>
+                                    <th style="width: 16.66%;">Late Arrivals</th>
+                                    <th style="width: 16.66%;">Early Departures</th>
                                 </tr>
                             </thead>
                             <tbody style="font-size: 18px; font-weight: bold;">
                                 <tr>
                                     <td style="padding: 15px; color: #6a4a6e;"><t t-esc="data['total_employees']"/></td>
                                     <td style="padding: 15px; color: #28a745;"><t t-esc="data['present_count']"/></td>
+                                    <td style="padding: 15px; color: #17a2b8;"><t t-esc="data.get('on_leave_count', 0)"/></td>
                                     <td style="padding: 15px; color: #dc3545;"><t t-esc="data['absent_count']"/></td>
                                     <td style="padding: 15px; color: #ffc107;"><t t-esc="data['late_count']"/></td>
-                                    <td style="padding: 15px; color: #17a2b8;"><t t-esc="data['early_count']"/></td>
+                                    <td style="padding: 15px; color: #6c5ce7;"><t t-esc="data['early_count']"/></td>
                                 </tr>
                             </tbody>
                         </table>
+
+                        <!-- On Leave Employees Details -->
+                        <h4 style="color: #6a4a6e; margin-bottom: 10px;">Employees on Leave <small style="color: #999; font-size: 12px;">(<t t-esc="data.get('on_leave_count', 0)"/> employees)</small></h4>
+                        <div style="border-top: 1px solid #ddd; padding-top: 10px; margin-bottom: 25px;">
+                            <table class="table table-sm table-bordered">
+                                <thead style="background-color: #6a4a6e; color: white;">
+                                    <tr class="text-center">
+                                        <th style="width: 50px; vertical-align: middle;">Sl.No</th>
+                                        <th style="vertical-align: middle;">Employee Name</th>
+                                        <th style="vertical-align: middle;">Company/Location</th>
+                                        <th style="vertical-align: middle;">Department</th>
+                                        <th style="vertical-align: middle;">Leave Type/Holiday</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="sl_l" t-value="1"/>
+                                    <t t-foreach="data.get('on_leave_employees', [])" t-as="emp">
+                                        <tr class="text-center" style="height: 35px;">
+                                            <td style="vertical-align: middle;"><t t-esc="sl_l"/></td>
+                                            <td style="vertical-align: middle;"><strong><t t-esc="emp['name']"/></strong></td>
+                                            <td style="color: #666; vertical-align: middle;"><t t-esc="emp['company']"/></td>
+                                            <td style="color: #666; vertical-align: middle;"><t t-esc="emp['department']"/></td>
+                                            <td style="color: #17a2b8; font-weight: bold; vertical-align: middle;"><t t-esc="emp['type']"/></td>
+                                        </tr>
+                                        <t t-set="sl_l" t-value="sl_l + 1"/>
+                                    </t>
+                                    <t t-if="not data.get('on_leave_employees')">
+                                        <tr>
+                                            <td colspan="5" class="text-center" style="vertical-align: middle;">No employees on leave today.</td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
 
                         <!-- Absent Employees Details -->
                         <h4 style="color: #6a4a6e; margin-bottom: 10px;">Absent Employees <small style="color: #999; font-size: 12px;">(<t t-esc="data['absent_count']"/> employees)</small></h4>

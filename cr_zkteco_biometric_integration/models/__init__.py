@@ -9,3 +9,5 @@ from . import biometric_device_command
 from . import biometric_user_template
 from . import hr_attendance_extend
 from . import res_users
+from . import biometric_attendance_alert_log
+
