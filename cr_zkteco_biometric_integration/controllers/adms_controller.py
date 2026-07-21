@@ -56,6 +56,21 @@ class AdmsController(http.Controller):
             .search([("serial_number", "=", serial)], limit=1)
         )
         if not device:
+            _logger.info("ADMS: New device discovered via heartbeat SN=%s. Auto-creating...", serial)
+            device = (
+                request.env["biometric.device"]
+                .sudo()
+                .create(
+                    {
+                        "name": f"Discovered Device: {serial}",
+                        "serial_number": serial,
+                        "state": "draft",
+                        "active": True,
+                        "last_seen": fields.Datetime.now(),
+                    }
+                )
+            )
+            device._notify_admin(notification_type="discovered")
             return request.make_response("OK", headers=[("Content-Type", "text/plain")])
 
         if device.password and device.communication_key != comm_key:
