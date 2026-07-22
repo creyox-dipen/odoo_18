@@ -2,7 +2,6 @@
 # Part of Creyox Technologies.
 from odoo import api, fields, models
 
-
 class PaymentProvider(models.Model):
     _inherit = "account.payment"
 
