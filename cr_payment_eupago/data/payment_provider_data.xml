@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+
+    <!--
+        euPago Multibanco (ATM Reference) Provider Record
+        code: eupago_mbref
+        inline_form_view_id: uses the mbref inline template (no redirect)
+    -->
+    <record id="payment_provider_cr_eupago_mbref" model="payment.provider">
+        <field name="name">euPago — Multibanco (ATM Reference)</field>
+        <field name="code">eupago_mbref</field>
+        <field name="state">disabled</field>
+        <field name="is_published">False</field>
+        <field name="inline_form_view_id" ref="eupago_mbref_inline_form"/>
+        <field name="redirect_form_view_id" ref="redirect_form"/>
+        <field name="sequence">350</field>
+        <field name="pre_msg" type="html">
+            <p>Pagamento por Referência Multibanco. Pague num ATM ou MB NET.</p>
+        </field>
+        <field name="cr_eupago_min_amount">1.00</field>
+        <field name="cr_eupago_max_amount">99999.00</field>
+        <field name="image_128" type="base64" file="payment/static/img/multibanco.png"/>
+        <field name="payment_method_ids"
+               eval="[Command.set([
+                         ref('payment.payment_method_multibanco'),
+                     ])]"
+        />
+    </record>
+
+    <!--
+        euPago MB WAY Provider Record
+        code: eupago_mbway
+        inline_form_view_id: uses the mbway inline template (phone input + pending)
+    -->
+    <record id="payment_provider_cr_eupago_mbway" model="payment.provider">
+        <field name="name">euPago — MB WAY</field>
+        <field name="code">eupago_mbway</field>
+        <field name="state">disabled</field>
+        <field name="is_published">False</field>
+        <field name="inline_form_view_id" ref="eupago_mbway_inline_form"/>
+        <field name="sequence">351</field>
+        <field name="pre_msg" type="html">
+            <p>Pagamento MB WAY. Confirme na app MB WAY do seu smartphone.</p>
+        </field>
+        <field name="cr_eupago_min_amount">0.10</field>
+        <field name="cr_eupago_max_amount">99999.00</field>
+        <field name="image_128" type="base64" file="payment/static/img/mbway.png"/>
+        <field name="payment_method_ids"
+               eval="[Command.set([
+                         ref('payment.payment_method_mbway'),
+                     ])]"
+        />
+    </record>
+
+    <!--
+        euPago Credit Card Provider Record
+        code: eupago_cc
+        redirect_form_view_id: uses the CC redirect form (browser redirect to 3DS)
+    -->
+    <record id="payment_provider_cr_eupago_cc" model="payment.provider">
+        <field name="name">euPago — Credit Card</field>
+        <field name="code">eupago_cc</field>
+        <field name="state">disabled</field>
+        <field name="is_published">False</field>
+        <field name="redirect_form_view_id" ref="redirect_form"/>
+        <field name="sequence">352</field>
+        <field name="pre_msg" type="html">
+            <p>Pagamento com Cartão de Crédito. Suporta tecnologia 3D Secure.</p>
+        </field>
+        <field name="cr_eupago_min_amount">1.00</field>
+        <field name="cr_eupago_max_amount">3999.00</field>
+        <field name="image_128" type="base64" file="payment/static/img/card.png"/>
+        <field name="payment_method_ids"
+               eval="[Command.set([
+                         ref('payment.payment_method_card'),
+                     ])]"
+        />
+    </record>
+
+
+
+
+</odoo>

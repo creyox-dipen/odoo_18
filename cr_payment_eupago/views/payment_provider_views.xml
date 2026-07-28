@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        euPago Payment Provider Form
+        Extends the core payment provider form to add the euPago API Key field.
+        The field is only visible when the selected code is one of the euPago variants.
+    -->
+    <record id="payment_provider_form_cr_eupago" model="ir.ui.view">
+        <field name="name">euPago Provider Form</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <group name="provider_credentials" position="inside">
+                <group invisible="code not in ('eupago_mbref', 'eupago_mbway', 'eupago_cc')">
+                    <field
+                        name="cr_eupago_api_key"
+                        string="euPago API Key"
+                        password="True"
+                        required="code in ('eupago_mbref', 'eupago_mbway', 'eupago_cc') and state != 'disabled'"
+                    />
+                    <field
+                        name="cr_eupago_client_id"
+                        string="euPago Client ID (OAuth)"
+                        invisible="code not in ('eupago_cc', 'eupago_mbway')"
+                        help="Client ID for OAuth 2.0 (Required for Refunds on Credit Card and MB WAY)"
+                    />
+                    <field
+                        name="cr_eupago_client_secret"
+                        string="euPago Client Secret (OAuth)"
+                        password="True"
+                        invisible="code not in ('eupago_cc', 'eupago_mbway')"
+                        help="Client Secret for OAuth 2.0 (Required for Refunds on Credit Card and MB WAY)"
+                    />
+                    <field
+                        name="cr_eupago_mb_deadline_days"
+                        string="Multibanco Deadline (days)"
+                        invisible="code != 'eupago_mbref'"
+                        help="Number of days a Multibanco ATM reference remains valid. Default: 30 days."
+                    />
+                    <field
+                        name="cr_eupago_min_amount"
+                        string="Minimum Amount"
+                        help="Minimum order amount required to use this payment method."
+                    />
+                    <field
+                        name="cr_eupago_max_amount"
+                        string="Maximum Amount"
+                        help="Maximum order amount allowed to use this payment method."
+                    />
+                </group>
+            </group>
+
+
+        </field>
+    </record>
+
+</odoo>

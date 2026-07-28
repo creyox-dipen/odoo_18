@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         CREDIT CARD — Redirect Form
+         Used when provider_code = 'eupago_cc'.
+         The api_url comes from euPago's redirectUrl field in the CC
+         create response. Browser is redirected to euPago's 3DS hosted form.
+         ================================================================ -->
+    <template id="redirect_form" name="euPago CC Redirect Form">
+        <!--
+            This form is auto-submitted by Odoo's payment JS.
+            method="get" because euPago CC uses a GET redirect (direct URL).
+        -->
+        <form t-att-action="api_url" method="get">
+            <!-- No hidden fields needed — euPago CC uses a self-contained URL -->
+        </form>
+    </template>
+
+    <!-- ================================================================
+         MULTIBANCO — Inline ATM Reference Form
+         Used when provider_code = 'eupago_mbref'.
+         Displays the ATM entity and reference number to the customer.
+         The customer pays at any ATM or MB NET using these details.
+         No redirect occurs — this is an inline display only.
+         ================================================================ -->
+    <template id="eupago_mbref_inline_form" name="euPago Multibanco ATM Reference">
+        <div class="o_cr_eupago_mbref_container">
+            <div class="o_eupago_mbref_header">
+                <img src="/cr_payment_eupago/static/description/multibanco_logo.png"
+                     alt="Multibanco"
+                     class="o_eupago_mbref_logo"
+                     onerror="this.style.display='none'"/>
+                <h4>Pagamento por Referência Multibanco</h4>
+                <p class="text-muted">Use os dados abaixo para efectuar o pagamento num ATM ou MB NET.</p>
+            </div>
+
+            <div class="o_eupago_mbref_details">
+                <div class="o_eupago_mbref_row">
+                    <span class="o_eupago_mbref_label">Entidade</span>
+                    <span class="o_eupago_mbref_value o_eupago_bold"
+                          t-esc="cr_eupago_entity"/>
+                </div>
+                <div class="o_eupago_mbref_row">
+                    <span class="o_eupago_mbref_label">Referência</span>
+                    <span class="o_eupago_mbref_value o_eupago_bold o_eupago_reference"
+                          t-esc="cr_eupago_reference"/>
+                </div>
+                <div class="o_eupago_mbref_row">
+                    <span class="o_eupago_mbref_label">Montante</span>
+                    <span class="o_eupago_mbref_value">
+                        <t t-esc="cr_eupago_amount"/>&#160;<t t-esc="cr_eupago_currency"/>
+                    </span>
+                </div>
+                <t t-if="cr_eupago_deadline">
+                    <div class="o_eupago_mbref_row">
+                        <span class="o_eupago_mbref_label">Validade</span>
+                        <span class="o_eupago_mbref_value" t-esc="cr_eupago_deadline"/>
+                    </div>
+                </t>
+            </div>
+
+            <div class="o_eupago_mbref_info alert alert-info mt-3">
+                <i class="fa fa-info-circle me-2"/>
+                O pagamento será confirmado automaticamente após o processamento bancário.
+            </div>
+        </div>
+    </template>
+
+    <!-- ================================================================
+         MB WAY — Inline Phone Input + Pending Confirmation Form
+         Used when provider_code = 'eupago_mbway'.
+
+         Phase 1: Customer enters their MB WAY phone number.
+         Phase 2: After submission, show "Awaiting confirmation" message.
+         ================================================================ -->
+    <template id="eupago_mbway_inline_form" name="euPago MB WAY Inline Form">
+        <div class="o_cr_eupago_mbway_container">
+            <div class="o_eupago_mbway_header">
+                <img src="/cr_payment_eupago/static/description/mbway_logo.png"
+                     alt="MB WAY"
+                     class="o_eupago_mbway_logo"
+                     onerror="this.style.display='none'"/>
+                <h4>Pagamento MB WAY</h4>
+            </div>
+
+            <!-- Phone number input — collected before the API call -->
+            <div class="o_cr_eupago_mbway_phone_form">
+                <label for="cr_eupago_phone" class="form-label">
+                    Número de Telemóvel MB WAY
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fa fa-phone"/> +351
+                    </span>
+                    <input
+                        type="tel"
+                        id="cr_eupago_phone"
+                        name="cr_eupago_phone"
+                        class="form-control"
+                        placeholder="912 345 678"
+                        maxlength="9"
+                        pattern="[0-9]{9}"
+                        required="required"
+                    />
+                </div>
+                <div class="form-text text-muted">
+                    Introduza o número de telemóvel associado ao MB WAY.
+                </div>
+            </div>
+
+            <!-- Pending state — shown after push is sent -->
+            <div class="o_cr_eupago_mbway_pending d-none">
+                <div class="text-center py-3">
+                    <i class="fa fa-mobile fa-3x text-success mb-3 d-block"/>
+                    <h5>Notificação enviada!</h5>
+                    <p>
+                        Foi enviada uma notificação para o número
+                        <strong t-esc="cr_eupago_phone"/>.
+                    </p>
+                    <p class="text-muted">
+                        Tem <strong>5 minutos</strong> para confirmar o pagamento
+                        de <strong><t t-esc="cr_eupago_amount"/>&#160;<t t-esc="cr_eupago_currency"/></strong>
+                        na app MB WAY.
+                    </p>
+
+                    <!-- Countdown spinner -->
+                    <div class="o_eupago_mbway_countdown mt-3">
+                        <div class="spinner-border spinner-border-sm text-success me-2" role="status">
+                            <span class="visually-hidden">Aguardando...</span>
+                        </div>
+                        <span class="text-muted">A aguardar confirmação...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <!-- ================================================================
+         PORTAL STATUS PAGE — Multibanco ATM Reference Display
+         Inherits from payment.state_header to display generated Entity,
+         Reference, and Amount details when the transaction is pending.
+         ================================================================ -->
+    <template id="eupago_state_header" inherit_id="payment.state_header" name="euPago ATM Details Display">
+        <xpath expr="//div[@id='o_payment_status_message']" position="inside">
+            <t t-if="tx.provider_code == 'eupago_mbref' and tx.state == 'pending'">
+                <div class="o_eupago_mbref_card card mt-3 border-primary bg-light">
+                    <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0">Dados para Pagamento Multibanco</h5>
+                        <img src="/payment/static/img/multibanco.png"
+                             alt="Multibanco"
+                             style="max-height: 24px; filter: brightness(0) invert(1);"
+                             onerror="this.style.display='none'"/>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center my-2">
+                            <div class="col-4 border-end">
+                                <span class="d-block text-muted small">Entidade</span>
+                                <strong class="fs-5 text-primary" t-out="tx.cr_eupago_entity"/>
+                            </div>
+                            <div class="col-4 border-end">
+                                <span class="d-block text-muted small">Referência</span>
+                                <strong class="fs-5 text-primary" t-out="tx.cr_eupago_reference"/>
+                            </div>
+                            <div class="col-4">
+                                <span class="d-block text-muted small">Montante</span>
+                                <strong class="fs-5 text-primary" t-out="tx.amount" t-options="{'widget': 'monetary', 'display_currency': tx.currency_id}"/>
+                            </div>
+                        </div>
+                        <t t-if="tx.cr_eupago_deadline">
+                            <div class="text-center mt-3 text-muted small">
+                                <i class="fa fa-clock-o me-1"/> Válido até: <span class="fw-bold" t-out="tx.cr_eupago_deadline"/>
+                            </div>
+                        </t>
+                    </div>
+                    <div class="card-footer bg-white text-muted small text-center">
+                        <i class="fa fa-info-circle me-1"/> Pague em qualquer Caixa Automático (ATM) ou serviço de Homebanking.
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+</odoo>

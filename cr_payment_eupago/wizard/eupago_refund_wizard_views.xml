@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="eupago_refund_wizard_view_form" model="ir.ui.view">
+        <field name="name">cr.eupago.refund.wizard.form</field>
+        <field name="model">cr.eupago.refund.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Refund via euPago">
+                <group>
+                    <field name="move_id" invisible="1"/>
+                    <field name="transaction_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="amount_to_refund" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                </group>
+                <p class="text-muted">
+                    This will process a refund via the euPago API. Once the refund is confirmed successful by euPago, a Credit Note for this exact amount will be automatically generated and reconciled against the refund.
+                </p>
+                <footer>
+                    <button string="Confirm Refund" type="object" name="action_confirm_refund" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
