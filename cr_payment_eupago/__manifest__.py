@@ -6,7 +6,7 @@
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "https://www.creyox.com/helpdesk",
-    "live_test_url": "https://www.creyox.com/helpdesk?module_tech_name=cr_payment_eupago&version=19.0",
+    "live_test_url": "https://www.creyox.com/helpdesk?module_tech_name=cr_payment_eupago&version=18.0",
     "category": "Accounting",
     "summary": """
         The euPago Payment Provider module seamlessly integrates your Odoo system with Portugal's leading payment gateway, euPago. It empowers businesses to offer a localized and secure checkout experience, directly enhancing customer satisfaction and boosting conversion rates for the Portuguese market.
@@ -14,7 +14,7 @@
         Comprehensive integration supports key payment methods including Multibanco (ATM Reference), MB WAY, and 3D Secure Credit Cards. It ensures automated payment synchronization, secure transaction processing, and a streamlined workflow for both administrators and customers.
     """,
     "license": "OPL-1",
-    "version": "19.0.0.0",
+    "version": "18.0.0.0",
     "description": """
         <h1>euPago Payment Provider – Odoo Portuguese Payment Gateway Integration</h1>
         <p>

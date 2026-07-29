@@ -1,24 +1,12 @@
 /** @odoo-module **/
 
-import { patch } from '@web/core/utils/patch';
-import { PaymentForm } from '@payment/interactions/payment_form';
+import paymentForm from '@payment/js/payment_form';
 import { rpc } from "@web/core/network/rpc";
 
-const originalPrepareInlineForm = PaymentForm.prototype._prepareInlineForm;
-patch(PaymentForm.prototype, {
+paymentForm.include({
     async _prepareInlineForm(providerId, providerCode, paymentOptionId, paymentMethodCode, flow) {
 
-        if (originalPrepareInlineForm) {
-            await originalPrepareInlineForm.call(
-                this,
-                providerId,
-                providerCode,
-                paymentOptionId,
-                paymentMethodCode,
-                flow
-            );
-        }
-
+        await this._super(...arguments);
         // Only process euPago providers
         if (!['eupago_cc', 'eupago_mbway', 'eupago_mbref'].includes(providerCode)) {
             return;

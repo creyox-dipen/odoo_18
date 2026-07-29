@@ -1,12 +1,13 @@
-import { patch } from '@web/core/utils/patch';
-import { PaymentForm } from '@payment/interactions/payment_form';
+/** @odoo-module **/
+
+import paymentForm from '@payment/js/payment_form';
 import { rpc, RPCError } from '@web/core/network/rpc';
 import { _t } from "@web/core/l10n/translation";
 
-patch(PaymentForm.prototype, {
+paymentForm.include({
     async _prepareInlineForm(providerId, providerCode, paymentOptionId, paymentMethodCode, flow) {
         if (providerCode !== 'eupago_mbway') {
-            await super._prepareInlineForm(...arguments);
+            await this._super(...arguments);
             return;
         } else if (flow === 'token') {
             return;
@@ -16,7 +17,7 @@ patch(PaymentForm.prototype, {
 
     async _processDirectFlow(providerCode, paymentOptionId, paymentMethodCode, processingValues) {
         if (providerCode !== 'eupago_mbway') {
-            await super._processDirectFlow(...arguments);
+            await this._super(...arguments);
             return;
         }
 

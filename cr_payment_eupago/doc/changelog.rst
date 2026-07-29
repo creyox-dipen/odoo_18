@@ -1,5 +1,6 @@
-19.0.0.0(Date: 24th July, 2026)
+18.0.0.0(Date: 29th July, 2026)
 -------------------------------
+- Migrated module from version 19
 - Supports Multibanco (ATM Reference) payments directly in Odoo.
 - Enables MB WAY transactions for instant mobile payments.
 - Supports 3D Secure Credit Card payments for enhanced security.

@@ -7,14 +7,12 @@ from urllib.parse import urljoin
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
-from odoo.tools import urls
 
-from odoo.addons.payment.logging import get_payment_logger
+import logging
 from odoo.addons.cr_payment_eupago import const
 from odoo.addons.cr_payment_eupago.controllers.main import EupagoController
 
-
-_logger = get_payment_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class PaymentTransaction(models.Model):
@@ -166,7 +164,7 @@ class PaymentTransaction(models.Model):
             pprint.pformat(payload),
         )
         try:
-            response_data = self._send_api_request(
+            response_data = self.provider_id._send_api_request(
                 "POST", const.ENDPOINT_MULTIBANCO, json=payload
             )
         except ValidationError as error:
@@ -278,7 +276,7 @@ class PaymentTransaction(models.Model):
             pprint.pformat(payload),
         )
         try:
-            response_data = self._send_api_request(
+            response_data = self.provider_id._send_api_request(
                 "POST", const.ENDPOINT_MBWAY, json=payload
             )
         except ValidationError as error:
@@ -368,7 +366,7 @@ class PaymentTransaction(models.Model):
             pprint.pformat(payload),
         )
         try:
-            response_data = self._send_api_request(
+            response_data = self.provider_id._send_api_request(
                 "POST", const.ENDPOINT_CC, json=payload
             )
         except ValidationError as error:
@@ -479,7 +477,7 @@ class PaymentTransaction(models.Model):
             pprint.pformat(payload),
         )
         try:
-            response_data = self._send_api_request(
+            response_data = self.provider_id._send_api_request(
                 "POST", const.ENDPOINT_MBWAY, json=payload
             )
         except ValidationError as error:
@@ -569,7 +567,7 @@ class PaymentTransaction(models.Model):
             pprint.pformat(payload),
         )
         try:
-            response_data = self._send_api_request(
+            response_data = self.provider_id._send_api_request(
                 "POST", const.ENDPOINT_CC, json=payload
             )
         except ValidationError as error:
@@ -852,7 +850,7 @@ class PaymentTransaction(models.Model):
 
         try:
             # Inject context flag so provider uses Bearer token for auth
-            response_data = self.with_context(is_management_api=True)._send_api_request(
+            response_data = self.provider_id.with_context(is_management_api=True)._send_api_request(
                 "POST", endpoint, json=payload
             )
         except ValidationError as error:
@@ -943,7 +941,7 @@ class PaymentTransaction(models.Model):
                 lines_to_keep.with_context(check_move_validity=False).write({
                     "price_unit": refund_amount,
                     "quantity": 1.0,
-                    "tax_ids": [(5, 0, 0)], # Remove taxes to ensure exact amount match, or keep taxes?
+                    "tax_id": [(5, 0, 0)], # Remove taxes to ensure exact amount match, or keep taxes?
                 })
                 # Delete other product lines
                 (credit_note.invoice_line_ids - lines_to_keep).with_context(check_move_validity=False).unlink()

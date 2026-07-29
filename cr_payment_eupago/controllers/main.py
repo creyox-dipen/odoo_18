@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 # -*- Part of Creyox Technologies -*-
 
+import logging
 import pprint
 
 from odoo import http
 from odoo.exceptions import ValidationError
 from odoo.http import request
 
-from odoo.addons.payment.logging import get_payment_logger
 from odoo.addons.account_payment.controllers.payment import (
     PaymentPortal as AccountPaymentPortal,
 )
 from odoo.addons.cr_payment_eupago import const
 
 
-_logger = get_payment_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class EupagoPaymentPortal(AccountPaymentPortal):
@@ -23,7 +23,7 @@ class EupagoPaymentPortal(AccountPaymentPortal):
     users click 'Pay Now' on portal invoice pages without `access_token` parameter.
     """
 
-    @http.route("/invoice/transaction/<int:invoice_id>", type="jsonrpc", auth="public")
+    @http.route("/invoice/transaction/<int:invoice_id>", type="json", auth="public")
     def invoice_transaction(self, invoice_id, access_token=None, **kwargs):
         return super().invoice_transaction(
             invoice_id, access_token=access_token, **kwargs

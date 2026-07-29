@@ -3,13 +3,11 @@
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
-from odoo.tools import urls
 
-from odoo.addons.payment.logging import get_payment_logger
+import logging
 from odoo.addons.cr_payment_eupago import const
 
-
-_logger = get_payment_logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class PaymentProvider(models.Model):
@@ -289,6 +287,25 @@ class PaymentProvider(models.Model):
         except Exception as e:
             _logger.exception("Failed to fetch euPago Bearer token: %s", e)
             raise ValidationError(_("Failed to authenticate with euPago Management API (OAuth 2.0). Check your Client ID and Secret."))
+
+    def _send_api_request(self, method, endpoint, **kwargs):
+        """Send an API request to euPago and return the JSON response."""
+        self.ensure_one()
+        url = self._build_request_url(endpoint)
+        headers = self._build_request_headers()
+        import requests
+        try:
+            response = requests.request(method, url, headers=headers, timeout=10, **kwargs)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as error:
+            err_msg = self._parse_response_error(error.response)
+            _logger.error("API request error: %s", err_msg)
+            raise ValidationError(err_msg)
+        except Exception as error:
+            _logger.exception("Failed to fetch euPago data: %s", error)
+            raise ValidationError(_("Failed to communicate with euPago API."))
+
 
     def _parse_response_error(self, response):
         """Override of `payment` to parse euPago API error messages."""
