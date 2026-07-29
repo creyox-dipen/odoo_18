@@ -50,6 +50,29 @@
                     />
                 </group>
             </group>
+            
+            <xpath expr="//notebook" position="inside">
+                <page string="Extra Fees" name="eupago_extra_fees" invisible="code not in ('eupago_mbref', 'eupago_mbway', 'eupago_cc')">
+                    <group string="Fees Configuration">
+                        <field name="cr_eupago_is_extra_fees"/>
+                        <field name="cr_eupago_fees_product" invisible="not cr_eupago_is_extra_fees" required="cr_eupago_is_extra_fees" readonly="1"/>
+                    </group>
+                    <group>
+                        <group string="Domestic Fees" invisible="not cr_eupago_is_extra_fees">
+                            <field name="cr_eupago_fix_domestic_fees" required="cr_eupago_is_extra_fees"/>
+                            <field name="cr_eupago_var_domestic_fees" required="cr_eupago_is_extra_fees"/>
+                            <field name="cr_eupago_is_free_domestic"/>
+                            <field name="cr_eupago_free_domestic_amount" invisible="not cr_eupago_is_free_domestic" required="cr_eupago_is_free_domestic"/>
+                        </group>
+                        <group string="International Fees" invisible="not cr_eupago_is_extra_fees">
+                            <field name="cr_eupago_fix_international_fees" required="cr_eupago_is_extra_fees"/>
+                            <field name="cr_eupago_var_international_fees" required="cr_eupago_is_extra_fees"/>
+                            <field name="cr_eupago_is_free_international"/>
+                            <field name="cr_eupago_free_international_amount" invisible="not cr_eupago_is_free_international" required="cr_eupago_is_free_international"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
 
 
         </field>

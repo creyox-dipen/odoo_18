@@ -7,15 +7,14 @@ from odoo import http
 from odoo.exceptions import ValidationError
 from odoo.http import request
 
-import logging
-
+from odoo.addons.payment.logging import get_payment_logger
 from odoo.addons.account_payment.controllers.payment import (
     PaymentPortal as AccountPaymentPortal,
 )
 from odoo.addons.cr_payment_eupago import const
 
 
-_logger = logging.getLogger(__name__)
+_logger = get_payment_logger(__name__)
 
 
 class EupagoPaymentPortal(AccountPaymentPortal):
@@ -24,7 +23,7 @@ class EupagoPaymentPortal(AccountPaymentPortal):
     users click 'Pay Now' on portal invoice pages without `access_token` parameter.
     """
 
-    @http.route("/invoice/transaction/<int:invoice_id>", type="json", auth="public")
+    @http.route("/invoice/transaction/<int:invoice_id>", type="jsonrpc", auth="public")
     def invoice_transaction(self, invoice_id, access_token=None, **kwargs):
         return super().invoice_transaction(
             invoice_id, access_token=access_token, **kwargs
@@ -113,6 +112,15 @@ class EupagoController(http.Controller):
                     data.get(const.WEBHOOK_FIELD_REFERENCE, "N/A"),
                 )
                 return ""  # Always return 200
+
+            # Extract and store the numeric TRID immediately. 
+            # This ensures we capture it for refunds even if `_process` skips `_apply_updates` 
+            # because the transaction was already marked 'done' by the CC return page.
+            trid = data.get(const.WEBHOOK_FIELD_TRANSACTION_ID, "")
+            if trid and not tx_sudo.cr_eupago_trid:
+                tx_sudo.cr_eupago_trid = trid
+            if trid and not tx_sudo.provider_reference:
+                tx_sudo.provider_reference = trid
 
             # Process the payment data
             tx_sudo._process(provider_code, data)
@@ -217,8 +225,69 @@ class EupagoController(http.Controller):
                 "euPago CC return: unexpected error while processing data:\n%s",
                 pprint.pformat(data),
             )
-
+        
         return request.redirect("/payment/status")
+
+    # =========================================================================
+    # FRONTEND JS CONFIGURATION FETCHERS
+    # =========================================================================
+
+    @http.route(
+        ["/custom/eupago/provider_config"], type="json", auth="public", csrf=False
+    )
+    def get_eupago_provider_config(self, provider_code="eupago_cc"):
+        provider = (
+            request.env["payment.provider"]
+            .sudo()
+            .search([("code", "=", provider_code)], limit=1)
+        )
+        if not provider:
+            return {}
+        return {
+            "cr_eupago_is_extra_fees": provider.cr_eupago_is_extra_fees,
+            "cr_eupago_is_free_domestic": provider.cr_eupago_is_free_domestic,
+            "cr_eupago_is_free_international": provider.cr_eupago_is_free_international,
+            "cr_eupago_free_domestic_amount": provider.cr_eupago_free_domestic_amount,
+            "cr_eupago_free_international_amount": provider.cr_eupago_free_international_amount,
+            "cr_eupago_fix_domestic_fees": provider.cr_eupago_fix_domestic_fees,
+            "cr_eupago_var_domestic_fees": provider.cr_eupago_var_domestic_fees,
+            "cr_eupago_fix_international_fees": provider.cr_eupago_fix_international_fees,
+            "cr_eupago_var_international_fees": provider.cr_eupago_var_international_fees,
+            "company_id": provider.company_id.id,
+        }
+
+    @http.route(
+        ["/custom/eupago/company_country/<int:company_id>"],
+        type="json",
+        auth="public",
+        csrf=False,
+    )
+    def get_company_country(self, company_id):
+        company = request.env["res.company"].sudo().browse(company_id)
+        return {"country_id": company.country_id.id if company.country_id else None}
+
+    @http.route(
+        ["/custom/eupago/document_shipping_country/<int:doc_id>"],
+        type="json",
+        auth="public",
+        csrf=False,
+    )
+    def get_document_shipping_country(self, doc_id, is_invoice=False):
+        if is_invoice:
+            invoice = request.env["account.move"].sudo().browse(doc_id)
+            if hasattr(invoice, "partner_shipping_id") and invoice.partner_shipping_id:
+                partner = invoice.partner_shipping_id
+            else:
+                partner = invoice.partner_id
+        else:
+            order = request.env["sale.order"].sudo().browse(doc_id)
+            partner = order.partner_shipping_id or order.partner_id
+        
+        return {
+            "country_id": (
+                partner.country_id.id if partner and partner.country_id else None
+            )
+        }
 
     # =========================================================================
     # MB WAY STATUS POLLING (optional) — for real-time UI feedback

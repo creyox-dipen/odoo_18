@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="eupago_fees_product_template" model="product.template">
+            <field name="name">euPago Payment Fees</field>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="taxes_id" eval="[(5, 0, 0)]"/>
+            <field name="supplier_taxes_id" eval="[(5, 0, 0)]"/>
+            <field name="description_sale">Extra fees for euPago payments</field>
+            <field name="default_code">EUPAGO_FEE</field>
+        </record>
+    </data>
+</odoo>

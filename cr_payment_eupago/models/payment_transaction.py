@@ -7,14 +7,14 @@ from urllib.parse import urljoin
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools import urls
 
-import logging
-
+from odoo.addons.payment.logging import get_payment_logger
 from odoo.addons.cr_payment_eupago import const
 from odoo.addons.cr_payment_eupago.controllers.main import EupagoController
 
 
-_logger = logging.getLogger(__name__)
+_logger = get_payment_logger(__name__)
 
 
 class PaymentTransaction(models.Model):
@@ -29,10 +29,12 @@ class PaymentTransaction(models.Model):
         copy=False,
     )
     cr_eupago_cn_created = fields.Boolean(
-        string="Credit Note Created",
-        help="Indicates if a Credit Note has already been automatically created for this refund transaction.",
-        copy=False,
+        
+        string="euPago CN Created",
+        default=False,
+        help="Technical field to track if a credit note has been created for this refund transaction."
     )
+    cr_eupago_fees = fields.Float(string="euPago Fees", copy=False)
 
     # =========================================================================
     # POST-PROCESSING — force immediate reconciliation for euPago payments
@@ -232,6 +234,9 @@ class PaymentTransaction(models.Model):
         deadline_days = self.provider_id.cr_eupago_mb_deadline_days or 30
         deadline = (date.today() + timedelta(days=deadline_days)).strftime("%Y-%m-%d")
 
+        # Calculate fees and update SO/Invoice if needed
+        self._eupago_calculate_fees()
+
         return {
             const.MB_REQ_API_KEY: self.provider_id.cr_eupago_api_key,  # 'chave'
             const.MB_REQ_AMOUNT: round(self.amount, 2),  # 'valor'
@@ -323,6 +328,210 @@ class PaymentTransaction(models.Model):
         :return: dict payload
         :rtype: dict
         """
+        # Calculate fees and update SO/Invoice if needed
+        self._eupago_calculate_fees()
+
+        return {
+            "payment": {
+                const.MBWAY_REQ_IDENTIFIER: self.reference,
+                "amount": {
+                    const.MBWAY_REQ_AMOUNT_VALUE: round(self.amount, 2),
+                    const.MBWAY_REQ_AMOUNT_CURRENCY: self.currency_id.name,
+                },
+                const.MBWAY_REQ_PHONE: phone,
+                const.MBWAY_REQ_COUNTRY_CODE: const.MBWAY_DEFAULT_COUNTRY_CODE,
+            },
+            "customer": {
+                "notify": True,
+                "email": self.partner_email or "",
+            },
+        }
+
+    # =========================================================================
+    # CREDIT CARD — 3DS Redirect Flow
+    # =========================================================================
+
+    def _eupago_render_cc(self):
+        """Create Credit Card payment and return redirect URL.
+
+        Calls POST /v1.02/creditcard/create on the new API (ApiKey header auth).
+        Returns redirectUrl — the browser is sent to euPago's hosted 3DS form.
+        After completion euPago redirects to /payment/eupago/return.
+
+        :return: dict with 'api_url' key containing the euPago redirect URL
+        :rtype: dict
+        """
+        payload = self._eupago_prepare_cc_payload()
+        _logger.info(
+            "Sending Credit Card create request for transaction %s:\n%s",
+            self.reference,
+            pprint.pformat(payload),
+        )
+        try:
+            response_data = self._send_api_request(
+                "POST", const.ENDPOINT_CC, json=payload
+            )
+        except ValidationError as error:
+            _logger.error(
+                "CC create failed for transaction %s: %s", self.reference, error
+            )
+            self._set_error(str(error))
+            return {}
+
+        # Check response status
+        tx_status = response_data.get(const.MBWAY_RESP_STATUS, "")
+        if tx_status != "Success":
+            error_msg = response_data.get("text", tx_status or _("Unknown error."))
+            _logger.error(
+                "euPago CC error for transaction %s: %s", self.reference, error_msg
+            )
+            self._set_error(_("euPago Credit Card error: %s", error_msg))
+            return {}
+
+        # Store transactionID as provider_reference so we can verify on return
+        self.provider_reference = response_data.get(const.MBWAY_RESP_TRANSACTION_ID, "")
+
+        redirect_url = response_data.get(const.CC_RESP_REDIRECT_URL, "")
+        if not redirect_url:
+            _logger.error(
+                "euPago CC: no redirectUrl in response for transaction %s",
+                self.reference,
+            )
+            self._set_error(_("euPago Credit Card: no redirect URL received."))
+            return {}
+
+        _logger.info(
+            "CC redirect URL obtained for transaction %s: %s",
+            self.reference,
+            redirect_url,
+        )
+
+        return {"api_url": redirect_url}
+
+    def _eupago_prepare_cc_payload(self):
+        """Build the JSON payload for the Credit Card create endpoint.
+
+        New API (ApiKey Header Auth) — API key is in the Authorization header.
+        Endpoint: POST /api/v1.02/creditcard/create
+        Docs: https://eupago.readme.io/reference/credit-card
+
+        successUrl/failUrl/backUrl use different `outcome` params so the return
+        controller can immediately set the correct Odoo transaction state, rather
+        than waiting solely on the async webhook.
+
+        :return: dict payload
+        :rtype: dict
+        """
+        base_url = self.provider_id.get_base_url() or ""
+        if "localhost" in base_url:
+            base_url = base_url.replace("localhost", "127.0.0.1")
+
+        if not base_url.endswith("/"):
+            base_url += "/"
+
+        return_base = urljoin(base_url, EupagoController._cc_return_url.lstrip("/"))
+
+        ref_param = f"ref={self.reference}"
+
+        success_url = f"{return_base}?{ref_param}&outcome=success"
+
+        # Calculate fees and update SO if needed
+        self._eupago_calculate_fees()
+
+        return {
+            const.MB_REQ_API_KEY: self.provider_id.cr_eupago_api_key,  # 'chave'
+            const.MB_REQ_AMOUNT: round(self.amount, 2),  # 'valor'
+            const.MB_REQ_IDENTIFIER: self.reference,  # 'id'
+            const.MB_REQ_DEADLINE: deadline,  # 'data_fim'
+            const.MB_REQ_ALLOW_MULTI: 0,  # 'per_dup' — single payment
+        }
+
+    # =========================================================================
+    # MB WAY — Mobile Push Flow
+    # =========================================================================
+
+    def _eupago_render_mbway(self, processing_values):
+        """Send MB WAY payment push notification and return pending UI values.
+
+        Calls POST /v1.02/mbway/create on the new API (ApiKey header auth).
+        Returns a pending state — customer must confirm in their MB WAY app
+        within 5 minutes. The webhook fires when confirmed.
+
+        Phone number is read from processing_values['cr_eupago_phone'] which
+        is collected by the inline form in the checkout UI.
+
+        :param dict processing_values: Must contain 'cr_eupago_phone' key
+        :return: dict with provider and status keys for the inline template
+        :rtype: dict
+        """
+        phone = processing_values.get("cr_eupago_phone", "")
+        if not phone:
+            _logger.warning(
+                "MB WAY transaction %s: no phone number provided.", self.reference
+            )
+            self._set_error(_("Please provide a phone number for MB WAY payment."))
+            return {}
+
+        payload = self._eupago_prepare_mbway_payload(phone)
+        _logger.info(
+            "Sending MB WAY create request for transaction %s:\n%s",
+            self.reference,
+            pprint.pformat(payload),
+        )
+        try:
+            response_data = self._send_api_request(
+                "POST", const.ENDPOINT_MBWAY, json=payload
+            )
+        except ValidationError as error:
+            _logger.error(
+                "MB WAY create failed for transaction %s: %s", self.reference, error
+            )
+            self._set_error(str(error))
+            return {}
+
+        # Check response status
+        tx_status = response_data.get(const.MBWAY_RESP_STATUS, "")
+        if tx_status != "Success":
+            error_msg = response_data.get("text", tx_status or _("Unknown error."))
+            _logger.error(
+                "euPago MB WAY error for transaction %s: %s", self.reference, error_msg
+            )
+            self._set_error(_("euPago MB WAY error: %s", error_msg))
+            return {}
+
+        # Store euPago's transaction ID as provider_reference
+        self.provider_reference = response_data.get(const.MBWAY_RESP_TRANSACTION_ID, "")
+
+        _logger.info(
+            "MB WAY push sent for transaction %s. transactionID=%s",
+            self.reference,
+            self.provider_reference,
+        )
+
+        # Mark as pending — waiting for customer to confirm in MB WAY app
+        self._set_pending()
+
+        return {
+            "cr_eupago_provider": "mbway",
+            "cr_eupago_amount": f"{self.amount:.2f}",
+            "cr_eupago_currency": self.currency_id.name,
+            "cr_eupago_phone": phone,
+        }
+
+    def _eupago_prepare_mbway_payload(self, phone):
+        """Build the JSON payload for the MB WAY create endpoint.
+
+        New API (ApiKey Header Auth) — API key is in the Authorization header.
+        Endpoint: POST /api/v1.02/mbway/create
+        Docs: https://eupago.readme.io/reference/mbway
+
+        :param str phone: Customer's MB WAY phone number (9 digits, Portugal)
+        :return: dict payload
+        :rtype: dict
+        """
+        # Calculate fees and update SO if needed
+        self._eupago_calculate_fees()
+
         return {
             "payment": {
                 const.MBWAY_REQ_IDENTIFIER: self.reference,
@@ -430,6 +639,9 @@ class PaymentTransaction(models.Model):
         back_url = f"{return_base}?{ref_param}&outcome=back"
 
         customer_name = self.partner_name or self.partner_id.name or "Test Customer"
+
+        # Calculate fees and update SO if needed
+        self._eupago_calculate_fees()
 
         return {
             "payment": {
@@ -604,12 +816,13 @@ class PaymentTransaction(models.Model):
         # Refund via euPago API (MB WAY and Credit Card)
         if (
             not self.source_transaction_id
-            or not self.source_transaction_id.provider_reference
+            or not self.source_transaction_id.cr_eupago_trid
         ):
             raise ValidationError(
                 _(
                     "Cannot refund: original transaction has no euPago Transaction ID (TRID). "
-                    "Please process the refund manually in the euPago Backoffice."
+                    "This usually means the euPago webhook has not arrived yet. "
+                    "Please wait a moment and try again, or process the refund manually in the euPago Backoffice."
                 )
             )
 
@@ -617,13 +830,8 @@ class PaymentTransaction(models.Model):
             "amount": round(abs(self.amount), 2),
         }
 
-        # Use the dedicated webhook TRID field if available (numeric ID for Management API);
-        # otherwise fall back to provider_reference (e.g., if refunding right after payment
-        # and webhook hasn't arrived yet).
-        refund_trid = (
-            self.source_transaction_id.cr_eupago_trid
-            or self.source_transaction_id.provider_reference
-        )
+        # The Management API requires the numeric webhook TRID
+        refund_trid = self.source_transaction_id.cr_eupago_trid
         endpoint = const.ENDPOINT_MANAGEMENT_REFUND.format(refund_trid)
 
         _logger.info(
@@ -749,8 +957,148 @@ class PaymentTransaction(models.Model):
             # Link it by writing to transaction_ids if needed
             self.invoice_ids = [(4, credit_note.id)]
 
+            # Mark as created
             self.cr_eupago_cn_created = True
             _logger.info("Successfully generated and posted Credit Note %s for refund tx %s", credit_note.name, self.reference)
 
         except Exception as e:
-            _logger.exception("Failed to generate Credit Note for refund tx %s: %s", self.reference, e)
+            _logger.exception("Error while generating Credit Note for euPago refund tx %s: %s", self.reference, e)
+
+    # =========================================================================
+    # EXTRA FEES HELPER
+    # =========================================================================
+
+    def _eupago_calculate_fees(self):
+        """Helper method to calculate extra fees dynamically and store them on the transaction."""
+        self.ensure_one()
+        
+        if self.provider_code not in const.ALL_PROVIDER_CODES:
+            return
+            
+        provider = self.provider_id
+        if not provider.cr_eupago_is_extra_fees:
+            self.cr_eupago_fees = 0.0
+            return
+
+        base_amount = self.amount
+        total_fixed_fees = 0.0
+        total_percent_fees = 0.0
+
+        partner_country = False
+
+        # 1. Try to get country from Sales Order delivery address
+        if hasattr(self, "sale_order_ids") and getattr(self, "sale_order_ids", False):
+            so = self.sale_order_ids[:1]
+            if so.partner_shipping_id:
+                partner_country = so.partner_shipping_id.country_id
+
+        # 2. Try to get country from Invoice delivery address or invoice partner
+        if not partner_country and hasattr(self, "invoice_ids") and getattr(self, "invoice_ids", False):
+            invoice = self.invoice_ids[:1]
+            if hasattr(invoice, "partner_shipping_id") and invoice.partner_shipping_id:
+                partner_country = invoice.partner_shipping_id.country_id
+            elif invoice.partner_id:
+                partner_country = invoice.partner_id.country_id
+
+        # 3. Fallback to transaction partner
+        if not partner_country:
+            partner_country = self.partner_id.country_id
+
+        company_country = self.company_id.country_id
+        is_international = (
+            partner_country
+            and company_country
+            and partner_country.id != company_country.id
+        )
+
+        if is_international:
+            if not provider.cr_eupago_is_free_international:
+                total_fixed_fees = provider.cr_eupago_fix_international_fees
+                total_percent_fees = (provider.cr_eupago_var_international_fees * base_amount) / 100
+            else:
+                if base_amount < provider.cr_eupago_free_international_amount:
+                    total_fixed_fees = provider.cr_eupago_fix_international_fees
+                    total_percent_fees = (provider.cr_eupago_var_international_fees * base_amount) / 100
+        else:
+            if not provider.cr_eupago_is_free_domestic:
+                total_fixed_fees = provider.cr_eupago_fix_domestic_fees
+                total_percent_fees = (provider.cr_eupago_var_domestic_fees * base_amount) / 100
+            else:
+                if base_amount < provider.cr_eupago_free_domestic_amount:
+                    total_fixed_fees = provider.cr_eupago_fix_domestic_fees
+                    total_percent_fees = (provider.cr_eupago_var_domestic_fees * base_amount) / 100
+
+        self.cr_eupago_fees = round(total_fixed_fees + total_percent_fees, 2)
+        
+        if self.cr_eupago_fees > 0:
+            self._add_eupago_fee_line_to_document()
+            self.amount += self.cr_eupago_fees
+
+    def _add_eupago_fee_line_to_document(self):
+        """
+        Add a fee line to the associated sale order or invoice using the provider's fees_product
+        and the calculated fees amount. Ensures only one fee line exists.
+        """
+        self.ensure_one()
+        provider = self.provider_id
+        fees_product = provider.cr_eupago_fees_product
+        
+        if not fees_product or self.cr_eupago_fees <= 0:
+            return
+
+        # 1. Handle Sales Order
+        if hasattr(self, "sale_order_ids") and getattr(self, "sale_order_ids", False):
+            so = self.sale_order_ids[:1]
+            existing_fee_lines = so.order_line.filtered(
+                lambda line: line.product_id == fees_product.product_variant_id
+            )
+            if existing_fee_lines:
+                _logger.info("Removing %s existing euPago fee lines from SO %s before adding new one", len(existing_fee_lines), so.id)
+                existing_fee_lines.unlink()
+
+            fee_line_vals = {
+                "order_id": so.id,
+                "product_id": fees_product.product_variant_id.id,
+                "name": f"Payment Fee - {provider.name} ({self.reference})",
+                "product_uom_qty": 1.0,
+                "price_unit": self.cr_eupago_fees,
+            }
+            new_line = self.env["sale.order.line"].create(fee_line_vals)
+            _logger.info("Added euPago fee line to SO %s: %s (amount: %.2f)", so.id, new_line.name, self.cr_eupago_fees)
+            so._compute_amounts()
+            so._compute_tax_totals()
+            return
+
+        # 2. Handle Invoice directly (No Sales Order)
+        if hasattr(self, "invoice_ids") and getattr(self, "invoice_ids", False):
+            invoice = self.invoice_ids[:1]
+            existing_fee_lines = invoice.invoice_line_ids.filtered(
+                lambda line: line.product_id == fees_product.product_variant_id
+            )
+            
+            try:
+                was_posted = invoice.state == 'posted'
+                if was_posted:
+                    invoice.button_draft()
+                
+                if existing_fee_lines:
+                    _logger.info("Removing existing euPago fee lines from Invoice %s", invoice.id)
+                    existing_fee_lines.with_context(check_move_validity=False).unlink()
+                
+                fee_line_vals = {
+                    "move_id": invoice.id,
+                    "product_id": fees_product.product_variant_id.id,
+                    "name": f"Payment Fee - {provider.name} ({self.reference})",
+                    "quantity": 1.0,
+                    "price_unit": self.cr_eupago_fees,
+                }
+                new_line = self.env["account.move.line"].with_context(check_move_validity=False).create(fee_line_vals)
+                _logger.info("Added euPago fee line to Invoice %s: %s (amount: %.2f)", invoice.id, new_line.name, self.cr_eupago_fees)
+                
+                invoice.with_context(check_move_validity=False)._compute_tax_totals()
+                
+                if was_posted:
+                    invoice.action_post()
+            except Exception as e:
+                _logger.error("Could not add fee line to invoice %s: %s", invoice.id, e)
+                raise ValidationError(_("Could not add payment fee to the invoice because it is posted and cannot be modified. Error: %s", e))

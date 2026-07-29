@@ -3,13 +3,13 @@
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.tools import urls
 
-import logging
-
+from odoo.addons.payment.logging import get_payment_logger
 from odoo.addons.cr_payment_eupago import const
 
 
-_logger = logging.getLogger(__name__)
+_logger = get_payment_logger(__name__)
 
 
 class PaymentProvider(models.Model):
@@ -79,6 +79,26 @@ class PaymentProvider(models.Model):
         default=99999.0,
         help="Maximum payment amount allowed for this provider.",
     )
+
+    # =========================================================================
+    # EXTRA FEES CONFIGURATION
+    # =========================================================================
+    cr_eupago_is_extra_fees = fields.Boolean(string="Add Extra Fees")
+    cr_eupago_fees_product = fields.Many2one(
+        comodel_name="product.template",
+        string="Fees Product",
+        domain=[("detailed_type", "=", "service")],
+        help="The product used to add extra fees to the Sales Order.",
+        default=lambda self: self.env.ref('cr_payment_eupago.eupago_fees_product_template', raise_if_not_found=False)
+    )
+    cr_eupago_fix_domestic_fees = fields.Float(string="Fixed Domestic Fees")
+    cr_eupago_var_domestic_fees = fields.Float(string="Variable Domestic Fees (in percent)")
+    cr_eupago_is_free_domestic = fields.Boolean(string="Free Domestic Fees if Amount is Above")
+    cr_eupago_free_domestic_amount = fields.Float(string="Domestic Total Amount")
+    cr_eupago_fix_international_fees = fields.Float(string="Fixed International Fees")
+    cr_eupago_var_international_fees = fields.Float(string="Variable International Fees (in percent)")
+    cr_eupago_is_free_international = fields.Boolean(string="Free International Fees if Amount is Above")
+    cr_eupago_free_international_amount = fields.Float(string="International Total Amount")
 
     # =========================================================================
     # FEATURE SUPPORT FLAGS
