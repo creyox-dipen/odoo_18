@@ -104,7 +104,7 @@ class EupagoController(http.Controller):
             tx_sudo = (
                 request.env["payment.transaction"]
                 .sudo()
-                ._search_by_reference(provider_code, data)
+                ._get_tx_from_notification_data(provider_code, data)
             )
             if not tx_sudo:
                 _logger.warning(
@@ -123,7 +123,7 @@ class EupagoController(http.Controller):
                 tx_sudo.provider_reference = trid
 
             # Process the payment data
-            tx_sudo._process(provider_code, data)
+            tx_sudo._process_notification_data(data)
             
             # --- NEW CUSTOM REFUND LOGIC ---
             # If this webhook confirmed a refund, generate the credit note.
@@ -180,7 +180,7 @@ class EupagoController(http.Controller):
             tx_sudo = (
                 request.env["payment.transaction"]
                 .sudo()
-                ._search_by_reference(const.PROVIDER_CODE_CC, data)
+                ._get_tx_from_notification_data(const.PROVIDER_CODE_CC, data)
             )
             if tx_sudo:
                 if outcome == "success":

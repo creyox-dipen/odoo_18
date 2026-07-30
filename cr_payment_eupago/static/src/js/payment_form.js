@@ -32,10 +32,10 @@ paymentForm.include({
 
         // Call our custom controller to process the MB WAY payment
         try {
-            await this.waitFor(rpc('/payment/cr_eupago/mbway/pay', {
+            await rpc('/payment/cr_eupago/mbway/pay', {
                 'reference': processingValues.reference,
                 'phone': phone,
-            }));
+            });
             
             // Switch view to pending notification
             const container = document.querySelector('.o_cr_eupago_mbway_container');
@@ -79,7 +79,7 @@ paymentForm.include({
             // Hard timeout — stop polling after 5 minutes
             if (attempts >= MAX_POLL_ATTEMPTS) {
                 clearInterval(pollInterval);
-                _logger.debug('euPago MB WAY poll: timeout after ' + attempts + ' attempts for ref ' + reference);
+                console.debug('euPago MB WAY poll: timeout after ' + attempts + ' attempts for ref ' + reference);
                 window.location = '/payment/status';
                 return;
             }

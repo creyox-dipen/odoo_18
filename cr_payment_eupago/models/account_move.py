@@ -15,7 +15,7 @@ class AccountMove(models.Model):
 
     def _compute_can_eupago_refund(self):
         for move in self:
-            if move.state == "posted" and move.payment_state in ("paid", "in_payment", "partial"):
+            if move.move_type == "out_invoice" and move.state == "posted" and move.payment_state in ("paid", "in_payment", "partial"):
                 # Find if there is a successful euPago Credit Card or MB WAY transaction linked to this invoice
                 # Transactions are linked via the invoice's transaction_ids field (standard payment integration)
                 has_refundable_tx = any(

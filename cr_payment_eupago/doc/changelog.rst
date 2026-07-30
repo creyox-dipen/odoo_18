@@ -1,4 +1,4 @@
-18.0.0.0(Date: 29th July, 2026)
+18.0.0.0(Date: 30th July, 2026)
 -------------------------------
 - Migrated module from version 19
 - Supports Multibanco (ATM Reference) payments directly in Odoo.

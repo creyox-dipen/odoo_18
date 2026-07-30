@@ -665,24 +665,26 @@ class PaymentTransaction(models.Model):
     # =========================================================================
 
     @api.model
-    def _extract_reference(self, provider_code, payment_data):
-        """Override of `payment` to extract the transaction reference from webhook or return URL data.
+    def _get_tx_from_notification_data(self, provider_code, notification_data):
+        """Override of `payment` to find the transaction based on the notification data."""
+        tx = super()._get_tx_from_notification_data(provider_code, notification_data)
+        if provider_code not in const.ALL_PROVIDER_CODES or len(tx) == 1:
+            return tx
 
-        - euPago webhooks (1.0) send 'identificador' parameter.
-        - Credit Card return URLs send 'ref' parameter.
-
-        :param str provider_code: The provider code
-        :param dict payment_data: The parsed webhook or return GET/POST parameters
-        :return: Our internal transaction reference (e.g. 'INV/2026/00010-1')
-        :rtype: str
-        """
-        if provider_code not in const.ALL_PROVIDER_CODES:
-            return super()._extract_reference(provider_code, payment_data)
-        return (
-            payment_data.get(const.WEBHOOK_FIELD_REFERENCE)
-            or payment_data.get("ref")
-            or payment_data.get("reference")
+        reference = (
+            notification_data.get(const.WEBHOOK_FIELD_REFERENCE)
+            or notification_data.get("ref")
+            or notification_data.get("reference")
         )
+        if not reference:
+            raise ValidationError("euPago: " + _("Received data with missing reference."))
+
+        tx = self.search([("reference", "=", reference), ("provider_code", "=", provider_code)])
+        if not tx:
+            raise ValidationError(
+                "euPago: " + _("No transaction found matching reference %s.", reference)
+            )
+        return tx
 
     # =========================================================================
     # AMOUNT EXTRACTION — used by _process
@@ -711,7 +713,7 @@ class PaymentTransaction(models.Model):
     # STATE UPDATES — apply euPago webhook data to transaction state
     # =========================================================================
 
-    def _apply_updates(self, payment_data):
+    def _process_notification_data(self, notification_data):
         """Override of `payment` to update transaction state from euPago data.
 
         For webhooks (1.0): only 'paid' notifications are sent - euPago does
@@ -720,15 +722,15 @@ class PaymentTransaction(models.Model):
 
         For CC return page: we re-fetch the payment status from euPago.
 
-        :param dict payment_data: Parsed webhook parameters or API response
+        :param dict notification_data: Parsed webhook parameters or API response
         """
         if self.provider_code not in const.ALL_PROVIDER_CODES:
-            return super()._apply_updates(payment_data)
+            return super()._process_notification_data(notification_data)
 
         # Check if this is a webhook notification (has 'identificador' field)
-        if const.WEBHOOK_FIELD_REFERENCE in payment_data:
+        if const.WEBHOOK_FIELD_REFERENCE in notification_data:
             # Validate API Key to prevent webhook spoofing
-            received_api_key = payment_data.get("chave_api")
+            received_api_key = notification_data.get("chave_api")
             if received_api_key != self.provider_id.cr_eupago_api_key:
                 _logger.warning(
                     "euPago webhook verification failed for transaction %s: invalid API key.",
@@ -745,7 +747,7 @@ class PaymentTransaction(models.Model):
             # Store TRID (euPago's webhook transaction ID) for future refunds.
             # This is a NUMERIC ID that the Management API requires for refunds,
             # which is different from the UUID-style transactionID in the initial create response.
-            trid = payment_data.get(const.WEBHOOK_FIELD_TRANSACTION_ID, "")
+            trid = notification_data.get(const.WEBHOOK_FIELD_TRANSACTION_ID, "")
             if trid:
                 self.cr_eupago_trid = trid
                 _logger.info(
@@ -761,7 +763,7 @@ class PaymentTransaction(models.Model):
         else:
             # This is a direct API response (e.g., from CC return verification)
             # The 'transactionStatus' field indicates the status
-            tx_status = payment_data.get(const.MBWAY_RESP_STATUS, "")
+            tx_status = notification_data.get(const.MBWAY_RESP_STATUS, "")
 
             if tx_status == "Success":
                 self._set_done()
@@ -941,7 +943,7 @@ class PaymentTransaction(models.Model):
                 lines_to_keep.with_context(check_move_validity=False).write({
                     "price_unit": refund_amount,
                     "quantity": 1.0,
-                    "tax_id": [(5, 0, 0)], # Remove taxes to ensure exact amount match, or keep taxes?
+                    "tax_ids": [(5, 0, 0)], # Remove taxes to ensure exact amount match, or keep taxes?
                 })
                 # Delete other product lines
                 (credit_note.invoice_line_ids - lines_to_keep).with_context(check_move_validity=False).unlink()
