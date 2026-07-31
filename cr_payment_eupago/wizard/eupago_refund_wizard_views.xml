@@ -13,6 +13,10 @@
                 </group>
                 <p class="text-muted">
                     This will process a refund via the euPago API. Once the refund is confirmed successful by euPago, a Credit Note for this exact amount will be automatically generated and reconciled against the refund.
+                    <br/><br/>
+                    <strong>Note:</strong> Please make sure that the Client ID and Client Secret are configured in the euPago payment provider settings, and that your Webhook URL in <strong>URL</strong> field is correctly set inside the euPago Backoffice.
+                    <br/><br/>
+                    <strong>Webhook URL Format:</strong> https://YOUR_ODOO_DOMAIN/payment/cr_eupago/webhook
                 </p>
                 <footer>
                     <button string="Confirm Refund" type="object" name="action_confirm_refund" class="btn-primary" data-hotkey="q"/>

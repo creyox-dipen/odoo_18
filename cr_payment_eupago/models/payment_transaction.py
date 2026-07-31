@@ -885,7 +885,14 @@ class PaymentTransaction(models.Model):
             raise ValidationError(_("euPago refund failed: %s", error_msg))
 
     def _set_done(self, **kwargs):
-        """Override of `payment` to intercept successful refunds and generate Credit Notes."""
+        """Override of `payment` to intercept successful transactions.
+        For normal payments, we add the fee line to the document so the total matches before reconciliation.
+        For refunds, we generate Credit Notes.
+        """
+        for tx in self:
+            if tx.operation != "refund" and getattr(tx, "cr_eupago_fees", 0.0) > 0:
+                tx._add_eupago_fee_line_to_document()
+                
         res = super()._set_done(**kwargs)
         for tx in self.filtered(lambda t: t.operation == "refund" and t.provider_code in const.ALL_PROVIDER_CODES):
             tx._generate_refund_credit_note()
@@ -1031,7 +1038,6 @@ class PaymentTransaction(models.Model):
         self.cr_eupago_fees = round(total_fixed_fees + total_percent_fees, 2)
         
         if self.cr_eupago_fees > 0:
-            self._add_eupago_fee_line_to_document()
             self.amount += self.cr_eupago_fees
 
     def _add_eupago_fee_line_to_document(self):
