@@ -261,6 +261,15 @@
                                 <p style="color: #64748b; font-size: 16px; line-height: 1.7;">Effortlessly link and synchronize multiple Odoo user accounts with different external calendar providers simultaneously.</p>
                             </div>
                         </div>
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="p-4 h-100 shadow-sm rounded-4 border" style="background-color: #ffffff;">
+                                <div class="d-flex align-items-center justify-content-center rounded-3 shadow-sm mb-4" style="width: 60px; height: 60px; background-color: #f97316;">
+                                    <i class="fa fa-crosshairs" style="color: white; font-size: 24px;"></i>
+                                </div>
+                                <h3 style="font-weight: 800; color: #1e293b; font-size: 21px; margin-bottom: 12px;">Target Account Selection</h3>
+                                <p style="color: #64748b; font-size: 16px; line-height: 1.7;">Select a specific target CalDAV account for each event to keep events separate and prevent mixing them between accounts.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -625,6 +634,21 @@
                         <div id="faq3" class="panel-collapse collapse show" role="tabpanel">
                             <div class="panel-body" style="padding: 0 25px 25px 72px; color: #64748b; font-size: 16px; line-height: 1.6;">
                                 The synchronization flow depends on the direction chosen in your account settings (Bidirectional, Pull-only, or Push-only) to perfectly suit your requirements.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default shadow-sm mb-4" style="border-radius: 20px; border: 1px solid #f1f5f9; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading" role="tab" style="padding: 25px; background-color: #ffffff;">
+                            <h4 class="panel-title" style="margin: 0;">
+                                <a role="button" class="d-flex align-items-center text-decoration-none fw-bold" style="font-size: 17px; color: #1e293b; cursor: default;">
+                                    <span class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background-color: #eff6ff; color: #10488A; flex-shrink: 0;"><i class="fa fa-question"></i></span>
+                                    Can I choose which account an event syncs to if I have multiple connected?
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="faq_account_selection" class="panel-collapse collapse show" role="tabpanel">
+                            <div class="panel-body" style="padding: 0 25px 25px 72px; color: #64748b; font-size: 16px; line-height: 1.6;">
+                                Yes! You can select a specific "Target CalDAV Account" directly on the event form in Odoo. This ensures the event is only pushed to that chosen account (e.g., keeping personal and work events completely separate).
                             </div>
                         </div>
                     </div>
