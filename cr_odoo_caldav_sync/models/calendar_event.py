@@ -30,6 +30,12 @@ class CalendarEvent(models.Model):
         help="UUID used as the iCal UID for this event. Generated automatically.",
     )
 
+    caldav_account_id = fields.Many2one(
+        "caldav.account",
+        string="Target CalDAV Account",
+        help="The specific CalDAV account this event belongs to. If not set, it syncs to all bidirectional accounts.",
+    )
+
     caldav_original_start = fields.Datetime(
         string="CalDAV Original Start",
         copy=False,

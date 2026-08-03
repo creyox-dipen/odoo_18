@@ -2,8 +2,6 @@
 # Part of Creyox Technologies.
 
 import base64
-import hashlib
-from cryptography.fernet import Fernet
 import json
 import logging
 import ssl
@@ -81,17 +79,7 @@ class CalDAVAccount(models.Model):
     password = fields.Char(
         string="Password",
         required=False,
-        store=False,
         help="Login password for the CalDAV server.",
-    )
-    password_encrypted = fields.Char(
-        string="Encrypted Password",
-        copy=False,
-    )
-    change_password = fields.Boolean(
-        string="Tick to change the password",
-        default=False,
-        store=False,
     )
     server_type = fields.Selection(
         selection=[
@@ -109,24 +97,6 @@ class CalDAVAccount(models.Model):
         default="other",
         required=True,
     )
-    sync_model = fields.Selection(
-        selection=[
-            ("calendar.event", "Calendar Events"),
-            ("project.task", "Project Tasks"),
-            ("fsm.order", "Field Service Orders"),
-            ("maintenance.request", "Maintenance Requests"),
-        ],
-        string="Sync Model",
-        default="calendar.event",
-        required=True,
-        help="Select the Odoo model whose events/records should be synced with this account.",
-    )
-    auto_create_users = fields.Boolean(
-        string="Auto-create Users",
-        default=False,
-        help="When pulling a task or maintenance request from Nextcloud, if an attendee email does not exist as an Odoo user, create it automatically.",
-    )
-
 
     google_client_id = fields.Char(
         string="Google Client ID",
@@ -199,22 +169,6 @@ class CalDAVAccount(models.Model):
         help=(
             "When enabled, new contacts are automatically created for unknown "
             "attendee email addresses found in CalDAV events."
-        ),
-    )
-    auto_create_persons = fields.Boolean(
-        string="Auto-create Persons",
-        default=False,
-        help=(
-            "Field Service Orders only: when pulling from CalDAV, if an attendee email "
-            "does not match an existing FSM Worker (fsm.person), create one automatically."
-        ),
-    )
-    auto_create_locations = fields.Boolean(
-        string="Auto-create Locations",
-        default=False,
-        help=(
-            "Field Service Orders only: when pulling from CalDAV, if the LOCATION string "
-            "does not match any existing FSM Location (fsm.location), create one automatically."
         ),
     )
     last_ctag = fields.Char(
@@ -314,7 +268,7 @@ class CalDAVAccount(models.Model):
         For Google Calendar accounts (server_type == 'google'), returns a
         'Bearer <access_token>' header after ensuring the token is fresh.
         For all other server types, falls back to HTTP Basic Authentication
-        using the decrypted password.
+        using the configured username and password.
 
         :return: 'Basic ...' or 'Bearer ...' authorization header string.
         :rtype: str
@@ -323,8 +277,7 @@ class CalDAVAccount(models.Model):
         if self.server_type == "google":
             self._refresh_google_token()
             return f'Bearer {self.google_access_token or ""}'
-        password = self._decrypt_password(self.password_encrypted)
-        credentials = f'{self.username or ""}:{password}'
+        credentials = f'{self.username or ""}:{self.password or ""}'
         encoded = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
         return f"Basic {encoded}"
 
@@ -702,17 +655,7 @@ class CalDAVAccount(models.Model):
             )
             raw_etag = headers.get("ETag", headers.get("etag", ""))
 
-            if not raw_etag and self.sync_model != "calendar.event":
-                # If the server doesn't return an ETag on PUT, fetch it now to avoid conflict/false pull on next sync
-                _logger.info(
-                    "[%s] No ETag returned on PUT. Fetching fresh ETag now for url: %s",
-                    self.server_type, url
-                )
-                try:
-                    raw_etag, _ = self._fetch_ical_with_etag(url)
-                except Exception as fetch_ex:
-                    _logger.warning("Failed to fetch fresh ETag after PUT: %s", fetch_ex)
-            elif self.server_type == "zoho":
+            if self.server_type == "zoho":
                 body_str = data.decode("utf-8", errors="replace") if data else "<empty>"
                 _logger.info(
                     "[ZOHO] PUT attempt results: Status=%s, ETag=%s, Body=%s",
@@ -720,8 +663,14 @@ class CalDAVAccount(models.Model):
                     raw_etag,
                     body_str[:500],
                 )
+                if not raw_etag:
+                    # If Zoho doesn't return an ETag on PUT, fetch it now to avoid conflict on next sync
+                    _logger.warning(
+                        "[ZOHO] No ETag returned on PUT. Fetching fresh ETag now."
+                    )
+                    raw_etag, _ = self._fetch_ical_with_etag(url) or ("", None)
 
-            return (raw_etag or "").strip('"')
+            return raw_etag.strip('"')
 
         try:
             return _attempt(etag)
@@ -1097,114 +1046,3 @@ class CalDAVAccount(models.Model):
                 })
         except Exception as e:
             _logger.warning("Could not reset stuck CalDAV accounts/logs on startup: %s", e)
-
-    def _get_encryption_key(self):
-        """Retrieve or generate encryption key using Odoo database secret.
-
-        This key is derived from the system secret stored in the configuration
-        parameters to ensure the symmetric encryption key is unique per database.
-        """
-        icp = self.env['ir.config_parameter'].sudo()
-        secret = icp.get_param('database.secret') or 'cr_odoo_caldav_sync_default_secret_key_fallback_123'
-        hasher = hashlib.sha256()
-        hasher.update(secret.encode('utf-8'))
-        return base64.urlsafe_b64encode(hasher.digest())
-
-    def _encrypt_password(self, password):
-        """Encrypt password using symmetric encryption.
-
-        :param str password: The plaintext password.
-        :return: Encrypted password string.
-        :rtype: str
-        """
-        if not password:
-            return False
-        key = self._get_encryption_key()
-        f = Fernet(key)
-        encrypted_bytes = f.encrypt(password.encode('utf-8'))
-        return encrypted_bytes.decode('utf-8')
-
-    def _decrypt_password(self, encrypted_password):
-        """Decrypt password using symmetric encryption.
-
-        :param str encrypted_password: The encrypted password string.
-        :return: Decrypted plaintext password.
-        :rtype: str
-        """
-        if not encrypted_password:
-            return ''
-        try:
-            key = self._get_encryption_key()
-            f = Fernet(key)
-            decrypted_bytes = f.decrypt(encrypted_password.encode('utf-8'))
-            return decrypted_bytes.decode('utf-8')
-        except Exception as e:
-            _logger.info("Failed to decrypt password: %s", str(e))
-            return ''
-
-    def init(self):
-        """Migrate existing plaintext passwords to encrypted passwords if needed.
-
-        Checks if the legacy 'password' column exists in the database. If present,
-        it reads any plaintext passwords, encrypts them, saves them into the new
-        'password_encrypted' column, and logs the process.
-        """
-        super(CalDAVAccount, self).init()
-        self.env.cr.execute("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name = 'caldav_account' AND column_name = 'password'
-        """)
-        if self.env.cr.fetchone():
-            self.env.cr.execute("""
-                SELECT id, password 
-                FROM caldav_account 
-                WHERE password IS NOT NULL AND password != '' 
-                  AND (password_encrypted IS NULL OR password_encrypted = '')
-            """)
-            rows = self.env.cr.fetchall()
-            if rows:
-                _logger.info("Migrating %s plaintext CalDAV passwords to encrypted format", len(rows))
-                for account_id, plain_pwd in rows:
-                    encrypted_pwd = self._encrypt_password(plain_pwd)
-                    self.env.cr.execute("""
-                        UPDATE caldav_account 
-                        SET password_encrypted = %s 
-                        WHERE id = %s
-                    """, (encrypted_pwd, account_id))
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Override create to encrypt plaintext password input.
-
-        :param list vals_list: List of values dicts for new records.
-        :return: Created caldav.account records.
-        """
-        for vals in vals_list:
-            if 'password' in vals:
-                password = vals.pop('password')
-                if password:
-                    vals['password_encrypted'] = self._encrypt_password(password)
-        return super(CalDAVAccount, self).create(vals_list)
-
-    def write(self, vals):
-        """Override write to encrypt password only if change_password is confirmed.
-
-        If the password is provided in vals, it is only encrypted and saved if
-        the user ticked the change_password checkbox (or it was already checked).
-        The change_password checkbox is reset to False afterwards.
-
-        :param dict vals: Field values to update.
-        :return: True if update succeeded.
-        :rtype: bool
-        """
-        if 'password' in vals:
-            password = vals.pop('password')
-            if 'change_password' not in vals or vals.get('change_password'):
-                if password:
-                    vals['password_encrypted'] = self._encrypt_password(password)
-                else:
-                    vals['password_encrypted'] = False
-                if 'change_password' in vals:
-                    vals['change_password'] = False
-        return super(CalDAVAccount, self).write(vals)

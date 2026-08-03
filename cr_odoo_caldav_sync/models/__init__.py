@@ -7,7 +7,4 @@ from . import (
     caldav_sync_service,
     calendar_event,
     res_config_settings,
-    project_task,
-    fsm_order,
-    maintenance_request,
 )

@@ -47,4 +47,15 @@ action = env['caldav.sync.service'].action_sync_current_user()
         </field>
     </record>
 
+    <record id="view_calendar_event_form_caldav" model="ir.ui.view">
+        <field name="name">calendar.event.form.caldav</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@class='d-flex align-items-baseline']" position="after">
+                <field name="caldav_account_id" string="Target CalDAV Account" options="{'no_create': True}" domain="[('user_id', '=', uid)]" groups="base.group_user"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
