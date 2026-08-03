@@ -21,17 +21,20 @@ class PaymentProvider(models.Model):
         comodel_name="account.account",
         domain=[("account_type", "=", "asset_cash")],
     )
+    stripe_fees_expense_account_id = fields.Many2one(
+        string="Stripe Fees Expense Account",
+        comodel_name="account.account",
+        domain=[("account_type", "=", "expense")],
+        help="Expense account used to post Stripe processing fees",
+    )
 
     def action_stripe_create_webhook(self):
         """Create or update a webhook with additional events and return a feedback notification.
-
         Note: This action only works for instances using a public URL
-
         :return: The feedback notification
         :rtype: dict
         """
         self.ensure_one()
-
         if not self.stripe_secret_key:
             message = _(
                 "You cannot create a Stripe Webhook if your Stripe Secret Key is not set."
@@ -47,13 +50,11 @@ class PaymentProvider(models.Model):
                     "next": {"type": "ir.actions.act_window_close"},
                 },
             }
-
         webhook_url = self._get_stripe_webhook_url()
         extended_events = list(
             set(const.HANDLED_WEBHOOK_EVENTS)
             | {"charge.succeeded", "charge.refunded", "payout.paid"}
         )
-
         try:
             # List existing webhook endpoints
             endpoints = self._stripe_make_request("webhook_endpoints", method="GET")
@@ -65,7 +66,6 @@ class PaymentProvider(models.Model):
                 ),
                 None,
             )
-
             if existing_endpoint:
                 current_events = set(existing_endpoint.get("enabled_events", []))
                 if current_events != set(extended_events):
@@ -109,14 +109,12 @@ class PaymentProvider(models.Model):
                     "Created new Stripe webhook endpoint with events: %s",
                     extended_events,
                 )
-
         except Exception as e:
             _logger.info("Error while setting up Stripe webhook: %s", str(e))
             message = _(
                 "An error occurred while setting up the Stripe Webhook. Please try again."
             )
             notification_type = "danger"
-
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",

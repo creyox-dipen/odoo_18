@@ -1,4 +1,7 @@
-18.0.0.0(Date: 15th October,2025)
+18.0.0.0(Date: 31st July,2026)
 -------------------------------
 
- [ADDED] Developed in version 18.0.0.0
+- Migrated and added all features of enterprise version.
+- fees account selectable in payment provider.
+- used partner's receivable account instead of hardcoded account in statement line.
+- auto reconcile credit note for refund statement.

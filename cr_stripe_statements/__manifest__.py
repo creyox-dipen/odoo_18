@@ -4,7 +4,8 @@
     "name": "Advanced Stripe Bank Statement Connector – Real-Time Sync & Automated Accounting",
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
-    "support": "support@creyox.com",
+    "support": "https://www.creyox.com/helpdesk",
+    "live_test_url": "https://www.creyox.com/helpdesk?module_tech_name=cr_stripe_statements&version=18.0",
     "category": "Accounting",
     "summary": """
     Automatically sync Stripe transactions, fees, refunds, and payouts into Odoo bank statements in real time using webhooks. Accurate, fast, and error-free.
@@ -99,25 +100,9 @@
 
         <hr/>
 
-        <p>
-        For custom Odoo integrations and CRM enhancements, visit 
-        <a href="#">Creyox Technologies</a>
-        </p>
-
-        <p>
-        Watch the youtube video, visit 
-        <a href="#">Creyox Technologies YouTube Videos</a>
-        </p>
-
-        <p>
-        Read our blog post, visit 
-        <a href="#">Creyox Technologies Blogs</a>
-        </p>
-
-        <p>
-        Visit Our Linkedin Page 
-        <a href="#">Creyox Technologies Linkedin Page</a>
-        </p>
+        <p>For custom Odoo payment integrations, visit <a href="https://creyox.com">creyox.com</a></p>
+        <p>Watch the YouTube video: <a href="https://youtu.be/4FevgJck7Zs">Stripe Statement Collection</a></p>
+        <p>Read our blog: <a href="https://creyox.com/blog">https://creyox.com/blog</a></p>
 
     """,
     "depends": ["base", "payment_stripe", "account"],
@@ -126,7 +111,6 @@
         "data/data.xml",
         "views/payment_provider.xml",
         "views/account_payment.xml",
-        "views/res_config_settings.xml",
     ],
     "external_dependencies": {"python": ["stripe"]},
     "images": ["static/description/banner.png"],

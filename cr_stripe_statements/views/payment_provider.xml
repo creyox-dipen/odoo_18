@@ -10,6 +10,8 @@
                     <field name="is_stripe_collection" invisible="code != 'stripe'"/>
                     <field name="stripe_fees_partner" invisible="code != 'stripe'"/>
                     <field name="transfer_account" invisible="code != 'stripe'"/>
+                    <field name="stripe_fees_expense_account_id" invisible="code != 'stripe'"/>
+
                 </group>
             </xpath>
         </field>
