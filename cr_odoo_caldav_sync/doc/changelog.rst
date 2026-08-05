@@ -10,3 +10,4 @@
 -------------------------------
 
 - Added the ability to select a specific target CalDAV account for each event to keep events separate and prevent mixing them between accounts.
+- Added support for webhook sync for Google server

@@ -232,7 +232,7 @@ class CalDAVSyncService(models.AbstractModel):
                     occ_orig_start = occ.caldav_original_start or occ.start
                     occ_orig_date = occ_orig_start.date() if hasattr(occ_orig_start, "date") else occ_orig_start
                     occ_start_orig = datetime.combine(occ_orig_date, base_start_time)
-                    
+
                     try:
                         occ_rid_srv = pytz.utc.localize(occ_start_orig).astimezone(server_tz)
                     except Exception:
@@ -1328,7 +1328,7 @@ class CalDAVSyncService(models.AbstractModel):
                         account_vals["sync_progress"] = _("Completed successfully.")
                     else:
                         details_summary = stats_log["details"][:100] + "..." if len(stats_log["details"]) > 100 else \
-                        stats_log["details"]
+                            stats_log["details"]
                         account_vals["sync_progress"] = _("Failed: %s") % details_summary
                     account.sudo().write(account_vals)
                     self.env.cr.commit()
@@ -3182,25 +3182,25 @@ class CalDAVSyncService(models.AbstractModel):
                     "caldav.event.map"]
 
                 is_deletion = occ_map and occ_map.last_odoo_write is False
-                
+
                 # Check Zoho-specific occurrence field differences from the base event
                 time_diff = False
                 if occ.start and base_event.start:
                     time_diff = (
-                        occ.start.hour != base_event.start.hour
-                        or occ.start.minute != base_event.start.minute
-                        or occ.allday != base_event.allday
+                            occ.start.hour != base_event.start.hour
+                            or occ.start.minute != base_event.start.minute
+                            or occ.allday != base_event.allday
                     )
                 privacy_diff = (occ.privacy or "public") != (base_event.privacy or "public")
                 alarms_diff = sorted(occ.alarm_ids.ids) != sorted(base_event.alarm_ids.ids)
                 attendees_diff = sorted(occ.partner_ids.ids) != sorted(base_event.partner_ids.ids)
 
                 differs = occ.active and (
-                    self._occurrence_differs_from_base(occ, base_event)
-                    or time_diff
-                    or privacy_diff
-                    or alarms_diff
-                    or attendees_diff
+                        self._occurrence_differs_from_base(occ, base_event)
+                        or time_diff
+                        or privacy_diff
+                        or alarms_diff
+                        or attendees_diff
                 )
 
                 last_sync = (
@@ -3245,7 +3245,8 @@ class CalDAVSyncService(models.AbstractModel):
                             (account.id, occ.id)
                         )
                         _res = self.env.cr.fetchone()
-                        _occ_map = self.env["caldav.event.map"].browse(_res[0]) if _res else self.env["caldav.event.map"]
+                        _occ_map = self.env["caldav.event.map"].browse(_res[0]) if _res else self.env[
+                            "caldav.event.map"]
                         modified_occs.append((occ, _occ_map))
 
                 _logger.info(
@@ -3660,12 +3661,12 @@ class CalDAVSyncService(models.AbstractModel):
                     # Google stores, causing every unchanged occurrence to be falsely
                     # classified as user-modified and preventing the two-step pinning.
                     is_user_modified_by_time = (
-                        not last_sync
-                        or (occ.write_date and occ.write_date > last_sync)
+                            not last_sync
+                            or (occ.write_date and occ.write_date > last_sync)
                     )
                     user_modified = (
-                        self._occurrence_differs_from_base(occ, base_event)
-                        and is_user_modified_by_time
+                            self._occurrence_differs_from_base(occ, base_event)
+                            and is_user_modified_by_time
                     )
                 elif current_ical:
                     # Base unchanged: compare occurrence content to what Google currently
@@ -4702,10 +4703,20 @@ class CalDAVSyncService(models.AbstractModel):
             "confidential": "CONFIDENTIAL",
         }
         class_val = _privacy_to_class.get(event.privacy or "public", "PUBLIC")
-        vevent.add("class").value = class_val
+        # Google CalDAV rejects adding CLASS to events originally created in Google
+        # (e.g. "Default" visibility). Those events have no CLASS on Google's side,
+        # so a PUT that adds CLASS returns 400. Google-origin events are identified
+        # by UIDs ending in "@google.com"; Odoo-origin events use UUID4-style UIDs
+        # and Google stores CLASS for them, making subsequent CLASS updates safe.
+        is_google_origin_event = (
+                account.server_type == "google"
+                and (event.caldav_uid or "").endswith("@google.com")
+        )
+        if not is_google_origin_event:
+            vevent.add("class").value = class_val
 
         is_nextcloud = account.server_type == "nextcloud" or (
-            account.url and "remote.php/dav/calendars" in account.url
+                account.url and "remote.php/dav/calendars" in account.url
         )
         if is_nextcloud or account.server_type == "google":
             vevent.add("transp").value = "TRANSPARENT" if event.show_as == "free" else "OPAQUE"
@@ -4946,7 +4957,8 @@ class CalDAVSyncService(models.AbstractModel):
                 alarms_differ = sorted(occ.alarm_ids.ids) != sorted(event.alarm_ids.ids)
                 attendees_differ = sorted(occ.partner_ids.ids) != sorted(event.partner_ids.ids)
 
-                if not (name_differs or loc_differs or desc_differs or time_differs or privacy_differs or alarms_differ or attendees_differ):
+                if not (
+                        name_differs or loc_differs or desc_differs or time_differs or privacy_differs or alarms_differ or attendees_differ):
                     continue  # occurrence matches base template — no override needed
 
                 # Build RECURRENCE-ID VEVENT
@@ -5321,7 +5333,7 @@ class CalDAVSyncService(models.AbstractModel):
                 vals["privacy"] = privacy
 
             is_nextcloud = account.server_type == "nextcloud" or (
-                account.url and "remote.php/dav/calendars" in account.url
+                    account.url and "remote.php/dav/calendars" in account.url
             )
             if is_nextcloud or account.server_type == "google":
                 transp_comp = getattr(vevent, "transp", None)

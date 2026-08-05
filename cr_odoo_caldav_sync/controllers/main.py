@@ -166,3 +166,47 @@ class CalDAVGoogleOAuthController(http.Controller):
         return request.redirect(
             f"/odoo/action-cr_odoo_caldav_sync.action_caldav_account"
         )
+
+
+class CalDavWebhookController(http.Controller):
+
+    @http.route('/caldav/google/webhook', type='http', auth='public', methods=['POST'], csrf=False)
+    def receive_google_webhook(self, **kwargs):
+        """Endpoint to receive Google Calendar Push Notifications."""
+        
+        # Google sends specific headers for webhooks
+        channel_id = request.httprequest.headers.get('X-Goog-Channel-ID')
+        resource_state = request.httprequest.headers.get('X-Goog-Resource-State')
+        
+        # Log all headers and payload for easier debugging
+        _logger.info("Google Webhook Headers: %s", request.httprequest.headers)
+        
+        if not channel_id:
+            _logger.warning("Received Google webhook without X-Goog-Channel-ID")
+            return request.make_response("Missing Channel ID", status=400)
+            
+        if resource_state == 'sync':
+            # 'sync' state is sent immediately when the channel is successfully registered
+            _logger.info("Google Webhook channel %s successfully registered.", channel_id)
+            return request.make_response("OK", status=200)
+            
+        _logger.info("Received Google webhook for channel: %s, state: %s", channel_id, resource_state)
+        
+        # Find the CalDAV account associated with this channel ID
+        account = request.env['caldav.account'].sudo().search([
+            ('google_push_channel_id', '=', channel_id),
+            ('server_type', '=', 'google')
+        ], limit=1)
+
+        if not account:
+            _logger.warning("No Google account found for webhook channel ID: %s", channel_id)
+            return request.make_response("Account not found", status=404)
+
+        # Trigger the sync process for this account
+        try:
+            request.env['caldav.sync.service'].sudo().sync_account(account)
+            _logger.info("Google webhook successfully triggered sync for account %s", account.id)
+            return request.make_response("Sync triggered successfully", status=200)
+        except Exception as e:
+            _logger.error("Error triggering sync from Google webhook: %s", e)
+            return request.make_response("Internal Server Error", status=500)

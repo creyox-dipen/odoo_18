@@ -8,6 +8,7 @@ import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 from datetime import datetime, timedelta, timezone
 from xml.etree import ElementTree as ET
 
@@ -143,6 +144,39 @@ class CalDAVAccount(models.Model):
         compute="_compute_google_auth_status",
         store=False,
     )
+    google_push_channel_id = fields.Char(
+        string="Google Push Channel ID",
+        copy=False,
+        help="UUID identifying the push notification channel.",
+    )
+    google_push_resource_id = fields.Char(
+        string="Google Push Resource ID",
+        copy=False,
+        help="Google's internal ID for this push notification channel.",
+    )
+    google_push_expiration = fields.Datetime(
+        string="Push Channel Expiration",
+        copy=False,
+        help="When the current push notification channel expires.",
+    )
+    google_push_status = fields.Selection(
+        selection=[
+            ("inactive", "Inactive"),
+            ("active", "Active"),
+        ],
+        string="Webhook Status",
+        compute="_compute_google_push_status",
+        store=False,
+    )
+
+    @api.depends("google_push_resource_id", "google_push_expiration")
+    def _compute_google_push_status(self):
+        for account in self:
+            if account.google_push_resource_id and account.google_push_expiration and account.google_push_expiration > fields.Datetime.now():
+                account.google_push_status = "active"
+            else:
+                account.google_push_status = "inactive"
+
     sync_direction = fields.Selection(
         selection=[
             ("bidirectional", "Bidirectional"),
@@ -408,6 +442,90 @@ class CalDAVAccount(models.Model):
             "url": auth_url,
             "target": "self",
         }
+
+    def action_register_google_webhook(self):
+        """Registers a push notification webhook with Google Calendar API."""
+        self.ensure_one()
+        if self.server_type != 'google':
+            raise UserError(_("This feature is only for Google Calendar accounts."))
+        
+        self._refresh_google_token()
+        token = self.google_access_token
+        if not token:
+            raise UserError(_("Account is not authenticated with Google."))
+            
+        if self.url and '/caldav/v2/' in self.url:
+            calendar_id = self.url.split('/caldav/v2/')[1].split('/events')[0]
+        else:
+            calendar_id = 'primary'
+            
+        url = f"https://www.googleapis.com/calendar/v3/calendars/{urllib.parse.quote(calendar_id)}/events/watch"
+        channel_id = str(uuid.uuid4())
+        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url", "").rstrip("/")
+        address = f"{base_url}/caldav/google/webhook"
+        
+        payload = {
+            "id": channel_id,
+            "type": "web_hook",
+            "address": address,
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+        
+        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, context=_get_ssl_context()) as response:
+                res_body = response.read()
+                data = json.loads(res_body)
+                
+                expiration_ms = int(data.get("expiration", 0))
+                expiration_dt = False
+                if expiration_ms:
+                    expiration_dt = datetime.fromtimestamp(expiration_ms / 1000.0)
+                    
+                self.write({
+                    "google_push_channel_id": data.get("id"),
+                    "google_push_resource_id": data.get("resourceId"),
+                    "google_push_expiration": expiration_dt,
+                })
+        except urllib.error.HTTPError as e:
+            error_details = e.read().decode('utf-8')
+            raise UserError(_("Failed to register webhook. Google says: %s", error_details))
+        except Exception as e:
+            raise UserError(_("Failed to register webhook: %s", str(e)))
+
+    def action_stop_google_webhook(self):
+        """Unregisters the push notification webhook from Google."""
+        self.ensure_one()
+        if not self.google_push_channel_id or not self.google_push_resource_id:
+            return
+            
+        self._refresh_google_token()
+        token = self.google_access_token
+        if token:
+            url = "https://www.googleapis.com/calendar/v3/channels/stop"
+            payload = {
+                "id": self.google_push_channel_id,
+                "resourceId": self.google_push_resource_id
+            }
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+            req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method="POST")
+            try:
+                urllib.request.urlopen(req, context=_get_ssl_context())
+            except Exception as e:
+                _logger.warning("Failed to cleanly stop google webhook for %s: %s", self.name, e)
+                
+        self.write({
+            "google_push_channel_id": False,
+            "google_push_resource_id": False,
+            "google_push_expiration": False,
+        })
 
     def _build_request(self, url, method, body=None, extra_headers=None):
         """Construct a urllib Request object with proper auth and headers.

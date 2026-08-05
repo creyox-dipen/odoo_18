@@ -115,6 +115,18 @@
                         <field name="last_ctag" readonly="1" string="Last CTag (internal)" invisible="1"/>
                         <field name="active"/>
                     </group>
+                    <group string="Real-Time Sync (Webhooks)" invisible="server_type != 'google'">
+                        <field name="google_push_status"/>
+                        <field name="google_push_channel_id" readonly="1" invisible="not google_push_channel_id"/>
+                        <field name="google_push_expiration" readonly="1" invisible="not google_push_channel_id"/>
+                        <div class="mt8" colspan="2">
+                            <button name="action_register_google_webhook" type="object" string="Register Webhook" class="btn-primary" invisible="google_push_status == 'active'"/>
+                            <button name="action_stop_google_webhook" type="object" string="Stop Webhook" class="btn-secondary ms-2" invisible="google_push_status == 'inactive'"/>
+                        </div>
+                        <div class="text-muted mt8" colspan="2">
+                            <i class="fa fa-info-circle"></i> Requires your Odoo domain to be verified in Google Search Console.
+                        </div>
+                    </group>
                     <notebook>
                         <page string="Event Mappings" name="event_mappings">
                             <field name="event_map_ids" readonly="1">
