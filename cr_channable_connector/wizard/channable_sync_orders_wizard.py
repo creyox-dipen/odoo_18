@@ -270,7 +270,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
     def action_import_orders(self):
         self.ensure_one()
-        _logger.warning("[Channable] action_import_orders CALLED - import_by_id=%s, order_ids_str=%s", self.import_by_id, self.order_ids_str)
+        _logger.info("[Channable] action_import_orders CALLED - import_by_id=%s, order_ids_str=%s", self.import_by_id, self.order_ids_str)
         
         # If running synchronously (e.g. cron or when explicitly requested)
         if self._context.get('sync_synchronously'):
@@ -394,18 +394,17 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             orders_data = []
             if self.import_by_id and self.order_ids_str:
                 order_ids = [oid.strip() for oid in self.order_ids_str.split(',') if oid.strip()]
-                _logger.warning("[Channable] Parsed IDs to fetch: %s", order_ids)
+                _logger.info("[Channable] Parsed IDs to fetch: %s", order_ids)
                 for oid in order_ids:
                     single_url = f"{url}/{oid}"
-                    _logger.warning("[Channable] Fetching single order by ID: %s", single_url)
+                    _logger.info("[Channable] Fetching single order by ID: %s", single_url)
                     response = requests.get(single_url, headers=headers, timeout=30)
-                    _logger.warning("[Channable] Fetch single order ID %s response status: %s", oid, response.status_code)
+                    _logger.info("[Channable] Fetch single order ID %s response status: %s", oid, response.status_code)
                     if response.status_code == 404:
-                        _logger.warning("[Channable] Order ID %s not found in Channable (404)", oid)
+                        _logger.info("[Channable] Order ID %s not found in Channable (404)", oid)
                         continue
                     response.raise_for_status()
                     order_payload = response.json()
-                    _logger.warning("[Channable] Fetch single order ID %s payload: %s", oid, order_payload)
                     order_obj = order_payload.get('order') or order_payload
                     if order_obj and order_obj.get('id'):
                         orders_data.append(order_obj)
@@ -424,10 +423,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                         response.raise_for_status()
                         data = response.json()
                         page_orders = data.get('orders', [])
-                        _logger.warning(
-                            "[Channable] Raw API response | status=%s | offset=%d | URL: %s\nFetched %d orders",
-                            status_filter, offset, response.url, len(page_orders)
-                        )
                         for o in page_orders:
                             o_id = o.get('id')
                             if o_id and o_id not in seen_order_ids:
@@ -447,10 +442,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     response.raise_for_status()
                     data = response.json()
                     page_orders = data.get('orders', [])
-                    _logger.warning(
-                        "[Channable] Raw API response | offset=%d | URL: %s\nFetched %d orders",
-                        offset, response.url, len(page_orders)
-                    )
                     for o in page_orders:
                         orders_data.append(o)
                     if len(page_orders) < limit:
@@ -548,7 +539,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     'notes': notes,
                 })
             except Exception as log_err:
-                _logger.error("Failed to create channable.sync.log: %s", str(log_err))
+                _logger.info("Failed to create channable.sync.log: %s", str(log_err))
 
             # Update latest sync metrics on the marketplace
             try:
@@ -561,19 +552,15 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 })
                 self.env.cr.commit()
             except Exception as mp_err:
-                _logger.error("Failed to update marketplace sync statistics: %s", str(mp_err))
+                _logger.info("Failed to update marketplace sync statistics: %s", str(mp_err))
 
     def _process_order_batch(self, orders_data, marketplace, country_cache=None, state_cache=None, partner_cache=None, shipping_partner_cache=None):
         SaleOrder = self.env['sale.order']
         new_orders = self.env['sale.order']
 
         # ── Bulk Fetch Existing Orders ─────────────────────────────────────────
-        _logger.warning("[Channable] Total orders fetched from API: %d", len(orders_data))
-        if orders_data:
-            _logger.warning("[Channable] First order raw payload:\n%s", orders_data[0])
 
         channable_ids = [str(o.get('id', '')) for o in orders_data if o.get('id')]
-        _logger.debug("Found %d orders from Channable API", len(channable_ids))
         existing_orders_map = {}
         if channable_ids:
             existing_orders = SaleOrder.search_read(
@@ -584,7 +571,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 ['channable_order_id', 'id', 'state']
             )
             existing_orders_map = {str(eo['channable_order_id']): eo for eo in existing_orders}
-        _logger.debug("Existing orders in Odoo: %s", list(existing_orders_map.keys()))
 
         # ── Bulk Fetch Existing Products ───────────────────────────────────────
         product_refs = []
@@ -608,7 +594,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 product_ids = [row[0] for row in product_rows]
                 products = self.env['product.product'].browse(product_ids)
                 product_dict = {getattr(p, sync_field): p for p in products if getattr(p, sync_field)}
-        _logger.debug("Existing products found in Odoo matching refs %s: %s", product_refs, list(product_dict.keys()))
 
         # ── Bulk Fetch Existing Partners and Shipping Partners ──────────────────
         if partner_cache is None:
@@ -734,10 +719,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 price = float(item.get('price', 0.0))
 
                 product = product_dict.get(product_ref)
-                if product:
-                    _logger.debug("Product %s found in Odoo: %s", product_ref, product)
                 if not product:
-                    _logger.debug("Product %s not found. Attempting to auto-create...", product_ref)
                     # ── Auto-create product ───────────────────────────────────
                     try:
                         tmpl_vals = {
@@ -758,16 +740,10 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                             mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
                         ).create(tmpl_vals)
                         product = product_tmpl.product_variant_ids[:1] if product_tmpl.product_variant_ids else False
-                        _logger.debug("Created product_tmpl: %s, product_variant: %s", product_tmpl, product)
                         if not product:
                             raise Exception("Product template was created but no variant is available.")
 
                         product_dict[product_ref] = product
-                        # Informational – not an error; use _logger so it stays out of error records
-                        _logger.info(
-                            "Product auto-created: '%s' (ref: %s) for Channable order %s.",
-                            title, product_ref, channable_id
-                        )
                     except Exception as e:
                         err_trace = traceback.format_exc()
                         self._log_error(
@@ -791,11 +767,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 
                 if uom_id:
                     line_vals['product_uom'] = uom_id
-                _logger.debug("Appending line %s for order %s", line_vals, channable_id)
                 order_lines.append((0, 0, line_vals))
 
             if order_failed:
-                _logger.warning("Order %s skipped due to product creation failure.", channable_id)
                 continue
 
             # ── Resolve Shipping Carrier ──────────────────────────────────────
@@ -805,7 +779,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 or inner_data.get('shipping', {}).get('method')
                 or ''
             )
-            _logger.info("[Channable] Mapped shipping method : %s", channable_ship_method)
             carrier = False
             if channable_ship_method:
                 channable_ship_method_clean = str(channable_ship_method).strip().lower()
@@ -814,12 +787,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 )
                 if matching_mapping:
                     carrier = matching_mapping[0].carrier_id
-                    _logger.info("[Channable] Mapped shipping method '%s' to carrier: %s", channable_ship_method, carrier.name)
             
             if not carrier:
                 carrier = marketplace.carrier_id
-                if channable_ship_method:
-                    _logger.info("[Channable] No mapping found for shipping method '%s', using default carrier: %s", channable_ship_method, carrier.name if carrier else 'None')
 
             # ── Shipping cost line ────────────────────────────────────────────
             # Shipping cost lives at data.price.shipping in the Channable payload
@@ -893,7 +863,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
         # ── Bulk Sales Order Update ──────────────────────────────────────────
         updated_count = 0
         if updates_mapping:
-            _logger.info("Attempting to update %d existing orders", len(updates_mapping))
             for order_id, order_vals, ch_total, channable_id in updates_mapping:
                 try:
                     order = SaleOrder.browse(order_id)
@@ -927,18 +896,16 @@ class ChannableSyncOrdersWizard(models.TransientModel):
         # ── Bulk Sales Order Creation with Fallback ──────────────────────────
         if orders_vals_list:
             try:
-                _logger.info("Attempting optimistic batch creation of %d orders", len(orders_vals_list))
                 created_orders = SaleOrder.with_context(
                     mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
                 ).create(orders_vals_list)
                 new_orders |= created_orders
                 
                 # Map created orders back to their totals
-                for order, (_, ch_total) in zip(created_orders, orders_mapping):
+                for order, (ch_id_ignore, ch_total) in zip(created_orders, orders_mapping):
                     channable_totals[order.id] = ch_total
                     
             except Exception as batch_err:
-                _logger.warning("Batch creation failed: %s. Falling back to single order creation.", str(batch_err))
                 # Fallback to creating each order individually to isolate any errors
                 for order_vals, (channable_id, ch_total) in zip(orders_vals_list, orders_mapping):
                     try:
@@ -1029,10 +996,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 try:
                     confirmable_orders.with_context(**_bypass_ctx).action_confirm()
                 except Exception:
-                    _logger.warning(
-                        "Batch confirmation failed, falling back to per-order.",
-                        exc_info=True,
-                    )
                     failed = self.env['sale.order']
                     for order in confirmable_orders:
                         try:
@@ -1093,7 +1056,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 try:
                     all_invoices.with_context(**_bypass_ctx).action_post()
                 except Exception:
-                    _logger.warning(
+                    _logger.info(
                         "Batch invoice posting failed, falling back to per-invoice.",
                         exc_info=True,
                     )
