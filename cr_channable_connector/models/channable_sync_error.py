@@ -19,6 +19,7 @@ class ChannableSyncError(models.Model):
 
     action_attempted = fields.Selection([
         ('create_order', 'Create Order'),
+        ('update_order', 'Update Order'),
         ('sync_order', 'Sync Order'),
         ('update_shipment', 'Update Shipment Info'),
         ('sync_state', 'Sync Order State'),

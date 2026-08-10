@@ -378,6 +378,19 @@ class ChannableMarketplace(models.Model):
         if orders:
             orders.action_channable_notify_shipped()
 
+    def action_open_cron(self):
+        self.ensure_one()
+        cron = self.env.ref('cr_channable_connector.ir_cron_channable_sync_orders', raise_if_not_found=False)
+        if cron:
+            return {
+                'name': _('Schedule Automatic Sync'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'ir.cron',
+                'view_mode': 'form',
+                'res_id': cron.id,
+            }
+        return False
+
     def action_view_orders(self):
         self.ensure_one()
         return {

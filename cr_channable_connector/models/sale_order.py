@@ -144,34 +144,6 @@ class SaleOrder(models.Model):
 
     # ── Public Actions ────────────────────────────────────────────────────────
 
-    def action_channable_sync_state(self):
-        """Pull current status from Channable and update the record."""
-        for order in self.filtered(lambda o: o.channable_marketplace_id and o.channable_order_id):
-            try:
-                connection, url_base, headers = order._channable_get_connection_and_headers()
-                url = f'{url_base}/orders/{order.channable_order_id}'
-                resp = requests.get(url, headers=headers, timeout=15)
-                resp.raise_for_status()
-                data = resp.json()
-                _logger.warning(
-                    "[Channable Status Sync] Raw Response for order %s | URL: %s\nPayload: %s",
-                    order.name, resp.url, data
-                )
-                if 'order' in data and 'status_shipped' in data['order']:
-                    old_status = order.channable_status
-                    new_status = data['order']['status_shipped']
-                    if old_status != new_status:
-                        order.channable_status = new_status
-                        order.message_post(body=_("Channable Status updated: %s &rarr; %s", old_status, new_status))
-                        if new_status in ['canceled', 'cancelled'] and order.state != 'cancel':
-                            try:
-                                order.with_context(disable_cancel_warning=True).action_cancel()
-                                order.message_post(body=_("Order automatically cancelled in Odoo due to Channable cancellation."))
-                                order._channable_create_credit_notes()
-                            except Exception as cancel_err:
-                                order.message_post(body=_("Failed to automatically cancel the order in Odoo: %s", str(cancel_err)))
-            except Exception as e:
-                order._channable_log_error('Status Sync Error', 'sync_state', e)
 
     def action_channable_sync_order(self):
         """Re-fetch the order from Channable and update editable fields."""

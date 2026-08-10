@@ -343,6 +343,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
         
         orders_count = 0
         total_synced = 0
+        total_updated = 0
         total_skipped = 0
         status = 'success'
         notes = ''
@@ -483,6 +484,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                         shipping_partner_cache=shipping_partner_cache
                     )
                     total_synced += batch_result.get('synced', 0)
+                    total_updated += batch_result.get('updated', 0)
                     total_skipped += batch_result.get('skipped', 0)
                     # Commit progress after successfully processing the batch
                     marketplace.write({
@@ -502,7 +504,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                         pass
             
             # Determine sync status
-            attempted_new = orders_count - total_skipped
+            attempted_new = orders_count - total_skipped - total_updated
             if attempted_new > 0:
                 if total_synced == attempted_new:
                     status = 'success'
@@ -517,8 +519,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 "Successfully executed sync.\n"
                 "Total orders fetched from API: %d\n"
                 "New orders imported: %d\n"
+                "Existing orders updated: %d\n"
                 "Existing orders skipped: %d"
-            ) % (orders_count, total_synced, total_skipped)
+            ) % (orders_count, total_synced, total_updated, total_skipped)
 
         except Exception as e:
             status = 'failed'
@@ -571,14 +574,17 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
         channable_ids = [str(o.get('id', '')) for o in orders_data if o.get('id')]
         _logger.debug("Found %d orders from Channable API", len(channable_ids))
-        existing_channable_ids = set()
+        existing_orders_map = {}
         if channable_ids:
-            self.env.cr.execute(
-                "SELECT channable_order_id FROM sale_order WHERE channable_order_id IN %s",
-                (tuple(channable_ids),)
+            existing_orders = SaleOrder.search_read(
+                [
+                    ('channable_marketplace_id', '=', marketplace.id),
+                    ('channable_order_id', 'in', channable_ids)
+                ],
+                ['channable_order_id', 'id', 'state']
             )
-            existing_channable_ids = {r[0] for r in self.env.cr.fetchall() if r[0]}
-        _logger.debug("Existing orders in Odoo: %s", existing_channable_ids)
+            existing_orders_map = {str(eo['channable_order_id']): eo for eo in existing_orders}
+        _logger.debug("Existing orders in Odoo: %s", list(existing_orders_map.keys()))
 
         # ── Bulk Fetch Existing Products ───────────────────────────────────────
         product_refs = []
@@ -648,6 +654,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
         channable_totals = {}
         orders_vals_list = []
         orders_mapping = []
+        updates_mapping = []
 
         for order_data in orders_data:
             channable_id = str(order_data.get('id', ''))
@@ -661,10 +668,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             shipping_data = inner_data.get('shipping', {})
             products_data = inner_data.get('products', [])
 
-            # ── Skip already-imported orders ─────────────────────────────────
-            if channable_id in existing_channable_ids:
-                _logger.debug("Skipping order %s because it already exists.", channable_id)
-                continue
+            is_existing = channable_id in existing_orders_map
 
             # ── Partners ─────────────────────────────────────────────────────
             try:
@@ -868,8 +872,57 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             if not ch_total:
                 ch_total = sum(float(item.get('price', 0.0)) * float(item.get('quantity', 1)) for item in products_data) + shipping_cost
 
-            orders_vals_list.append(order_vals)
-            orders_mapping.append((channable_id, ch_total))
+            if is_existing:
+                existing_info = existing_orders_map[channable_id]
+                existing_state = existing_info['state']
+                
+                # Dynamic update logic based on state
+                if existing_state in ['draft', 'sent']:
+                    # Replace order lines entirely for unconfirmed orders
+                    order_vals['order_line'] = [(5, 0, 0)] + order_lines
+                else:
+                    # For confirmed orders, strictly limit updates to safe fields
+                    safe_fields = ['note', 'channable_status', 'channable_market_ref']
+                    order_vals = {k: v for k, v in order_vals.items() if k in safe_fields}
+                
+                updates_mapping.append((existing_info['id'], order_vals, ch_total, channable_id))
+            else:
+                orders_vals_list.append(order_vals)
+                orders_mapping.append((channable_id, ch_total))
+
+        # ── Bulk Sales Order Update ──────────────────────────────────────────
+        updated_count = 0
+        if updates_mapping:
+            _logger.info("Attempting to update %d existing orders", len(updates_mapping))
+            for order_id, order_vals, ch_total, channable_id in updates_mapping:
+                try:
+                    order = SaleOrder.browse(order_id)
+                    old_status = order.channable_status
+                    new_status = order_vals.get('channable_status', old_status)
+
+                    order.with_context(
+                        mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
+                    ).write(order_vals)
+                    updated_count += 1
+
+                    # Auto-cancel in Odoo if status changed to cancelled in Channable
+                    if new_status in ['canceled', 'cancelled'] and old_status != new_status and order.state != 'cancel':
+                        try:
+                            order._channable_create_credit_notes()
+                            if order.state == 'done':
+                                order.action_unlock()
+                            order.with_context(disable_cancel_warning=True).action_cancel()
+                            order.message_post(body=_("Order automatically cancelled in Odoo during import due to Channable status update."))
+                        except Exception as cancel_err:
+                            order.message_post(body=_("Failed to automatically cancel the order in Odoo: %s", str(cancel_err)))
+                except Exception as update_err:
+                    import traceback
+                    err_trace = traceback.format_exc()
+                    self._log_error(
+                        f'Order update failed for existing order {channable_id}',
+                        'update_order',
+                        f'Could not update order {channable_id}.\nError: {update_err}\nTraceback: {err_trace}'
+                    )
 
         # ── Bulk Sales Order Creation with Fallback ──────────────────────────
         if orders_vals_list:
@@ -906,7 +959,8 @@ class ChannableSyncOrdersWizard(models.TransientModel):
         self._post_create_flow(new_orders, marketplace, channable_totals)
         return {
             'synced': len(new_orders),
-            'skipped': len(existing_channable_ids),
+            'updated': updated_count,
+            'skipped': len(existing_orders_map) - updated_count,
         }
 
     def _post_create_flow(self, new_orders, marketplace, channable_totals=None):
