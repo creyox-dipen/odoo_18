@@ -154,10 +154,6 @@ class SaleOrder(models.Model):
                 resp = requests.get(url, headers=headers, timeout=15)
                 resp.raise_for_status()
                 data = resp.json()
-                _logger.warning(
-                    "[Channable Full Order Sync] Raw Response for order %s | URL: %s\nPayload: %s",
-                    order.name, resp.url, data
-                )
                 order_data = data.get('order', {})
                 if order_data:
                     old_status = order.channable_status
