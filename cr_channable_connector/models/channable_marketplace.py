@@ -272,7 +272,7 @@ class ChannableMarketplace(models.Model):
         )
         url = f'{url_base}/offers'
         headers = {
-            'Authorization': f'Bearer {connection.api_token.strip()}',
+            'Authorization': f'Bearer {(connection.api_token or "").strip()}',
             'Content-Type': 'application/json',
         }
 

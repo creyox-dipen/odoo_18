@@ -33,7 +33,7 @@ class ChannableConnection(models.Model):
             
         url = f'https://api.channable.com/v1/companies/{company_id}/projects'
         headers = {
-            'Authorization': f'Bearer {self.api_token.strip()}',
+            'Authorization': f'Bearer {(self.api_token or "").strip()}',
             'Content-Type': 'application/json',
         }
         # 1. Try to test using the company projects endpoint (works for Personal tokens)

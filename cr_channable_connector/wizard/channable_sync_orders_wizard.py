@@ -116,7 +116,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
             state_code = billing_data.get('state_code') or billing_data.get('state', '')
             if country and state_code:
-                state_code_upper = state_code.strip().upper()
+                state_code_upper = (state_code or '').strip().upper()
                 state_key = (country.id, state_code_upper)
                 if state_key in state_cache:
                     state = state_cache[state_key]
@@ -128,10 +128,10 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     if state:
                         state_cache[state_key] = state
 
-            fname = billing_data.get('first_name', '').strip()
-            lname = billing_data.get('last_name', '').strip()
+            fname = (billing_data.get('first_name') or '').strip()
+            lname = (billing_data.get('last_name') or '').strip()
             full_name = f'{fname} {lname}'.strip() or 'Channable Customer'
-            company_name = billing_data.get('company', '').strip()
+            company_name = (billing_data.get('company') or '').strip()
 
             partner_vals = {
                 'name': full_name,
@@ -216,7 +216,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
         state_code = shipping_data.get('state_code') or shipping_data.get('state', '')
         if country and state_code:
-            state_code_upper = state_code.strip().upper()
+            state_code_upper = (state_code or '').strip().upper()
             state_key = (country.id, state_code_upper)
             if state_key in state_cache:
                 state = state_cache[state_key]
@@ -228,8 +228,8 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 if state:
                     state_cache[state_key] = state
 
-        fname = shipping_data.get('first_name', '').strip()
-        lname = shipping_data.get('last_name', '').strip()
+        fname = (shipping_data.get('first_name') or '').strip()
+        lname = (shipping_data.get('last_name') or '').strip()
         ship_name = f'{fname} {lname}'.strip() or invoice_partner.name
 
         # Search for an existing delivery child under this partner
@@ -359,7 +359,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 raise Exception(_("No connection configured for this project/marketplace."))
 
             headers = {
-                'Authorization': f'Bearer {connection.api_token.strip()}',
+                'Authorization': f'Bearer {(connection.api_token or "").strip()}',
                 'Content-Type': 'application/json',
             }
             # Use v2 endpoint – the v1 endpoint is deprecated and returns 404

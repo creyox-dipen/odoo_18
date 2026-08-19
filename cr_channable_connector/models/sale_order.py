@@ -89,7 +89,7 @@ class SaleOrder(models.Model):
             f'/projects/{mp.project_id.channable_identifier}'
         )
         headers = {
-            'Authorization': f'Bearer {connection.api_token.strip()}',
+            'Authorization': f'Bearer {(connection.api_token or "").strip()}',
             'Content-Type': 'application/json',
         }
         return connection, url_base, headers
