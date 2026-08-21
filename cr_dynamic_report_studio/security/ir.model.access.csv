@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_report_designer_template_all,report.designer.template.all,model_report_designer_template,base.group_user,1,1,1,1
+access_report_designer_template_page_all,report.designer.template.page.all,model_report_designer_template_page,base.group_user,1,1,1,1
+access_report_designer_component_all,report.designer.component.all,model_report_designer_component,base.group_user,1,1,1,1
+access_report_designer_component_template_all,report.designer.component.template.all,model_report_designer_component_template,base.group_user,1,1,1,1
+access_report_designer_font_all,report.designer.font.all,model_report_designer_font,base.group_user,1,1,1,1
+access_report_designer_resource_all,report.designer.resource.all,model_report_designer_resource,base.group_user,1,1,1,1
+access_report_designer_print_log_all,report.designer.print.log.all,model_report_designer_print_log,base.group_user,1,1,1,1

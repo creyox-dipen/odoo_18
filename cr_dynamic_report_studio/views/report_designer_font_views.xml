@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_report_designer_font_tree" model="ir.ui.view">
+        <field name="name">report.designer.font.tree</field>
+        <field name="model">report.designer.font</field>
+        <field name="arch" type="xml">
+            <list string="Fonts">
+                <field name="name"/>
+                <field name="font_family"/>
+                <field name="is_system"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_designer_font_form" model="ir.ui.view">
+        <field name="name">report.designer.font.form</field>
+        <field name="model">report.designer.font</field>
+        <field name="arch" type="xml">
+            <form string="Font">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Roboto"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="font_family"/>
+                            <field name="supports_cjk"/>
+                            <field name="supports_rtl"/>
+                            <field name="is_system"/>
+                        </group>
+                        <group>
+                            <field name="font_file_regular" filename="name"/>
+                            <field name="font_file_bold" filename="name"/>
+                            <field name="font_file_italic" filename="name"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_designer_font" model="ir.actions.act_window">
+        <field name="name">Fonts</field>
+        <field name="res_model">report.designer.font</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+
+</odoo>

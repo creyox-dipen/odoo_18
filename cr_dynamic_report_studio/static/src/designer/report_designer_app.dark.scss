@@ -1,0 +1,411 @@
+// ============================================================================
+// Report Designer - Dark Mode Overrides
+// Loaded via web.assets_web_dark when Odoo dark mode is active
+// ============================================================================
+
+.o_report_designer_app {
+
+    // ── Toolbar ──────────────────────────────────────────────────────────────
+    .o_report_designer_toolbar {
+        background-color: #1e1e2e !important;
+        border-bottom-color: #3a3a4a !important;
+
+        .fa-save {
+            color: #52a3ff !important;
+        }
+        .fa-undo, .fa-repeat {
+            color: #aeb4c2 !important;
+        }
+        .fa-trash {
+            color: #ff5c5c !important;
+        }
+        .fa-eye {
+            color: #ffffff !important;
+        }
+    }
+
+    // ── Left Sidebar ─────────────────────────────────────────────────────────
+    .o_report_designer_sidebar_left {
+        background-color: #1a1a2a !important;
+        border-right-color: #3a3a4a !important;
+
+        .o_report_designer_toolbox {
+            .o_component_btn {
+                background: linear-gradient(135deg, #4e555d 0%, #2d3238 100%) !important;
+                border: none !important;
+                border-bottom: 4px solid #1a1c20 !important;
+                box-shadow: 0 6px 14px rgba(0,0,0,0.45), 0 2px 4px rgba(0,0,0,0.3) !important;
+
+                &:hover {
+                    background: linear-gradient(135deg, #5b626c 0%, #373c43 100%) !important;
+                    border: none !important;
+                    border-bottom: 4px solid #101214 !important;
+                    box-shadow: 0 10px 22px rgba(0,0,0,0.55), 0 4px 8px rgba(0,0,0,0.35) !important;
+                }
+
+                &:active {
+                    border: none !important;
+                    border-bottom: 1px solid #101214 !important;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 2px 6px rgba(0,0,0,0.4) !important;
+                }
+
+                i, span {
+                    color: #ffffff !important;
+                    text-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+                }
+
+                .o_shape_preview_svg {
+                    stroke: #ffffff !important;
+                }
+
+                .o_shape_preview_circle {
+                    border-color: #ffffff !important;
+                }
+            }
+        }
+    }
+
+    // ── Tabs ─────────────────────────────────────────────────────────────────
+    .o_report_designer_tabs {
+        background-color: #1a1a2a !important;
+        border-bottom-color: #3a3a4a !important;
+
+        .o_designer_tab_item {
+            color: #9a9db0 !important;
+
+            &:hover {
+                color: #c4a8d8 !important;
+                background-color: rgba(196, 168, 216, 0.08) !important;
+            }
+
+            &.active {
+                color: #c4a8d8 !important;
+                border-bottom-color: #c4a8d8 !important;
+                background-color: #1e1e2e !important;
+            }
+        }
+    }
+
+    // ── Toolbar 3D Buttons ────────────────────────────────────────────────────
+    .o_designer_btn_3d {
+        background: linear-gradient(180deg, #2e3040 0%, #22242e 100%) !important;
+        border-color: #4a4d5e !important;
+        border-bottom: 3px solid #111318 !important;
+        color: #c8ccd4 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.35) !important;
+
+        &:hover {
+            background: linear-gradient(180deg, #383b4e 0%, #2a2d3a 100%) !important;
+            border-color: #5a5d70 !important;
+            border-bottom: 3px solid #0a0c10 !important;
+            color: #e0e2ea !important;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.45) !important;
+        }
+
+        &:active {
+            background: #1a1c26 !important;
+            border-bottom-width: 1px !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5) !important;
+        }
+
+        &.active {
+            background: #714B67 !important;
+            border-color: #5c3c54 !important;
+            border-bottom: 3px solid #3a2540 !important;
+        }
+    }
+
+    // ── Canvas Area ───────────────────────────────────────────────────────────
+    .o_report_designer_canvas_container {
+        background-color: #12131a !important;
+
+        .o_designer_canvas_wrapper {
+            background-image:
+                linear-gradient(#2a2c38 1px, transparent 1px),
+                linear-gradient(90deg, #2a2c38 1px, transparent 1px) !important;
+
+            &::-webkit-scrollbar-thumb {
+                background-color: #4a4d60 !important;
+                border-color: #12131a !important;
+            }
+        }
+    }
+
+    // ── Rulers ────────────────────────────────────────────────────────────────
+    .o_designer_ruler_h,
+    .o_designer_ruler_v {
+        background-color: #1e1e2e !important;
+        border-color: #3a3a4a !important;
+        color: #6a6d80 !important;
+    }
+
+    .position-absolute.top-0.start-0 {
+        background-color: #1e1e2e !important;
+        border-color: #3a3a4a !important;
+    }
+
+    // ── Right Sidebar ─────────────────────────────────────────────────────────
+    .o_report_designer_sidebar_right {
+        background-color: #1a1a2a !important;
+        border-left-color: #3a3a4a !important;
+
+        h5 {
+            color: #c8ccd4 !important;
+        }
+
+        label {
+            color: #8a8d9e !important;
+        }
+
+        .form-control,
+        .form-select {
+            background-color: #22242e !important;
+            border-color: #3a3d4e !important;
+            color: #c8ccd4 !important;
+
+            &:focus {
+                border-color: #714B67 !important;
+                box-shadow: 0 0 0 3px rgba(113, 75, 103, 0.25) !important;
+            }
+        }
+
+        .btn-light {
+            background-color: #2a2d3a !important;
+            border-color: #3a3d4e !important;
+            color: #c8ccd4 !important;
+
+            &:hover {
+                background-color: #363a4a !important;
+            }
+        }
+
+        .btn-primary {
+            background-color: #714B67 !important;
+            border-color: #5c3c54 !important;
+        }
+
+        .border-bottom {
+            border-bottom-color: #3a3a4a !important;
+        }
+    }
+
+    // ── Page Pagination ───────────────────────────────────────────────────────
+    .o_designer_pagination {
+        background-color: #22242e !important;
+
+        > div {
+            color: #9a9db0 !important;
+            background-color: #22242e !important;
+            border-color: #3a3a4a !important;
+
+            &.bg-primary {
+                background-color: #714B67 !important;
+                color: #fff !important;
+            }
+        }
+    }
+
+    // ── Zoom Control ─────────────────────────────────────────────────────────
+    .o_designer_zoom {
+        background-color: #22242e !important;
+        color: #c8ccd4 !important;
+
+        .btn-link {
+            color: #9a9db0 !important;
+
+            &:hover {
+                color: #c8ccd4 !important;
+            }
+        }
+    }
+
+    // ── Data Tab / Field List ─────────────────────────────────────────────────
+    .o_report_designer_data {
+        .form-control {
+            background-color: #22242e !important;
+            border-color: #3a3d4e !important;
+            color: #c8ccd4 !important;
+        }
+
+        .border-bottom {
+            border-bottom-color: #2e3040 !important;
+        }
+
+        .badge {
+            background-color: #2e3040 !important;
+            border-color: #4a4d60 !important;
+            color: #9a9db0 !important;
+        }
+
+        .text-dark {
+            color: #c8ccd4 !important;
+        }
+
+        .text-muted {
+            color: #6a6d80 !important;
+        }
+    }
+
+    // ── Pages Tab ────────────────────────────────────────────────────────────
+    .o_report_designer_pages {
+        .btn-light {
+            background-color: #22242e !important;
+            border-color: #3a3d4e !important;
+            color: #9a9db0 !important;
+
+            &:hover {
+                background-color: #2e3040 !important;
+                color: #c8ccd4 !important;
+            }
+        }
+
+        .bg-light {
+            background-color: #22242e !important;
+        }
+
+        .text-dark {
+            color: #c8ccd4 !important;
+        }
+
+        .dropdown-menu {
+            background-color: #22242e !important;
+            border-color: #3a3d4e !important;
+
+            .dropdown-item {
+                color: #c8ccd4 !important;
+
+                &:hover {
+                    background-color: #2e3040 !important;
+                }
+
+                &.text-danger {
+                    color: #f08080 !important;
+                }
+            }
+
+            .dropdown-divider {
+                border-color: #3a3d4e !important;
+            }
+        }
+
+        .form-control {
+            background-color: #2a2d3a !important;
+            border-color: #4a4d60 !important;
+            color: #c8ccd4 !important;
+        }
+    }
+}
+
+// ── Dark Mode Overrides for Kanban Card ──────────────────────────────────────
+.o_kanban_view {
+    .o_report_designer_kanban_card {
+        background-color: #1e1e2e !important;
+        border-color: #313143 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.35), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+
+        &:hover {
+            border-color: #4c4c66 !important;
+            box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.5), 0 4px 12px -2px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .o_report_designer_kanban_cover {
+            background-color: #151522 !important;
+            border-color: #262635 !important;
+
+            .o_report_designer_kanban_img {
+                border-color: #2b2b3d !important;
+                background-color: #1a1a2a !important;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
+            }
+        }
+
+        .o_report_designer_kanban_details {
+            .o_report_designer_kanban_title {
+                color: #e2e8f0 !important;
+            }
+            .text-muted {
+                color: #94a3b8 !important;
+            }
+        }
+    }
+}
+
+// ── Force Light Theme Colors Inside the White Canvas Sheet ───────────────────
+.o_designer_paper {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+
+    .text-muted {
+        color: #6c757d !important;
+    }
+
+    // Section dashed borders
+    div[style*="dashed"] {
+        border-color: #ced4da !important;
+        color: #6c757d !important;
+    }
+
+    // Image placeholder
+    .fa-picture-o {
+        color: #6c757d !important;
+    }
+
+    // Table container and layout
+    div[style*="background: white"] {
+        background-color: #ffffff !important;
+        color: #212529 !important;
+        border-color: #ced4da !important;
+    }
+    
+    div[style*="background-color: #f8f9fa"] {
+        background-color: #f8f9fa !important;
+        color: #212529 !important;
+        border-color: #ced4da !important;
+    }
+
+    // Table cell borders
+    div[style*="border-right"], div[style*="border-bottom"] {
+        border-color: #ced4da !important;
+    }
+}
+
+// ── Dark Mode Modal Theme Overrides for Expression Wizard ───────────────────
+.modal-content {
+    background-color: #1e1e2e !important;
+    color: #e2e8f0 !important;
+    
+    .modal-title {
+        color: #ffffff !important;
+    }
+    .text-dark {
+        color: #e2e8f0 !important;
+    }
+    .text-muted {
+        color: #94a3b8 !important;
+    }
+    .bg-light {
+        background-color: #2a2d3a !important;
+        color: #e2e8f0 !important;
+    }
+    .border-end, .border-bottom, .border {
+        border-color: #3a3a4a !important;
+    }
+    .form-control, textarea {
+        background-color: #151522 !important;
+        border-color: #3a3a4a !important;
+        color: #ffffff !important;
+        
+        &::placeholder {
+            color: #5a5d70 !important;
+        }
+    }
+    .btn-light {
+        background-color: #2d3238 !important;
+        color: #ffffff !important;
+        border-color: #4e555d !important;
+        
+        &:hover {
+            background-color: #373d44 !important;
+        }
+    }
+}

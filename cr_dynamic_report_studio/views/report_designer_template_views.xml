@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Standalone Tree View for Template Pages -->
+    <record id="view_report_designer_template_page_tree" model="ir.ui.view">
+        <field name="name">report.designer.template.page.tree</field>
+        <field name="model">report.designer.template.page</field>
+        <field name="arch" type="xml">
+            <list string="Pages">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="page_break_before"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_report_designer_template_form" model="ir.ui.view">
+        <field name="name">report.designer.template.form</field>
+        <field name="model">report.designer.template</field>
+        <field name="arch" type="xml">
+            <form string="Report Template">
+                <header>
+                    <button name="action_open_designer" string="Open Designer" type="object" class="btn-primary" invisible="not id"/>
+                    <button name="action_bind_print_menu" string="Add to Print Menu" type="object" icon="fa-plus-square" class="btn-success" invisible="is_bound_to_print_menu"/>
+                    <button name="action_unbind_print_menu" string="Remove from Print Menu" type="object" icon="fa-minus-square" class="btn-danger" invisible="not is_bound_to_print_menu"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" string="Action Name"/>
+                            <field name="model_id" string="Model Name"/>
+                        </group>
+                        <group>
+                            <field name="create_date" string="Created on" readonly="1"/>
+                            <field name="write_date" string="Last Updated on" readonly="1"/>
+                            <field name="is_bound_to_print_menu" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Template JSON" name="template_json">
+                            <div class="mb-2 mt-2">
+                                <button name="action_format_json" string="Format JSON" type="object" class="btn-secondary"/>
+                            </div>
+                            <field name="template_json" nolabel="1" style="font-family: monospace; white-space: pre-wrap; font-size: 0.9em;"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_report_designer_template_tree" model="ir.ui.view">
+        <field name="name">report.designer.template.tree</field>
+        <field name="model">report.designer.template</field>
+        <field name="arch" type="xml">
+            <list string="Report Templates">
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="category"/>
+                <field name="is_bound_to_print_menu"/>
+                <field name="is_active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_report_designer_template_kanban" model="ir.ui.view">
+        <field name="name">report.designer.template.kanban</field>
+        <field name="model">report.designer.template</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="thumbnail"/>
+                <field name="last_print_log_id"/>
+                <field name="write_date"/>
+                <field name="is_bound_to_print_menu"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_report_designer_kanban_card d-flex flex-column p-0 position-relative">
+                            <!-- Dropdown menu in standard Odoo top-right position -->
+                            <div class="o_dropdown_kanban dropdown">
+                                <a role="button" class="dropdown-toggle o-no-caret btn btn-sm btn-link text-muted p-2" data-bs-toggle="dropdown" data-bs-display="static" href="#">
+                                    <i class="fa fa-ellipsis-v fa-lg"/>
+                                </a>
+                                <div class="dropdown-menu" role="menu">
+                                    <a role="menuitem" type="object" name="action_preview_pdf" class="dropdown-item">
+                                        <i class="fa fa-eye me-2"/> Preview
+                                    </a>
+                                    <a role="menuitem" type="object" name="action_duplicate" class="dropdown-item">
+                                        <i class="fa fa-clone me-2"/> Duplicate
+                                    </a>
+                                    <a role="menuitem" type="object" name="action_export_json" class="dropdown-item">
+                                        <i class="fa fa-download me-2"/> Export
+                                    </a>
+                                    <t t-if="record.is_bound_to_print_menu.raw_value">
+                                        <a role="menuitem" type="object" name="action_unbind_print_menu" class="dropdown-item text-danger">
+                                            <i class="fa fa-print me-2"/> Remove from Print Menu
+                                        </a>
+                                    </t>
+                                    <t t-else="">
+                                        <a role="menuitem" type="object" name="action_bind_print_menu" class="dropdown-item text-success">
+                                            <i class="fa fa-print me-2"/> Add to Print Menu
+                                        </a>
+                                    </t>
+                                    <a role="menuitem" type="delete" class="dropdown-item text-danger">
+                                        <i class="fa fa-trash me-2"/> Delete
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Top Image Cover -->
+                            <div class="o_report_designer_kanban_cover d-flex align-items-center justify-content-center border-bottom" style="height: 200px;">
+                                <t t-if="record.last_print_log_id.raw_value">
+                                    <iframe t-attf-src="/web/content/report.designer.print.log/{{record.last_print_log_id.raw_value}}/pdf_file#toolbar=0&amp;navpanes=0&amp;scrollbar=0" style="width: 100%; height: 100%; border: none;" scrolling="no"></iframe>
+                                </t>
+                                <t t-elif="record.thumbnail.raw_value">
+                                    <img t-att-src="kanban_image('report.designer.template', 'thumbnail', record.id.raw_value)" class="o_report_designer_kanban_img" alt="Thumbnail"/>
+                                </t>
+                                <t t-else="">
+                                    <div class="o_report_designer_kanban_placeholder text-muted opacity-25">
+                                        <i class="fa fa-file-pdf-o fa-4x"/>
+                                    </div>
+                                </t>
+                            </div>
+                            
+                            <!-- Content Details -->
+                            <div class="o_report_designer_kanban_details p-3 flex-grow-1">
+                                <strong class="o_report_designer_kanban_title d-block mb-2">
+                                    <field name="name"/>
+                                </strong>
+                                <div class="text-muted d-flex align-items-center mb-1 small">
+                                    <i class="fa fa-database me-2" title="Model"/>
+                                    <span class="text-truncate"><field name="model_id"/></span>
+                                </div>
+                                <div class="text-muted d-flex align-items-center small">
+                                    <i class="fa fa-clock-o me-2" title="Last Modified"/>
+                                    <span><field name="write_date"/></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Bottom Footer -->
+                            <div class="o_report_designer_kanban_footer p-3 pt-0 d-flex align-items-center">
+                                <button name="action_open_designer" type="object" class="btn btn-sm btn-primary px-3 py-1 fw-bold">
+                                    <i class="fa fa-edit me-1"/> Design
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_report_designer_template_search" model="ir.ui.view">
+        <field name="name">report.designer.template.search</field>
+        <field name="model">report.designer.template</field>
+        <field name="arch" type="xml">
+            <search string="Search Templates">
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="category"/>
+                <filter string="Active" name="active" domain="[('is_active', '=', True)]"/>
+                <filter string="Archived" name="archived" domain="[('is_active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Model" name="group_by_model" context="{'group_by':'model_id'}"/>
+                    <filter string="Category" name="group_by_category" context="{'group_by':'category'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_report_designer_template" model="ir.actions.act_window">
+        <field name="name">Report Reports</field>
+        <field name="res_model">report.designer.template</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_report_designer_template_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first report template!
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item moved to report_designer_menus.xml -->
+</odoo>

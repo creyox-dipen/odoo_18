@@ -1,0 +1,2058 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="cr_dynamic_report_studio.ReportDesignerApp" owl="1">
+        <div class="o_report_designer_app d-flex flex-column h-100 w-100 bg-white">
+            <!-- Toolbar (Below standard Odoo Navbar) -->
+            <div class="o_report_designer_toolbar d-flex align-items-center border-bottom px-3 py-2 bg-white">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-white btn-sm border shadow-sm me-3" t-on-click="onClickBack" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa fa-arrow-left text-dark fw-bold"/>
+                    </button>
+                    <button class="btn btn-sm o_designer_btn_3d me-2 px-3 py-1" t-on-click="onClickSave">
+                        <i class="fa fa-save me-1 text-primary"/> Save
+                    </button>
+                    <button class="btn btn-sm o_designer_btn_3d me-2 px-3 py-1" t-on-click="onClickUndo" t-att-disabled="state.historyIndex &lt;= 0 ? '1' : None">
+                        <i class="fa fa-undo me-1"/> Undo
+                    </button>
+                    <button class="btn btn-sm o_designer_btn_3d me-3 px-3 py-1" t-on-click="onClickRedo" t-att-disabled="state.historyIndex &gt;= state.historyLength - 1 ? '1' : None">
+                        <i class="fa fa-repeat me-1"/> Redo
+                    </button>
+                    <button class="btn btn-sm o_designer_btn_3d me-3 px-3 py-1" t-on-click="onClickDelete" t-att-disabled="!state.activeElementId ? '1' : None">
+                        <i class="fa fa-trash me-1 text-danger"/> Delete
+                    </button>
+                    <button class="btn btn-sm o_designer_btn_3d px-3 py-1 text-white border-0" style="background: linear-gradient(135deg, #714B67 0%, #4a3043 100%); border-bottom: 3px solid #321e2c !important;" t-on-click="onClickPreview">
+                        <i class="fa fa-eye me-1 text-white"/> Preview
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Body -->
+            <div class="o_report_designer_body d-flex flex-grow-1 overflow-hidden">
+                
+                <!-- Left Sidebar (Toolbox) -->
+                <div class="o_report_designer_sidebar_left d-flex flex-column border-end bg-white" style="width: 320px; min-width: 320px;">
+                    <!-- Tabs -->
+                    <div class="d-flex text-center o_report_designer_tabs">
+                        <div t-attf-class="flex-fill o_designer_tab_item {{ state.activeTab === 'components' ? 'active' : '' }}" t-on-click="() => state.activeTab = 'components'">
+                            <i class="fa fa-puzzle-piece me-1"/> Components
+                        </div>
+                        <div t-attf-class="flex-fill o_designer_tab_item {{ state.activeTab === 'data' ? 'active' : '' }}" t-on-click="() => state.activeTab = 'data'">
+                            <i class="fa fa-database me-1"/> Data
+                        </div>
+                        <div t-attf-class="flex-fill o_designer_tab_item {{ state.activeTab === 'pages' ? 'active' : '' }}" t-on-click="() => state.activeTab = 'pages'">
+                            <i class="fa fa-file-o me-1"/> Pages
+                        </div>
+                    </div>
+                    
+                    <!-- Toolbox Grid (Components) -->
+                    <div t-if="state.activeTab === 'components'" class="o_report_designer_toolbox p-3 overflow-auto bg-white">
+                        <div class="row g-3">
+                            <!-- Text -->
+                            <div class="col-6">
+                                <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'text')" t-on-dblclick="() => this.onDblClickToolbox('text')">
+                                    <i class="fa fa-font fa-2x mb-2"/>
+                                    <span style="font-size: 13px;">Text</span>
+                                </button>
+                            </div>
+                            <!-- Field -->
+                            <div class="col-6">
+                                <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'field')" t-on-dblclick="() => this.onDblClickToolbox('field')">
+                                    <i class="fa fa-database fa-2x mb-2"/>
+                                    <span style="font-size: 13px;">Field</span>
+                                </button>
+                            </div>
+                            <!-- Image -->
+                            <div class="col-6">
+                                <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'image')" t-on-dblclick="() => this.onDblClickToolbox('image')">
+                                    <i class="fa fa-image fa-2x mb-2"/>
+                                    <span style="font-size: 13px;">Image</span>
+                                </button>
+                            </div>
+                            <!-- Watermark -->
+                            <div class="col-6">
+                                <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'watermark')" t-on-dblclick="() => this.onDblClickToolbox('watermark')">
+                                    <i class="fa fa-clone fa-2x mb-2" style="opacity: 0.8;"/>
+                                    <span style="font-size: 13px;">Watermark</span>
+                                </button>
+                            </div>
+                            <!-- Line -->
+                            <div class="col-6">
+                                <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'line')" t-on-dblclick="() => this.onDblClickToolbox('line')">
+                                    <i class="fa fa-arrows-h fa-2x mb-2"/>
+                                    <span style="font-size: 13px;">Line</span>
+                                </button>
+                            </div>
+                             <!-- Shape Selector (Dynamic) -->
+                             <div class="col-6 position-relative">
+                                 <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'shape')" t-on-dblclick="() => this.onDblClickToolbox('shape')">
+                                     <t t-if="state.selectedToolboxShape === 'rectangle'">
+                                         <i class="fa fa-square-o fa-2x mb-1" style="font-size: 24px;"/>
+                                     </t>
+                                     <t t-elif="state.selectedToolboxShape === 'ellipse'">
+                                         <div class="mb-1 o_shape_preview_circle" style="width: 24px; height: 24px; border: 2.5px solid currentColor; border-radius: 50%;"></div>
+                                     </t>
+                                     <t t-elif="state.selectedToolboxShape === 'triangle'">
+                                         <svg width="24" height="24" viewBox="0 0 24 24" class="mb-1 o_shape_preview_svg">
+                                             <polygon points="12,2 22,22 2,22"/>
+                                         </svg>
+                                     </t>
+                                     <t t-elif="state.selectedToolboxShape === 'star'">
+                                         <i class="fa fa-star-o fa-2x mb-1" style="font-size: 24px;"/>
+                                     </t>
+                                     <t t-elif="state.selectedToolboxShape === 'diamond'">
+                                         <svg width="24" height="24" viewBox="0 0 24 24" class="mb-1 o_shape_preview_svg">
+                                             <polygon points="12,2 22,12 12,22 2,12"/>
+                                         </svg>
+                                     </t>
+                                     <t t-elif="state.selectedToolboxShape === 'polygon'">
+                                         <svg width="24" height="24" viewBox="0 0 24 24" class="mb-1 o_shape_preview_svg">
+                                             <polygon points="12,2 22,7 22,17 12,22 2,17 2,7"/>
+                                         </svg>
+                                     </t>
+                                     <span style="font-size: 13px;">Shapes</span>
+                                 </button>
+                             </div>
+                            <!-- Section -->
+                            <div class="col-6">
+                                <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'section')" t-on-dblclick="() => this.onDblClickToolbox('section')">
+                                    <i class="fa fa-list-alt fa-2x mb-2"/>
+                                    <span style="font-size: 13px;">Section</span>
+                                </button>
+                            </div>
+                            <!-- Table -->
+                            <div class="col-6">
+                                <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'table')" t-on-dblclick="() => this.onDblClickToolbox('table')">
+                                    <i class="fa fa-table fa-2x mb-2"/>
+                                    <span style="font-size: 13px;">Table</span>
+                                </button>
+                            </div>
+                            <!-- Barcode -->
+                            <div class="col-6">
+                                <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'barcode')" t-on-dblclick="() => this.onDblClickToolbox('barcode')">
+                                    <i class="fa fa-barcode fa-2x mb-2"/>
+                                    <span style="font-size: 13px;">Barcode</span>
+                                </button>
+                            </div>
+                            <!-- Page Break -->
+                            <div class="col-6">
+                                <button class="btn w-100 py-3 d-flex flex-column align-items-center justify-content-center o_component_btn" style="height: 100px; cursor: grab;" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'pagebreak')" t-on-dblclick="() => this.onDblClickToolbox('pagebreak')">
+                                    <i class="fa fa-scissors fa-2x mb-2"/>
+                                    <span style="font-size: 13px;">Page Break</span>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Data Tab -->
+                    <div t-if="state.activeTab === 'data'" class="o_report_designer_data p-3 overflow-auto">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" placeholder="Search fields..." t-model="state.sidebarFieldSearchQuery" t-on-input="onSearchSidebarField"/>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2 text-muted" style="font-size: 13px;">
+                            <span>Model: <t t-esc="state.modelName"/></span>
+                        </div>
+                        <div class="o_designer_fields_list">
+                            <t t-if="state.sidebarVisibleFields.length === 0">
+                                <div class="text-muted small py-3 text-center">No fields found.</div>
+                            </t>
+                            <t t-else="">
+                                <t t-foreach="state.sidebarVisibleFields" t-as="field" t-key="field.fullPath">
+                                    <div class="d-flex align-items-center py-2 border-bottom" draggable="true" t-on-dragstart="(ev) => this.onDragStartToolbox(ev, 'field', field)" style="cursor: grab;">
+                                        <!-- Indentation based on level -->
+                                        <div t-attf-style="width: {{ field.level * 20 }}px;"></div>
+                                        
+                                        <!-- Expand/Collapse Chevron for relational fields -->
+                                        <t t-if="['many2one', 'one2many', 'many2many'].includes(field.ttype)">
+                                            <div class="text-center text-muted" style="width: 20px; cursor: pointer;" t-on-click.stop="() => this.toggleSidebarFieldExpand(field)">
+                                                <i t-attf-class="fa {{ field.isExpanded ? 'fa-chevron-down' : 'fa-chevron-right' }}" style="font-size: 10px;"/>
+                                            </div>
+                                        </t>
+                                        <t t-else="">
+                                            <div style="width: 20px;"></div>
+                                        </t>
+
+                                        <t t-set="typeCode" t-value="(field.ttype || 'unk').substring(0, 3).toUpperCase()"/>
+                                        <span class="badge bg-light text-dark border me-2" style="width: 35px; font-size: 9px; flex-shrink: 0;">
+                                            <t t-esc="typeCode"/>
+                                        </span>
+                                        <div class="d-flex flex-column" style="overflow: hidden; flex-grow: 1;">
+                                            <span class="text-dark text-truncate" style="font-size: 13px;" t-att-title="field.field_description">
+                                                <t t-esc="field.field_description"/>
+                                            </span>
+                                            <span class="text-muted text-truncate" style="font-size: 11px;" t-att-title="field.fullPath">
+                                                <t t-esc="field.fullPath"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </t>
+                            </t>
+                        </div>
+                    </div>
+                    <!-- Pages Tab -->
+                    <div t-if="state.activeTab === 'pages'" class="o_report_designer_pages p-3" style="overflow-y: auto; overflow-x: visible;">
+                        <button class="btn btn-light w-100 mb-3 text-muted border" t-on-click="addPage">
+                            <i class="fa fa-plus me-1"/> Add Page
+                        </button>
+
+                        <div class="o_designer_page_tree">
+                            <t t-foreach="state.pages" t-as="page" t-key="page.id">
+                                <!-- Page Header -->
+                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-start border-3 fw-bold mb-2 mt-3" 
+                                     t-attf-class="{{ state.activePageId === page.id ? 'bg-light text-dark border-dark' : 'bg-light text-dark border-secondary border-opacity-20' }}" 
+                                     t-on-click="() => this.selectPage(page.id)"
+                                     style="cursor: pointer; position: relative;">
+                                    <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+                                        <i t-attf-class="fa {{ page.expanded !== false ? 'fa-chevron-down' : 'fa-chevron-right' }} me-2" 
+                                           style="font-size: 10px; cursor: pointer; padding: 5px;"
+                                           t-on-click.stop="() => page.expanded = (page.expanded === false ? true : false)"/>
+                                        <t t-if="state.editingPageId === page.id">
+                                            <input type="text" class="form-control form-control-sm border-primary" 
+                                                   t-att-value="page.name"
+                                                   t-on-blur="(ev) => this.finishEditPageName(page.id, ev)"
+                                                   t-on-keydown="(ev) => this.onPageNameKeyDown(page.id, ev)"
+                                                   t-on-click.stop=""
+                                                   t-on-mousedown.stop=""
+                                                   style="width: 140px; font-size: 13px; font-weight: 600;"
+                                                   t-ref="'pageNameInput_' + page.id"/>
+                                        </t>
+                                        <t t-else="">
+                                            <span t-on-dblclick.stop="() => this.startEditPageName(page.id)" 
+                                                  style="font-size: 13px; user-select: none;"
+                                                  title="Double-click to rename">
+                                                <t t-esc="page.name"/>
+                                            </span>
+                                        </t>
+                                    </div>
+                                    <div class="dropdown" t-on-mousedown.stop="" t-on-click.stop="">
+                                        <span class="dropdown-toggle o-no-caret" data-bs-toggle="dropdown" style="cursor: pointer; padding: 4px 8px; font-size: 18px; font-weight: bold; color: #000; line-height: 1; user-select: none;">&#8942;</span>
+                                        <div class="dropdown-menu dropdown-menu-end shadow-sm border" style="margin-top: 5px; z-index: 1050; position: absolute;">
+                                            <button class="dropdown-item d-flex align-items-center py-2" type="button" t-on-click="() => this.startEditPageName(page.id)">
+                                                <i class="fa fa-pencil me-2 text-dark" style="width: 16px;"/> Rename
+                                            </button>
+                                            <button class="dropdown-item d-flex align-items-center py-2" type="button" t-on-click="() => this.duplicatePage(page.id)">
+                                                <i class="fa fa-copy me-2 text-dark" style="width: 16px;"/> Duplicate
+                                            </button>
+                                            <button class="dropdown-item d-flex align-items-center py-2 text-danger" type="button" t-on-click="() => this.deletePage(page.id)" t-att-disabled="state.pages.length &lt;= 1">
+                                                <i class="fa fa-trash me-2" style="width: 16px;"/> Delete
+                                            </button>
+                                            <div class="dropdown-divider"/>
+                                            <button class="dropdown-item d-flex align-items-center py-2" type="button" t-on-click="() => this.movePageUp(page.id)" t-att-disabled="page_index === 0">
+                                                <i class="fa fa-chevron-up me-2 text-dark" style="width: 16px;"/> Move Up
+                                            </button>
+                                            <button class="dropdown-item d-flex align-items-center py-2" type="button" t-on-click="() => this.movePageDown(page.id)" t-att-disabled="page_index === state.pages.length - 1">
+                                                <i class="fa fa-chevron-down me-2 text-dark" style="width: 16px;"/> Move Down
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Elements Tree grouped by Header/Content/Footer -->
+                                 <div t-if="page.expanded !== false" class="o_designer_page_elements_tree pb-2">
+                                     <!-- Header Group -->
+                                     <div t-if="state.headerEnabled" class="px-4 py-1 text-muted fw-bold mt-2" style="font-size: 11px; text-transform: uppercase;">Header</div>
+                                     <t t-foreach="page.elements" t-as="el" t-key="'tree_header_'+el.id">
+                                         <t t-if="state.headerEnabled and el.y &lt; state.headerHeight">
+                                             <t t-call="cr_dynamic_report_studio.TreeElement"/>
+                                         </t>
+                                     </t>
+
+                                     <!-- Content Group -->
+                                     <div class="px-4 py-1 text-muted fw-bold mt-2" style="font-size: 11px; text-transform: uppercase;">Content</div>
+                                     <t t-foreach="page.elements" t-as="el" t-key="'tree_body_'+el.id">
+                                         <t t-if="!((state.headerEnabled and el.y &lt; state.headerHeight) or (state.footerEnabled and el.y &gt;= (state.pageHeight - state.footerHeight)))">
+                                             <t t-call="cr_dynamic_report_studio.TreeElement"/>
+                                         </t>
+                                     </t>
+
+                                     <!-- Footer Group -->
+                                     <div t-if="state.footerEnabled" class="px-4 py-1 text-muted fw-bold mt-2" style="font-size: 11px; text-transform: uppercase;">Footer</div>
+                                     <t t-foreach="page.elements" t-as="el" t-key="'tree_footer_'+el.id">
+                                         <t t-if="state.footerEnabled and el.y &gt;= (state.pageHeight - state.footerHeight)">
+                                             <t t-call="cr_dynamic_report_studio.TreeElement"/>
+                                         </t>
+                                     </t>
+                                 </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Canvas Area -->
+                <div class="o_report_designer_canvas_container flex-grow-1 position-relative d-flex flex-column" style="min-width: 0; background-color: #f4f5f9;">
+                    <!-- Rulers -->
+                    <!-- Top Left Corner Intersection -->
+                    <div class="position-absolute top-0 start-0 bg-white border-end border-bottom" style="width: 30px; height: 30px; z-index: 20;"></div>
+                    
+                    <!-- Horizontal Ruler -->
+                    <div class="o_designer_ruler_h position-absolute top-0 border-bottom bg-white text-muted overflow-hidden" style="left: 30px; right: 0; height: 30px; font-size: 10px; z-index: 10; pointer-events: none;">
+                        <!-- Container that translates with scroll and tracks canvas offset -->
+                        <div class="position-absolute h-100 d-flex" t-attf-style="width: 100%; left: 0; transform: translateX({{state.rulerOffsetX - state.scrollLeft}}px);">
+                            <!-- The scaled ruler -->
+                            <div class="position-relative h-100 flex-shrink-0" t-attf-style="width: {{state.pageWidth * state.zoomLevel / 100}}px;">
+                                <t t-foreach="horizontalTicks" t-as="tick" t-key="tick">
+                                    <t t-if="tick % 100 === 0">
+                                        <div class="position-absolute bottom-0 text-muted" t-attf-style="left: {{tick * state.zoomLevel / 100}}px; transform: translateX(-50%); padding-bottom: 5px;">
+                                            <t t-esc="tick"/>
+                                        </div>
+                                        <div class="position-absolute bottom-0 border-start border-secondary" t-attf-style="left: {{tick * state.zoomLevel / 100}}px; height: 8px;"></div>
+                                    </t>
+                                    <t t-elif="tick % 50 === 0">
+                                        <div class="position-absolute bottom-0 border-start border-secondary opacity-50" t-attf-style="left: {{tick * state.zoomLevel / 100}}px; height: 5px;"></div>
+                                    </t>
+                                    <t t-else="">
+                                        <div t-if="state.zoomLevel >= 50" class="position-absolute bottom-0 border-start border-secondary opacity-25" t-attf-style="left: {{tick * state.zoomLevel / 100}}px; height: 3px;"></div>
+                                    </t>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vertical Ruler -->
+                    <div class="o_designer_ruler_v position-absolute start-0 border-end bg-white text-muted overflow-hidden" style="top: 30px; bottom: 0; width: 30px; font-size: 10px; z-index: 10; pointer-events: none;">
+                        <!-- Container that translates with scroll -->
+                        <div class="position-absolute w-100" t-attf-style="height: 100%; top: 0; transform: translateY(-{{state.scrollTop}}px);">
+                            <!-- The scaled ruler -->
+                            <div class="position-absolute w-100" t-attf-style="height: {{state.pageHeight * state.zoomLevel / 100}}px; top: 48px;">
+                                <t t-foreach="verticalTicks" t-as="tick" t-key="tick">
+                                    <t t-if="tick % 100 === 0">
+                                        <div class="position-absolute end-0 text-muted pe-1" t-attf-style="top: {{tick * state.zoomLevel / 100}}px; transform: translateY(-50%); padding-right: 5px;">
+                                            <t t-esc="tick"/>
+                                        </div>
+                                        <div class="position-absolute end-0 border-top border-secondary" t-attf-style="top: {{tick * state.zoomLevel / 100}}px; width: 8px;"></div>
+                                    </t>
+                                    <t t-elif="tick % 50 === 0">
+                                        <div class="position-absolute end-0 border-top border-secondary opacity-50" t-attf-style="top: {{tick * state.zoomLevel / 100}}px; width: 5px;"></div>
+                                    </t>
+                                    <t t-else="">
+                                        <div t-if="state.zoomLevel >= 50" class="position-absolute end-0 border-top border-secondary opacity-25" t-attf-style="top: {{tick * state.zoomLevel / 100}}px; width: 3px;"></div>
+                                    </t>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Canvas -->
+                    <div class="o_designer_canvas_wrapper flex-grow-1 d-flex flex-column align-items-center overflow-auto position-relative p-5 gap-4" 
+                         t-attf-style="margin-left: 30px; margin-top: 30px; background-image: linear-gradient(#e9ecef 1px, transparent 1px), linear-gradient(90deg, #e9ecef 1px, transparent 1px); background-size: {{20 * state.zoomLevel / 100}}px {{20 * state.zoomLevel / 100}}px; background-position: 48px 48px; background-attachment: local;" 
+                         t-on-scroll="onCanvasScroll"
+                         t-on-click="onCanvasClick">
+                        <t t-foreach="state.pages" t-as="page" t-key="page.id">
+                            <div t-if="state.activePageId === page.id" 
+                                 class="o_designer_page_container flex-shrink-0"
+                                 t-attf-style="width: {{state.pageWidth * state.zoomLevel / 100}}px; height: {{state.pageHeight * state.zoomLevel / 100}}px; position: relative;">
+                                 
+                                 <div class="o_designer_paper bg-white shadow position-absolute text-start" 
+                                      t-attf-style="width: {{state.pageWidth}}px; height: {{state.pageHeight}}px; transform: scale({{state.zoomLevel / 100}}); transform-origin: top left; top: 0; left: 0;"
+                                      t-on-dragover="onDragOverCanvas"
+                                      t-on-drop="(ev) => this.onDropOnCanvas(ev, page.id)"
+                                      t-on-click="onCanvasClick">
+                                      
+                                      <!-- Margin Overlay Lines -->
+                                      <div class="position-absolute" t-attf-style="pointer-events: none; border-top: 1px dashed rgba(255, 0, 0, 0.3); left: {{state.marginLeft}}px; right: {{state.marginRight}}px; top: {{state.headerEnabled ? Math.max(state.marginTop, state.headerHeight) : state.marginTop}}px; z-index: 1000;"/>
+                                      <div class="position-absolute" t-attf-style="pointer-events: none; border-bottom: 1px dashed rgba(255, 0, 0, 0.3); left: {{state.marginLeft}}px; right: {{state.marginRight}}px; bottom: {{state.footerEnabled ? Math.max(state.marginBottom, state.footerHeight) : state.marginBottom}}px; z-index: 1000;"/>
+                                      <div class="position-absolute" t-attf-style="pointer-events: none; border-left: 1px dashed rgba(255, 0, 0, 0.3); top: {{state.headerEnabled ? Math.max(state.marginTop, state.headerHeight) : state.marginTop}}px; bottom: {{state.footerEnabled ? Math.max(state.marginBottom, state.footerHeight) : state.marginBottom}}px; left: {{state.marginLeft}}px; z-index: 1000;"/>
+                                      <div class="position-absolute" t-attf-style="pointer-events: none; border-right: 1px dashed rgba(255, 0, 0, 0.3); top: {{state.headerEnabled ? Math.max(state.marginTop, state.headerHeight) : state.marginTop}}px; bottom: {{state.footerEnabled ? Math.max(state.marginBottom, state.footerHeight) : state.marginBottom}}px; right: {{state.marginRight}}px; z-index: 1000;"/>
+
+                                      <!-- Header/Footer Overlay Lines -->
+                                      <div t-if="state.headerEnabled" class="position-absolute" t-attf-style="pointer-events: none; border-bottom: 2px dashed rgba(0, 82, 204, 0.4); left: 0; right: 0; top: {{state.headerHeight}}px; z-index: 1001;">
+                                          <span style="position: absolute; right: 5px; bottom: 2px; color: rgba(0,82,204,0.6); font-size: 10px; font-weight: bold;">Header Band</span>
+                                      </div>
+                                      <div t-if="state.footerEnabled" class="position-absolute" t-attf-style="pointer-events: none; border-top: 2px dashed rgba(0, 168, 89, 0.4); left: 0; right: 0; bottom: {{state.footerHeight}}px; z-index: 1001;">
+                                          <span style="position: absolute; right: 5px; top: 2px; color: rgba(0,168,89,0.6); font-size: 10px; font-weight: bold;">Footer Band</span>
+                                      </div>
+
+                                      <!-- Smart Snapping Guides -->
+                                      <div t-if="state.snapLines and state.snapLines.x !== null" class="position-absolute" t-attf-style="pointer-events: none; border-left: 1px dashed blue; top: 0; bottom: 0; left: {{state.snapLines.x}}px; z-index: 2000;"/>
+                                      <div t-if="state.snapLines and state.snapLines.y !== null" class="position-absolute" t-attf-style="pointer-events: none; border-top: 1px dashed blue; left: 0; right: 0; top: {{state.snapLines.y}}px; z-index: 2000;"/>
+
+                                      <!-- Header Elements -->
+                                      <!-- Always render header elements from the first page (global master template) -->
+                                      <t t-foreach="state.pages[0].elements" t-as="el" t-key="'header_' + el.id">
+                                          <t t-if="state.headerEnabled and el.y &lt; state.headerHeight">
+                                              <div t-attf-style="pointer-events: {{ state.activePageId === state.pages[0].id ? 'auto' : 'none' }}; opacity: {{ state.activePageId === state.pages[0].id ? 1 : 0.6 }};">
+                                                  <t t-call="cr_dynamic_report_studio.DesignerElement"/>
+                                              </div>
+                                          </t>
+                                      </t>
+
+                                      <!-- Elements Clipped by Margins -->
+                                      <div class="position-absolute w-100 h-100" t-attf-style="clip-path: inset({{state.headerEnabled ? Math.max(state.marginTop, state.headerHeight) : state.marginTop}}px {{state.marginRight}}px {{state.footerEnabled ? Math.max(state.marginBottom, state.footerHeight) : state.marginBottom}}px {{state.marginLeft}}px); pointer-events: none;">
+                                          <!-- We need to re-enable pointer events for the children -->
+                                          <div class="position-absolute w-100 h-100" style="pointer-events: auto;">
+                                              <t t-foreach="page.elements" t-as="el" t-key="'body_' + el.id">
+                                                  <t t-if="!((state.headerEnabled and el.y &lt; state.headerHeight) or (state.footerEnabled and el.y &gt;= (state.pageHeight - state.footerHeight)))">
+                                                      <t t-call="cr_dynamic_report_studio.DesignerElement"/>
+                                                  </t>
+                                              </t>
+                                          </div>
+                                      </div>
+
+                                      <!-- Footer Elements -->
+                                      <!-- Always render footer elements from the first page (global master template) -->
+                                      <t t-foreach="state.pages[0].elements" t-as="el" t-key="'footer_' + el.id">
+                                          <t t-if="state.footerEnabled and el.y &gt;= (state.pageHeight - state.footerHeight)">
+                                              <div t-attf-style="pointer-events: {{ state.activePageId === state.pages[0].id ? 'auto' : 'none' }}; opacity: {{ state.activePageId === state.pages[0].id ? 1 : 0.6 }};">
+                                                  <t t-call="cr_dynamic_report_studio.DesignerElement"/>
+                                              </div>
+                                          </t>
+                                      </t>
+                                  </div>
+                              </div>
+                         </t>
+                     </div>
+
+                    <!-- Footer Controls -->
+                    <div class="o_designer_canvas_footer position-absolute bottom-0 w-100 p-3 d-flex justify-content-between align-items-center" style="pointer-events: none;">
+                        <div style="width: 150px;"></div>
+                        <!-- Pagination -->
+                        <div class="o_designer_pagination d-flex bg-white rounded shadow-sm overflow-hidden" style="pointer-events: auto;">
+                            <t t-foreach="state.pages" t-as="page" t-key="page.id">
+                                <div t-attf-class="px-3 py-1 text-center {{ state.activePageId === page.id ? 'bg-primary text-white' : 'text-muted bg-light border-end' }}"
+                                     style="cursor: pointer; min-width: 35px;"
+                                     t-on-click="() => state.activePageId = page.id">
+                                    <t t-esc="page.id"/>
+                                </div>
+                            </t>
+                        </div>
+                        <!-- Zoom -->
+                        <div class="o_designer_zoom d-flex align-items-center bg-white rounded shadow-sm px-2 py-1" style="pointer-events: auto;">
+                            <button class="btn btn-sm btn-link text-dark" t-on-click="onClickZoomOut"><i class="fa fa-minus"/></button>
+                            <span class="mx-2 fw-bold"><t t-esc="state.zoomLevel"/>%</span>
+                            <button class="btn btn-sm btn-link text-dark" t-on-click="onClickZoomIn"><i class="fa fa-plus"/></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar (Properties) -->
+                <div class="o_report_designer_sidebar_right d-flex flex-column border-start bg-white overflow-auto" style="width: 380px; min-width: 380px;">
+                    <t t-set="activeEl" t-value="activeElement"/>
+                    
+                    <t t-if="!activeEl">
+                        <div class="p-3 border-bottom bg-white">
+                            <h5 class="mb-0">Page Settings</h5>
+                        </div>
+                        <div class="p-3">
+                            <!-- Page Size -->
+                            <div class="mb-4">
+                                <label class="text-muted small mb-2">Page Size</label>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="text-muted small d-block mb-1" style="font-size: 11px;">Width</label>
+                                        <input type="number" step="any" class="form-control text-center" t-att-value="pageWidthDisplay" t-on-change="onChangePageWidth" t-on-focus="(ev) => ev.target.select()"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="text-muted small d-block mb-1" style="font-size: 11px;">Height</label>
+                                        <input type="number" step="any" class="form-control text-center" t-att-value="pageHeightDisplay" t-on-change="onChangePageHeight" t-on-focus="(ev) => ev.target.select()"/>
+                                    </div>
+                                </div>
+                                 <div class="d-flex gap-2 mb-3 position-relative">
+                                     <button type="button" class="btn btn-sm flex-fill" t-attf-class="{{ Math.round(state.pageWidth) === 227 ? 'btn-primary text-white' : 'btn-light border text-dark' }}" t-on-click="() => this.setPaperSize(80, 297)">80mm</button>
+                                     <button type="button" class="btn btn-sm flex-fill" t-attf-class="{{ Math.round(state.pageWidth) === 595 ? 'btn-primary text-white' : 'btn-light border text-dark' }}" t-on-click="() => this.setPaperSize(210, 297)">A4</button>
+                                     <button type="button" class="btn btn-sm flex-fill" t-attf-class="{{ Math.round(state.pageWidth) === 612 ? 'btn-primary text-white' : 'btn-light border text-dark' }}" t-on-click="() => this.setPaperSize(215.9, 279.4)">Letter</button>
+                                     <button class="btn btn-light btn-sm flex-fill border dropdown-toggle" type="button" t-on-click="() => state.showMoreSizes = !state.showMoreSizes">More</button>
+                                     
+                                     <!-- More Sizes Dropdown -->
+                                     <div t-if="state.showMoreSizes" class="dropdown-menu show p-2 position-absolute end-0" style="top: 100%; right: 0; z-index: 1050; width: 220px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.15); border: 1px solid #dee2e6;">
+                                         <div class="mb-2">
+                                             <input type="text" class="form-control form-control-sm" placeholder="Search..." t-model="state.paperSizeSearchQuery"/>
+                                         </div>
+                                         <t t-foreach="filteredPaperSizes" t-as="size" t-key="size.name">
+                                             <button class="dropdown-item py-2 border-bottom text-start" type="button" style="font-size: 13px;" t-on-click="() => { this.setPaperSize(size.width, size.height); state.showMoreSizes = false; }">
+                                                 <t t-esc="size.name"/> (<t t-esc="size.width"/>x<t t-esc="size.height"/> mm)
+                                             </button>
+                                         </t>
+                                     </div>
+                                 </div>
+                             </div>
+
+                            <!-- Unit -->
+                            <div class="mb-4">
+                                <label class="text-muted small mb-1">Unit</label>
+                                <select class="form-select" t-model="state.unit" t-on-change="onChangeUnit">
+                                    <option value="pt">Points (pt)</option>
+                                    <option value="mm">Millimeters (mm)</option>
+                                    <option value="in">Inches (in)</option>
+                                </select>
+                            </div>
+
+                            <!-- Paper Type -->
+                            <div class="mb-4">
+                                <label class="text-muted small mb-1">Paper Type</label>
+                                <select class="form-select" t-model="state.paperType" t-on-change="onChangePaperType">
+                                    <option value="standard">Standard Sheets</option>
+                                    <option value="receipt">Receipt Roll (58mm, 80mm...)</option>
+                                </select>
+                                <div t-if="state.paperType === 'receipt'" class="text-muted mt-2" style="font-size: 11px; line-height: 1.4;">
+                                    In receipt roll mode, page height grows with content. The Height value is only a preview hint.
+                                </div>
+                            </div>
+
+                             <!-- Orientation -->
+                             <div class="mb-4">
+                                 <label class="text-muted small mb-1">Orientation</label>
+                                 <select class="form-select" t-model="state.orientation" t-on-change="onChangeOrientation">
+                                     <option value="portrait">Portrait</option>
+                                     <option value="landscape">Landscape</option>
+                                 </select>
+                             </div>
+
+                            <!-- Margins -->
+                            <div class="mb-4">
+                                <label class="text-muted small mb-2">Margins</label>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="text-muted small d-block mb-1" style="font-size: 11px;">Top</label>
+                                        <input type="number" step="any" class="form-control text-center" t-att-value="marginTopDisplay" t-on-change="(ev) => this.onChangeMargin(ev, 'marginTop')" t-on-focus="(ev) => ev.target.select()"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="text-muted small d-block mb-1" style="font-size: 11px;">Right</label>
+                                        <input type="number" step="any" class="form-control text-center" t-att-value="marginRightDisplay" t-on-change="(ev) => this.onChangeMargin(ev, 'marginRight')" t-on-focus="(ev) => ev.target.select()"/>
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="text-muted small d-block mb-1" style="font-size: 11px;">Bottom</label>
+                                        <input type="number" step="any" class="form-control text-center" t-att-value="marginBottomDisplay" t-on-change="(ev) => this.onChangeMargin(ev, 'marginBottom')" t-on-focus="(ev) => ev.target.select()"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="text-muted small d-block mb-1" style="font-size: 11px;">Left</label>
+                                        <input type="number" step="any" class="form-control text-center" t-att-value="marginLeftDisplay" t-on-change="(ev) => this.onChangeMargin(ev, 'marginLeft')" t-on-focus="(ev) => ev.target.select()"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Header Band -->
+                            <div class="mb-4">
+                                <label class="text-muted small mb-2">Header Band</label>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" t-model="state.headerEnabled" t-on-change="() => this.pushHistory()" id="enableHeader"/>
+                                    <label class="form-check-label" for="enableHeader">
+                                        Enable Header
+                                    </label>
+                                </div>
+                                <div class="mb-2" t-if="state.headerEnabled">
+                                    <label class="text-muted small d-block mb-1" style="font-size: 11px;">Height</label>
+                                    <input type="number" step="any" class="form-control" t-att-value="headerHeightDisplay" t-on-change="(ev) => this.onChangeHeaderFooter(ev, 'headerHeight')" t-on-focus="(ev) => ev.target.select()"/>
+                                </div>
+                                <div t-if="state.headerEnabled">
+                                    <label class="text-muted small d-block mb-1" style="font-size: 11px;">Print On</label>
+                                    <select class="form-select" t-model="state.headerPrintOn" t-on-change="() => this.pushHistory()">
+                                        <option value="all">All Pages</option>
+                                        <option value="first">First Page Only</option>
+                                        <option value="last">Last Page Only</option>
+                                        <option value="even">Even Pages</option>
+                                        <option value="odd">Odd Pages</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Footer Band -->
+                            <div class="mb-4">
+                                <label class="text-muted small mb-2">Footer Band</label>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" t-model="state.footerEnabled" t-on-change="() => this.pushHistory()" id="enableFooter"/>
+                                    <label class="form-check-label" for="enableFooter">
+                                        Enable Footer
+                                    </label>
+                                </div>
+                                <div class="mb-2" t-if="state.footerEnabled">
+                                    <label class="text-muted small d-block mb-1" style="font-size: 11px;">Height</label>
+                                    <input type="number" step="any" class="form-control" t-att-value="footerHeightDisplay" t-on-change="(ev) => this.onChangeHeaderFooter(ev, 'footerHeight')" t-on-focus="(ev) => ev.target.select()"/>
+                                </div>
+                                <div t-if="state.footerEnabled">
+                                    <label class="text-muted small d-block mb-1" style="font-size: 11px;">Print On</label>
+                                    <select class="form-select" t-model="state.footerPrintOn" t-on-change="() => this.pushHistory()">
+                                        <option value="all">All Pages</option>
+                                        <option value="first">First Page Only</option>
+                                        <option value="last">Last Page Only</option>
+                                        <option value="even">Even Pages</option>
+                                        <option value="odd">Odd Pages</option>
+                                    </select>
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </t>
+                    
+                    <t t-else="">
+                        <!-- Element Settings -->
+                        <div class="p-3 border-bottom bg-white">
+                            <h6 class="mb-0 text-dark fw-bold" style="text-transform: capitalize;">
+                                <t t-if="activeEl.type === 'rectangle' or activeEl.type === 'shape'">Shape</t>
+                                <t t-elif="activeEl.type === 'pagebreak'">Page Break</t>
+                                <t t-else=""><t t-esc="activeEl.type"/></t>
+                            </h6>
+                        </div>
+                        <div class="p-3 overflow-auto flex-grow-1">
+                            <!-- Position & Size -->
+                            <div class="mb-4">
+                                <label class="form-label text-muted small fw-bold mb-2">Position &amp; Size</label>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">X</label>
+                                        <input type="number" class="form-control form-control-sm" t-model.number="activeEl.x" t-on-change="pushHistory" t-att-disabled="activeEl.type === 'pagebreak' ? '1' : undefined" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Y</label>
+                                        <input type="number" class="form-control form-control-sm" t-model.number="activeEl.y" t-on-change="pushHistory" />
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <t t-if="activeEl.type !== 'section' and activeEl.type !== 'table' and activeEl.type !== 'pagebreak'">
+                                        <div class="col-4">
+                                            <label class="form-label text-muted mb-1" style="font-size: 11px;">Rotation</label>
+                                            <input type="number" class="form-control form-control-sm" t-model.number="activeEl.rotation" t-on-change="pushHistory" />
+                                        </div>
+                                    </t>
+                                    <div t-attf-class="{{ activeEl.type === 'section' or activeEl.type === 'table' or activeEl.type === 'pagebreak' ? 'col-6' : 'col-4' }}">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Width</label>
+                                        <input type="number" class="form-control form-control-sm" t-model.number="activeEl.width" t-on-change="pushHistory" t-att-disabled="activeEl.type === 'pagebreak' ? '1' : undefined" />
+                                    </div>
+                                    <div t-attf-class="{{ activeEl.type === 'section' or activeEl.type === 'table' or activeEl.type === 'pagebreak' ? 'col-6' : 'col-4' }}">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Height</label>
+                                        <input type="number" class="form-control form-control-sm" t-model.number="activeEl.height" t-on-change="pushHistory" />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                             <!-- Layers -->
+                             <div class="mb-4 d-flex align-items-center justify-content-between" t-if="activeEl.type !== 'watermark' and activeEl.type !== 'pagebreak'">
+                                 <label class="form-label text-muted small fw-bold mb-0">Layers</label>
+                                 <div class="d-flex gap-2">
+                                     <button class="o_designer_btn_3d" t-on-click="() => this.onClickLayer('back')" title="Send to Back" style="width: 32px; height: 30px;"><i class="fa fa-step-backward" style="transform: rotate(-90deg); font-size: 11px;"/></button>
+                                     <button class="o_designer_btn_3d" t-on-click="() => this.onClickLayer('backward')" title="Send Backward" style="width: 32px; height: 30px;"><i class="fa fa-chevron-down" style="font-size: 11px;"/></button>
+                                     <button class="o_designer_btn_3d" t-on-click="() => this.onClickLayer('forward')" title="Bring Forward" style="width: 32px; height: 30px;"><i class="fa fa-chevron-up" style="font-size: 11px;"/></button>
+                                     <button class="o_designer_btn_3d" t-on-click="() => this.onClickLayer('front')" title="Bring to Front" style="width: 32px; height: 30px;"><i class="fa fa-step-forward" style="transform: rotate(-90deg); font-size: 11px;"/></button>
+                                 </div>
+                             </div>
+                            
+                            <!-- Text / Field Common Typography -->
+                            <t t-if="activeEl.type === 'text' or activeEl.type === 'field'">
+                                <!-- Text Properties -->
+                                <div t-if="activeEl.type === 'text'" class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Text Properties</label>
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Content</label>
+                                    <textarea class="form-control mb-2" rows="3" t-model="activeEl.content"></textarea>
+                                    <div class="text-end position-relative">
+                                        <button class="btn btn-link btn-sm text-primary text-decoration-none p-0"
+                                                t-on-click.stop="() => this.state.showInsertMenu = !this.state.showInsertMenu">
+                                            <i class="fa fa-plus"/> Insert...
+                                        </button>
+                                        <div t-if="state.showInsertMenu"
+                                             class="position-absolute end-0 bg-white border rounded shadow-sm py-1"
+                                             style="z-index: 9999; min-width: 140px; font-size: 13px; top: 22px;">
+                                            <a class="d-flex align-items-center gap-2 px-3 py-2 text-dark text-decoration-none"
+                                               t-on-click="() => this.openFieldSelector('fields')"
+                                               style="cursor: pointer;">
+                                                <i class="fa fa-database text-muted" style="width:16px;"/>
+                                                Field...
+                                            </a>
+                                            <a class="d-flex align-items-center gap-2 px-3 py-2 text-dark text-decoration-none"
+                                               t-on-click="() => this.openFieldSelector('variables')"
+                                               style="cursor: pointer;">
+                                                <i class="fa fa-code text-muted" style="width:16px;"/>
+                                                Variable...
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field Properties -->
+                                <div t-if="activeEl.type === 'field'" class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Field Properties</label>
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Expression</label>
+                                    <div class="input-group input-group-sm mb-3 position-relative">
+                                        <input type="text" class="form-control" placeholder="Expression or select..." t-model="activeEl.content"/>
+                                        <button class="btn btn-light border text-muted" type="button" t-on-click="() => this.openFieldSelector('fields')" title="Select Field"><i class="fa fa-list"/></button>
+                                        <button class="btn btn-light border text-muted dropdown-toggle dropdown-toggle-split" type="button" style="padding-left: 2px; padding-right: 2px;" t-on-click="() => state.showExpressionDropdown = !state.showExpressionDropdown"></button>
+                                        <div t-if="state.showExpressionDropdown" class="dropdown-menu show position-absolute end-0" style="top: 100%; right: 0; z-index: 1050; min-width: 140px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); border: 1px solid #dee2e6;">
+                                            <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" t-on-click="() => { this.openFieldSelector('fields'); state.showExpressionDropdown = false; }" style="font-size: 13px;">
+                                                <i class="fa fa-database text-muted" style="width: 14px;"/> Field...
+                                            </button>
+                                            <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" t-on-click="() => { this.openFieldSelector('variables'); state.showExpressionDropdown = false; }" style="font-size: 13px;">
+                                                <i class="fa fa-cog text-muted" style="width: 14px;"/> Variable...
+                                            </button>
+                                            <button class="dropdown-item d-flex align-items-center gap-2 py-2" type="button" t-on-click="() => { this.openExpressionEditor(); state.showExpressionDropdown = false; }" style="font-size: 13px;">
+                                                <span style="font-family: serif; font-weight: bold; width: 14px; text-align: center;">Σ</span> Expression...
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <label class="form-label text-muted small fw-bold mb-2">Format</label>
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Format Type</label>
+                                    <select class="form-select form-select-sm">
+                                        <option>None</option>
+                                    </select>
+                                </div>
+
+                                <!-- Typography -->
+                                 <div class="mb-4">
+                                     <label class="form-label text-dark fw-bold mb-2" style="font-size: 13px;">Text</label>
+                                     <div class="d-flex align-items-center gap-2">
+                                         <select class="form-select form-select-sm flex-grow-1" t-model.number="activeEl.style.fontSize" t-on-change="pushHistory" style="height: 32px; border-color: #dee2e6; min-width: 90px; flex: 1;">
+                                             <option value="8">8</option>
+                                             <option value="10">10</option>
+                                             <option value="12">12</option>
+                                             <option value="14">14</option>
+                                             <option value="16">16</option>
+                                             <option value="18">18</option>
+                                             <option value="20">20</option>
+                                             <option value="24">24</option>
+                                             <option value="28">28</option>
+                                             <option value="32">32</option>
+                                             <option value="36">36</option>
+                                             <option value="48">48</option>
+                                             <option value="72">72</option>
+                                         </select>
+                                         <div class="btn-group shadow-sm" style="border-radius: 6px; overflow: hidden; border: 1px solid #dee2e6;">
+                                             <button t-attf-class="btn btn-sm border-0 fw-bold {{ activeEl.style.bold ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.toggleStyle('bold')" t-attf-style="background-color: {{ activeEl.style.bold ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px; font-size: 13px;">B</button>
+                                             <button t-attf-class="btn btn-sm border-0 fst-italic {{ activeEl.style.italic ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.toggleStyle('italic')" t-attf-style="background-color: {{ activeEl.style.italic ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px; font-size: 13px; border-left: 1px solid #dee2e6 !important; border-right: 1px solid #dee2e6 !important;">I</button>
+                                             <button t-attf-class="btn btn-sm border-0 text-decoration-underline {{ activeEl.style.underline ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.toggleStyle('underline')" t-attf-style="background-color: {{ activeEl.style.underline ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px; font-size: 13px;">U</button>
+                                         </div>
+                                     </div>
+                                     <div class="mt-3">
+                                         <label class="form-label text-muted mb-1" style="font-size: 11px;">Font Family</label>
+                                         <select class="form-select form-select-sm" t-model="activeEl.style.fontFamily" t-on-change="pushHistory">
+                                             <option value="Helvetica">Helvetica</option>
+                                             <option value="Arial">Arial</option>
+                                             <option value="Times New Roman">Times New Roman</option>
+                                             <option value="Courier New">Courier New</option>
+                                             <option value="Verdana">Verdana</option>
+                                             <option value="Georgia">Georgia</option>
+                                         </select>
+                                     </div>
+
+                                 </div>
+                                 
+                                 <!-- Alignment -->
+                                 <div class="mb-4">
+                                     <label class="form-label text-dark fw-bold mb-2" style="font-size: 13px;">Alignment</label>
+                                     <div class="d-flex align-items-center">
+                                         <!-- Horizontal Alignment Group -->
+                                         <div class="btn-group shadow-sm" style="border-radius: 6px; overflow: hidden; border: 1px solid #dee2e6;">
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.textAlign === 'left' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('textAlign', 'left')" t-attf-style="background-color: {{ activeEl.style.textAlign === 'left' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px;" title="Align Left">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 2.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M1 6H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M1 9.5H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                 </svg>
+                                             </button>
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.textAlign === 'center' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('textAlign', 'center')" t-attf-style="background-color: {{ activeEl.style.textAlign === 'center' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px; border-left: 1px solid #dee2e6 !important; border-right: 1px solid #dee2e6 !important;" title="Align Center">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 2.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M3 6H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M2 9.5H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                 </svg>
+                                             </button>
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.textAlign === 'right' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('textAlign', 'right')" t-attf-style="background-color: {{ activeEl.style.textAlign === 'right' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px;" title="Align Right">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 2.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M5 6H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M3 9.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                 </svg>
+                                             </button>
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.textAlign === 'justify' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('textAlign', 'justify')" t-attf-style="background-color: {{ activeEl.style.textAlign === 'justify' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px; border-left: 1px solid #dee2e6 !important;" title="Align Justify">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 2.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M1 6H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M1 9.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                 </svg>
+                                             </button>
+                                         </div>
+
+                                         <!-- Vertical Alignment Group -->
+                                         <div class="btn-group shadow-sm ms-auto" style="border-radius: 6px; overflow: hidden; border: 1px solid #dee2e6;">
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.verticalAlign === 'top' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('verticalAlign', 'top')" t-attf-style="background-color: {{ activeEl.style.verticalAlign === 'top' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px;" title="Align Top">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 1.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <rect x="4" y="4" width="6" height="8" fill="currentColor" fill-opacity="0.8"/>
+                                                 </svg>
+                                             </button>
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.verticalAlign === 'middle' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('verticalAlign', 'middle')" t-attf-style="background-color: {{ activeEl.style.verticalAlign === 'middle' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px; border-left: 1px solid #dee2e6 !important; border-right: 1px solid #dee2e6 !important;" title="Align Middle">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 7H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <rect x="4" y="3" width="6" height="8" fill="currentColor" fill-opacity="0.8"/>
+                                                 </svg>
+                                             </button>
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.verticalAlign === 'bottom' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('verticalAlign', 'bottom')" t-attf-style="background-color: {{ activeEl.style.verticalAlign === 'bottom' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px;" title="Align Bottom">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 12.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <rect x="4" y="2" width="6" height="8" fill="currentColor" fill-opacity="0.8"/>
+                                                 </svg>
+                                             </button>
+                                         </div>
+                                     </div>
+                                 </div>
+
+                                <!-- Color -->
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small mb-1">Color</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div t-attf-style="width: 34px; height: 34px; background-color: {{ activeEl.style.color || '#000000' }}; border-radius: 6px; border: 1px solid #dee2e6; cursor: pointer; flex-shrink: 0;" t-on-click="() => this.openColorPicker('color')" title="Click to pick color"></div>
+                                        <div class="input-group input-group-sm flex-grow-1" style="height: 34px;">
+                                            <input type="text" class="form-control" t-model="activeEl.style.color" t-on-change="pushHistory" style="height: 34px; font-size: 13px; border-color: #dee2e6;"/>
+                                            <span t-if="activeEl.style.color" class="input-group-text bg-white border-start-0 text-muted" style="cursor: pointer; padding-left: 8px; padding-right: 8px; border-color: #dee2e6;" t-on-click="() => { activeEl.style.color = ''; this.pushHistory(); }" title="Clear color">
+                                                <i class="fa fa-times"/>
+                                            </span>
+                                            <span class="input-group-text bg-white" style="cursor: pointer; border-color: #dee2e6;" t-on-click="() => this.openColorPicker('color')">
+                                                <i class="fa fa-paint-brush text-primary"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Background -->
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small mb-1">Background</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div t-attf-style="width: 34px; height: 34px; background-color: {{ activeEl.style.backgroundColor || '#ffffff' }}; border-radius: 6px; border: 1px solid #dee2e6; cursor: pointer; flex-shrink: 0;" t-on-click="() => this.openColorPicker('backgroundColor')" title="Click to pick background color"></div>
+                                        <div class="input-group input-group-sm flex-grow-1" style="height: 34px;">
+                                            <input type="text" class="form-control" t-model="activeEl.style.backgroundColor" t-on-change="pushHistory" style="height: 34px; font-size: 13px; border-color: #dee2e6;"/>
+                                            <span t-if="activeEl.style.backgroundColor" class="input-group-text bg-white border-start-0 text-muted" style="cursor: pointer; padding-left: 8px; padding-right: 8px; border-color: #dee2e6;" t-on-click="() => { activeEl.style.backgroundColor = ''; this.pushHistory(); }" title="Clear background color">
+                                                <i class="fa fa-times"/>
+                                            </span>
+                                            <span class="input-group-text bg-white" style="cursor: pointer; border-color: #dee2e6;" t-on-click="() => this.openColorPicker('backgroundColor')">
+                                                <i class="fa fa-paint-brush text-primary"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Line Spacing -->
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small mb-1">Line Spacing</label>
+                                    <input type="number" step="0.1" class="form-control form-control-sm" t-model.number="activeEl.style.lineHeight" t-on-change="pushHistory"/>
+                                </div>
+                                
+
+                            </t>
+                            
+                            <!-- Image Properties -->
+                            <t t-if="activeEl.type === 'image'">
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Image Source</label>
+                                    <div class="btn-group w-100 mb-2" style="border-radius: 6px; overflow: hidden;">
+                                        <button type="button" t-attf-class="btn btn-sm {{ (activeEl.imageSourceMode || 'resource') === 'resource' ? 'btn-primary text-white' : 'btn-light text-dark' }}" t-on-click="() => { activeEl.imageSourceMode = 'resource'; this.pushHistory(); }" style="font-size: 12px;"><i class="fa fa-picture-o me-1"/> Resource</button>
+                                        <button type="button" t-attf-class="btn btn-sm {{ activeEl.imageSourceMode === 'expression' ? 'btn-primary text-white' : 'btn-light text-dark' }}" t-on-click="() => { activeEl.imageSourceMode = 'expression'; this.pushHistory(); }" style="font-size: 12px;">&lt;&gt; Expression</button>
+                                    </div>
+                                    
+                                    <t t-if="(activeEl.imageSourceMode || 'resource') === 'resource'">
+                                        <select class="form-select form-select-sm mb-2" t-model.number="activeEl.resourceId" t-on-change="pushHistory">
+                                            <option value="">Select image...</option>
+                                            <t t-foreach="state.libraryImages || []" t-as="img" t-key="img.id">
+                                                <option t-att-value="img.id"><t t-esc="img.name"/></option>
+                                            </t>
+                                        </select>
+                                        <div t-if="activeEl.resourceId" class="border rounded p-2 mb-2 bg-light text-center d-flex align-items-center justify-content-center" style="height: 120px; overflow: hidden;">
+                                            <img t-attf-src="/web/image/report.designer.resource/{{activeEl.resourceId}}/image" style="max-width: 100%; max-height: 100%; object-fit: contain;"/>
+                                        </div>
+                                        <button type="button" class="btn btn-light w-100 border text-muted py-3 text-center" t-on-click="openUploadImageWizard" style="border-style: dashed !important; font-size: 11px;">
+                                            <i class="fa fa-upload me-1"/> Click or drag to add another
+                                        </button>
+                                    </t>
+                                    <t t-else="">
+                                        <div class="input-group input-group-sm mb-2">
+                                            <input type="text" class="form-control" placeholder="e.g. product.image" t-model="activeEl.expression" t-on-change="pushHistory"/>
+                                            <button class="btn btn-light border text-muted" type="button" t-on-click="() => this.openFieldSelector('fields')" title="Select Field"><i class="fa fa-list"/></button>
+                                        </div>
+                                    </t>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Layout</label>
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Object Fit</label>
+                                    <select class="form-select form-select-sm mb-3" t-model="activeEl.style.objectFit" t-on-change="pushHistory">
+                                        <option value="contain">Contain</option>
+                                        <option value="cover">Cover</option>
+                                        <option value="fill">Fill</option>
+                                        <option value="none">None</option>
+                                    </select>
+                                    
+                                     <div class="d-flex justify-content-between mb-3">
+                                         <!-- Horizontal Alignment Group -->
+                                         <div class="btn-group shadow-sm" style="border-radius: 6px; overflow: hidden; border: 1px solid #dee2e6;">
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.textAlign === 'left' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('textAlign', 'left')" t-attf-style="background-color: {{ activeEl.style.textAlign === 'left' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px;" title="Align Left">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 2.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M1 6H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M1 9.5H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                 </svg>
+                                             </button>
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.textAlign === 'center' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('textAlign', 'center')" t-attf-style="background-color: {{ activeEl.style.textAlign === 'center' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px; border-left: 1px solid #dee2e6 !important; border-right: 1px solid #dee2e6 !important;" title="Align Center">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 2.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M3 6H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M2 9.5H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                 </svg>
+                                             </button>
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.textAlign === 'right' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('textAlign', 'right')" t-attf-style="background-color: {{ activeEl.style.textAlign === 'right' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px;" title="Align Right">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 2.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M5 6H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <path d="M3 9.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                 </svg>
+                                             </button>
+                                         </div>
+
+                                         <!-- Vertical Alignment Group -->
+                                         <div class="btn-group shadow-sm" style="border-radius: 6px; overflow: hidden; border: 1px solid #dee2e6;">
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.verticalAlign === 'top' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('verticalAlign', 'top')" t-attf-style="background-color: {{ activeEl.style.verticalAlign === 'top' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px;" title="Align Top">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 1.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <rect x="4" y="4" width="6" height="8" fill="currentColor" fill-opacity="0.8"/>
+                                                 </svg>
+                                             </button>
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.verticalAlign === 'middle' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('verticalAlign', 'middle')" t-attf-style="background-color: {{ activeEl.style.verticalAlign === 'middle' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px; border-left: 1px solid #dee2e6 !important; border-right: 1px solid #dee2e6 !important;" title="Align Middle">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 7H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <rect x="4" y="3" width="6" height="8" fill="currentColor" fill-opacity="0.8"/>
+                                                 </svg>
+                                             </button>
+                                             <button type="button" t-attf-class="btn btn-sm border-0 d-flex align-items-center justify-content-center {{ activeEl.style.verticalAlign === 'bottom' ? 'text-white' : 'text-dark bg-white' }}" t-on-click="() => this.setStyle('verticalAlign', 'bottom')" t-attf-style="background-color: {{ activeEl.style.verticalAlign === 'bottom' ? '#3b427b' : '#ffffff' }}; width: 34px; height: 32px;" title="Align Bottom">
+                                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                     <path d="M1 12.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                                     <rect x="4" y="2" width="6" height="8" fill="currentColor" fill-opacity="0.8"/>
+                                                 </svg>
+                                             </button>
+                                         </div>
+                                     </div>
+                                 </div>
+                                
+                                <!-- Background Color -->
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Background</label>
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Background Color</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div t-attf-style="width: 34px; height: 34px; background-color: {{ activeEl.style.backgroundColor || '#ffffff' }}; border-radius: 6px; border: 1px solid #dee2e6; cursor: pointer; flex-shrink: 0;" t-on-click="() => this.openColorPicker('backgroundColor')" title="Click to pick background color"></div>
+                                        <div class="input-group input-group-sm flex-grow-1" style="height: 34px;">
+                                            <input type="text" class="form-control" t-model="activeEl.style.backgroundColor" t-on-change="pushHistory" style="height: 34px; font-size: 13px; border-color: #dee2e6;"/>
+                                            <span t-if="activeEl.style.backgroundColor" class="input-group-text bg-white border-start-0 text-muted" style="cursor: pointer; padding-left: 8px; padding-right: 8px; border-color: #dee2e6;" t-on-click="() => { activeEl.style.backgroundColor = ''; this.pushHistory(); }" title="Clear background color">
+                                                <i class="fa fa-times"/>
+                                            </span>
+                                            <span class="input-group-text bg-white" style="cursor: pointer; border-color: #dee2e6;" t-on-click="() => this.openColorPicker('backgroundColor')">
+                                                <i class="fa fa-paint-brush text-primary"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Border</label>
+                                    <div class="mb-2">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Border Width</label>
+                                        <input type="number" class="form-control form-control-sm" t-model.number="activeEl.style.borderWidth" t-on-change="pushHistory"/>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Border Color</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div t-attf-style="width: 34px; height: 34px; background-color: {{ activeEl.style.borderColor || '#000000' }}; border-radius: 6px; border: 1px solid #dee2e6; cursor: pointer; flex-shrink: 0;" t-on-click="() => this.openColorPicker('borderColor')" title="Click to pick border color"></div>
+                                            <div class="input-group input-group-sm flex-grow-1" style="height: 34px;">
+                                                <input type="text" class="form-control" t-model="activeEl.style.borderColor" t-on-change="pushHistory" style="height: 34px; font-size: 13px; border-color: #dee2e6;"/>
+                                                <span t-if="activeEl.style.borderColor" class="input-group-text bg-white border-start-0 text-muted" style="cursor: pointer; padding-left: 8px; padding-right: 8px; border-color: #dee2e6;" t-on-click="() => { activeEl.style.borderColor = ''; this.pushHistory(); }" title="Clear border color">
+                                                    <i class="fa fa-times"/>
+                                                </span>
+                                                <span class="input-group-text bg-white" style="cursor: pointer; border-color: #dee2e6;" t-on-click="() => this.openColorPicker('borderColor')">
+                                                    <i class="fa fa-paint-brush text-primary"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Border Radius</label>
+                                        <input type="number" class="form-control form-control-sm" t-model.number="activeEl.style.borderRadius" t-on-change="pushHistory"/>
+                                    </div>
+                                </div>
+                                
+
+                            </t>
+                            
+                            <!-- Line Properties -->
+                            <t t-if="activeEl.type === 'line'">
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Line Properties</label>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Color</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div t-attf-style="width: 34px; height: 34px; background-color: {{ activeEl.style.color || '#000000' }}; border-radius: 6px; border: 1px solid #dee2e6; cursor: pointer; flex-shrink: 0;" t-on-click="() => this.openColorPicker('color')" title="Click to pick color"></div>
+                                            <div class="input-group input-group-sm flex-grow-1" style="height: 34px;">
+                                                <input type="text" class="form-control" t-model="activeEl.style.color" t-on-change="pushHistory" style="height: 34px; font-size: 13px; border-color: #dee2e6;"/>
+                                                <span t-if="activeEl.style.color" class="input-group-text bg-white border-start-0 text-muted" style="cursor: pointer; padding-left: 8px; padding-right: 8px; border-color: #dee2e6;" t-on-click="() => { activeEl.style.color = ''; this.pushHistory(); }" title="Clear color">
+                                                    <i class="fa fa-times"/>
+                                                </span>
+                                                <span class="input-group-text bg-white" style="cursor: pointer; border-color: #dee2e6;" t-on-click="() => this.openColorPicker('color')">
+                                                    <i class="fa fa-paint-brush text-primary"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Thickness</label>
+                                        <select class="form-select form-select-sm" t-model.number="activeEl.style.borderWidth" t-on-change="pushHistory">
+                                            <option value="0.5">0.5</option>
+                                            <option value="1">1.0</option>
+                                            <option value="1.5">1.5</option>
+                                            <option value="2">2.0</option>
+                                            <option value="3">3.0</option>
+                                            <option value="4">4.0</option>
+                                            <option value="5">5.0</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Dash Pattern</label>
+                                        <select class="form-select form-select-sm" t-model="activeEl.style.borderStyle" t-on-change="pushHistory">
+                                            <option value="solid">Solid</option>
+                                            <option value="dashed">Dashed</option>
+                                            <option value="dotted">Dotted</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+
+                            </t>
+                            
+
+                            
+                            <!-- Watermark Properties -->
+                            <t t-if="activeEl.type === 'watermark'">
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Watermark Properties</label>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Mode</label>
+                                    <select class="form-select form-select-sm mb-3" t-model="activeEl.watermarkMode" t-on-change="pushHistory">
+                                        <option value="text">Text</option>
+                                        <option value="image">Image</option>
+                                    </select>
+                                    
+                                    <t t-if="(activeEl.watermarkMode || 'text') === 'text'">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Text</label>
+                                        <input type="text" class="form-control mb-3" t-model="activeEl.content" t-on-change="pushHistory" placeholder="DRAFT"/>
+                                    </t>
+                                    <t t-else="">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Image Source</label>
+                                        <div class="btn-group w-100 mb-2" style="border-radius: 6px; overflow: hidden;">
+                                            <button type="button" t-attf-class="btn btn-sm {{ (activeEl.imageSourceMode || 'resource') === 'resource' ? 'btn-primary text-white' : 'btn-light text-dark' }}" t-on-click="() => { activeEl.imageSourceMode = 'resource'; this.pushHistory(); }" style="font-size: 12px;"><i class="fa fa-picture-o me-1"/> Resource</button>
+                                            <button type="button" t-attf-class="btn btn-sm {{ activeEl.imageSourceMode === 'expression' ? 'btn-primary text-white' : 'btn-light text-dark' }}" t-on-click="() => { activeEl.imageSourceMode = 'expression'; this.pushHistory(); }" style="font-size: 12px;">&lt;&gt; Expression</button>
+                                        </div>
+                                        
+                                        <t t-if="(activeEl.imageSourceMode || 'resource') === 'resource'">
+                                            <select class="form-select form-select-sm mb-2" t-model.number="activeEl.resourceId" t-on-change="pushHistory">
+                                                <option value="">Select image...</option>
+                                                <t t-foreach="state.libraryImages || []" t-as="img" t-key="img.id">
+                                                    <option t-att-value="img.id"><t t-esc="img.name"/></option>
+                                                </t>
+                                            </select>
+                                            <div t-if="activeEl.resourceId" class="border rounded p-2 mb-2 bg-light text-center d-flex align-items-center justify-content-center" style="height: 120px; overflow: hidden;">
+                                                <img t-attf-src="/web/image/report.designer.resource/{{activeEl.resourceId}}/image" style="max-width: 100%; max-height: 100%; object-fit: contain;"/>
+                                            </div>
+                                            <button type="button" class="btn btn-light w-100 border text-muted py-3 text-center" t-on-click="openUploadImageWizard" style="border-style: dashed !important; font-size: 11px;">
+                                                <i class="fa fa-upload me-1"/> Upload Image
+                                            </button>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="input-group input-group-sm mb-2">
+                                                <input type="text" class="form-control" placeholder="e.g. company.logo" t-model="activeEl.expression" t-on-change="pushHistory"/>
+                                                <button class="btn btn-light border text-muted" type="button" t-on-click="() => this.openFieldSelector('fields')" title="Select Field"><i class="fa fa-list"/></button>
+                                            </div>
+                                        </t>
+                                    </t>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Appearance</label>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-12">
+                                            <label class="form-label text-muted mb-1" style="font-size: 11px;">Font Size</label>
+                                            <input type="number" class="form-control form-control-sm" t-model.number="activeEl.style.fontSize" t-on-change="pushHistory" placeholder="64"/>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Color</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div t-attf-style="width: 34px; height: 34px; background-color: {{ activeEl.style.color || '#6B7280' }}; border-radius: 6px; border: 1px solid #dee2e6; cursor: pointer; flex-shrink: 0;" t-on-click="() => this.openColorPicker('color')" title="Click to pick color"></div>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" t-model="activeEl.style.color" t-on-change="pushHistory" style="height: 34px; font-size: 13px; border-color: #dee2e6;"/>
+                                                <span t-if="activeEl.style.color" class="input-group-text bg-white border-start-0 text-muted" style="cursor: pointer; padding-left: 8px; padding-right: 8px; border-color: #dee2e6;" t-on-click="() => { activeEl.style.color = ''; this.pushHistory(); }" title="Clear color">
+                                                    <i class="fa fa-times" style="font-size: 12px;"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <label class="form-label text-muted mb-0" style="font-size: 11px;">Opacity</label>
+                                            <span class="text-muted" style="font-size: 11px;"><t t-esc="activeEl.style.opacity !== undefined ? activeEl.style.opacity : 0.18"/></span>
+                                        </div>
+                                        <input type="range" class="form-range" min="0.01" max="1" step="0.01" t-model.number="activeEl.style.opacity" t-on-change="pushHistory" style="accent-color: #3b427b;"/>
+                                    </div>
+                                </div>
+                                
+
+                            </t>
+                            
+                            <!-- Section Properties -->
+                            <t t-if="activeEl.type === 'section'">
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Section Properties</label>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Data Source</label>
+                                    <div class="input-group input-group-sm mb-3">
+                                        <input type="text" class="form-control" placeholder="Select..." t-model="activeEl.content" t-on-change="pushHistory"/>
+                                        <button class="btn btn-light border text-primary" type="button" t-on-click="() => this.openFieldSelector('fields')" title="Select Data Source"><i class="fa fa-search"/></button>
+                                    </div>
+                                </div>
+                                
+
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Actions</label>
+                                    <button class="btn btn-outline-primary btn-sm w-100 mb-3" style="color: #3b427b; border-color: #3b427b;"><i class="fa fa-pencil me-1"/> Edit Section</button>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Convert</label>
+                                    <button class="btn btn-outline-primary btn-sm w-100 mb-3" style="color: #3b427b; border-color: #3b427b;" t-on-click="convertToTable">Convert to Table</button>
+                                </div>
+                                
+
+                            </t>
+                                <!-- Table Properties -->
+                                <t t-if="activeEl.type === 'table'">
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Table Properties</label>
+                                                                        <label class="form-label text-muted mb-1" style="font-size: 11px;">Data Source</label>
+                                    <div class="input-group input-group-sm mb-3">
+                                        <input type="text" class="form-control" placeholder="Select..." t-model="activeEl.dataSource" t-on-change="pushHistory"/>
+                                        <button class="btn btn-light border text-primary" type="button" t-on-click="() => this.openFieldSelector('fields')" title="Select Data Source"><i class="fa fa-search"/></button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                     <label class="form-label text-muted small fw-bold mb-2">Header</label>
+                                     <div class="form-check mb-2">
+                                         <input class="form-check-input" type="checkbox" id="showHeader" t-model="activeEl.showHeader" t-on-change="pushHistory"/>
+                                         <label class="form-check-label text-muted small" for="showHeader">Show Header</label>
+                                     </div>
+                                     <label class="form-label text-muted mb-1" style="font-size: 11px;">Header Height</label>
+                                     <input type="number" class="form-control form-control-sm mb-2" t-model.number="activeEl.headerHeight" t-on-change="pushHistory"/>
+                                     <div class="form-check mb-2">
+                                         <input class="form-check-input" type="checkbox" id="repeatNewPage" t-model="activeEl.repeatNewPage" t-on-change="pushHistory"/>
+                                         <label class="form-check-label text-muted small" for="repeatNewPage">Repeat on New Page</label>
+                                     </div>
+                                 </div>
+                                 
+                                 <div class="mb-4">
+                                     <label class="form-label text-muted small fw-bold mb-2">Footer</label>
+                                     <div class="form-check mb-2">
+                                         <input class="form-check-input" type="checkbox" id="showFooter" t-model="activeEl.showFooter" t-on-change="pushHistory"/>
+                                         <label class="form-check-label text-muted small" for="showFooter">Show Footer</label>
+                                     </div>
+                                 </div>
+                                
+
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Columns (<t t-esc="activeEl.content.length"/>)</label>
+                                    
+                                    <t t-foreach="activeEl.content" t-as="col" t-key="col.id">
+                                        <div class="border rounded p-2 mb-2 bg-light">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-muted small">Column <t t-esc="col_index + 1"/></span>
+                                                <button class="btn btn-link p-0 text-muted" type="button" t-on-click="() => this.deleteColumn(col.id)"><i class="fa fa-trash"/></button>
+                                            </div>
+                                            <label class="form-label text-muted mb-1" style="font-size: 11px;">Header</label>
+                                            <input type="text" class="form-control form-control-sm mb-2" t-model="col.header" t-on-change="pushHistory"/>
+                                            
+                                            <label class="form-label text-muted mb-1" style="font-size: 11px;">Footer</label>
+                                            <input type="text" class="form-control form-control-sm mb-2" t-model="col.footer" t-on-change="pushHistory"/>
+                                            
+                                            <label class="form-label text-muted mb-1" style="font-size: 11px;">Cell Content</label>
+                                            <div class="btn-group w-100 mb-2">
+                                                <button type="button" t-attf-class="btn btn-sm {{ col.contentType === 'text' ? 'btn-primary text-white' : 'btn-light border text-muted' }}" t-on-click="() => { col.contentType = 'text'; this.pushHistory(); }"><i class="fa fa-font me-1"/> Text</button>
+                                                <button type="button" t-attf-class="btn btn-sm {{ col.contentType === 'image' ? 'btn-primary text-white' : 'btn-light border text-muted' }}" t-on-click="() => { col.contentType = 'image'; this.pushHistory(); }"><i class="fa fa-picture-o me-1"/> Image</button>
+                                                <button type="button" t-attf-class="btn btn-sm {{ col.contentType === 'barcode' ? 'btn-primary text-white' : 'btn-light border text-muted' }}" t-on-click="() => { col.contentType = 'barcode'; this.pushHistory(); }"><i class="fa fa-barcode me-1"/> Barcode</button>
+                                            </div>
+                                            
+                                            <label class="form-label text-muted mb-1" style="font-size: 11px;">Cell Expression</label>
+                                            <div class="input-group input-group-sm mb-2">
+                                                <input type="text" class="form-control" placeholder="Expression or select..." t-model="col.contentExpression" t-on-change="pushHistory"/>
+                                                <button class="btn btn-light border text-primary" type="button" t-on-click="() => this.openFieldSelector('fields', col.id)" title="Select Field"><i class="fa fa-search"/></button>
+                                            </div>
+                                            
+                                            <label class="form-label text-muted mb-1" style="font-size: 11px;">Width Type</label>
+                                            <select class="form-select form-select-sm mb-2" t-model="col.widthType" t-on-change="pushHistory">
+                                                <option value="px">Absolute (px)</option>
+                                                <option value="percent">Percentage (%)</option>
+                                            </select>
+                                            
+                                            <label class="form-label text-muted mb-1" style="font-size: 11px;">Width Value</label>
+                                            <input type="number" class="form-control form-control-sm mb-2" t-model.number="col.widthValue" t-on-change="pushHistory"/>
+                                            
+
+                                        </div>
+                                    </t>
+                                    
+                                    <button class="btn btn-outline-primary btn-sm w-100 mt-2" type="button" t-on-click="addColumn" style="color: #3b427b; border-color: #3b427b;">+ Add Column</button>
+                                </div>
+                                
+
+                            </t>
+                            
+                            <!-- Barcode Properties -->
+                            <t t-if="activeEl.type === 'barcode'">
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Barcode Properties</label>
+                                    
+                                    <input type="text" class="form-control" placeholder="Expression or select..." t-model="activeEl.content" t-on-change="pushHistory"/>
+                                    <button class="btn btn-light border text-muted" type="button" t-on-click="() => this.openFieldSelector('fields')" title="Select Field"><i class="fa fa-list"/></button>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Format</label>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Symbology</label>
+                                    <select class="form-select form-select-sm mb-3" t-model="activeEl.symbology" t-on-change="pushHistory">
+                                        <option value="Code 128">Code 128</option>
+                                        <option value="QR Code">QR Code</option>
+                                        <option value="EAN-13">EAN-13</option>
+                                    </select>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="showBarcodeText" t-model="activeEl.showBarcodeText" t-on-change="pushHistory"/>
+                                        <label class="form-check-label text-muted small" for="showBarcodeText">Show Text</label>
+                                    </div>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Text Position</label>
+                                    <select class="form-select form-select-sm mb-3" t-model="activeEl.barcodeTextPosition" t-on-change="pushHistory">
+                                        <option value="Bottom">Bottom</option>
+                                        <option value="Top">Top</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Barcode Options</label>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Bar Width</label>
+                                    <select class="form-select form-select-sm mb-3" t-model="activeEl.barWidth" t-on-change="pushHistory">
+                                        <option value="2.0">2.0</option>
+                                        <option value="1.0">1.0</option>
+                                        <option value="3.0">3.0</option>
+                                    </select>
+                                </div>
+                                
+
+                            </t>
+                            
+                            <!-- Shape / Rectangle Properties -->
+                            <t t-if="activeEl.type === 'shape' or activeEl.type === 'rectangle'">
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Shape Type</label>
+                                    <select class="form-select form-select-sm mb-3" t-model="activeEl.shapeType" t-on-change="pushHistory">
+                                        <option value="rectangle">Rectangle</option>
+                                        <option value="ellipse">Ellipse</option>
+                                        <option value="triangle">Triangle</option>
+                                        <option value="diamond">Diamond</option>
+                                        <option value="polygon">Polygon</option>
+                                        <option value="star">Star</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Fill</label>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Fill Color</label>
+                                    <div class="d-flex align-items-center gap-2 mb-3">
+                                        <div t-attf-style="width: 34px; height: 34px; background-color: {{ activeEl.style.fillColor || '#ffffff' }}; border-radius: 6px; border: 1px solid #dee2e6; cursor: pointer; flex-shrink: 0;" t-on-click="() => this.openColorPicker('fillColor')" title="Click to pick fill color"></div>
+                                        <div class="input-group input-group-sm flex-grow-1" style="height: 34px;">
+                                            <input type="text" class="form-control" t-model="activeEl.style.fillColor" t-on-change="pushHistory" style="height: 34px; font-size: 13px; border-color: #dee2e6;"/>
+                                            <span t-if="activeEl.style.fillColor" class="input-group-text bg-white border-start-0 text-muted" style="cursor: pointer; padding-left: 8px; padding-right: 8px; border-color: #dee2e6;" t-on-click="() => { activeEl.style.fillColor = ''; this.pushHistory(); }" title="Clear fill color">
+                                                <i class="fa fa-times"/>
+                                            </span>
+                                            <span class="input-group-text bg-white" style="cursor: pointer; border-color: #dee2e6;" t-on-click="() => this.openColorPicker('fillColor')">
+                                                <i class="fa fa-paint-brush text-primary"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <label class="form-label text-muted mb-1 w-100 d-flex justify-content-between" style="font-size: 11px;">
+                                        <span>Fill Opacity</span>
+                                        <span><t t-esc="(activeEl.style.fillOpacity !== undefined ? activeEl.style.fillOpacity : 1.0).toFixed(2)"/></span>
+                                    </label>
+                                    <input type="range" class="form-range" min="0" max="1" step="0.05" t-model.number="activeEl.style.fillOpacity" t-on-input="pushHistory" style="height: 1.5rem; accent-color: #3b427b;"/>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small fw-bold mb-2">Stroke</label>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Stroke Color</label>
+                                    <div class="d-flex align-items-center gap-2 mb-3">
+                                        <div t-attf-style="width: 34px; height: 34px; background-color: {{ activeEl.style.strokeColor || '#000000' }}; border-radius: 6px; border: 1px solid #dee2e6; cursor: pointer; flex-shrink: 0;" t-on-click="() => this.openColorPicker('strokeColor')" title="Click to pick stroke color"></div>
+                                        <div class="input-group input-group-sm flex-grow-1" style="height: 34px;">
+                                            <input type="text" class="form-control" t-model="activeEl.style.strokeColor" t-on-change="pushHistory" style="height: 34px; font-size: 13px; border-color: #dee2e6;"/>
+                                            <span t-if="activeEl.style.strokeColor" class="input-group-text bg-white border-start-0 text-muted" style="cursor: pointer; padding-left: 8px; padding-right: 8px; border-color: #dee2e6;" t-on-click="() => { activeEl.style.strokeColor = ''; this.pushHistory(); }" title="Clear stroke color">
+                                                <i class="fa fa-times"/>
+                                            </span>
+                                            <span class="input-group-text bg-white" style="cursor: pointer; border-color: #dee2e6;" t-on-click="() => this.openColorPicker('strokeColor')">
+                                                <i class="fa fa-paint-brush text-primary"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Stroke Width</label>
+                                    <input type="number" class="form-control form-control-sm mb-3" t-model.number="activeEl.style.strokeWidth" t-on-change="pushHistory"/>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Stroke Style</label>
+                                    <select class="form-select form-select-sm mb-3" t-model="activeEl.style.strokeStyle" t-on-change="pushHistory">
+                                        <option value="solid">Solid</option>
+                                        <option value="dashed">Dashed</option>
+                                        <option value="dotted">Dotted</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-4" t-if="activeEl.shapeType === 'rectangle' or activeEl.type === 'rectangle'">
+                                    <label class="form-label text-muted small fw-bold mb-2">Corner</label>
+                                    
+                                    <label class="form-label text-muted mb-1" style="font-size: 11px;">Corner Radius</label>
+                                    <input type="number" class="form-control form-control-sm" t-model.number="activeEl.style.cornerRadius" t-on-change="pushHistory"/>
+                                </div>
+                                
+
+                            </t>
+
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preview Modal -->
+        <t t-if="state.showPreviewPopup">
+            <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content shadow border-0" style="border-radius: 12px;">
+                        <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+                            <div>
+                                <h5 class="modal-title fw-bold text-dark mb-1" style="font-size: 16px;">Select Records for Preview</h5>
+                                <small class="text-muted" style="font-size: 11px;">Model: stock.picking</small>
+                            </div>
+                            <button type="button" class="btn-close" t-on-click="onClosePreview" aria-label="Close" style="font-size: 12px; opacity: 0.5; margin-top: -10px;"></button>
+                        </div>
+                        <div class="modal-body px-4 py-3">
+                            <div class="input-group mb-4 shadow-sm border rounded">
+                                <input type="text" class="form-control text-muted border-0 shadow-none py-2" placeholder="Search records..." style="font-size: 14px; background: transparent;" t-att-value="state.previewSearchQuery" t-on-input="onSearchPreview" />
+                                <span class="input-group-text bg-white border-0 text-muted px-3">
+                                    <i class="fa fa-search text-secondary"/>
+                                </span>
+                            </div>
+                            
+                            <div class="border rounded" style="height: 280px; overflow-y: auto;">
+                                <div class="list-group list-group-flush m-0">
+                                    <t t-foreach="state.previewRecords" t-as="record" t-key="record.id">
+                                        <label class="list-group-item list-group-item-action d-flex align-items-center py-3 border-bottom border-0 m-0" t-attf-style="background-color: {{ state.previewSelectedRecords.includes(record.id) ? '#eef2fb' : 'transparent' }}; cursor: pointer; border-bottom: 1px solid #f8f9fa !important;">
+                                            <input class="form-check-input m-0 me-3 shadow-none" type="checkbox" t-att-checked="state.previewSelectedRecords.includes(record.id)" t-on-change="() => this.toggleRecordSelection(record.id)" style="width: 18px; height: 18px; border-color: #adb5bd;" />
+                                            <div>
+                                                <div class="text-dark mb-1" style="font-size: 14px;"><t t-esc="record.name"/></div>
+                                                <div class="text-muted" style="font-size: 11px;">ID: <t t-esc="record.id"/></div>
+                                            </div>
+                                        </label>
+                                    </t>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mt-3" style="height: 20px;">
+                                <span class="small fw-medium" style="color: #3b427b; font-size: 12px;" t-if="state.previewSelectedRecords.length > 0">
+                                    <t t-esc="state.previewSelectedRecords.length"/> record(s) selected
+                                </span>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top-0 pb-4 px-4 pt-2 d-flex justify-content-center justify-content-sm-end">
+                            <button type="button" class="btn btn-light border px-4 py-2 me-2" style="border-radius: 24px; color: #6c757d; font-size: 13px;" t-on-click="onClosePreview">Cancel</button>
+                            <button type="button" class="btn px-4 py-2 d-flex align-items-center justify-content-center" t-attf-style="border-radius: 24px; font-size: 13px; background-color: {{ state.previewSelectedRecords.length > 0 ? '#3b427b' : '#e9ecef' }}; color: {{ state.previewSelectedRecords.length > 0 ? 'white' : '#adb5bd' }} !important; border: none; min-width: 110px;" t-att-disabled="state.previewSelectedRecords.length === 0 ? '1' : undefined" t-on-click="confirmPreview">
+                                <i class="fa fa-check me-2" t-if="state.previewSelectedRecords.length > 0"/> Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+        
+        <!-- Preview Error Modal -->
+        <t t-if="state.previewError">
+            <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.6); z-index: 1060;">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content shadow border-0" style="border-radius: 12px; background-color: #ffffff;">
+                        <div class="modal-header border-bottom-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center text-danger">
+                                <i class="fa fa-exclamation-triangle fa-2x me-3"/>
+                                <div>
+                                    <h5 class="modal-title fw-bold m-0 text-danger" style="font-size: 18px;">Report Rendering Runtime Error</h5>
+                                    <small class="text-muted" style="font-size: 11px;">The QWeb report template failed to execute with this record.</small>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close shadow-none" t-on-click="() => { this.state.previewError = null; }" aria-label="Close" style="font-size: 12px; opacity: 0.5; margin-top: -10px;"></button>
+                        </div>
+                        <div class="modal-body px-4 py-3">
+                            <div class="alert alert-danger border-0 p-3 mb-3 d-flex flex-column" style="background-color: #fdf2f2; border-radius: 8px; font-family: monospace; font-size: 13px; color: #9b1c1c; white-space: pre-wrap; overflow-x: auto; max-height: 200px;">
+                                <t t-esc="state.previewError"/>
+                            </div>
+                            
+                            <t t-if="state.previewErrorNode">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Failing QWeb Node / Component:</label>
+                                    <div class="p-3 bg-light border rounded" style="font-family: monospace; font-size: 12px; color: #4b5563; white-space: pre-wrap; overflow-x: auto;">
+                                        <t t-esc="state.previewErrorNode"/>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <t t-if="state.previewErrorSuggestion">
+                                <div class="mb-2">
+                                    <label class="form-label fw-bold text-success mb-1" style="font-size: 13px;">💡 Suggested Action:</label>
+                                    <div class="p-3 border-start border-success border-4 rounded" style="background-color: #f6fcf9; font-size: 13px; color: #1e4620; line-height: 1.5;">
+                                        <t t-esc="state.previewErrorSuggestion"/>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                        <div class="modal-footer border-top-0 pb-4 px-4 pt-2">
+                            <button type="button" class="btn btn-secondary px-4 py-2 border-0" style="border-radius: 24px; font-size: 13px; background-color: #6c757d; color: white;" t-on-click="() => { this.state.previewError = null; }">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+
+        <!-- ==================== Select Field Modal ==================== -->
+        <t t-if="state.showFieldPopup">
+            <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
+                    <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+                        <!-- Header -->
+                        <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                            <h5 class="modal-title fw-semibold" style="font-size: 16px;">Insert Field or Variable</h5>
+                            <button type="button" class="btn-close" t-on-click="closeFieldSelector"/>
+                        </div>
+                        
+                        <!-- Tabs -->
+                        <div class="px-4 pt-2" t-if="!(activeElement and (activeElement.type === 'section' or activeElement.type === 'table'))">
+                            <div class="d-flex border-bottom" style="font-size: 14px;">
+                                <button class="btn btn-link nav-link flex-fill text-center pb-2 border-bottom fw-bold shadow-none text-decoration-none"
+                                        t-attf-class="{{ state.fieldPopupTab === 'fields' ? 'border-primary text-primary border-bottom border-2' : 'text-muted border-0' }}"
+                                        t-on-click="() => state.fieldPopupTab = 'fields'">
+                                    Fields
+                                </button>
+                                <button class="btn btn-link nav-link flex-fill text-center pb-2 border-bottom fw-bold shadow-none text-decoration-none"
+                                        t-attf-class="{{ state.fieldPopupTab === 'variables' ? 'border-primary text-primary border-bottom border-2' : 'text-muted border-0' }}"
+                                        t-on-click="() => state.fieldPopupTab = 'variables'">
+                                    Variables
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Search -->
+                        <div class="px-4 pt-3 pb-2">
+                            <input type="text"
+                                   class="form-control"
+                                   placeholder="Search fields or variables..."
+                                   t-att-value="state.fieldSearchQuery"
+                                   t-on-input="onSearchField"
+                                   autofocus="autofocus"
+                                   style="border-radius: 8px; font-size: 13px;"/>
+                        </div>
+                        
+                        <!-- Labels -->
+                        <div class="px-4 pb-2 d-flex align-items-center justify-content-between" t-if="state.fieldPopupTab === 'fields'">
+                            <small class="text-muted">
+                                Model: <strong t-esc="state.modelName"/>
+                            </small>
+                            <small class="text-muted" t-esc="state.filteredFields.length + ' fields'"/>
+                        </div>
+                        <div class="px-4 pb-2 d-flex align-items-center justify-content-between" t-else="">
+                            <small class="text-muted">
+                                Variables list for model: <strong t-esc="state.modelName"/>
+                            </small>
+                            <small class="text-muted" t-esc="filteredVariables.length + ' variables'"/>
+                        </div>
+
+                        <!-- List Content -->
+                        <div class="px-2 pb-2" style="max-height: 360px; overflow-y: auto;">
+                            <!-- Fields Tab Content -->
+                            <t t-if="state.fieldPopupTab === 'fields'">
+                                <t t-if="state.filteredFields.length === 0">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fa fa-search fa-2x mb-2"/>
+                                        <div style="font-size: 13px;">No fields found</div>
+                                    </div>
+                                </t>
+                                <t t-foreach="state.filteredFields" t-as="field" t-key="field.id">
+                                    <div t-on-click="() => this.onSelectField(field)"
+                                         t-attf-class="d-flex align-items-center gap-2 px-3 py-2 rounded mb-1 {{ state.selectedField and state.selectedField.id === field.id ? 'bg-primary bg-opacity-10 border border-primary border-opacity-25' : '' }}"
+                                         t-attf-style="cursor: pointer; margin-left: {{ (field.level || 0) * 16 }}px; border-left: {{ (field.level || 0) > 0 ? '1px dashed #dee2e6' : 'none' }}; padding-left: {{ (field.level || 0) > 0 ? '12px' : '16px' }} !important;">
+                                        
+                                        <!-- Caret Toggle for Relational Fields -->
+                                        <span t-if="field.ttype === 'many2one' or field.ttype === 'one2many' or field.ttype === 'many2many'"
+                                              t-on-click.stop="() => this.toggleFieldExpand(field)"
+                                              class="d-inline-flex align-items-center justify-content-center text-muted"
+                                              style="width: 16px; height: 16px; margin-right: 4px; cursor: pointer;">
+                                            <i t-attf-class="fa {{ field.isExpanded ? 'fa-chevron-down' : 'fa-chevron-right' }}" style="font-size: 10px;"/>
+                                        </span>
+                                        <span t-else="" style="width: 16px; display: inline-block; margin-right: 4px;"></span>
+
+                                        <!-- Type Badge -->
+                                        <span class="badge rounded-1 fw-semibold text-white" style="font-size: 9px; min-width: 32px; text-align: center; padding: 2px 4px;"
+                                              t-attf-style="background-color: {{ this.getFieldTypeBadgeColor(field.ttype) }};"
+                                              t-esc="this.getFieldTypeBadge(field.ttype)"/>
+                                        <!-- Field Info -->
+                                        <div class="flex-grow-1 overflow-hidden">
+                                            <div class="fw-medium text-dark" style="font-size: 13px;" t-esc="field.field_description"/>
+                                            <div class="text-muted" style="font-size: 11px;">
+                                                <t t-if="field.parentPath">
+                                                    <t t-esc="field.parentPath"/>.<strong t-esc="field.name"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <t t-esc="field.name"/>
+                                                </t>
+                                            </div>
+                                        </div>
+                                        <!-- Check icon if selected -->
+                                        <i t-if="state.selectedField and state.selectedField.id === field.id"
+                                           class="fa fa-check text-primary"/>
+                                    </div>
+                                </t>
+                            </t>
+                            
+                            <!-- Variables Tab Content -->
+                            <t t-else="">
+                                <t t-if="filteredVariables.length === 0">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fa fa-search fa-2x mb-2"/>
+                                        <div style="font-size: 13px;">No variables found</div>
+                                    </div>
+                                </t>
+                                <t t-foreach="filteredVariables" t-as="v" t-key="v.code">
+                                    <div t-on-click="() => this.onSelectVariable(v)"
+                                         t-attf-class="d-flex align-items-center gap-3 px-3 py-2 rounded mb-1 {{ state.selectedVariable and state.selectedVariable.code === v.code ? 'bg-primary bg-opacity-10 border border-primary border-opacity-25' : '' }}"
+                                         style="cursor: pointer;">
+                                        <!-- Type Badge -->
+                                        <span class="badge rounded-1 fw-semibold text-white" style="font-size: 9px; min-width: 32px; text-align: center; padding: 2px 4px;"
+                                              t-attf-style="background-color: {{ v.isBuiltIn ? '#7c5cbf' : this.getFieldTypeBadgeColor(v.ttype) }};"
+                                              t-esc="v.isBuiltIn ? 'VAR' : this.getFieldTypeBadge(v.ttype)"/>
+                                        <!-- Variable Info -->
+                                        <div class="flex-grow-1 overflow-hidden">
+                                            <div class="fw-medium text-dark" style="font-size: 13px;" t-esc="v.name"/>
+                                            <div class="text-muted" style="font-size: 11px;" t-esc="v.code"/>
+                                        </div>
+                                        <!-- Check icon if selected -->
+                                        <i t-if="state.selectedVariable and state.selectedVariable.code === v.code"
+                                           class="fa fa-check text-primary"/>
+                                    </div>
+                                </t>
+                            </t>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div class="modal-footer border-0 px-4 py-3 d-flex justify-content-end gap-2">
+                            <button type="button"
+                                    class="btn btn-light border px-4"
+                                    style="border-radius: 24px; font-size: 13px;"
+                                    t-on-click="closeFieldSelector">Cancel</button>
+                            <button type="button"
+                                    t-attf-class="btn px-4 {{ (state.fieldPopupTab === 'fields' ? state.selectedField : state.selectedVariable) ? 'btn-primary' : 'btn-secondary disabled' }}"
+                                    style="border-radius: 24px; font-size: 13px;"
+                                    t-on-click="confirmInsertField">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+
+        <!-- Color Picker Modal -->
+        <t t-if="state.showColorPicker">
+            <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.4); z-index: 99999;">
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 320px;">
+                    <div class="modal-content shadow border-0" style="border-radius: 12px; background: white;">
+                        <div class="modal-header border-bottom-0 pb-0 pt-3 px-3 d-flex justify-content-between align-items-center">
+                            <h6 class="modal-title fw-bold text-dark mb-0"><i class="fa fa-paint-brush me-1 text-primary"/> Color Picker</h6>
+                            <button type="button" class="btn-close" t-on-click="closeColorPicker" style="font-size: 10px; opacity: 0.5;"></button>
+                        </div>
+                        <div class="modal-body p-3">
+                            <!-- Custom Color Picker Input -->
+                            <div class="mb-3 d-flex align-items-center gap-2">
+                                <label class="small text-muted mb-0">Custom:</label>
+                                <input type="color" class="form-control form-control-sm p-1 border" t-model="state.colorPickerValue" style="width: 50px; height: 32px; cursor: pointer; border-radius: 4px;"/>
+                                <input type="text" class="form-control form-control-sm" t-model="state.colorPickerValue" placeholder="#FFFFFF" style="height: 32px; font-family: monospace;"/>
+                            </div>
+
+                            <div class="small fw-bold text-muted mb-2">Preset Colors</div>
+                            <!-- Swatches Grid -->
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <t t-foreach="presetColors" t-as="color" t-key="color">
+                                    <div t-on-click="() => this.selectPresetColor(color)" 
+                                         t-attf-style="width: 24px; height: 24px; background-color: {{ color }}; border-radius: 4px; border: 1px solid #dee2e6; cursor: pointer; transition: transform 0.1s; {{ color === 'transparent' ? 'background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 8px 8px; background-position: 0 0, 0 4px, 4px -4px, -4px 0px;' : '' }}"
+                                         class="color-swatch-item"
+                                         t-att-title="color === 'transparent' ? 'Transparent' : color">
+                                         <div t-if="color === 'transparent'" style="width: 100%; height: 100%; position: relative; overflow: hidden; border-radius: 3px;">
+                                             <div style="position: absolute; width: 141%; height: 2px; background-color: #ef4444; top: 0; left: 0; transform: rotate(45deg); transform-origin: 0 0;"></div>
+                                         </div>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top-0 pt-0 pb-3 px-3 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm btn-light border" style="border-radius: 20px;" t-on-click="closeColorPicker">Cancel</button>
+                            <button type="button" class="btn btn-sm btn-primary" style="background-color: #3b427b; border-color: #3b427b; border-radius: 20px;" t-on-click="applyColorPicker">Select</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+
+        <!-- Expression Editor Modal -->
+        <t t-if="state.showExpressionPopup">
+            <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 99999;">
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; width: 820px;">
+                    <div class="modal-content shadow border-0" style="border-radius: 12px;">
+                        
+                        <!-- Header -->
+                        <div class="modal-header border-bottom-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                            <h5 class="modal-title fw-semibold" style="font-size: 16px;">Expression Editor</h5>
+                            <button type="button" class="btn-close" t-on-click="closeExpressionEditor"/>
+                        </div>
+
+                        <!-- Main Modal Body with Split Columns -->
+                        <div class="modal-body px-4 py-3">
+                            <div class="row g-3">
+                                <!-- Left Column: Fields & Variables -->
+                                <div class="col-6 border-end pe-3" style="max-height: 480px; display: flex; flex-direction: column;">
+                                    <!-- Tabs -->
+                                    <div class="d-flex border-bottom mb-2" style="font-size: 14px;">
+                                        <button class="btn btn-link nav-link flex-fill text-center pb-2 border-bottom fw-bold shadow-none text-decoration-none"
+                                                t-attf-class="{{ state.expressionPopupTab === 'fields' ? 'border-primary text-primary border-bottom border-2' : 'text-muted border-0' }}"
+                                                t-on-click="() => state.expressionPopupTab = 'fields'">
+                                            Fields
+                                        </button>
+                                        <button class="btn btn-link nav-link flex-fill text-center pb-2 border-bottom fw-bold shadow-none text-decoration-none"
+                                                t-attf-class="{{ state.expressionPopupTab === 'variables' ? 'border-primary text-primary border-bottom border-2' : 'text-muted border-0' }}"
+                                                t-on-click="() => state.expressionPopupTab = 'variables'">
+                                            Variables
+                                        </button>
+                                    </div>
+
+                                    <!-- Search Fields/Variables -->
+                                    <div class="mb-2">
+                                        <input type="text"
+                                               class="form-control form-control-sm"
+                                               placeholder="Search..."
+                                               t-att-value="state.fieldSearchQuery"
+                                               t-on-input="onSearchField"
+                                               style="border-radius: 8px; font-size: 13px;"/>
+                                    </div>
+
+                                    <!-- List Area (Fields or Variables) -->
+                                    <div class="flex-grow-1 overflow-auto" style="height: 300px; max-height: 300px;">
+                                        <t t-if="state.expressionPopupTab === 'fields'">
+                                            <t t-if="state.filteredFields.length === 0">
+                                                <div class="text-center text-muted py-4">
+                                                    <div style="font-size: 13px;">No fields found</div>
+                                                </div>
+                                            </t>
+                                            <t t-foreach="state.filteredFields" t-as="field" t-key="field.id">
+                                                <div t-on-click="() => this.onSelectField(field)"
+                                                     t-on-dblclick="() => this.onDblClickField(field)"
+                                                     t-attf-class="d-flex align-items-center gap-2 px-2 py-1 rounded mb-1 {{ state.selectedField and state.selectedField.id === field.id ? 'bg-primary bg-opacity-10 border border-primary border-opacity-25' : '' }}"
+                                                     t-attf-style="cursor: pointer; margin-left: {{ (field.level || 0) * 16 }}px; border-left: {{ (field.level || 0) > 0 ? '1px dashed #dee2e6' : 'none' }}; padding-left: {{ (field.level || 0) > 0 ? '8px' : '12px' }} !important; user-select: none;">
+                                                    
+                                                    <!-- Caret Toggle for Relational Fields -->
+                                                    <span t-if="field.ttype === 'many2one' or field.ttype === 'one2many' or field.ttype === 'many2many'"
+                                                          t-on-click.stop="() => this.toggleFieldExpand(field)"
+                                                          class="d-inline-flex align-items-center justify-content-center text-muted"
+                                                          style="width: 14px; height: 14px; margin-right: 2px; cursor: pointer;">
+                                                        <i t-attf-class="fa {{ field.isExpanded ? 'fa-chevron-down' : 'fa-chevron-right' }}" style="font-size: 9px;"/>
+                                                    </span>
+                                                    <span t-else="" style="width: 14px; display: inline-block; margin-right: 2px;"></span>
+
+                                                    <!-- Type Badge -->
+                                                    <span class="badge rounded-1 fw-semibold text-white" style="font-size: 8px; min-width: 28px; text-align: center; padding: 1px 3px;"
+                                                          t-attf-style="background-color: {{ this.getFieldTypeBadgeColor(field.ttype) }};"
+                                                          t-esc="this.getFieldTypeBadge(field.ttype)"/>
+                                                    
+                                                    <div class="flex-grow-1 overflow-hidden" style="line-height: 1.1;">
+                                                        <div class="fw-medium text-dark" style="font-size: 12px;" t-esc="field.field_description"/>
+                                                        <div class="text-muted" style="font-size: 10px;">
+                                                            <t t-if="field.parentPath">
+                                                                <t t-esc="field.parentPath"/>.<strong t-esc="field.name"/>
+                                                            </t>
+                                                            <t t-else="">
+                                                                <t t-esc="field.name"/>
+                                                            </t>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                        </t>
+                                        <t t-else="">
+                                            <t t-if="filteredVariables.length === 0">
+                                                <div class="text-center text-muted py-4">
+                                                    <div style="font-size: 13px;">No variables found</div>
+                                                </div>
+                                            </t>
+                                            <t t-foreach="filteredVariables" t-as="v" t-key="v.code">
+                                                <div t-on-click="() => this.onSelectVariable(v)"
+                                                     t-on-dblclick="() => this.onDblClickVariable(v)"
+                                                     t-attf-class="d-flex align-items-center gap-2 px-2 py-1 rounded mb-1 {{ state.selectedVariable and state.selectedVariable.code === v.code ? 'bg-primary bg-opacity-10 border border-primary border-opacity-25' : '' }}"
+                                                     style="cursor: pointer; user-select: none;">
+                                                    <span class="badge rounded-1 fw-semibold text-white" style="font-size: 8px; min-width: 28px; text-align: center; padding: 1px 3px;"
+                                                          t-attf-style="background-color: {{ v.isBuiltIn ? '#7c5cbf' : this.getFieldTypeBadgeColor(v.ttype) }};"
+                                                          t-esc="v.isBuiltIn ? 'VAR' : this.getFieldTypeBadge(v.ttype)"/>
+                                                    <div class="flex-grow-1 overflow-hidden" style="line-height: 1.1;">
+                                                        <div class="fw-medium text-dark" style="font-size: 12px;" t-esc="v.name"/>
+                                                        <div class="text-muted" style="font-size: 10px;" t-esc="v.code"/>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                        </t>
+                                    </div>
+                                    <div class="text-muted mt-1" style="font-size: 10px;">Double-click to insert</div>
+                                </div>
+
+                                <!-- Right Column: Function categories and lists -->
+                                <div class="col-6 ps-3" style="max-height: 480px; display: flex; flex-direction: column;">
+                                    <!-- Search Functions -->
+                                    <div class="mb-2">
+                                        <input type="text"
+                                               class="form-control form-control-sm"
+                                               placeholder="Search functions..."
+                                               t-model="state.functionSearchQuery"
+                                               style="border-radius: 8px; font-size: 13px;"/>
+                                    </div>
+
+                                    <!-- Categories and List area -->
+                                    <div class="flex-grow-1 overflow-auto" style="height: 300px; max-height: 300px; font-size: 13px;">
+                                        <t t-foreach="filteredFunctionCategories" t-as="cat" t-key="cat.name">
+                                            <div class="mb-2 border rounded" style="border-color: #dee2e6 !important;">
+                                                <!-- Category Header -->
+                                                <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-light"
+                                                     style="cursor: pointer; font-weight: 600; font-size: 13px; border-bottom: 1px solid #dee2e6;"
+                                                     t-on-click="() => state.expandedFunctionCategory = (state.expandedFunctionCategory === cat.name ? '' : cat.name)">
+                                                    <span t-esc="cat.name"/>
+                                                    <i t-attf-class="fa {{ state.expandedFunctionCategory === cat.name ? 'fa-chevron-down' : 'fa-chevron-right' }} text-muted" style="font-size: 10px;"/>
+                                                </div>
+                                                <!-- Category Functions List -->
+                                                <div t-if="state.expandedFunctionCategory === cat.name" class="p-1">
+                                                    <t t-foreach="cat.functions" t-as="func" t-key="func.name">
+                                                        <div class="d-flex align-items-center justify-content-between px-3 py-2 rounded border-bottom"
+                                                             style="font-size: 12px; border-bottom: 1px solid #f1f3f5 !important;">
+                                                            <div class="flex-grow-1 pe-2">
+                                                                <strong t-esc="func.name" class="text-primary"/>
+                                                                <div class="text-muted" style="font-size: 10px;" t-esc="func.desc"/>
+                                                            </div>
+                                                            <button class="btn btn-link btn-sm text-primary text-decoration-none p-0 fw-bold"
+                                                                    type="button"
+                                                                    t-on-click="() => this.insertIntoExpression(func.code)"
+                                                                    style="font-size: 12px;">Insert</button>
+                                                        </div>
+                                                    </t>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Expression Textarea Field -->
+                            <div class="mt-3">
+                                <label class="form-label text-muted small fw-bold mb-1">Expression:</label>
+                                <textarea id="expressionTextarea"
+                                          class="form-control"
+                                          rows="4"
+                                          t-model="state.expressionValue"
+                                          style="font-family: monospace; font-size: 13px; border-radius: 8px;"></textarea>
+                                
+                                <!-- Validation Error Box -->
+                                <div t-if="state.expressionError" class="alert alert-danger mt-2 py-2 px-3 d-flex flex-column gap-1" style="border-radius: 8px; font-size: 12px; margin-bottom: 0;">
+                                    <div class="fw-bold text-danger"><i class="fa fa-exclamation-triangle me-1"/> Invalid Expression</div>
+                                    <div t-esc="state.expressionError" class="text-danger"/>
+                                    <div t-if="state.expressionSuggestion" class="mt-1 pt-1 border-top" style="border-top-color: rgba(220, 53, 69, 0.15) !important;">
+                                        <strong class="text-danger">Suggestion:</strong> <span t-esc="state.expressionSuggestion" class="text-danger"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-1 d-flex justify-content-between text-muted" style="font-size: 11px;">
+                                <span>Enter expression to validate</span>
+                                <span class="text-primary" style="cursor: pointer;" t-on-click="() => { state.expressionValue = ''; state.expressionError = ''; state.expressionSuggestion = ''; }">Clear</span>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="modal-footer border-top-0 px-4 py-3 d-flex justify-content-end gap-2">
+                            <button type="button"
+                                    class="btn btn-light border px-4"
+                                    style="border-radius: 24px; font-size: 13px;"
+                                    t-on-click="closeExpressionEditor">Cancel</button>
+                            <button type="button"
+                                    class="btn btn-primary px-4"
+                                    style="background-color: #3b427b; border-color: #3b427b; border-radius: 24px; font-size: 13px;"
+                                    t-att-disabled="state.isValidatingExpression"
+                                    t-on-click="confirmExpression">
+                                <t t-if="state.isValidatingExpression"><i class="fa fa-spinner fa-spin me-1"/>Validating...</t>
+                                <t t-else="">Confirm</t>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+
+    </t>
+
+    <t t-name="cr_dynamic_report_studio.DesignerElement">
+                                              <div class="o_designer_element position-absolute"
+                                                   t-attf-style="left: {{ el.type === 'pagebreak' ? 0 : el.x }}px; top: {{el.y}}px; width: {{ el.type === 'pagebreak' ? state.pageWidth : el.width }}px; height: {{el.height}}px; transform: rotate({{ (el.type === 'section' or el.type === 'pagebreak') ? 0 : (el.rotation || 0)}}deg); cursor: move; outline: {{ state.activeElementId === el.id ? '2px solid #0052cc' : '1px dashed transparent' }}; z-index: {{ el_index }};"
+                                                   t-on-mousedown.stop="(ev) => this.onElementMouseDown(ev, el.id)"
+                                                   t-on-click.stop="">
+                                        
+                                        <!-- Text / Field -->
+                                        <div t-if="el.type === 'text' or el.type === 'field'" t-attf-class="w-100 h-100 d-flex {{ el.style.verticalAlign === 'top' ? 'align-items-start' : (el.style.verticalAlign === 'bottom' ? 'align-items-end' : 'align-items-center') }}" t-attf-style="border: {{ el.type === 'field' ? '1px solid #dee2e6' : 'none' }}; background: {{ el.style.backgroundColor || (el.type === 'field' ? '#f8f9fa' : 'transparent') }}; color: {{ el.style.color || '#000000' }}; line-height: {{ el.style.lineHeight || 1.2 }}; padding: 4px; font-size: {{el.style.fontSize || 12}}px; font-weight: {{el.style.bold ? 'bold' : 'normal'}}; font-style: {{el.style.italic ? 'italic' : 'normal'}}; text-decoration: {{el.style.underline ? 'underline' : 'none'}}; font-family: {{el.style.fontFamily || 'Helvetica'}}; text-align: {{el.style.textAlign || 'left'}}; overflow: {{ el.style.overflow === 'visible' ? 'visible' : 'hidden' }};">
+                                            <span class="w-100" t-esc="el.content" t-attf-style="white-space: {{el.style.textWrap === 'nowrap' ? 'nowrap' : 'normal'}}; text-overflow: {{el.style.overflow === 'ellipsis' ? 'ellipsis' : 'clip'}}; overflow: {{ el.style.overflow === 'visible' ? 'visible' : 'hidden' }}; display: {{ el.style.textWrap === 'nowrap' || el.style.overflow === 'ellipsis' ? 'block' : 'inline' }};"/>
+                                        </div>
+                                        
+                                         <!-- Image -->
+                                         <div t-elif="el.type === 'image'" 
+                                              t-attf-class="w-100 h-100 d-flex {{ el.style.textAlign === 'left' ? 'justify-content-start' : (el.style.textAlign === 'right' ? 'justify-content-end' : 'justify-content-center') }} {{ el.style.verticalAlign === 'top' ? 'align-items-start' : (el.style.verticalAlign === 'bottom' ? 'align-items-end' : 'align-items-center') }}"
+                                              t-attf-style="background-color: {{ el.style.backgroundColor || 'transparent' }}; border: {{ el.style.borderWidth || 0 }}px solid {{ el.style.borderColor || '#ced4da' }}; border-radius: {{ el.style.borderRadius || 0 }}px; overflow: hidden;">
+                                             <t t-if="el.imageSourceMode === 'expression'">
+                                                 <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                                                     <i class="fa fa-picture-o fa-2x"/>
+                                                     <div style="font-size: 10px; margin-top: 4px;"><t t-if="el.expression"><t t-esc="'{{' + el.expression + '}}'"/></t><t t-else="">{}</t></div>
+                                                 </div>
+                                             </t>
+                                             <t t-elif="(el.imageSourceMode || 'resource') === 'resource' and el.resourceId">
+                                                 <img t-attf-src="/web/image/report.designer.resource/{{el.resourceId}}/image" t-attf-style="width: 100%; height: 100%; object-fit: {{ el.style.objectFit || 'contain' }};"/>
+                                             </t>
+                                         </div>
+                                        
+                                         <!-- Line -->
+                                         <div t-elif="el.type === 'line'" class="w-100" t-attf-style="border-top: {{ el.style.borderWidth || 1 }}px {{ el.style.borderStyle || 'solid' }} {{ el.style.color || '#000000' }}; height: 0; margin-top: {{ (el.height - (el.style.borderWidth || 1)) / 2 }}px;"></div>
+                                        
+
+                                        
+                                        <!-- Watermark -->
+                                        <div t-elif="el.type === 'watermark'" class="w-100 h-100 d-flex align-items-center justify-content-center" t-attf-style="opacity: {{ el.style.opacity !== undefined ? el.style.opacity : 0.18 }}; pointer-events: none;">
+                                            <t t-if="(el.watermarkMode || 'text') === 'text'">
+                                                <div t-attf-style="color: {{ el.style.color || '#6B7280' }}; font-family: {{ el.style.fontFamily || 'Helvetica' }}, Arial, sans-serif; font-size: {{ el.style.fontSize || 64 }}px; font-weight: bold; white-space: nowrap;">
+                                                    <t t-esc="el.content || 'DRAFT'"/>
+                                                </div>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-if="(el.imageSourceMode || 'resource') === 'resource'">
+                                                    <img t-if="el.resourceId" t-attf-src="/web/image/report.designer.resource/{{el.resourceId}}/image" style="max-width: 100%; max-height: 100%; object-fit: contain;"/>
+                                                    <div t-else="" class="text-muted"><i class="fa fa-image fa-3x"/></div>
+                                                </t>
+                                                <t t-else="">
+                                                    <div class="text-muted"><i class="fa fa-code fa-3x"/></div>
+                                                </t>
+                                            </t>
+                                        </div>
+                                        
+                                        
+                                        <!-- Section -->
+                                        <div t-elif="el.type === 'section'" class="w-100 h-100 d-flex align-items-center justify-content-center text-muted" style="background: transparent; border: 1px dashed #ced4da;">
+                                            <span style="font-size: 11px;">Drop elements here</span>
+                                        </div>
+                                        
+                                        <!-- Page Break -->
+                                        <div t-elif="el.type === 'pagebreak'" class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: #fff5f5; border-top: 1.5px solid #ff4d4d; border-bottom: 1.5px solid #ff4d4d; border-left: none; border-right: none; overflow: hidden; pointer-events: none;">
+                                            <span style="color: #ff4d4d; font-weight: bold; font-size: 10px; text-align: center; width: 100%; letter-spacing: 1px; user-select: none;">- PAGE BREAK -</span>
+                                        </div>
+                                        
+                                         <!-- Table -->
+                                         <div t-elif="el.type === 'table'" class="w-100 h-100 d-flex flex-column text-muted" style="background: white; border: 1px solid #ced4da;">
+                                             <div t-if="el.showHeader" class="d-flex w-100" t-attf-style="border-bottom: 1px solid #ced4da; height: {{ el.headerHeight || 24 }}px; background-color: #f8f9fa;">
+                                                 <t t-foreach="el.content" t-as="col" t-key="col.id">
+                                                     <div t-attf-style="width: {{ col.widthValue }}{{ col.widthType === 'percent' ? '%' : 'px' }}; flex-grow: 0; flex-shrink: 0; {{ col_last ? '' : 'border-right: 1px solid #ced4da;' }} font-size: 11px; font-weight: bold; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 2px; align-content: center;">
+                                                         <t t-esc="col.header"/>
+                                                     </div>
+                                                 </t>
+                                             </div>
+                                             <div class="d-flex w-100 flex-grow-1">
+                                                 <t t-foreach="el.content" t-as="col" t-key="col.id">
+                                                     <div t-attf-style="width: {{ col.widthValue }}{{ col.widthType === 'percent' ? '%' : 'px' }}; flex-grow: 0; flex-shrink: 0; {{ col_last ? '' : 'border-right: 1px solid #ced4da;' }} font-size: 11px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 2px; align-content: center;">
+                                                         <t t-if="col.contentType === 'image'">
+                                                             <div class="d-flex align-items-center gap-1 text-muted" style="font-size: 10px;">
+                                                                 <i class="fa fa-picture-o"/>
+                                                                 <span class="text-truncate"><t t-esc="col.contentExpression ? '{{' + col.contentExpression + '}}' : '(image)'"/></span>
+                                                             </div>
+                                                         </t>
+                                                         <t t-elif="col.contentType === 'barcode'">
+                                                             <div class="d-flex align-items-center gap-1 text-muted" style="font-size: 10px;">
+                                                                 <i class="fa fa-barcode"/>
+                                                                 <span class="text-truncate"><t t-esc="col.contentExpression ? '{{' + col.contentExpression + '}}' : '(barcode)'"/></span>
+                                                             </div>
+                                                         </t>
+                                                         <t t-else="">
+                                                             <span class="text-muted"><t t-esc="col.contentExpression ? '{{' + col.contentExpression + '}}' : '(empty)'"/></span>
+                                                         </t>
+                                                     </div>
+                                                 </t>
+                                             </div>
+                                             <div t-if="el.showFooter" class="d-flex w-100" style="border-top: 1px solid #ced4da; height: 24px; background-color: #f8f9fa;">
+                                                 <t t-foreach="el.content" t-as="col" t-key="col.id">
+                                                     <div t-attf-style="width: {{ col.widthValue }}{{ col.widthType === 'percent' ? '%' : 'px' }}; flex-grow: 0; flex-shrink: 0; {{ col_last ? '' : 'border-right: 1px solid #ced4da;' }} font-size: 11px; font-weight: bold; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 2px; align-content: center;">
+                                                          <t t-esc="col.footer || ''"/>
+                                                     </div>
+                                                 </t>
+                                             </div>
+                                         </div>
+                                        
+                                        <!-- Barcode -->
+                                        <div t-elif="el.type === 'barcode'" class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white border overflow-hidden p-2">
+                                            <t t-if="el.symbology === 'QR Code'">
+                                                <t t-if="el.showBarcodeText !== false and el.barcodeTextPosition === 'Top'">
+                                                    <span class="mb-1 text-muted text-center w-100 text-truncate" style="font-size: 10px;"><t t-esc="el.content || 'QR Code'"/></span>
+                                                </t>
+                                                <div class="d-flex align-items-center justify-content-center flex-grow-1">
+                                                    <i class="fa fa-qrcode text-dark" style="font-size: 36px;"/>
+                                                </div>
+                                                <t t-if="el.showBarcodeText !== false and (el.barcodeTextPosition || 'Bottom') === 'Bottom'">
+                                                    <span class="mt-1 text-muted text-center w-100 text-truncate" style="font-size: 10px;"><t t-esc="el.content || 'QR Code'"/></span>
+                                                </t>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-if="el.showBarcodeText !== false and el.barcodeTextPosition === 'Top'">
+                                                    <span class="mb-1 text-muted text-center w-100 text-truncate" style="font-size: 10px;"><t t-esc="el.content || '123456789012'"/></span>
+                                                </t>
+                                                <div class="d-flex w-100 h-100 px-2 pt-1" style="background-image: repeating-linear-gradient(90deg, #000 0px, #000 2px, transparent 2px, transparent 4px, #000 4px, #000 5px, transparent 5px, transparent 8px, #000 8px, #000 11px, transparent 11px, transparent 13px); background-size: contain; background-repeat: no-repeat; background-position: center; flex: 1;"></div>
+                                                <t t-if="el.showBarcodeText !== false and (el.barcodeTextPosition || 'Bottom') === 'Bottom'">
+                                                    <span class="mt-1 text-muted text-center w-100 text-truncate" style="font-size: 10px;"><t t-esc="el.content || '123456789012'"/></span>
+                                                </t>
+                                            </t>
+                                        </div>
+                                        
+                                        <!-- Shape (Rectangle, Ellipse, Triangle, Star, Diamond, Polygon) -->
+                                        <div t-elif="el.type === 'shape' or el.type === 'rectangle'" class="w-100 h-100 position-relative" style="overflow: visible;">
+                                            <svg class="w-100 h-100" style="overflow: visible; display: block;" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                                <t t-if="el.shapeType === 'rectangle' or el.type === 'rectangle'">
+                                                    <rect x="0" y="0" width="100" height="100"
+                                                          vector-effect="non-scaling-stroke"
+                                                          t-att-rx="el.style.cornerRadius || 0"
+                                                          t-att-ry="el.style.cornerRadius || 0"
+                                                          t-att-fill="el.style.fillColor || '#ffffff'"
+                                                          t-att-fill-opacity="el.style.fillOpacity !== undefined ? el.style.fillOpacity : 1.0"
+                                                          t-att-stroke="el.style.strokeColor || '#000000'"
+                                                          t-att-stroke-width="el.style.strokeWidth !== undefined ? el.style.strokeWidth : 1"
+                                                          t-att-stroke-dasharray="el.style.strokeStyle === 'dashed' ? '5,5' : (el.style.strokeStyle === 'dotted' ? '2,2' : 'none')" />
+                                                </t>
+                                                <t t-elif="el.shapeType === 'ellipse'">
+                                                    <ellipse cx="50" cy="50" rx="50" ry="50"
+                                                          vector-effect="non-scaling-stroke"
+                                                          t-att-fill="el.style.fillColor || '#ffffff'"
+                                                          t-att-fill-opacity="el.style.fillOpacity !== undefined ? el.style.fillOpacity : 1.0"
+                                                          t-att-stroke="el.style.strokeColor || '#000000'"
+                                                          t-att-stroke-width="el.style.strokeWidth !== undefined ? el.style.strokeWidth : 1"
+                                                          t-att-stroke-dasharray="el.style.strokeStyle === 'dashed' ? '5,5' : (el.style.strokeStyle === 'dotted' ? '2,2' : 'none')" />
+                                                </t>
+                                                <t t-elif="el.shapeType === 'triangle'">
+                                                    <polygon points="50,0 100,100 0,100"
+                                                          vector-effect="non-scaling-stroke"
+                                                          t-att-fill="el.style.fillColor || '#ffffff'"
+                                                          t-att-fill-opacity="el.style.fillOpacity !== undefined ? el.style.fillOpacity : 1.0"
+                                                          t-att-stroke="el.style.strokeColor || '#000000'"
+                                                          t-att-stroke-width="el.style.strokeWidth !== undefined ? el.style.strokeWidth : 1"
+                                                          t-att-stroke-dasharray="el.style.strokeStyle === 'dashed' ? '5,5' : (el.style.strokeStyle === 'dotted' ? '2,2' : 'none')" />
+                                                </t>
+                                                <t t-elif="el.shapeType === 'diamond'">
+                                                    <polygon points="50,0 100,50 50,100 0,50"
+                                                          vector-effect="non-scaling-stroke"
+                                                          t-att-fill="el.style.fillColor || '#ffffff'"
+                                                          t-att-fill-opacity="el.style.fillOpacity !== undefined ? el.style.fillOpacity : 1.0"
+                                                          t-att-stroke="el.style.strokeColor || '#000000'"
+                                                          t-att-stroke-width="el.style.strokeWidth !== undefined ? el.style.strokeWidth : 1"
+                                                          t-att-stroke-dasharray="el.style.strokeStyle === 'dashed' ? '5,5' : (el.style.strokeStyle === 'dotted' ? '2,2' : 'none')" />
+                                                </t>
+                                                <t t-elif="el.shapeType === 'polygon'">
+                                                    <polygon points="50,0 95,25 95,75 50,100 5,75 5,25"
+                                                          vector-effect="non-scaling-stroke"
+                                                          t-att-fill="el.style.fillColor || '#ffffff'"
+                                                          t-att-fill-opacity="el.style.fillOpacity !== undefined ? el.style.fillOpacity : 1.0"
+                                                          t-att-stroke="el.style.strokeColor || '#000000'"
+                                                          t-att-stroke-width="el.style.strokeWidth !== undefined ? el.style.strokeWidth : 1"
+                                                          t-att-stroke-dasharray="el.style.strokeStyle === 'dashed' ? '5,5' : (el.style.strokeStyle === 'dotted' ? '2,2' : 'none')" />
+                                                </t>
+                                                <t t-elif="el.shapeType === 'star'">
+                                                    <polygon points="50,0 63,38 100,38 69,59 82,100 50,75 18,100 31,59 0,38 37,38"
+                                                          vector-effect="non-scaling-stroke"
+                                                          t-att-fill="el.style.fillColor || '#ffffff'"
+                                                          t-att-fill-opacity="el.style.fillOpacity !== undefined ? el.style.fillOpacity : 1.0"
+                                                          t-att-stroke="el.style.strokeColor || '#000000'"
+                                                          t-att-stroke-width="el.style.strokeWidth !== undefined ? el.style.strokeWidth : 1"
+                                                          t-att-stroke-dasharray="el.style.strokeStyle === 'dashed' ? '5,5' : (el.style.strokeStyle === 'dotted' ? '2,2' : 'none')" />
+                                                </t>
+                                            </svg>
+                                        </div>
+                                        
+                                        <!-- Default fallback -->
+                                        <div t-else="" class="w-100 h-100 border border-secondary bg-light d-flex align-items-center justify-content-center text-muted small">
+                                            <t t-esc="el.type"/>
+                                        </div>
+                                        
+                                         <!-- Resize Handle (bottom right for standard elements, top/bottom center for section) -->
+                                         <t t-if="state.activeElementId === el.id">
+                                             <t t-if="el.type === 'section' or el.type === 'pagebreak'">
+                                                 <!-- Top center handle -->
+                                                 <div class="position-absolute bg-primary" 
+                                                      style="width: 8px; height: 8px; border-radius: 50%; left: 50%; top: -4px; transform: translateX(-50%); cursor: ns-resize; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10;" 
+                                                      t-on-mousedown.stop.prevent="(ev) => this.onSectionResizeMouseDown(ev, el.id, 'top')"></div>
+                                                 <!-- Bottom center handle -->
+                                                 <div class="position-absolute bg-primary" 
+                                                      style="width: 8px; height: 8px; border-radius: 50%; left: 50%; bottom: -4px; transform: translateX(-50%); cursor: ns-resize; border: 1.5px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10;" 
+                                                      t-on-mousedown.stop.prevent="(ev) => this.onSectionResizeMouseDown(ev, el.id, 'bottom')"></div>
+                                             </t>
+                                             <t t-else="">
+                                                 <div class="position-absolute bg-white border border-primary" style="width: 8px; height: 8px; right: -4px; bottom: -4px; cursor: nwse-resize;" t-on-mousedown.stop.prevent="(ev) => this.onResizeMouseDown(ev, el.id)"></div>
+                                             </t>
+                                         </t>
+                                    </div>
+    </t>
+
+    <t t-name="cr_dynamic_report_studio.TreeElement">
+        <div class="d-flex align-items-center px-4 py-1 text-dark o_designer_tree_item" 
+             t-attf-class="{{ state.activeElementId === el.id ? 'bg-primary text-white' : 'bg-transparent text-dark hover-bg-light' }}"
+             style="cursor: pointer; font-size: 12px;"
+             t-on-click.stop="() => state.activeElementId = el.id">
+             
+             <!-- Icon mapping -->
+             <t t-set="iconClass" t-value="
+                el.type === 'image' ? 'fa-image text-warning' :
+                el.type === 'text' ? 'fa-font text-success' :
+                el.type === 'field' ? 'fa-database text-info' :
+                el.type === 'table' ? 'fa-table text-primary' :
+                el.type === 'barcode' ? 'fa-barcode text-secondary' :
+                el.type === 'section' ? 'fa-bars text-danger' :
+                el.type === 'pagebreak' ? 'fa-scissors text-dark' :
+                el.type === 'line' ? 'fa-minus text-dark' :
+                el.type === 'shape' ? 'fa-square-o text-warning' : 'fa-cube text-muted'"/>
+             
+             <!-- For active elements, make the icon white -->
+             <i t-attf-class="fa {{ iconClass }} me-2 {{ state.activeElementId === el.id ? 'text-white' : '' }}" style="width: 14px; text-align: center;"/>
+             
+             <span class="text-truncate">
+                 <t t-if="el.type === 'field'">
+                     <t t-esc="el.content"/>
+                 </t>
+                 <t t-elif="el.type === 'text'">
+                     <t t-esc="el.content.substring(0, 20) || 'Text'"/>
+                 </t>
+                 <t t-else="">
+                     <t t-esc="el.type.charAt(0).toUpperCase() + el.type.slice(1)"/>
+                 </t>
+             </span>
+        </div>
+    </t>
+
+</templates>

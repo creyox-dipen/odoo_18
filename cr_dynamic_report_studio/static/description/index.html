@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Odoo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+          integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
+    <link href="https://apps.odoocdn.com/web/content/7247337-184ae0e/1/web.assets_frontend.css" rel="stylesheet">
+</head>
+
+<body>
+<main class="container" style="border-radius:20px;">
+    <header class="py-2">
+        <div class="row align-items-center" style="margin-top: 20px;">
+            <div class="col-12 col-md-12 text-right">
+                <span style="font-size: 19px; font-weight: 500;margin-right: 20px;color: black;"><i
+                        class="fa fa-check-circle mr-1" style="color: #00D100;"></i> Community</span>
+                <span style="font-size: 19px; font-weight: 500;color: black;"><i class="fa fa-check-circle mr-1"
+                                                                                 style="color: #00D100;"></i> Enterprise</span>
+                <span style="font-size: 19px; font-weight: 500;color: black;padding: 15px;"><i
+                        class="fa fa-check-circle mr-1" style="color: #00D100;"></i> Odoo.sh</span>
+            </div>
+        </div>
+        <hr/>
+    </header>
+
+    <div class="px-md-5 py-md-4 p-2 mb-4 shadow rounded-5" style="background-color: #0f172a; border: 2px solid #3b82f6;">
+        <div class="p-lg-5 p-3 text-center">
+            <h1 class="mb-3" style="font-weight: 900; font-size: calc(2rem + 1vw); color: #ffffff;">GET <span style="color: #3b82f6;">PERSONALIZED</span> DEMO</h1>
+            <p class="mb-4" style="color: #94a3b8; font-size: 18px;">Direct connection to our engineering team for a customized walkthrough.</p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="mailto:support@creyox.com" target="_blank" class="d-flex align-items-center px-4 py-3 shadow rounded-4 text-decoration-none border-0" style="background-color: #3b82f6;">
+                    <img src="static_img/email.png" style="width: 24px;" alt="Email">
+                    <span class="ms-2" style="color: #ffffff; font-weight: 800;">Email Our Team</span>
+                </a>
+                <a href="https://creyox.com/helpdesk" target="_blank" class="d-flex align-items-center px-4 py-3 shadow rounded-4 text-decoration-none border-0" style="background-color: #ffffff;">
+                    <img src="static_img/helpdesk.png" style="width: 24px;" alt="Helpdesk">
+                    <span class="ms-2" style="color: #0f172a; font-weight: 800;">https://creyox.com/helpdesk</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-md-5 py-md-4 p-2 mb-4 shadow rounded-5" style="background-color: #eff6ff; border: 2px solid #bfdbfe;">
+        <div class="p-lg-5 p-3 text-center">
+            <h2 style="font-weight: 800; color: #1e293b;">Dynamic Report Studio</h2>
+            <p class="mb-3" style="color: #64748b;">Visual drag-and-drop Odoo report designer to build stunning custom invoices, purchase orders, and business reports in minutes without coding.</p>
+            <a class="btn d-inline-flex align-items-center shadow px-5 py-3 mt-2" target="_blank" style="background-color: #3b82f6; color: #ffffff; border-radius: 15px; font-weight: 800;"
+               href="https://youtu.be/W2mY4IbDQ0s">
+                <i class="fa fa-youtube-play me-2" style="font-size: 20px;"></i> Watch Video 
+            </a>
+        </div>
+    </div>
+
+
+    <!-- Dynamic Report Studio GIF Showcase -->
+    <div class="p-5 my-5 text-center rounded-5" style="background-color: #ffffff; border: 4px solid #f1f5f9;">
+        <h1 class="mb-4" style="font-size: 52px; font-weight: 900; color: #0f172a; letter-spacing: -2px;">
+            <span style="color: #3b82f6;">Dynamic Report Studio</span> Feature Overview
+        </h1>
+        <p class="mx-auto mb-5" style="max-width: 800px; color: #64748b; font-size: 20px; line-height: 1.8;">
+            A conceptual look at the modern, drag-and-drop capabilities that empower you to build stunning Odoo reports visually.
+        </p>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-11 col-lg-10">
+                <div class="shadow-lg rounded-5 overflow-hidden" style="border: 2px solid #e2e8f0; background-color: #f8fafc;">
+                    <img src="images/dynamic_report_animation.gif" alt="Dynamic Report Studio Demo" style="width: 100%; height: auto; display: block;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .sync-ring {
+            width: 100px; height: 100px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 3s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .ticker-content { animation: scroll-up 10s linear infinite; }
+        @keyframes scroll-up { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+
+    <div class="bg-white rounded-5" style="font-family: 'Outfit', 'Inter', sans-serif; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.05);">
+
+        <!-- Tab Navigation -->
+        <div class="px-md-5 px-4 mt-5">
+            <style>
+                .water-tab-btn {
+                    font-weight: 800; font-size: 16px; transition: all 0.3s;
+                    background-color: rgba(14, 165, 233, 0.05); color: #64748b; border: 1px solid rgba(14, 165, 233, 0.1);
+                }
+                .water-tab-btn:hover {
+                    background-color: rgba(14, 165, 233, 0.1); color: #0284c7;
+                }
+                .nav-pills .nav-link.water-tab-btn.active {
+                    background-color: rgba(14, 165, 233, 0.15) !important;
+                    color: #0284c7 !important;
+                    border-color: rgba(14, 165, 233, 0.3) !important;
+                }
+            </style>
+            <ul class="nav nav-pills justify-content-center mb-5 gap-3 border-0" id="pills-tab" role="tablist" style="background-color: white;">
+                <li class="nav-item mx-2" role="presentation">
+                    <a class="nav-link active cursor-pointer px-5 py-3 rounded-pill text-decoration-none water-tab-btn" id="pills-features-tab" data-bs-toggle="pill" data-bs-target="#pills-features" href="javascript:void(0)" role="tab" aria-controls="pills-features" aria-selected="true">Detailed Features</a>
+                </li>
+                <li class="nav-item mx-2" role="presentation">
+                    <a class="nav-link cursor-pointer px-5 py-3 rounded-pill text-decoration-none water-tab-btn" id="pills-setup-tab" data-bs-toggle="pill" data-bs-target="#pills-setup" href="javascript:void(0)" role="tab" aria-controls="pills-setup" aria-selected="false">Setup</a>
+                </li>
+                <li class="nav-item mx-2" role="presentation">
+                    <a class="nav-link cursor-pointer px-5 py-3 rounded-pill text-decoration-none water-tab-btn" id="pills-faq-tab" data-bs-toggle="pill" data-bs-target="#pills-faq" href="javascript:void(0)" role="tab" aria-controls="pills-faq" aria-selected="false">FAQ</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content" id="pills-tabContent">
+
+            <!-- ============================= -->
+            <!--   TAB 1 : DETAILED FEATURES   -->
+            <!-- ============================= -->
+            <div class="tab-pane fade show active" id="pills-features" role="tabpanel" aria-labelledby="pills-features-tab">
+
+                <div class="px-md-5 px-4 pt-2 pb-5">
+
+                    <!-- ✨ UNIQUE EDITOR MOCKUP BLOCK ✨ -->
+                    <div class="my-5 rounded-5 shadow-sm position-relative overflow-hidden" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                        <!-- Header -->
+                        <div class="p-5 text-center">
+                            <h2 class="fw-bolder mb-3" style="color: #0f172a; font-size: 42px; letter-spacing: -1px;">
+                                A True <span style="color: #3b82f6;">Drag-and-Drop</span> Experience
+                            </h2>
+                            <p class="mx-auto" style="color: #64748b; font-size: 19px; max-width: 750px;">
+                                No more guessing with XML. See exactly what your document will look like as you build it in real-time.
+                            </p>
+                        </div>
+                        
+                        <!-- Mac Window Mockup -->
+                        <div class="mx-auto mb-5" style="max-width: 1000px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #cbd5e1; overflow: hidden;">
+                            <!-- Window Toolbar -->
+                            <div class="d-flex align-items-center px-3 py-2" style="background-color: #f1f5f9; border-bottom: 1px solid #e2e8f0;">
+                                <div class="d-flex gap-2">
+                                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444;"></div>
+                                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #f59e0b;"></div>
+                                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #10b981;"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Window Body (Editor Image) -->
+                            <div class="w-100 bg-light d-flex align-items-center justify-content-center">
+                                <img src="images/report_designer_light.png" alt="Drag and Drop Builder Mockup" class="img-fluid w-100 d-block" style="border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <!-- Feature Highlights Tiles -->
+                    <div class="row g-4 mb-5 mt-5">
+                        <!-- Feature Highlights Section Header -->
+                        <div class="mt-5 pt-4 px-3 text-center">
+                            <h2 class="mb-3" style="font-weight: 900; color: #1e293b; font-size: 36px;">Core <span style="color: #3b82f6;">Features</span></h2>
+                            <p class="mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px;">
+                                Everything you need to build powerful, dynamic, and professional reports without writing a single line of code.
+                            </p>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #10b981;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #f0fdf4; border-radius: 20px; color: #10b981; font-size: 30px;">
+                                    <i class="fa fa-mouse-pointer"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Drag & Drop Builder</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Intuitively design complex reports by dragging elements directly onto the canvas.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #f59e0b;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #fff7ed; border-radius: 20px; color: #f59e0b; font-size: 30px;">
+                                    <i class="fa fa-eye"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Live Preview</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Instantly preview your report with real database records before publishing.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #3b82f6;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #eff6ff; border-radius: 20px; color: #3b82f6; font-size: 30px;">
+                                    <i class="fa fa-database"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">All Models Supported</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Create custom reports for any standard or custom Odoo model with ease.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #ef4444;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #fef2f2; border-radius: 20px; color: #ef4444; font-size: 30px;">
+                                    <i class="fa fa-bolt"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Dynamic Fields</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Link elements directly to Odoo database fields to display real-time values.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Extended Feature Tiles: Row 2 -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #8b5cf6;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #faf5ff; border-radius: 20px; color: #8b5cf6; font-size: 30px;">
+                                    <i class="fa fa-barcode"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Smart Barcodes</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Easily embed 1D and 2D barcodes, including QR codes, directly into designs.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #06b6d4;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #ecfeff; border-radius: 20px; color: #06b6d4; font-size: 30px;">
+                                    <i class="fa fa-paint-brush"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Rich Formatting</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Customize fonts, colors, alignments, and borders with a visual toolbar.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #f43f5e;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #fff1f2; border-radius: 20px; color: #f43f5e; font-size: 30px;">
+                                    <i class="fa fa-shield"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Secure Watermarks</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Add text or image background watermarks to protect your documents.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #6366f1;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #eef2ff; border-radius: 20px; color: #6366f1; font-size: 30px;">
+                                    <i class="fa fa-history"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Print Tracking</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Keep a detailed log of when and by whom reports were printed.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Extended Feature Tiles: Row 3 -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #f97316;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #fff7ed; border-radius: 20px; color: #f97316; font-size: 30px;">
+                                    <i class="fa fa-magic"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">No XML Required</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Say goodbye to complex QWeb/XML syntax. Build everything visually.</p>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #a855f7;">
+                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #f3e8ff; border-radius: 20px; color: #a855f7; font-size: 30px;">
+                                    <i class="fa fa-table"></i>
+                                </div>
+                                <h5 style="font-weight: 800; color: #1e293b;">Dynamic Tables</h5>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Render complex, data-driven tables with automatic grouping and dynamic sub-totals.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Components Showcase Coded Block -->
+                    <div class="mt-5 pt-5 mx-5 text-center">
+                        <h2 class="mb-3" style="font-weight: 900; color: #1e293b; font-size: 36px;">Rich <span style="color: #3b82f6;">Component</span> Library</h2>
+                        <p class="mb-5 mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px;">
+                            Everything you need to build pixel-perfect reports. Drag and drop these elements directly onto your canvas to create professional documents instantly.
+                        </p>
+                        
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 text-start">
+                            <!-- Card 1: Text -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">1</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Text</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add and style text</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
+                                            <div class="position-relative d-flex justify-content-center align-items-center" style="width: 70px; height: 70px; border: 1px dashed #6366f1;">
+                                                <div style="position: absolute; top: -4px; left: -4px; width: 8px; height: 8px; background-color: #818cf8; border-radius: 1px;"></div>
+                                                <div style="position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; background-color: #818cf8; border-radius: 1px;"></div>
+                                                <div style="position: absolute; bottom: -4px; left: -4px; width: 8px; height: 8px; background-color: #818cf8; border-radius: 1px;"></div>
+                                                <div style="position: absolute; bottom: -4px; right: -4px; width: 8px; height: 8px; background-color: #818cf8; border-radius: 1px;"></div>
+                                                <span style="font-family: serif; font-size: 46px; color: #ffffff; line-height: 1;">T</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Add headings, paragraphs or labels and customize font, size, color and alignment.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Card 2: Field -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">2</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Field</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Insert dynamic data</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
+                                            <i class="fa fa-database me-3" style="font-size: 45px; color: #818cf8; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));"></i>
+                                            <div class="d-flex flex-column gap-2">
+                                                <div class="rounded-pill" style="width: 45px; height: 8px; background-color: #334155;"></div>
+                                                <div class="rounded-pill" style="width: 35px; height: 8px; background-color: #334155;"></div>
+                                                <div class="rounded-pill" style="width: 50px; height: 8px; background-color: #334155;"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Insert fields to automatically populate data from your sources.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 3: Image -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">3</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Image</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add images</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
+                                            <div class="position-relative overflow-hidden shadow" style="width: 70px; height: 50px; background-color: #3b82f6; border-radius: 4px; border: 2px solid #818cf8;">
+                                                <div class="rounded-circle" style="position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; background-color: #fcd34d;"></div>
+                                                <div style="position: absolute; bottom: -10px; left: -10px; width: 45px; height: 45px; background-color: #10b981; transform: rotate(45deg);"></div>
+                                                <div style="position: absolute; bottom: -15px; right: -15px; width: 55px; height: 55px; background-color: #059669; transform: rotate(45deg);"></div>
+                                            </div>
+                                            <div style="position: absolute; top: 22px; left: 16px; width: 6px; height: 6px; background-color: #818cf8; border-radius: 1px;"></div>
+                                            <div style="position: absolute; bottom: 22px; right: 16px; width: 6px; height: 6px; background-color: #818cf8; border-radius: 1px;"></div>
+                                            <div style="position: absolute; top: 22px; left: 22px; right: 22px; height: 1px; border-top: 1px dashed #6366f1;"></div>
+                                            <div style="position: absolute; bottom: 22px; left: 22px; right: 22px; height: 1px; border-top: 1px dashed #6366f1;"></div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Upload or choose images to enhance your document visually.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 4: Watermark -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">4</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Watermark</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Brand your documents</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
+                                            <div class="position-relative p-2 shadow" style="width: 60px; height: 80px; background-color: #e2e8f0; border-radius: 4px; border-top-right-radius: 12px;">
+                                                <div style="position: absolute; top: 0; right: 0; width: 12px; height: 12px; background-color: #cbd5e1; border-bottom-left-radius: 4px;"></div>
+                                                <div class="mb-2 mt-2" style="width: 100%; height: 3px; background-color: #cbd5e1;"></div>
+                                                <div class="mb-2" style="width: 80%; height: 3px; background-color: #cbd5e1;"></div>
+                                                <div class="mb-2" style="width: 90%; height: 3px; background-color: #cbd5e1;"></div>
+                                                <div class="mb-2" style="width: 70%; height: 3px; background-color: #cbd5e1;"></div>
+                                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); color: rgba(99, 102, 241, 0.5); font-weight: 900; font-size: 9px; letter-spacing: 1px; border: 1px solid rgba(99, 102, 241, 0.5); padding: 2px;">CONFIDENTIAL</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Add text or image watermarks to protect and brand your documents.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 5: Line -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">5</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Line</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Draw lines and connectors</p>
+                                        
+                                        <div class="position-relative d-flex flex-column justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1); gap: 15px;">
+                                            <div class="d-flex align-items-center w-75">
+                                                <div style="flex-grow: 1; height: 3px; background-color: #818cf8; border-radius: 2px;"></div>
+                                                <i class="fa fa-caret-right" style="color: #818cf8; margin-left: -2px; font-size: 18px;"></i>
+                                            </div>
+                                            <div class="w-75" style="height: 2px; border-bottom: 2px dashed #64748b;"></div>
+                                            <div class="w-50" style="height: 2px; border-bottom: 3px dotted #94a3b8; align-self: flex-start; margin-left: 12.5%;"></div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Use lines to separate content or connect information clearly.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 6: Shapes -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">6</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Shapes</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add shapes</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
+                                            <div class="position-relative" style="width: 80px; height: 80px;">
+                                                <div class="rounded-circle shadow" style="position: absolute; top: 5px; left: 5px; width: 40px; height: 40px; background-color: #6366f1;"></div>
+                                                <div class="shadow" style="position: absolute; top: 15px; right: 5px; width: 35px; height: 35px; background-color: #3b82f6; border-radius: 4px;"></div>
+                                                <div style="position: absolute; bottom: 5px; left: 20px; width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 35px solid #10b981; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Insert shapes to highlight content and create visual structure.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 7: Section -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">7</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Section</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Organize content</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
+                                            <div class="d-flex flex-column shadow" style="width: 70px; height: 80px; background-color: #1e293b; border-radius: 4px; padding: 6px; gap: 6px;">
+                                                <div style="width: 100%; height: 18px; background-color: #6366f1; border-radius: 2px;"></div>
+                                                <div class="d-flex h-100" style="gap: 6px;">
+                                                    <div style="flex: 2; height: 100%; background-color: #334155; border-radius: 2px;"></div>
+                                                    <div class="d-flex flex-column" style="flex: 1; height: 100%; gap: 6px;">
+                                                        <div style="flex: 1; width: 100%; background-color: #475569; border-radius: 2px;"></div>
+                                                        <div style="flex: 1; width: 100%; background-color: #475569; border-radius: 2px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Divide your document into sections for better organization.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 8: Table -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">8</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Table</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Insert tables</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
+                                            <div class="d-flex flex-column shadow" style="width: 80px; border: 1px solid #334155; border-radius: 4px; overflow: hidden;">
+                                                <div class="d-flex" style="background-color: #6366f1; height: 14px;">
+                                                    <div style="flex: 1; border-right: 1px solid rgba(255,255,255,0.2);"></div>
+                                                    <div style="flex: 1; border-right: 1px solid rgba(255,255,255,0.2);"></div>
+                                                    <div style="flex: 1;"></div>
+                                                </div>
+                                                <div class="d-flex" style="height: 14px; border-bottom: 1px solid #334155; background-color: #1e293b;">
+                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
+                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
+                                                    <div style="flex: 1;"></div>
+                                                </div>
+                                                <div class="d-flex" style="height: 14px; border-bottom: 1px solid #334155; background-color: #1e293b;">
+                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
+                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
+                                                    <div style="flex: 1;"></div>
+                                                </div>
+                                                <div class="d-flex" style="height: 14px; background-color: #1e293b;">
+                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
+                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
+                                                    <div style="flex: 1;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Add tables to present data in rows and columns clearly.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 9: Barcode -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">9</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Barcode</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add barcodes</p>
+                                        
+                                        <div class="position-relative d-flex flex-column justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
+                                            <div class="bg-white p-2 rounded-2 shadow" style="width: 75px;">
+                                                <div class="d-flex align-items-end justify-content-between" style="height: 35px;">
+                                                    <div style="width: 3px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 1px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 4px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 2px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 1px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 3px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 4px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 2px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 1px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 3px; height: 100%; background-color: #0f172a;"></div>
+                                                </div>
+                                                <div class="text-center mt-1" style="font-family: monospace; font-size: 8px; color: #0f172a; font-weight: 900; letter-spacing: 1px;">12345678</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Generate barcodes to encode information automatically.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 10: Page Break -->
+                            <div class="col">
+                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">10</span>
+                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Page Break</h5>
+                                        </div>
+                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add page breaks</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4 overflow-hidden" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1); gap: 10px;">
+                                            <div class="shadow" style="width: 35px; height: 50px; background-color: #cbd5e1; border-radius: 2px; border-top-right-radius: 10px; position: relative;">
+                                                <div style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; background-color: #94a3b8; border-bottom-left-radius: 2px;"></div>
+                                                <div style="position: absolute; top: 20px; left: 5px; right: 5px; height: 2px; background-color: #94a3b8;"></div>
+                                                <div style="position: absolute; top: 30px; left: 5px; right: 15px; height: 2px; background-color: #94a3b8;"></div>
+                                            </div>
+                                            
+                                            <div class="d-flex flex-column align-items-center" style="position: absolute; top: 0; bottom: 0; justify-content: center; left: 50%; transform: translateX(-50%); z-index: 2;">
+                                                <div style="width: 2px; height: 100%; border-left: 2px dashed #818cf8;"></div>
+                                                <i class="fa fa-scissors" style="position: absolute; color: #818cf8; font-size: 18px; background-color: #162032; padding: 4px; border-radius: 50%;"></i>
+                                            </div>
+
+                                            <div class="shadow" style="width: 35px; height: 50px; background-color: #cbd5e1; border-radius: 2px; border-top-right-radius: 10px; position: relative;">
+                                                <div style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; background-color: #94a3b8; border-bottom-left-radius: 2px;"></div>
+                                                <div style="position: absolute; top: 20px; left: 5px; right: 5px; height: 2px; background-color: #94a3b8;"></div>
+                                                <div style="position: absolute; top: 30px; left: 5px; right: 15px; height: 2px; background-color: #94a3b8;"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Insert page breaks to control content flow across pages.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dark & Light Theme Showcase -->
+                    <div class="my-5 bg-white rounded-5 shadow-sm position-relative border" style="border-color: #e2e8f0 !important;">
+                        <div class="position-relative p-md-5 p-4 z-1">
+                            <div class="text-center mb-5 mt-3">
+                                <h2 style="font-weight: 900; color: #1e293b; font-size: 36px;">Seamless <span style="color: #3b82f6;">Dark & Light</span> Themes</h2>
+                                <p class="mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px;">
+                                    Designed to look stunning whether you prefer working in the light or the dark.
+                                </p>
+                            </div>
+
+                            <!-- Desktop Layout -->
+                            <div class="d-none d-lg-block position-relative mx-auto my-5" style="width: 100%; max-width: 1200px; padding-bottom: 250px;">
+                                <!-- Connection Line -->
+                                <div class="position-absolute d-flex align-items-center justify-content-center" style="width: 52%; height: 200px; left: 50%; top: 150px; transform: translateX(-50%); z-index: 1;">
+                                    <!-- Horizontal Line -->
+                                    <div style="position: absolute; width: 100%; height: 2px; background-color: #cbd5e1; top: 50%; left: 0;"></div>
+                                    <!-- Vertical Line Left (Down to Light Theme) -->
+                                    <div style="position: absolute; width: 2px; height: 50%; background-color: #cbd5e1; left: 0; bottom: 0;"></div>
+                                    <!-- Vertical Line Right (Up to Dark Theme) -->
+                                    <div style="position: absolute; width: 2px; height: 50%; background-color: #cbd5e1; right: 0; top: 0;"></div>
+                                    <!-- Arrow Down -->
+                                    <i class="fa fa-chevron-down" style="position: absolute; color: #cbd5e1; left: -6.5px; bottom: -8px; font-size: 16px;"></i>
+                                    <!-- Arrow Up -->
+                                    <i class="fa fa-chevron-up" style="position: absolute; color: #cbd5e1; right: -6.5px; top: -8px; font-size: 16px;"></i>
+                                </div>
+                                
+                                <!-- Dark & Light Badge (Rendered on top) -->
+                                <div class="position-absolute d-flex align-items-center justify-content-center" style="width: 100%; left: 0; top: 232px; z-index: 10;">
+                                    <div class="px-5 py-3 rounded-pill shadow-lg" style="background-color: #ffffff; color: #1e293b; font-weight: 800; border: 2px solid #3b82f6; font-size: 16px;">
+                                        Dark & Light
+                                    </div>
+                                </div>
+
+                                <!-- Top Right: Light Theme -->
+                                <div class="position-relative ms-auto shadow-lg rounded-4 overflow-hidden" style="width: 49%; border: 4px solid #1e293b; z-index: 3;">
+                                    <img src="images/report_designer_light.png" class="w-100 d-block" alt="Light Theme">
+                                </div>
+
+                                <!-- Bottom Left: Dark Theme -->
+                                <div class="position-absolute shadow-lg rounded-4 overflow-hidden" style="width: 49%; left: 0; top: 250px; border: 4px solid grey; z-index: 3;">
+                                    <img src="images/report_designer_dark.png" class="w-100 d-block" alt="Dark Theme">
+                                </div>
+                            </div>
+
+                            <!-- Mobile Layout -->
+                            <div class="d-block d-lg-none mt-5">
+                                <div class="mb-4 shadow-lg rounded-4 overflow-hidden border" style="border-color: #1e293b !important; border-width: 4px !important;">
+                                    <img src="images/report_designer_dark.png" class="img-fluid" alt="Dark Theme">
+                                </div>
+                                <div class="my-4 text-center">
+                                    <div class="px-4 py-2 rounded-pill d-inline-block shadow-sm" style="background-color: #ffffff; color: #1e293b; font-weight: 800; border: 2px solid #3b82f6;">
+                                        Dark & Light
+                                    </div>
+                                </div>
+                                <div class="shadow-lg rounded-4 overflow-hidden border" style="border-color: #cbd5e1 !important; border-width: 4px !important;">
+                                    <img src="images/report_designer_light.png" class="img-fluid" alt="Light Theme">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ✨ HOW IT WORKS — Dynamic Report Studio (Enhanced) -->
+                    <div class="my-5 py-5 rounded-5 position-relative overflow-hidden" style="background: linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%); border: 1px solid #e2e8f0; box-shadow: inset 0 2px 15px rgba(0,0,0,0.02);">
+                        
+                        <!-- Decorative Orbs -->
+                        <div class="position-absolute rounded-circle" style="top: 10%; left: 15%; width: 300px; height: 300px; background: rgba(236, 72, 153, 0.1); filter: blur(60px); z-index: 0;"></div>
+                        <div class="position-absolute rounded-circle" style="bottom: 10%; right: 15%; width: 300px; height: 300px; background: rgba(16, 185, 129, 0.1); filter: blur(60px); z-index: 0;"></div>
+                        
+                        <div class="text-center mb-5 position-relative z-1">
+                            <span class="px-4 py-2 d-inline-block rounded-pill text-white fw-bold shadow-sm" style="background: linear-gradient(90deg, #3b82f6, #8b5cf6); font-size: 13px; letter-spacing: 2px;">WORKFLOW</span>
+                            <h2 class="mt-4 fw-bolder" style="color: #0f172a; font-size: 42px; letter-spacing: -1px;">From <span style="color: #ec4899;">Design</span> to <span style="color: #10b981;">Pixel-Perfect PDF</span></h2>
+                            <p class="text-muted mt-3" style="font-size: 18px; max-width: 650px; margin: 0 auto;">Experience a fully visual report building process. Design, configure, and generate stunning reports without a single line of code.</p>
+                        </div>
+                        
+                        <div class="row g-4 align-items-center justify-content-center px-4 position-relative z-1">
+                            
+                            <!-- Connecting Line Background (Desktop Only) -->
+                            <div class="position-absolute d-none d-lg-block" style="top: 35%; left: 20%; right: 20%; height: 4px; background: linear-gradient(90deg, #ec4899, #3b82f6, #10b981); z-index: -1; opacity: 0.3; border-radius: 4px;"></div>
+                            
+                            <!-- Step 1 -->
+                            <div class="col-lg-3 col-md-8 mb-4 mb-lg-0">
+                                <div class="p-4 text-center rounded-4 h-100 bg-white" style="border: 1px solid #fce7f3; box-shadow: 0 15px 30px rgba(236,72,153,0.08); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-10px)'; this.style.boxShadow='0 20px 40px rgba(236,72,153,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 15px 30px rgba(236,72,153,0.08)';">
+                                    <div class="d-flex justify-content-center align-items-center mx-auto mb-4 rounded-circle position-relative" style="width: 80px; height: 80px; background: linear-gradient(135deg, #fdf2f8, #fbcfe8); color: #ec4899; font-size: 32px; border: 4px solid white; box-shadow: 0 10px 20px rgba(236,72,153,0.2);">
+                                        <i class="fa fa-paint-brush"></i>
+                                        <div class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="font-size: 14px; border: 2px solid white;">1</div>
+                                    </div>
+                                    <h4 class="fw-bolder mb-2" style="color: #1e293b;">Visual Design</h4>
+                                    <p class="text-muted mb-0" style="font-size: 15px; line-height: 1.6;">Use the intuitive drag-and-drop interface to position elements exactly where you want them.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 2 -->
+                            <div class="col-lg-3 col-md-8 mb-4 mb-lg-0">
+                                <div class="p-4 text-center rounded-4 h-100 bg-white" style="border: 1px solid #dbeafe; box-shadow: 0 15px 30px rgba(59,130,246,0.08); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-10px)'; this.style.boxShadow='0 20px 40px rgba(59,130,246,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 15px 30px rgba(59,130,246,0.08)';">
+                                    <div class="d-flex justify-content-center align-items-center mx-auto mb-4 rounded-circle position-relative" style="width: 80px; height: 80px; background: linear-gradient(135deg, #eff6ff, #bfdbfe); color: #3b82f6; font-size: 32px; border: 4px solid white; box-shadow: 0 10px 20px rgba(59,130,246,0.2);">
+                                        <i class="fa fa-database"></i>
+                                        <div class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="font-size: 14px; border: 2px solid white;">2</div>
+                                    </div>
+                                    <h4 class="fw-bolder mb-2" style="color: #1e293b;">Map Data</h4>
+                                    <p class="text-muted mb-0" style="font-size: 15px; line-height: 1.6;">Easily link Odoo fields to your report components without writing complex XML.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Step 3 -->
+                            <div class="col-lg-3 col-md-8">
+                                <div class="p-4 text-center rounded-4 h-100 bg-white" style="border: 1px solid #d1fae5; box-shadow: 0 15px 30px rgba(16,185,129,0.08); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-10px)'; this.style.boxShadow='0 20px 40px rgba(16,185,129,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 15px 30px rgba(16,185,129,0.08)';">
+                                    <div class="d-flex justify-content-center align-items-center mx-auto mb-4 rounded-circle position-relative" style="width: 80px; height: 80px; background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #10b981; font-size: 32px; border: 4px solid white; box-shadow: 0 10px 20px rgba(16,185,129,0.2);">
+                                        <i class="fa fa-file-pdf-o"></i>
+                                        <div class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="font-size: 14px; border: 2px solid white;">3</div>
+                                    </div>
+                                    <h4 class="fw-bolder mb-2" style="color: #1e293b;">Generate PDF</h4>
+                                    <p class="text-muted mb-0" style="font-size: 15px; line-height: 1.6;">Instantly preview and print stunning, pixel-perfect reports directly from Odoo.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- ✅ SIMILAR PICKS + OUR SERVICES (bottom of Detailed Features tab) -->
+                    <div class="pr-5" style="font-size: 1.6rem; font-weight: 600; color: #0b3b52;">
+                        <center>
+                            <h2 style="font-size:35px; color:#000099; margin-bottom:20px; font-weight:700;">
+                                Explore similar picks
+                            </h2>
+                            <div style="border: 1px solid black; width:30%;"/>
+                        </center>
+                        <br/>
+
+                        <!-- Card Wrapper (Grid) -->
+                        <div class="row">
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_all_in_one_direct_print"
+                                            target="_blank">
+                                            <img src="banner_images/banner_cr_all_in_one_direct_print.png"
+                                                    style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_bpmn_workflow_designer"
+                                            target="_blank">
+                                            <img src="banner_images/banner_cr_bpmn_workflow_designer.png"
+                                                    style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_export_image_excel"
+                                            target="_blank">
+                                            <img src="banner_images/banner_cr_export_image_excel.png"
+                                                    style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_hide_product_code"
+                                            target="_blank">
+                                            <img src="banner_images/banner_cr_hide_product_code.png"
+                                                    style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_invoice_ocr"
+                                            target="_blank">
+                                            <img src="banner_images/banner_cr_invoice_ocr.png"
+                                                    style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_manufacturing_lot_report"
+                                            target="_blank">
+                                            <img src="banner_images/banner_cr_manufacturing_lot_report.png"
+                                                    style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <br/>
+                        <center>
+                            <a class="btn btn-primary btn-lg mt8" target="_blank" style="color: #FFFFFF !important;"
+                                href="https://apps.odoo.com/apps/modules/browse?author=Creyox Technologies">
+                                <i class="fa fa-list"></i>
+                                Explore Our Other Apps
+                            </a>
+                        </center>
+
+                        <br/>
+
+                        <center>
+                            <div style="border: 1px solid black; width:50%;"></div>
+                        </center>
+                    </div>
+
+                    <!-- Our Services -->
+                    <div class="row mb-5">
+                        <div class="col-12 col-md-12 text-center text-md-left" style="margin-top: 40px;">
+                            <center>
+                                <h2 style="color: #000099;"><i class="fa fa-handshake-o"
+                                                                style="color: #B87333;"></i> Our
+                                    Services <i class="fa fa-handshake-o" style="color: #B87333;"></i></h2>
+                            </center>
+                        </div>
+                    </div>
+                    <div class="container" style="width:100%; height:100%;">
+                        <div class="row">
+
+                            <!-- Odoo Implementation -->
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3"
+                                        style="background-color:#99b3ff; border:2px solid #000099; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-cloud-upload" style="color:#000099;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#000099; font-weight:bold;">
+                                            Odoo <br/> Implementation
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Odoo Customization -->
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3"
+                                        style="background-color:#99ff99; border:2px solid #006600; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-gear" style="color:#006600;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#006600; font-weight:bold;">
+                                            Odoo <br/> Customization
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- AI Powered Odoo Solutions -->
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3"
+                                        style="background-color:#ffccff; border:2px solid #b300b3; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-magic" style="color:#b300b3;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#b300b3; font-weight:bold;">
+                                            AI Powered <br/> Odoo Solutions
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div><!-- row end -->
+
+                        <div class="row">
+
+                            <!-- Odoo Data & Module Migration -->
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3"
+                                        style="background-color:#ff9980; border:2px solid #b32400; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-exchange" style="color:#b32400;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#b32400; font-weight:bold;">
+                                            Odoo Data & <br/> Module Migration
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Third Party App Integration -->
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3"
+                                        style="background-color:#ffeb99; border:2px solid #b38f00; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-link" style="color:#b38f00;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#b38f00; font-weight:bold;">
+                                            Third Party <br/> App Integration
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Odoo Artificial Intelligence Services -->
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3"
+                                        style="background-color:#c2d6ff; border:2px solid #0047b3; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-lightbulb-o" style="color:#0047b3;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#0047b3; font-weight:bold;">
+                                            Odoo Artificial <br/> Intelligence Services
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div><!-- row end -->
+
+                        <div class="row">
+
+                            <!-- Mobile App Development -->
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3"
+                                        style="background-color:#b3e6ff; border:2px solid #006699; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-mobile" style="color:#006699;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#006699; font-weight:bold;">
+                                            Mobile App <br/> Development
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Support & Maintenance -->
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3"
+                                        style="background-color:#99ffcf; border:2px solid #00796b; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-users" style="color:#00796b;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#00796b; font-weight:bold;">
+                                            Support & <br/> Maintenance
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Odoo Training & Guidance -->
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3"
+                                        style="background-color:#d9ffb3; border:2px solid #4d9900; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-graduation-cap" style="color:#4d9900;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#4d9900; font-weight:bold;">
+                                            Odoo Training <br/> & Guidance
+                                        </p>
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div><!-- row end -->
+                    </div>
+                    <div style="height: 60px;"></div>
+                </div>
+            </div>
+
+
+            <!-- ============================= -->
+            <!--       TAB 2 : SETUP         -->
+            <!-- ============================= -->
+            <div class="tab-pane fade" id="pills-setup" role="tabpanel" aria-labelledby="pills-setup-tab">
+                <!-- <div class="px-md-5 px-4 pt-5 pb-5">
+                    <div class="text-center py-4" style="background-color: #eff6ff; border-radius: 40px; border: 2px solid #bfdbfe;">
+                        <div class="d-flex justify-content-center align-items-center mb-3 mx-auto shadow-sm" style="width: 70px; height: 70px; background-color: #dbeafe; border-radius: 20px; color: #3b82f6; font-size: 32px;">
+                            <i class="fa fa-cogs"></i>
+                        </div>
+                        <h2 style="font-weight: 900; color: #0f172a; font-size: 26px;">System <span style="color: #3b82f6;">Setup</span> Guide</h2>
+                    </div>
+                </div> -->
+
+                <div class="row align-items-center mt-5 mb-4 px-md-5 px-4" style="margin-top:-25px">
+                    <div class="col-12 col-md-12">
+                        <ul style="font-size: 22px;">
+                            <li>
+                                Access the <b>Dynamic Report Studio</b> directly from your main Odoo apps dashboard.
+                            </li>
+                            <img src="images/report_studio_app.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            <li>
+                                Manage all your custom reports from one convenient workspace.
+                            </li>
+                            <img src="images/reports_kanabn_view.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                        </ul>
+                        <ul style="font-size: 22px;">
+                            <li>
+                                <b>Drag & Drop Design</b> : Easily place and arrange report components directly on the visual canvas.
+                            </li>
+                            <li>
+                                <b>No Coding Required</b> : Create and customize professional Odoo reports without manually writing HTML or QWeb XML.
+                            </li>
+                            <li>
+                                <b>Dynamic Odoo Fields and Tables</b> : Insert live database fields such as customer details, order information, dates, and product data.
+                            </li>
+                            <li>
+                                <b>Rich Components</b> : Add text, images, watermarks, shapes, sections, tables, barcodes, and page breaks.
+                            </li>
+                            <li>
+                                <b>Pixel Perfect Layouts</b> : Control the position, size, rotation, layers, colors, borders, and other design properties of every element.
+                            </li>
+                            <img src="images/report_designer_light.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                        </ul>
+                        <ul style="font-size: 22px;">
+                            <li>
+                                Test and verify your designs instantly using the live report preview.
+                            </li>
+                            <img src="images/preview_wizard.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            <li>
+                                Easily bind your custom design template directly to the standard Odoo print menu.
+                            </li>
+                            <img src="images/add_to_print_menu.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            <li>
+                                Configure specific print rules and document parameters for each template.
+                            </li>
+                            <img src="images/custom_report.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            <li>
+                                Generate stunning, professional PDF documents mapped directly from Odoo fields.
+                            </li>
+                            <img src="images/sale_order_report.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                        </ul>
+                        <ul style="font-size: 22px;">
+                            <li>
+                                Switch to the comfortable dark themed workspace layout for low light design sessions.
+                            </li>
+                            <li>
+                                Enjoy a consistent interface that adapts naturally to your preferred Odoo theme.
+                            </li>
+                            <img src="images/report_designer_dark.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            <li>
+                                Manage logos, background images, and custom watermark assets inside the Image Library.
+                            </li>
+                            <img src="images/image_library.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            <li>
+                                Audit all generated reports and output statistics from the Print History logs.
+                            </li>
+                            <img src="images/print_history.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                            <li>
+                                Explore the possibilities of Dynamic Report Studio with professionally designed examples including invoices, sales orders, delivery slips, work orders, and field service reports etc.
+                            </li>
+                            <img src="images/all_reports.png" alt="" class="img img-fluid shadow-lg mx-auto mt-4 mb-5"
+                                    loading="lazy"
+                                    style="border: 1px solid rgb(242, 238, 247); border-radius: 11px;"/>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- ✅ SIMILAR PICKS + OUR SERVICES (bottom of Setup tab) -->
+                <div class="pr-5" style="font-size: 1.6rem; font-weight: 600; color: #0b3b52;">
+                    <center>
+                        <h2 style="font-size:35px; color:#000099; margin-bottom:20px; font-weight:700;">
+                            Explore similar picks
+                        </h2>
+                        <div style="border: 1px solid black; width:30%;"/>
+                    </center>
+                    <br/>
+
+                    <!-- Card Wrapper (Grid) -->
+                    <div class="row">
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_all_in_one_direct_print"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_all_in_one_direct_print.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_bpmn_workflow_designer"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_bpmn_workflow_designer.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_export_image_excel"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_export_image_excel.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_hide_product_code"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_hide_product_code.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_invoice_ocr"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_invoice_ocr.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_manufacturing_lot_report"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_manufacturing_lot_report.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br/>
+                    <center>
+                        <a class="btn btn-primary btn-lg mt8" target="_blank" style="color: #FFFFFF !important;"
+                            href="https://apps.odoo.com/apps/modules/browse?author=Creyox Technologies">
+                            <i class="fa fa-list"></i>
+                            Explore Our Other Apps
+                        </a>
+                    </center>
+
+                    <br/>
+
+                    <center>
+                        <div style="border: 1px solid black; width:50%;"></div>
+                    </center>
+                </div>
+
+                <!-- Our Services -->
+                <div class="row mb-5">
+                    <div class="col-12 col-md-12 text-center text-md-left" style="margin-top: 40px;">
+                        <center>
+                            <h2 style="color: #000099;"><i class="fa fa-handshake-o"
+                                                            style="color: #B87333;"></i> Our
+                                Services <i class="fa fa-handshake-o" style="color: #B87333;"></i></h2>
+                        </center>
+                    </div>
+                </div>
+                <div class="container" style="width:100%; height:100%;">
+                    <div class="row">
+
+                        <!-- Odoo Implementation -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#99b3ff; border:2px solid #000099; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-cloud-upload" style="color:#000099;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#000099; font-weight:bold;">
+                                        Odoo <br/> Implementation
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Odoo Customization -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#99ff99; border:2px solid #006600; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-gear" style="color:#006600;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#006600; font-weight:bold;">
+                                        Odoo <br/> Customization
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- AI Powered Odoo Solutions -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#ffccff; border:2px solid #b300b3; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-magic" style="color:#b300b3;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#b300b3; font-weight:bold;">
+                                        AI Powered <br/> Odoo Solutions
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div><!-- row end -->
+
+                    <div class="row">
+
+                        <!-- Odoo Data & Module Migration -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#ff9980; border:2px solid #b32400; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-exchange" style="color:#b32400;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#b32400; font-weight:bold;">
+                                        Odoo Data & <br/> Module Migration
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Third Party App Integration -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#ffeb99; border:2px solid #b38f00; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-link" style="color:#b38f00;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#b38f00; font-weight:bold;">
+                                        Third Party <br/> App Integration
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Odoo Artificial Intelligence Services -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#c2d6ff; border:2px solid #0047b3; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-lightbulb-o" style="color:#0047b3;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#0047b3; font-weight:bold;">
+                                        Odoo Artificial <br/> Intelligence Services
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div><!-- row end -->
+
+                    <div class="row">
+
+                        <!-- Mobile App Development -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#b3e6ff; border:2px solid #006699; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-mobile" style="color:#006699;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#006699; font-weight:bold;">
+                                        Mobile App <br/> Development
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Support & Maintenance -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#99ffcf; border:2px solid #00796b; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-users" style="color:#00796b;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#00796b; font-weight:bold;">
+                                        Support & <br/> Maintenance
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Odoo Training & Guidance -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#d9ffb3; border:2px solid #4d9900; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-graduation-cap" style="color:#4d9900;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#4d9900; font-weight:bold;">
+                                        Odoo Training <br/> & Guidance
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div><!-- row end -->
+                </div>
+                <div style="height: 60px;"></div>
+            </div>
+
+            <!-- ============================= -->
+            <!--         TAB 3 : FAQ           -->
+            <!-- ============================= -->
+            <div class="tab-pane fade px-md-5 px-4" id="pills-faq" role="tabpanel" aria-labelledby="pills-faq-tab">
+                <div class="panel-group mt-5" id="accordion" role="tablist">
+                    <!-- FAQ 1 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #3b82f6; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #3b82f6; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-paint-brush"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">What is Dynamic Report Studio?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                It is a visual document design module for Odoo that replaces coding PDF layouts in HTML and QWeb XML. It provides a drag and drop workspace where users can build invoices, purchase orders, shipping labels, and custom business reports in minutes.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 2 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #10b981; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #10b981; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-database"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Does it support dynamic fields and data tables?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Yes. You can drag and drop individual dynamic fields using Python expressions and add dynamic data tables that automatically loop through and display line items in real time.
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <!-- FAQ 3 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #0ea5e9; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #0ea5e9; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-barcode"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Can I use barcodes and QR codes in my reports?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Yes. The module features a built in barcode and QR code generator that can be linked to dynamic Odoo database fields such as product barcodes or order tracking IDs.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FAQ 4 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #6366f1; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #6366f1; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-file-text-o"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Does this module support multi page document design?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Yes. The builder includes a page break component to control layout flow and supports multi page watermark syncing to repeat logos or headers across all pages automatically.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 5 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #f59e0b; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #f59e0b; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-building"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Is this app compatible with Odoo Community as well as Enterprise?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Yes, this app works perfectly with Odoo Enterprise (Odoo.sh & On Premise) as well as Community.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 6 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #ef4444; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #ef4444; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-globe"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Is this app compatible with Odoo Online?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                No, this app will not work for Odoo Online.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 7 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #8b5cf6; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #8b5cf6; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-envelope"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">How to contact if there is need of any Customization?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Please contact us on <strong>support@creyox.com</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 8 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #ec4899; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #ec4899; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-shopping-cart"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Do I need to buy all versions separately?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Yes, you need to pay different prices of app version wise.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 9 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #f97316; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #f97316; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-ticket"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">The app i paid for is not working, What should i do?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                You can raise a Ticket on <strong>support@creyox.com</strong> we'll get back to you with fixes.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ SIMILAR PICKS + OUR SERVICES (bottom of FAQ tab) -->
+                <div class="pr-5" style="font-size: 1.6rem; font-weight: 600; color: #0b3b52;">
+                    <center>
+                        <h2 style="font-size:35px; color:#000099; margin-bottom:20px; font-weight:700;">
+                            Explore similar picks
+                        </h2>
+                        <div style="border: 1px solid black; width:30%;"/>
+                    </center>
+                    <br/>
+
+                    <!-- Card Wrapper (Grid) -->
+                    <div class="row">
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_all_in_one_direct_print"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_all_in_one_direct_print.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_bpmn_workflow_designer"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_bpmn_workflow_designer.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_export_image_excel"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_export_image_excel.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_hide_product_code"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_hide_product_code.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_invoice_ocr"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_invoice_ocr.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_manufacturing_lot_report"
+                                        target="_blank">
+                                        <img src="banner_images/banner_cr_manufacturing_lot_report.png"
+                                                style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br/>
+                    <center>
+                        <a class="btn btn-primary btn-lg mt8" target="_blank" style="color: #FFFFFF !important;"
+                            href="https://apps.odoo.com/apps/modules/browse?author=Creyox Technologies">
+                            <i class="fa fa-list"></i>
+                            Explore Our Other Apps
+                        </a>
+                    </center>
+
+                    <br/>
+
+                    <center>
+                        <div style="border: 1px solid black; width:50%;"></div>
+                    </center>
+                </div>
+
+                <!-- Our Services -->
+                <div class="row mb-5">
+                    <div class="col-12 col-md-12 text-center text-md-left" style="margin-top: 40px;">
+                        <center>
+                            <h2 style="color: #000099;"><i class="fa fa-handshake-o"
+                                                            style="color: #B87333;"></i> Our
+                                Services <i class="fa fa-handshake-o" style="color: #B87333;"></i></h2>
+                        </center>
+                    </div>
+                </div>
+                <div class="container" style="width:100%; height:100%;">
+                    <div class="row">
+
+                        <!-- Odoo Implementation -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#99b3ff; border:2px solid #000099; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-cloud-upload" style="color:#000099;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#000099; font-weight:bold;">
+                                        Odoo <br/> Implementation
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Odoo Customization -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#99ff99; border:2px solid #006600; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-gear" style="color:#006600;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#006600; font-weight:bold;">
+                                        Odoo <br/> Customization
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- AI Powered Odoo Solutions -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#ffccff; border:2px solid #b300b3; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-magic" style="color:#b300b3;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#b300b3; font-weight:bold;">
+                                        AI Powered <br/> Odoo Solutions
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div><!-- row end -->
+
+                    <div class="row">
+
+                        <!-- Odoo Data & Module Migration -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#ff9980; border:2px solid #b32400; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-exchange" style="color:#b32400;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#b32400; font-weight:bold;">
+                                        Odoo Data & <br/> Module Migration
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Third Party App Integration -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#ffeb99; border:2px solid #b38f00; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-link" style="color:#b38f00;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#b38f00; font-weight:bold;">
+                                        Third Party <br/> App Integration
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Odoo Artificial Intelligence Services -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#c2d6ff; border:2px solid #0047b3; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-lightbulb-o" style="color:#0047b3;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#0047b3; font-weight:bold;">
+                                        Odoo Artificial <br/> Intelligence Services
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div><!-- row end -->
+
+                    <div class="row">
+
+                        <!-- Mobile App Development -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#b3e6ff; border:2px solid #006699; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-mobile" style="color:#006699;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#006699; font-weight:bold;">
+                                        Mobile App <br/> Development
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Support & Maintenance -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#99ffcf; border:2px solid #00796b; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-users" style="color:#00796b;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#00796b; font-weight:bold;">
+                                        Support & <br/> Maintenance
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Odoo Training & Guidance -->
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3"
+                                    style="background-color:#d9ffb3; border:2px solid #4d9900; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2">
+                                        <h3><i class="fa fa-graduation-cap" style="color:#4d9900;"></i></h3>
+                                    </div>
+                                    <p class="mb-0" style="font-size:18px; color:#4d9900; font-weight:bold;">
+                                        Odoo Training <br/> & Guidance
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div><!-- row end -->
+                </div>
+                <div style="height: 60px;"></div>
+                <!-- ✅ END OF FAQ TAB -->
+
+            </div>
+            <!-- END #pills-faq -->
+
+
+        </div>
+        <!-- END .tab-content -->
+
+    </div>
+    <!-- END .bg-white wrapper -->
+
+</main>
+
+<link href="https://apps.odoocdn.com/web/content/7247337-184ae0e/1/web.assets_frontend.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+</body>
+</html>

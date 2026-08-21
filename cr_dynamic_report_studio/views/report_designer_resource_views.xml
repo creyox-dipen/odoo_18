@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_report_designer_resource_tree" model="ir.ui.view">
+        <field name="name">report.designer.resource.tree</field>
+        <field name="model">report.designer.resource</field>
+        <field name="arch" type="xml">
+            <list string="Image Library">
+                <field name="name"/>
+                <field name="category"/>
+                <field name="mime_type"/>
+                <field name="file_size"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_report_designer_resource_form" model="ir.ui.view">
+        <field name="name">report.designer.resource.form</field>
+        <field name="model">report.designer.resource</field>
+        <field name="arch" type="xml">
+            <form string="Image Resource">
+                <sheet>
+                    <field name="image" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Company Logo"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="category"/>
+                        <field name="mime_type" readonly="1"/>
+                        <field name="file_size" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_report_designer_resource_kanban" model="ir.ui.view">
+        <field name="name">report.designer.resource.kanban</field>
+        <field name="model">report.designer.resource</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="id"/>
+                <field name="name"/>
+                <field name="image_small"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click d-flex flex-column align-items-center" style="padding: 0; width: 160px;">
+                            <div style="width: 160px; height: 160px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; padding: 10px; border-bottom: 1px solid #dee2e6;">
+                                <img t-att-src="kanban_image('report.designer.resource', 'image', record.id.raw_value)" alt="Image" style="max-width: 100%; max-height: 100%; object-fit: contain;"/>
+                            </div>
+                            <div class="p-2 text-center text-truncate w-100">
+                                <strong class="o_kanban_record_title">
+                                    <field name="name"/>
+                                </strong>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_report_designer_resource" model="ir.actions.act_window">
+        <field name="name">Image Library</field>
+        <field name="res_model">report.designer.resource</field>
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+
+
+</odoo>

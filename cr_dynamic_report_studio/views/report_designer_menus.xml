@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Top Level Menu -->
+    <menuitem id="menu_report_designer_root" name="Report Studio" sequence="100" web_icon="cr_dynamic_report_studio,static/description/icon.png"/>
+
+    <!-- Sub Menus -->
+    <menuitem id="menu_report_designer_template_action" name="Reports" parent="menu_report_designer_root" action="action_report_designer_template" sequence="10"/>
+    <menuitem id="menu_report_designer_resources" name="Image Library" parent="menu_report_designer_root" action="action_report_designer_resource" sequence="20"/>
+    
+    <!-- Action and Menu for Print Log -->
+    <record id="action_report_designer_print_log" model="ir.actions.act_window">
+        <field name="name">Print History</field>
+        <field name="res_model">report.designer.print.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_report_designer_print_log" name="Print History" parent="menu_report_designer_root" action="action_report_designer_print_log" sequence="40"/>
+</odoo>

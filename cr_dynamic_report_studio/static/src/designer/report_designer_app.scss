@@ -1,0 +1,279 @@
+.o_report_designer_app {
+    font-size: 13px;
+
+    // ── Toolbar ───────────────────────────────────────────────────────────────
+    .o_report_designer_toolbar {
+        height: 50px;
+        background-color: #ffffff;
+        border-bottom: 1px solid #e0e4ea;
+
+        .fa-undo, .fa-repeat {
+            color: #6c757d;
+        }
+    }
+
+    // ── Left Sidebar ──────────────────────────────────────────────────────────
+    .o_report_designer_sidebar_left {
+        background-color: #f4f6f9;
+        border-right: 1px solid #dde1e8 !important;
+
+        .o_report_designer_toolbox {
+            padding: 12px !important;
+
+            // ── Light Mode Component Blocks ───────────────────────────────────
+                .o_component_btn {
+                background: linear-gradient(180deg, #ffffff 0%, #f0f2f5 100%) !important;
+                border: 1px solid #ced4da !important;
+                border-bottom: 4px solid #b0b8c4 !important;
+                border-radius: 10px !important;
+                box-shadow: 0 3px 8px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04) !important;
+                transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                margin-bottom: 2px !important;
+                color: #3d4349 !important;
+
+                &:hover {
+                    background: linear-gradient(180deg, #ffffff 0%, #e8ebf0 100%) !important;
+                    border-color: #adb5bd !important;
+                    border-bottom: 4px solid #8a949f !important;
+                    transform: translateY(-3px) !important;
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.10), 0 3px 5px rgba(0,0,0,0.06) !important;
+                }
+
+                &:active {
+                    transform: translateY(3px) !important;
+                    border-bottom: 1px solid #8a949f !important;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08), inset 0 2px 5px rgba(0,0,0,0.07) !important;
+                    background: #e4e8ee !important;
+                }
+
+                i {
+                    font-size: 1.6rem !important;
+                    margin-bottom: 6px !important;
+                    color: #714B67 !important;
+                    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+                }
+
+                span {
+                    color: #3d4349 !important;
+                    font-weight: 600 !important;
+                    letter-spacing: 0.2px;
+                }
+
+                // Shape preview SVGs inherit current color
+                .o_shape_preview_svg {
+                    fill: none;
+                    stroke: #714B67;
+                    stroke-width: 2.5;
+                }
+            }
+        }
+
+        .o_report_designer_pages {
+            .o_designer_page_tree {
+                .dropdown {
+                    position: static;
+                }
+                .dropdown-menu {
+                    position: fixed !important;
+                    z-index: 1050 !important;
+                }
+            }
+        }
+    }
+
+    .o_report_designer_body {
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .o_report_designer_canvas_container {
+        min-width: 0;
+        flex: 1 1 0%;
+        overflow: hidden;
+    }
+
+    .o_report_designer_canvas_container {
+        .o_designer_canvas_wrapper {
+            &::-webkit-scrollbar {
+                width: 10px;
+                height: 10px;
+            }
+            &::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #cbd5e1;
+                border-radius: 5px;
+                border: 2px solid #f4f5f9;
+            }
+        }
+    }
+
+    // ── Tabs (Light Mode) ─────────────────────────────────────────────────────
+    .o_report_designer_tabs {
+        border-bottom: 2px solid #dee2e6;
+        background-color: #f8f9fa;
+
+        .o_designer_tab_item {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            transition: all 0.15s ease-in-out;
+            border-bottom: 3px solid transparent;
+            padding: 12px 6px;
+            cursor: pointer;
+            text-transform: uppercase;
+            color: #6c757d;
+
+            &:hover {
+                color: #714B67 !important;
+                background-color: rgba(113, 75, 103, 0.04);
+            }
+
+            &.active {
+                border-bottom-color: #714B67 !important;
+                color: #714B67 !important;
+                background-color: #ffffff;
+            }
+        }
+    }
+
+    // ── 3D Toolbar Buttons (Light Mode) ───────────────────────────────────────
+    .o_designer_btn_3d {
+        position: relative;
+        background: linear-gradient(180deg, #ffffff 0%, #f0f2f5 100%);
+        border: 1px solid #ced4da;
+        border-bottom: 3px solid #acb5bd;
+        border-radius: 6px;
+        color: #495057;
+        font-weight: 600;
+        transition: all 0.1s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            background: linear-gradient(180deg, #ffffff 0%, #e8ebf0 100%);
+            border-color: #adb5bd;
+            border-bottom: 3px solid #868e96;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.09);
+            color: #212529;
+        }
+
+        &:active {
+            transform: translateY(2px);
+            border-bottom-width: 1px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+            background: #e4e8ee;
+        }
+
+        &.active {
+            background: #714B67 !important;
+            border-color: #5c3c54 !important;
+            border-bottom: 3px solid #4a3043 !important;
+            color: #ffffff !important;
+
+            &:hover {
+                background: #7e5473 !important;
+                border-bottom: 3px solid #3c2736 !important;
+            }
+
+            &:active {
+                background: #603f57 !important;
+                border-bottom-width: 1px !important;
+                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+            }
+        }
+    }
+
+    // ── Designer Page Sheet (Always White) ──────────────────────────────────
+    .o_designer_paper {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+
+        // Ensure text blocks on the page sheet remain readable in dark mode
+        span, p, div, table, td, th, i {
+            color: inherit;
+        }
+    }
+}
+
+// ── Report Designer Kanban View Styling (Global Backend View) ──────────────────
+.o_kanban_view {
+    .o_report_designer_kanban_card {
+        border-radius: 12px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
+        background-color: #ffffff !important;
+        overflow: hidden;
+        min-height: 290px;
+
+        &:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03) !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        .o_report_designer_kanban_cover {
+            height: 180px;
+            background-color: #f8fafc;
+            overflow: hidden;
+            border-color: #f1f5f9 !important;
+            position: relative;
+
+            .o_report_designer_kanban_img {
+                height: 85%;
+                max-width: 85%;
+                object-fit: contain;
+                border-radius: 6px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+                border: 1px solid #e2e8f0;
+                background-color: #ffffff;
+                transition: transform 0.3s ease;
+            }
+
+            &:hover .o_report_designer_kanban_img {
+                transform: scale(1.03);
+            }
+        }
+
+        .o_report_designer_kanban_details {
+            .o_report_designer_kanban_title {
+                font-size: 1.15rem;
+                font-weight: 700;
+                color: #1e293b;
+            }
+        }
+
+        .o_report_designer_kanban_footer {
+            .btn-primary {
+                background: linear-gradient(135deg, #714B67 0%, #56394e 100%) !important;
+                border: none !important;
+                border-bottom: 2px solid #3c2736 !important;
+                border-radius: 6px !important;
+                box-shadow: 0 2px 4px rgba(113, 75, 103, 0.15) !important;
+                transition: all 0.15s ease;
+
+                &:hover {
+                    background: linear-gradient(135deg, #815676 0%, #614059 100%) !important;
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 8px rgba(113, 75, 103, 0.25) !important;
+                }
+
+                &:active {
+                    transform: translateY(1px);
+                    border-bottom-width: 0px !important;
+                }
+            }
+        }
+    }
+}
+
+.modal-content {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
