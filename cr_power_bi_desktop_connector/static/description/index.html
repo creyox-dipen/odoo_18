@@ -1,0 +1,1211 @@
+<div class="cr-powerbi-description-wrapper"
+    style="display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #fff !important; font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;">
+
+    <!-- External Font Dependencies -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+        .cr-powerbi-description-wrapper {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .cr-doc-section {
+            display: block !important;
+            width: 100% !important;
+            position: relative !important;
+            clear: both !important;
+        }
+
+        /* Bootstrap-Native Tabs (Odoo Compatible) */
+        .cr-powerbi-description-wrapper .nav-pills .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .cr-powerbi-description-wrapper .nav-pills .nav-link:hover {
+            background: #f1f5f9;
+            color: #006CA5;
+        }
+
+        .cr-powerbi-description-wrapper .nav-pills .nav-link.active {
+            background: #006CA5 !important;
+            color: #fff !important;
+            border-color: #006CA5 !important;
+            box-shadow: 0 10px 25px rgba(0, 108, 165, 0.25) !important;
+        }
+
+        .cr-powerbi-description-wrapper .tab-pane {
+            display: none;
+        }
+
+        .cr-powerbi-description-wrapper .tab-pane.active {
+            display: block !important;
+        }
+
+        /* FAQ Styling */
+        .cr-powerbi-description-wrapper .faq-item {
+            background: #fff;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 18px 22px;
+        }
+
+        .row {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            margin: 0 auto !important;
+        }
+
+        .col-lg-4,
+        .col-md-4,
+        .col-lg-6,
+        .col-lg-5,
+        .col-lg-7 {
+            box-sizing: border-box !important;
+            padding: 10px !important;
+            margin-bottom: 20px !important;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .setup-section {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        /* Step Item Styles */
+        .step-item {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: #006CA5;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .step-content {
+            flex-grow: 1;
+        }
+
+        .step-img {
+            display: block !important;
+            max-width: 100%;
+            border-radius: 12px;
+            border: 4px solid #fff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin: 20px auto 70px !important;
+        }
+
+        @keyframes crPulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Hot Features Styles */
+        .hot-feature-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 22px;
+            height: 100%;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            border-top: 3px solid #006CA5;
+        }
+
+        .hot-feature-card:nth-child(3n+2) {
+            border-top-color: #008083;
+        }
+
+        .hot-feature-card:nth-child(3n) {
+            border-top-color: #02367B;
+        }
+
+        .hot-feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-top-width: 6px;
+        }
+
+        .feature-icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(0, 108, 165, 0.08);
+            color: #006CA5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .hot-feature-card:hover .feature-icon-box {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .feature-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 6px;
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: -0.01em;
+            transition: color 0.3s ease;
+        }
+
+        .hot-feature-card:hover .feature-title {
+            color: #006CA5;
+        }
+
+        .hot-feature-card:nth-child(3n+2):hover .feature-title {
+            color: #008083;
+        }
+
+        .hot-feature-card:nth-child(3n):hover .feature-title {
+            color: #02367B;
+        }
+
+        .feature-desc {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.5;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .col-feature {
+            width: 33.333% !important;
+            padding: 8px !important;
+            box-sizing: border-box !important;
+        }
+
+        @media (max-width: 991px) {
+            .col-feature {
+                width: 50% !important;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .col-feature {
+                width: 100% !important;
+            }
+        }
+
+        .deep_hover {
+            transition: all 0.3s ease !important;
+        }
+
+        .deep_hover:hover {
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .tab-pane .step-img {
+            margin-bottom: 75px !important;
+        }
+
+        .faq-container summary i {
+            margin-right: 10px !important;
+        }
+    </style>
+
+    <!-- Hero Section -->
+    <div class="cr-doc-section"
+        style="padding:80px 0 70px; background-color: #006CA5 !important; background: linear-gradient(135deg, #02367B 0%, #006CA5 50%, #008083 100%) !important; color:#fff !important; border-bottom-left-radius:50px; border-bottom-right-radius:50px; text-align:center; overflow: hidden;">
+        <div style="max-width:1140px; margin:0 auto; padding:0 15px;">
+            <div style="margin-bottom:24px;">
+                <span
+                    style="display:inline-block; padding:8px 18px; border-radius:100px; font-weight:600; font-size:0.9rem; color:#fff; margin:0 6px 10px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);"><i
+                        class="fa fa-check-circle"></i> Community / Enterprise / Odoo.sh</span>
+            </div>
+            <h1
+                style="font-size:3rem; font-weight:800; letter-spacing:-1px; line-height:1.1; margin-bottom:20px; color: #ffffff !important; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                Power BI All in One <br> Connector</h1>
+            <p style="font-size:1.15rem; max-width:750px; margin:0 auto 35px; color:rgba(255,255,255,0.95) !important;">
+                Seamlessly bridge Odoo and Microsoft Power BI. Synchronize data, manage workspaces, and deploy
+                pipelines with a single, powerful documentation first interface.
+            </p>
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <a href="https://youtu.be/z0FFOSOyJSc"
+                        style="display:inline-block; padding:14px 28px; border-radius:50px; color:#fff; font-weight:700; text-decoration:none; border:2px solid rgba(255,255,255,0.7); margin: 8px;"
+                        class="deep_hover"><i class="fa fa-youtube-play"></i> Desktop Video</a>
+                    <a href="https://youtu.be/eWeB2kh4PAM"
+                        style="display:inline-block; padding:14px 28px; border-radius:50px; color:#fff; font-weight:700; text-decoration:none; border:2px solid rgba(255,255,255,0.7); margin: 8px;"
+                        class="deep_hover"><i class="fa fa-youtube-play"></i> Fabric Video</a>
+                    <a href="mailto:support@creyox.com"
+                        style="display:inline-block; padding:14px 28px; border-radius:50px; color:#fff; font-weight:700; text-decoration:none; border:2px solid rgba(255,255,255,0.7); margin: 8px;"
+                        class="deep_hover"><i class="fa fa-envelope"></i> Contact Us</a>
+                    <a href="https://creyox.com/helpdesk"
+                        style="display:inline-block; padding:14px 28px; border-radius:50px; color:#fff; font-weight:700; text-decoration:none; border:2px solid rgba(255,255,255,0.7); margin: 8px;"
+                        class="deep_hover"><i class="fa fa-ticket"></i> https://creyox.com/helpdesk</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <div class="cr-doc-section" style="padding:0; background:#ffffff;">
+        <div style="width:100%; margin:0 auto; padding:0;">
+            <!-- Feature Showcase Gallery -->
+            <div class="row" style="margin: 0; padding: 0;">
+                <!-- 1. Overview -->
+                <div class="col-12" style="text-align: center; padding: 0 !important; margin: 0 !important;">
+                    <img src="images/overview.png" style="width: 100%; border-radius: 0px; display: block;"
+                        alt="Power BI Overview">
+                </div>
+                <!-- 2. Connector -->
+                <div class="col-12" style="text-align: center; padding: 0 !important; margin: 0 !important;">
+                    <img src="images/connector.png" style="width: 100%; border-radius: 0px; display: block;"
+                        alt="Power BI Connector Settings">
+                </div>
+                <!-- 3. Embedded -->
+                <div class="col-12" style="text-align: center; padding: 0 !important; margin: 0 !important;">
+                    <img src="images/embedded.png" style="width: 100%; border-radius: 0px; display: block;"
+                        alt="Embedded Reports">
+                </div>
+                <!-- 4. Statistical -->
+                <div class="col-12" style="text-align: center; padding: 0 !important; margin: 0 !important;">
+                    <img src="images/statistical.png" style="width: 100%; border-radius: 0px; display: block;"
+                        alt="Statistical Insights">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hot Features Showcase -->
+    <div class="cr-doc-section" style="padding:0; background:#ffffff;">
+        <div style="width:100%; margin:0 auto; padding:0;">
+            <div class="row" style="margin: 0; padding: 0;">
+                <div class="col-12" style="text-align: center; padding: 0 !important; margin: 0 !important;">
+                    <img src="images/hotfeatures.png" style="width: 100%; border-radius: 0px; display: block;"
+                        alt="Hot Features">
+                    <img src="images/hotfeatures2.png" style="width: 100%; border-radius: 0px; display: block;"
+                        alt="Hot Features">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="bg-white"
+        style="border-radius: 30px; font-family: 'Outfit', 'Inter', sans-serif; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.05);">
+
+        <div style="text-align:center; margin-bottom:40px;">
+            <h2 style="color:#006CA5; font-weight:800; font-size:2.8rem; margin-bottom:15px;">Setup Guide
+            </h2>
+            <p style="color:#64748b; font-size:1.15rem;">Everything you need for a seamless integration.</p>
+        </div>
+
+        <div class="px-md-5 px-4 mt-5">
+            <ul class="nav nav-pills justify-content-center mb-5" id="cr-pills-tab" role="tablist"
+                style="display: flex !important; justify-content: center !important; flex-wrap: wrap !important; width: 100% !important; gap: 15px; border: none; background-color: transparent;">
+                <li class="nav-item mx-2" role="presentation">
+                    <a class="nav-link active" id="cr-pills-desktop-tab" data-toggle="pill" data-bs-toggle="pill"
+                        href="#cr-pills-desktop" role="tab" aria-controls="cr-pills-desktop" aria-selected="true"
+                        style="padding: 14px 40px; border-radius: 50px; font-weight: 800; font-size: 14px; border: 1px solid #e2e8f0; transition: all 0.3s; background-color: #f8fafc; color: #475569; text-decoration: none; cursor: pointer;">
+                        <i class="fa fa-desktop mr-2"></i> Desktop Connector
+                    </a>
+                </li>
+                <li class="nav-item mx-2" role="presentation">
+                    <a class="nav-link" id="cr-pills-fabric-tab" data-toggle="pill" data-bs-toggle="pill"
+                        href="#cr-pills-fabric" role="tab" aria-controls="cr-pills-fabric" aria-selected="false"
+                        style="padding: 14px 40px; border-radius: 50px; font-weight: 800; font-size: 14px; border: 1px solid #e2e8f0; transition: all 0.3s; background-color: #f8fafc; color: #475569; text-decoration: none; cursor: pointer;">
+                        <i class="fa fa-cubes mr-2"></i> Fabric Services
+                    </a>
+                </li>
+                <li class="nav-item mx-2" role="presentation">
+                    <a class="nav-link" id="cr-pills-pipelines-tab" data-toggle="pill" data-bs-toggle="pill"
+                        href="#cr-pills-pipelines" role="tab" aria-controls="cr-pills-pipelines" aria-selected="false"
+                        style="padding: 14px 40px; border-radius: 50px; font-weight: 800; font-size: 14px; border: 1px solid #e2e8f0; transition: all 0.3s; background-color: #f8fafc; color: #475569; text-decoration: none; cursor: pointer;">
+                        <i class="fa fa-sitemap mr-2"></i> Pipelines
+                    </a>
+                </li>
+                <li class="nav-item mx-2" role="presentation">
+                    <a class="nav-link" id="cr-pills-faq-tab" data-toggle="pill" data-bs-toggle="pill"
+                        href="#cr-pills-faq" role="tab" aria-controls="cr-pills-faq" aria-selected="false"
+                        style="padding: 14px 40px; border-radius: 50px; font-weight: 800; font-size: 14px; border: 1px solid #e2e8f0; transition: all 0.3s; background-color: #f8fafc; color: #475569; text-decoration: none; cursor: pointer;">
+                        <i class="fa fa-question-circle mr-2"></i> FAQs
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content" id="cr-pills-tabContent">
+            <!-- Tab 1: Desktop Connector -->
+            <div class="tab-pane fade show active" id="cr-pills-desktop" role="tabpanel"
+                aria-labelledby="cr-pills-desktop-tab">
+                <div style="background:#f8fffc; padding:30px; border-radius:20px; border:1px solid #dfdfdf;">
+                    <ul style="font-size: 18px; color:#1e293b; list-style-type:disc !important; padding-left:25px;">
+                        <li style="margin-bottom:30px;">
+                            Create powerful reports like this.</li>
+                        <img src="images/report.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+
+                        <li style="margin-bottom:30px;">
+                            Navigate to <b>Power Bi Connector</b>. </li>
+                        <img src="images/powerbi_connector.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Navigate to <b>Configuration</b> .</li>
+                        <img src="images/configuration_menu.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click on <b>New</b>. </li>
+                        <img src="images/configuration_new.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Navigate to notebook page <b>Desktop Connector</b></li>
+                        <img src="images/desktop_connector_notebook_page.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click on button <b>Generate Token</b> to generate Authentication Token.</li>
+                        <img src="images/desktop_access_token_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Open <b>PowerBi Desktop</b> >> <b>Get Data From Other Sources</b>.</li>
+                        <img src="images/get_data_from_other_sources.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Search <b>Odoo Connector By Creyox Technologies</b>. </li>
+                        <li style="margin-bottom:30px;">Click on Button <b>Connect</b>.</li>
+
+                        <img src="images/select_odoo_connector.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Here Add the URL And Authorization Token generated from Odoo.</li>
+                        <img src="images/enter_redirect_url.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Here Add the Authorization Token.</li>
+                        <li style="margin-bottom:30px;">Click on <b>Connect</b>.</li>
+
+                        <img src="images/enter_access_token.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Select The table of which you want to fetch the data.</li>
+                        <img src="images/table_in_powerbi.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Quickly find the tables you need using the search bar.</li>
+                        <img src="images/search_tabel_in_powerbi.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click on button <b>Load</b> .</li>
+                        <img src="images/load_table_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            The Imported Data Can Be found in Power Bi Sheet. </li>
+                        <img src="images/table_loaded.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click On <b>Refresh Data </b>to Refresh Data of Table.</li>
+                        <img src="images/refresh_data.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click on Button <b>Publish</b> to Publish Report in Power Bi Service. <br>
+                            Navigate to Report in Power Bi Service.</li>
+                        <img src="images/publish.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click on <b>View Semantic Model</b>.</li>
+                        <img src="images/semantic_model_menu_in_powerbi.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click on <b>Refresh</b> to Refresh Data.</li>
+                        <img src="images/refresh_now_menu.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Navigate to <b>Refresh </b>>>Schedule Refresh .</li>
+                        <img src="images/schedule_refresh_menu.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Configure Schedule Refresh >> <b>Apply</b> .</li>
+                        <img src="images/apply_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Navigate to >> <b>Refresh History </b>.</li>
+                        <li style="margin-bottom:30px;">Here You can See Refresh History</li>
+                        <img src="images/refresh_history_menu.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+                        <img src="images/refresh_history.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Navigate to >> <b>Power Bi Desktop</b>>> Odoo Connector By Creyox Technologies. </li>
+                        <li>To Fetch data Using Sql Query <b>Write Query </b>.</li>
+                        <li style="margin-bottom:30px;">Click On Button Ok.</li>
+
+                        <img src="images/sql_query.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            The Imported Data Can Be found in Power Bi Sheet.</li>
+                        <img src="images/table_loaded.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>In Odoo Navigate to <b>Power Bi Connector</b> >> <b> Data Processing Logs</b> .</li>
+                        <li style="margin-bottom:30px;">Transaction logs for syncing tables between Odoo and power Bi
+                            Desktop are
+                            available here.</li>
+
+                        <img src="images/data_processing_logs_menu.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Dashboards published from <b> Power bi Desktop </b> are seamlessly integrated</li>
+                        with <b> Power BI Fabric</b> allowing real time access and enhanced
+                        interactivity for a more dynamic analytics experience.
+                        <img src="images/powerbi_report_in_workspace.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Seamless support for <b>Power BI Tenant</b> ensures centralized access and
+                            enhanced security for shared reports.</li>
+                        <img src="images/tenant_name.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab 2: Fabric Services -->
+            <div class="tab-pane fade" id="cr-pills-fabric" role="tabpanel" aria-labelledby="cr-pills-fabric-tab">
+                <div style="background:#f8fffc; padding:30px; border-radius:20px; border:1px solid #dfdfdf;">
+                    <ul style="font-size: 18px; color:#1e293b; list-style-type:disc !important; padding-left:25px;">
+                        <li style="margin-bottom:30px;">
+                            Navigate to <b>Power Bi Connector</b>.</li>
+                        <img src="images/powerbi_connector.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Navigate to <b>Configuration</b> .</li>
+                        <li style="margin-bottom:30px;">Click on <b>New</b>.</li>
+                        <img src="images/configuration_menu.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+                        <img src="images/configuration_new.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Navigate to the Notebook page <b>Authentication</b> and enter your credentials.</li>
+                        <img src="images/enter_credentials.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click on <b>Test Connection</b> button.</li>
+                        <img src="images/test_connection_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            After successful authentication, an access token will be generated.</li>
+                        <img src="images/successful_authentication_notification.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+                        <img src="images/access_token_generated.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click button <b>Fetch Workspaces</b> to retrieve workspaces from Power BI.</li>
+                        <img src="images/fetch_workspace_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Use the smart button to access the list of workspaces associated with this account. </li>
+                        <li>Navigate to the <b>Workspace</b> menu to view all workspaces.</li>
+                        <li>Workspaces serve as containers in Power BI where reports, dashboards, and datasets are
+                            organized and managed. </li>
+                        <li><b>Pro License:</b> Used for standard Power BI features like Eventhouse, KQL databases, and
+                            creating/sharing reports.</li>
+                        <li style="margin-bottom:30px;"><b>Premium / PPU License:</b> Required for deployment pipelines,
+                            moving content between
+                            Development, Test, and Production stages.</li>
+
+                        <img src="images/configuration_smartbutton_workspace.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+                        <img src="images/workspace_menu.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">
+                            Click the <b>Fetch Eventhouses</b> button to retrieve all existing eventhouses in this
+                            workspace from Power BI. </li>
+                        <img src="images/fetch_eventhouses_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Eventhouse serves as a workspace in Power BI to manage streaming data, events, and real-time
+                            analytics. </li>
+                        <li style="margin-bottom:30px;">Use the smart button to access the list of Eventhouses
+                            associated with this workspace.</li>
+                        <img src="images/workspace_smartbutton_eventhouse.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Click on <b>New</b> button to create a new Eventhouse in odoo.</li>
+                        <li style="margin-bottom:30px;">It can be created and accessed using a Pro license without
+                            requiring Premium.</li>
+                        <img src="images/new_create_eventhouse.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Click <b>Create in Power BI</b> button to create a new
+                            eventhouse in PowerBI.</li>
+                        <img src="images/create_eventhouse_in_powerbi_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">The new Eventhouse is successfully created in the selected Power
+                            BI workspace from Odoo.</li>
+                        <img src="images/eventhouse_created_in_powerbi.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Navigate to Workspace >> Eventhouse </li>
+                        <li>Click the <b>Fetch Databases</b> button to retrieve all existing KQL databases in this
+                            eventhouse from Power BI. </li>
+                        <li style="margin-bottom:30px;">KQL databases are used to store and query large volumes of
+                            structured and semi-structured
+                            data in Power BI. </li>
+                        <img src="images/fetch_databases_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Use the smart button to access the list of KQL Databases
+                            associated with this Eventhouse.</li>
+                        <img src="images/eventhouse_smartbutton_databases.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Click on <b>New</b> button to create a new KQL Database in odoo.
+                        </li>
+                        <img src="images/new_create_database.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Click <b>Create in Power BI</b> button to create a new KQL Database in PowerBI within this
+                            eventhouse.</li>
+                        <li style="margin-bottom:30px;">KQL databases can be created and accessed using a Pro license
+                            without requiring Premium.</li>
+                        <img src="images/create_database_in_powerbi_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">The new KQL Database is successfully created in the selected
+                            Power BI eventhouse from Odoo.</li>
+                        <img src="images/database_created_in_powerbi.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Navigate to workspace </li>
+                        <li style="margin-bottom:30px;">Click the <b>Fetch Datasets</b> button to retrieve all existing
+                            datasets in this workspace
+                            from Power BI. </li>
+                        <img src="images/fetch_datasets_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Use the smart button to access the list of Datasets associated
+                            with this Workspace.</li>
+                        <img src="images/workspace_smartbutton_datasets.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Navigate to Workspace </li>
+                        <li style="margin-bottom:30px;">Click the <b>Fetch Reports</b> button to retrieve all existing
+                            reports in this workspace
+                            from Power BI.</li>
+                        <img src="images/fetch_reports_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Use the smart button to access the list of Reports associated
+                            with this Workspace. </li>
+                        <img src="images/workspace_smartbutton_reports.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Navigate to notebook page <b>Embedding Settings</b> </li>
+                        <img src="images/report_embedding_settings.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Enable <b>Allow Embedding</b> to view reports within odoo.</li>
+                        <li style="margin-bottom:30px;">Click on <b>View Embedded</b> button to see the report </li>
+                        <img src="images/report_view_embedded_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Reports can be viewed and edited directly from this section.
+                        </li>
+                        <img src="images/report_widget.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Clicking the <b>Open in Power BI</b> button redirects you to the
+                            corresponding report in the
+                            Power BI web portal.</li>
+                        <img src="images/report_open_in_powerbi.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Navigate to Workspace </li>
+                        <li style="margin-bottom:30px;">Click the <b>Fetch Dashboard</b> button to retrieve all existing
+                            dashboards in this
+                            workspace from Power BI.</li>
+                        <img src="images/fetch_dashboard_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Navigate to Power BI Connector >> Power BI Reports >> Dashboards
+                        </li>>
+                        <img src="images/dashboard_menu.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Use the smart button to access the list of Tiles associated with
+                            this Dashboard. </li>
+                        <img src="images/dashboard_smartbutton_tiles.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">All tile details are stored and displayed in this section.</li>
+                        <img src="images/tiles_record.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Click on <b>View Embedded</b> button to see the dashboard</li>
+                        <li style="margin-bottom:30px;">Clicking the <b>Open in Power BI</b> button redirects you to the
+                            corresponding dashboard in
+                            the Power BI web portal.</li>
+                        <img src="images/dashboard_buttons.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab 3: Pipelines -->
+            <div class="tab-pane fade" id="cr-pills-pipelines" role="tabpanel" aria-labelledby="cr-pills-pipelines-tab">
+                <div style="background:#f8fffc; padding:30px; border-radius:20px; border:1px solid #dfdfdf;">
+                    <ul style="font-size: 18px; color:#1e293b; list-style-type:disc !important; padding-left:25px;">
+                        <li>
+                            Navigate to Power BI Connector >> Configuration</li>
+
+                        <li style="margin-bottom:30px;">Click the <b>Fetch Pipelines</b> button to retrieve data
+                            pipelines from Power BI. </li>
+
+                        <img src="images/fetch_pipelines_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Navigate to the <b>Data Pipelines</b> menu to view all data
+                            pipelines once they have been
+                            successfully fetched. </li>
+
+                        <img src="images/pipelines_menu.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+                        <img src="images/pipeline_kanban.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Navigate to the smart button to easily access and manage all
+                            stages from a single location.</li>
+                        <img src="images/pipeline_smartbutton_stages.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li>Once all workspaces are fetched in Odoo, any workspace assigned
+                            to a particular stage will
+                            be automatically linked. </li>
+
+                        <li>If no workspaces are assigned, you can manually select a
+                            workspace from here. </li>
+                        <li>You can only select workspaces that are published in Power BI.
+                        </li>
+
+                        <li>Carefully choose workspaces that are not assigned to any other
+                            stage or pipeline, as each
+                            workspace can belong to only one stage and one pipeline. </li>
+                        <li style="margin-bottom:30px;">Only workspaces that are on Premium capacity or Premium Per User
+                            (PPU) license plans are
+                            permitted to be assigned in a data pipeline. standard Pro or free workspaces won't be
+                            available for data pipelines.</li>
+
+                        <img src="images/select_workspace.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Click the <b>Assign Workspace</b> button to link a workspace to
+                            the selected stage of
+                            pipeline in Power BI. </li>
+                        <img src="images/assign_workspace_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">The workspace has been successfully assigned in Power BI. </li>
+                        <img src="images/workspace_assigned_in_powerbi.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Click the <b>Unassign Workspace</b> button to remove a workspace
+                            from the selected stage of
+                            pipeline in Power BI. </li>
+                        <img src="images/unassign_workspace_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+                        <li style="margin-bottom:30px;">The <b>Deploy to Next Stage</b> button initiates the pipeline
+                            deployment process </li>
+                        <img src="images/deploy_button.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">Copying or updating Power BI content from one stage to the next
+                            (e.g., Development => Test)</li>
+                        <img src="images/deployment_triggerd_notification.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                        <li style="margin-bottom:30px;">The pipeline has been successfully deployed in Power BI, moving
+                            content from the Development
+                            stage to the Test stage.</li>
+                        <img src="images/successful_deployment_in_powerbi.png" class="step-img"
+                            style="width:100%; border-radius:11px; margin-top:15px; margin-bottom: 25px; border: 1px solid #f2eef7;">
+
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab 4: FAQs -->
+            <div class="tab-pane fade" id="cr-pills-faq" role="tabpanel" aria-labelledby="cr-pills-faq-tab">
+                <div style="background:#f8fffc; padding:30px; border-radius:20px; border:1px solid #dfdfdf;">
+                    <div class="faq-container">
+                        <!-- FAQ 1 -->
+                        <details open
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; What is the
+                                Odoo to Power BI Desktop Connector?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">The Desktop Connector
+                                allows you to push Odoo data directly into Power BI Desktop, enabling
+                                advanced analytics and visualization without manual data exports.</p>
+                        </details>
+                        <!-- FAQ 2 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; What is
+                                Microsoft Fabric Services, and how does it integrate with Odoo?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">Microsoft Fabric is a
+                                full-stack analytics platform that supports Eventhouse, KQL databases, and
+                                workspaces. Through Odoo, users can create, fetch, and manage these Fabric
+                                services for real-time data analysis and visualization.</p>
+                        </details>
+                        <!-- FAQ 3 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; Which licenses
+                                are required for different features?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">Pro licenses are
+                                sufficient for creating reports, dashboards, Eventhouse, and KQL databases.
+                                Deployment pipelines require Premium or Premium Per User (PPU) licenses.</p>
+                        </details>
+                        <!-- FAQ 4 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; How does the
+                                deployment pipeline work?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">Deployment pipelines
+                                allow you to move workspaces, reports, and dashboards across Development,
+                                Test, and Production stages in a controlled, automated way. It ensures each
+                                workspace is linked to a single stage and pipeline for consistency.</p>
+                        </details>
+                        <!-- FAQ 5 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; Can multiple
+                                workspaces be managed within Odoo?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">Yes, you can manage
+                                multiple workspaces directly within Odoo, including creating, fetching
+                                multiple eventhouses and databases within workspaces.</p>
+                        </details>
+                        <!-- FAQ 6 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; Is this app
+                                compatible with Odoo Community as well as Enterprise?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">Yes, this app works
+                                perfectly with Odoo Enterprise (Odoo.sh & On-Premise) as well as Community.
+                            </p>
+                        </details>
+                        <!-- FAQ 7 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; Is this app
+                                compatible with Odoo Online?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">No, this app will not
+                                work for Odoo Online.</p>
+                        </details>
+                        <!-- FAQ 8 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; How to contact
+                                if there is need of any Customization?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">Please contact us on
+                                support@creyox.com</p>
+                        </details>
+                        <!-- FAQ 9 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; Do I get free
+                                support when I buy these app?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">Yes, we give free
+                                support when you buy these app for 60 Days.</p>
+                        </details>
+                        <!-- FAQ 10 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; Do I need to
+                                buy all versions separately paying for each version?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">Yes, you need to pay
+                                different prices of app version wise.</p>
+                        </details>
+                        <!-- FAQ 11 -->
+                        <details
+                            style="background:#fff; margin-bottom:12px; border-radius:12px; border:1px solid #e2e8f0; padding:18px 22px;">
+                            <summary
+                                style="font-weight:700; cursor:pointer; color:#1e293b; display:flex; align-items:center; gap:10px;">
+                                <i class="fa fa-question-circle" style="color:#006CA5;"></i>&nbsp; The app i paid
+                                for is not working, What should i do?
+                            </summary>
+                            <p style="margin-top:12px; color:#555; padding-left:28px;">You can raise a
+                                Ticket on support@creyox.com we'll get back to you with fixes.</p>
+                        </details>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Explore Similar Picks -->
+<div class="cr-doc-section" style="padding:60px 0; background:#fff;">
+    <div class="container" style="max-width:1140px; margin:0 auto; padding:0 15px; text-align:center;">
+        <h2 style="font-weight:800; font-size:2rem; color:#006CA5; margin-bottom:8px;">Explore similar picks</h2>
+        <div style="height:3px; width:50px; background:#006CA5; margin:0 auto 40px;"></div>
+
+        <div class="row">
+            <div class="col-md-4" style="margin-top:1rem">
+                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                    <div class="sh_img" style="padding:10px;">
+                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_bigquery_connector" target="_blank">
+                            <img src="banner_images/banner_bigquery_connector.png"
+                                style="width:100%; height:auto; object-fit:contain">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" style="margin-top:1rem">
+                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                    <div class="sh_img" style="padding:10px;">
+                        <a href="https://apps.odoo.com/apps/modules/17.0/cr_odoo_to_sheets_connector" target="_blank">
+                            <img src="banner_images/banner_odoo_to_sheets_connector.png"
+                                style="width:100%; height:auto; object-fit:contain">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" style="margin-top:1rem">
+                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                    <div class="sh_img" style="padding:10px;">
+                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_smartsheet_connector" target="_blank">
+                            <img src="banner_images/banner_smartsheet_connector.png"
+                                style="width:100%; height:auto; object-fit:contain">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" style="margin-top:1rem">
+                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                    <div class="sh_img" style="padding:10px;">
+                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_miro_odoo_integration" target="_blank">
+                            <img src="banner_images/banner_miro_odoo_integration.png"
+                                style="width:100%; height:auto; object-fit:contain">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" style="margin-top:1rem">
+                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                    <div class="sh_img" style="padding:10px;">
+                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_odoo_brevo_integration" target="_blank">
+                            <img src="banner_images/banner_odoo_brevo_integration.png"
+                                style="width:100%; height:auto; object-fit:contain">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" style="margin-top:1rem">
+                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                    <div class="sh_img" style="padding:10px;">
+                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_tiktok_shop_connector" target="_blank">
+                            <img src="banner_images/banner_tiktok_shop_connector.png"
+                                style="width:100%; height:auto; object-fit:contain">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top:40px; text-align: center !important; width: 100% !important;">
+            <a href="https://apps.odoo.com/apps/modules/browse?author=Creyox Technologies" target="_blank"
+                style="display:inline-flex; align-items:center; gap:8px; padding:14px 32px; background-color:#006CA5; color:#fff; border-radius:8px; text-decoration:none; font-weight:700;">
+                &nbsp; Explore Our Other Apps
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Our Services -->
+<div class="cr-doc-section" style="padding:60px 0; ">
+    <div class="container" style="max-width:1140px; margin:0 auto; padding:0 15px; text-align:center;">
+        <h2 style="font-weight:800; font-size:2rem; color:#000000; margin-bottom:8px;">Our Services</h2>
+        <div style="height:3px; width:50px; background:#006CA5; margin:0 auto 40px;"></div>
+        <div class="row">
+            <!-- 1 -->
+            <div class="col-lg-4" style="margin-bottom:24px;">
+                <a href="mailto:support@creyox.com" style="text-decoration:none; display:block; height:100%;">
+                    <div style="background-color:#fff; border-radius:16px; padding:20px 25px; border:1px solid #e2e8f0; height:100%; text-align:center; transition: transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.08)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <div style="font-size:2rem; color:#006CA5; margin-bottom:12px;"><i
+                                class="fa fa-cloud-upload"></i></div>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Odoo</h4>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Implementation </h4>
+
+                    </div>
+                </a>
+            </div>
+
+            <!-- 2 -->
+            <div class="col-lg-4" style="margin-bottom:24px;">
+                <a href="mailto:support@creyox.com" style="text-decoration:none; display:block; height:100%;">
+                    <div style="background:#fff; border-radius:16px; padding:20px 25px; border:1px solid #e2e8f0; height:100%; text-align:center; transition: transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.08)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <div style="font-size:2rem; color:#008083; margin-bottom:12px;"><i class="fa fa-cogs"></i>
+                        </div>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Odoo
+                        </h4>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Customization</h4>
+
+                    </div>
+                </a>
+            </div>
+            <!-- 3 -->
+            <div class="col-lg-4" style="margin-bottom:24px;">
+                <a href="mailto:support@creyox.com" style="text-decoration:none; display:block; height:100%;">
+                    <div style="background:#fff; border-radius:16px; padding:20px 25px; border:1px solid #e2e8f0; height:100%; text-align:center; transition: transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.08)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <div style="font-size:2rem; color:#7c3aed; margin-bottom:12px;"><i class="fa fa-magic"></i>
+                        </div>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">AI
+                            Powered
+                        </h4>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Odoo
+                            Solutions</h4>
+
+                    </div>
+                </a>
+            </div>
+            <!-- 4 -->
+            <div class="col-lg-4" style="margin-bottom:24px;">
+                <a href="mailto:support@creyox.com" style="text-decoration:none; display:block; height:100%;">
+                    <div style="background:#fff; border-radius:16px; padding:20px 25px; border:1px solid #e2e8f0; height:100%; text-align:center; transition: transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.08)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <div style="font-size:2rem; color:#dc2626; margin-bottom:12px;"><i class="fa fa-exchange"></i>
+                        </div>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Odoo Data
+
+                        </h4>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            and Module
+                            Migration
+                        </h4>
+
+                    </div>
+                </a>
+            </div>
+            <!-- 5 -->
+            <div class="col-lg-4" style="margin-bottom:24px;">
+                <a href="mailto:support@creyox.com" style="text-decoration:none; display:block; height:100%;">
+                    <div style="background:#fff; border-radius:16px; padding:20px 25px; border:1px solid #e2e8f0; height:100%; text-align:center; transition: transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.08)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <div style="font-size:2rem; color:#d97706; margin-bottom:12px;"><i class="fa fa-plug"></i>
+                        </div>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Third Party
+                        </h4>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            App
+                            Integration</h4>
+
+                    </div>
+                </a>
+            </div>
+            <!-- 6 -->
+            <div class="col-lg-4" style="margin-bottom:24px;">
+                <a href="mailto:support@creyox.com" style="text-decoration:none; display:block; height:100%;">
+                    <div style="background:#fff; border-radius:16px; padding:20px 25px; border:1px solid #e2e8f0; height:100%; text-align:center; transition: transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.08)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <div style="font-size:2rem; color:#059669; margin-bottom:12px;"><i
+                                class="fa fa-lightbulb-o"></i>
+                        </div>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Odoo
+                            Atificial </h4>
+
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Intelligence
+                            Services</h4>
+
+                    </div>
+                </a>
+            </div>
+            <!-- 7 -->
+            <div class="col-lg-4" style="margin-bottom:24px;">
+                <a href="mailto:support@creyox.com" style="text-decoration:none; display:block; height:100%;">
+                    <div style="background:#fff; border-radius:16px; padding:20px 25px; border:1px solid #e2e8f0; height:100%; text-align:center; transition: transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.08)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <div style="font-size:2rem; color:#006CA5; margin-bottom:12px;"><i class="fa fa-mobile"></i>
+                        </div>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Mobile App
+                        </h4>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Development</h4>
+
+                    </div>
+                </a>
+            </div>
+            <!-- 8 -->
+            <div class="col-lg-4" style="margin-bottom:24px;">
+                <a href="mailto:support@creyox.com" style="text-decoration:none; display:block; height:100%;">
+                    <div style="background:#fff; border-radius:16px; padding:20px 25px; border:1px solid #e2e8f0; height:100%; text-align:center; transition: transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.08)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <div style="font-size:2rem; color:#059669; margin-bottom:12px;"><i class="fa fa-users"></i>
+                        </div>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Support
+                        </h4>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Maintenance</h4>
+
+                    </div>
+                </a>
+            </div>
+
+            <!-- 9 -->
+            <div class="col-lg-4" style="margin-bottom:24px;">
+                <a href="mailto:support@creyox.com" style="text-decoration:none; display:block; height:100%;">
+                    <div style="background:#fff; border-radius:16px; padding:20px 25px; border:1px solid #e2e8f0; height:100%; text-align:center; transition: transform 0.2s, box-shadow 0.2s;"
+                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 30px rgba(0,0,0,0.08)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                        <div style="font-size:2rem; color:#7c3aed; margin-bottom:12px;"><i
+                                class="fa fa-graduation-cap"></i></div>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+                            Odoo
+                            Training
+                        </h4>
+                        <h4 style="font-weight:800; color:#1e293b; margin-bottom:8px; font-size:1.1rem;">
+
+                            and
+                            Guidence</h4>
+
+                    </div>
+                </a>
+            </div>
+
+            <!-- Full-Width Overview Section -->
+
+        </div>
+    </div>
+</div>

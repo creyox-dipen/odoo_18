@@ -1,0 +1,19 @@
+<odoo>
+    <record id="view_powerbi_report_viewer_form" model="ir.ui.view">
+        <field name="name">powerbi.report.viewer.form</field>
+        <field name="model">powerbi.report.viewer</field>
+        <field name="arch" type="xml">
+            <form string="Power BI Report" js_class="powerbi_report_viewer">
+                <sheet>
+                    <group>
+                        <field name="report_name" readonly="1"/>
+                        <field name="report_id" readonly="1" invisible="1"/>
+                        <field name="embed_url" readonly="1" invisible="1"/>
+                    </group>
+                    <div id="powerbi_status" style="display:none;"/>
+                    <div id="powerbi_report_container" style="height:700px; width:100%; border:1px solid #dee2e6; border-radius:4px;"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

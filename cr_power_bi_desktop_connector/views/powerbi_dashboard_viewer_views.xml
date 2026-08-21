@@ -1,0 +1,20 @@
+<odoo>
+    <record id="view_powerbi_dashboard_viewer_form" model="ir.ui.view">
+        <field name="name">powerbi.dashboard.viewer.form</field>
+        <field name="model">powerbi.dashboard.viewer</field>
+        <field name="arch" type="xml">
+            <form string="Power BI Dashboard" js_class="powerbi_dashboard_viewer">
+                <sheet>
+                    <group>
+                        <field name="dashboard_name" readonly="1"/>
+                        <field name="dashboard_id" readonly="1" invisible="1"/>
+                        <field name="embed_url" readonly="1" invisible="1"/>
+                        <field name="web_url" readonly="1" invisible="1"/>
+                    </group>
+                    <div id="powerbi_dashboard_status" style="display:none;"/>
+                    <div id="powerbi_dashboard_container" style="height:700px; width:100%; border:1px solid #dee2e6; border-radius:4px;"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

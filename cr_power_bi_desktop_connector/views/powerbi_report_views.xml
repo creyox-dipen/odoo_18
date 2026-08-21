@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Report List View -->
+    <record id="view_powerbi_report_list" model="ir.ui.view">
+        <field name="name">powerbi.report.list</field>
+        <field name="model">powerbi.report</field>
+        <field name="arch" type="xml">
+            <list string="Power BI Reports" decoration-success="state=='published'" create="0">
+                <field name="report_name"/>
+                <field name="report_id"/>
+                <field name="workspace_id"/>
+                <field name="dataset_id"/>
+                <field name="model_id"/>
+                <field name="state" widget="badge" decoration-success="state=='published'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Report Form View -->
+    <record id="view_powerbi_report_form" model="ir.ui.view">
+        <field name="name">powerbi.report.form</field>
+        <field name="model">powerbi.report</field>
+        <field name="arch" type="xml">
+            <form string="Power BI Report" create="0">
+                <header>
+
+                    <button name="action_open_report" string="Open in Power BI" type="object"
+                            icon="fa-external-link" invisible="state != 'published' or not web_url"/>
+                    <button name="action_embed_report" string="View Embedded" type="object"
+                            invisible="state != 'published' or not allow_embedding"
+                            class="btn-primary" icon="fa-tv"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,to_publish,published"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Published" bg_color="text-bg-success" invisible="state != 'published'"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="report_name" placeholder="e.g., Monthly Sales Dashboard"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="config_id"/>
+                            <field name="workspace_id"/>
+                            <field name="dataset_id"/>
+                            <field name="report_id" readonly="1"/>
+                        </group>
+                        <group name="urls" string="URLs" invisible="state != 'published'">
+                            <field name="web_url" widget="url" readonly="1"/>
+                            <field name="embed_url" widget="url" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+
+                        <page string="Embedding Settings" name="embedding">
+                            <group>
+                                <group string="Embedding Options">
+                                    <field name="allow_embedding" widget="boolean_toggle"/>
+                                    <field name="auto_refresh" widget="boolean_toggle" invisible="not allow_embedding"/>
+                                    <field name="refresh_interval" invisible="not auto_refresh or not allow_embedding"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe what this report shows and how to use it..."/>
+                        </page>
+                        <page string="Power BI Metadata" name="metadata">
+                            <group>
+                                <group>
+                                    <field name="created_by" readonly="1"/>
+                                    <field name="created_on" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Report Search View -->
+    <record id="view_powerbi_report_search" model="ir.ui.view">
+        <field name="name">powerbi.report.search</field>
+        <field name="model">powerbi.report</field>
+        <field name="arch" type="xml">
+            <search string="Power BI Reports">
+                <field name="report_name"/>
+                <field name="report_id"/>
+                <field name="workspace_id"/>
+                <field name="dataset_id"/>
+                <field name="model_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Published" name="published" domain="[('state', '=', 'published')]"/>
+                <separator/>
+                <filter string="Standard Reports" name="standard" domain="[('report_type', '=', 'standard')]"/>
+                <filter string="Dashboards" name="dashboards" domain="[('report_type', '=', 'dashboard')]"/>
+                <filter string="Paginated Reports" name="paginated" domain="[('report_type', '=', 'paginated')]"/>
+                <separator/>
+                <filter string="With Smart Button" name="with_model" domain="[('model_id', '!=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Workspace" name="workspace" domain="[]" context="{'group_by': 'workspace_id'}"/>
+                    <filter string="Dataset" name="dataset" domain="[]" context="{'group_by': 'dataset_id'}"/>
+                    <filter string="Report Type" name="type" domain="[]" context="{'group_by': 'report_type'}"/>
+                    <filter string="Status" name="status" domain="[]" context="{'group_by': 'state'}"/>
+                    <filter string="Odoo Model" name="model" domain="[]" context="{'group_by': 'model_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Report Action -->
+    <record id="action_powerbi_report" model="ir.actions.act_window">
+        <field name="name">Reports</field>
+        <field name="res_model">powerbi.report</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_powerbi_report_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Power BI Report
+            </p>
+            <p>
+                Reports provide visualizations of your data. Configure smart buttons
+                to embed analytics directly in Odoo forms for easy access.
+            </p>
+        </field>
+    </record>
+
+    <record id="view_powerbi_report_viewer_form" model="ir.ui.view">
+        <field name="name">powerbi.report.viewer.form</field>
+        <field name="model">powerbi.report.viewer</field>
+        <field name="arch" type="xml">
+            <form string="Power BI Report" js_class="powerbi_report_viewer">
+                <sheet>
+                    <group>
+                        <field name="report_name" readonly="1"/>
+                        <field name="report_id" readonly="1" invisible="1"/>
+                        <field name="embed_url" readonly="1" invisible="1"/>
+                    </group>
+                    <div id="powerbi_status" style="display:none; padding:10px; margin-bottom:10px; border-radius:4px;"></div>
+                    <div id="powerbi_report_container" style="height:700px; width:100%; border:1px solid #dee2e6; border-radius:4px;"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

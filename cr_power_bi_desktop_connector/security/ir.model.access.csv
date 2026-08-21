@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cr_power_bi_configuration,cr.power.bi.configuration,model_cr_power_bi_configuration,,1,1,1,1
+access_cr_data_processing,cr.data.processing,model_cr_data_processing,,1,1,1,1
+access_powerbi_config,powerbi.config,model_powerbi_config,,1,1,1,1
+access_powerbi_dashboard,powerbi.dashboard,model_powerbi_dashboard,,1,1,1,1
+access_powerbi_dashboard_tile,powerbi.dashboard.tile,model_powerbi_dashboard_tile,,1,1,1,1
+access_powerbi_dataset,powerbi.dataset,model_powerbi_dataset,,1,1,1,1
+access_powerbi_eventhouse,powerbi.eventhouse,model_powerbi_eventhouse,,1,1,1,1
+access_powerbi_kql_database,powerbi.kql.database,model_powerbi_kql_database,,1,1,1,1
+access_powerbi_pipeline,powerbi.pipeline,model_powerbi_pipeline,,1,1,1,1
+access_powerbi_pipeline_stage,powerbi.pipeline.stage,model_powerbi_pipeline_stage,,1,1,1,1
+access_powerbi_report,powerbi.report,model_powerbi_report,,1,1,1,1
+access_powerbi_report_viewer,powerbi.report.viewer,model_powerbi_report_viewer,,1,1,1,1
+access_powerbi_dashboard_viewer,powerbi.dashboard.viewer,model_powerbi_dashboard_viewer,,1,1,1,1
+access_powerbi_workspace,powerbi.workspace,model_powerbi_workspace,,1,1,1,1

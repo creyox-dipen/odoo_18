@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Dataset List View -->
+    <record id="view_powerbi_dataset_list" model="ir.ui.view">
+        <field name="name">powerbi.dataset.list</field>
+        <field name="model">powerbi.dataset</field>
+        <field name="arch" type="xml">
+            <list string="Semantic Models (Datasets)" decoration-success="state=='published'" create="0">
+                <field name="dataset_name"/>
+                <field name="dataset_id"/>
+                <field name="workspace_id"/>
+                <field name="database_id"/>
+                <field name="state" widget="badge" decoration-success="state=='published'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Dataset Form View -->
+    <record id="view_powerbi_dataset_form" model="ir.ui.view">
+        <field name="name">powerbi.dataset.form</field>
+        <field name="model">powerbi.dataset</field>
+        <field name="arch" type="xml">
+            <form string="Semantic Model (Dataset)" create="0">
+                <header>
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,to_publish,published"/>
+                </header>
+                <sheet>
+
+                    <widget name="web_ribbon" title="Published" bg_color="text-bg-success" invisible="state != 'published'"/>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="dataset_name" placeholder="e.g., Sales Analytics Model"/>
+                        </h1>
+                    </div>
+
+                    <group name="basic_info" string="Basic Information">
+                            <field name="config_id"/>
+                            <field name="workspace_id"/>
+                            <field name="database_id"/>
+                            <field name="dataset_id" readonly="1"/>
+                    </group>
+
+                    <notebook>
+
+                        <page string="Reports" name="reports">
+                            <field name="report_ids" nolabel="1">
+                                <list>
+                                    <field name="report_name"/>
+                                    <field name="report_id"/>
+                                    <field name="report_type"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="model_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the business logic and purpose of this semantic model..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+
+</odoo>

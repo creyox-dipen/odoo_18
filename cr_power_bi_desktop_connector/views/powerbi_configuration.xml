@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_power_bi_configuration_form" model="ir.ui.view">
+        <field name="name">PowerBi Desktop Connector Configuration</field>
+        <field name="model">cr.power.bi.configuration</field>
+        <field name="arch" type="xml">
+            <form string=" ">
+                <sheet>
+                    <group>
+                        <field name="cr_connector_url"/>
+                        <field name="cr_access_token" />
+                        <button string="Generate Token" type="object" name="generate_token" class="oe_highlight"/>
+                    </group>
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+    <record id="view_power_bi_configuration_list" model="ir.ui.view">
+        <field name="name">PowerBi Desktop Connector Configuration list</field>
+        <field name="model">cr.power.bi.configuration</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="cr_connector_url"/>
+                <field name="cr_access_token"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_power_bi_configuration_config" model="ir.actions.act_window">
+        <field name="name">PowerBi Desktop Connector</field>
+        <field name="res_model">cr.power.bi.configuration</field>
+        <field name="view_id" ref="view_power_bi_configuration_list"/>
+        <field name="view_mode">list,form</field>
+    </record>
+    <!--
+    <menuitem id="menu_power_bi_connector"
+              name="Power Bi Desktop Connector"
+              sequence="1"
+              parent="power_bi_connector_menu"
+              action="action_power_bi_configuration_config"/> -->
+</odoo>

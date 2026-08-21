@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Workspace List View -->
+    <record id="view_powerbi_workspace_list" model="ir.ui.view">
+        <field name="name">powerbi.workspace.list</field>
+        <field name="model">powerbi.workspace</field>
+        <field name="arch" type="xml">
+            <list string="Power BI Workspaces" decoration-success="state=='published'" decoration-info="state=='to_publish'" create="0">
+                <field name="workspace_name"/>
+                <field name="workspace_id"/>
+                <field name="config_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="eventhouse_count"/>
+                <field name="database_count"/>
+                <field name="dataset_count"/>
+                <field name="report_count"/>
+                <field name="state" widget="badge" decoration-success="state=='published'"/>
+                <field name="created_on"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Workspace Form View -->
+    <record id="view_powerbi_workspace_form" model="ir.ui.view">
+        <field name="name">powerbi.workspace.form</field>
+        <field name="model">powerbi.workspace</field>
+        <field name="arch" type="xml">
+            <form string="Power BI Workspace" create="0">
+                <header>
+
+                    <button name="action_fetch_workspace" string="Sync from Power BI" type="object"/>
+                    <button name="action_fetch_eventhouses" string="Fetch Eventhouses" type="object"
+                            class="btn-info" invisible="state != 'published'"/>
+                    <button name="action_fetch_datasets" string="Fetch Datasets" type="object"
+                            class="btn-info" invisible="state != 'published'"/>
+                    <button name="action_fetch_reports" string="Fetch Reports" type="object"
+        class="btn-info" invisible="state != 'published'"/>
+<button name="action_fetch_dashboards" string="Fetch Dashboards" type="object"
+        class="btn-info" invisible="state != 'published'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,to_publish,published"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_eventhouses" type="object" class="oe_stat_button" icon="fa-database">
+                            <field name="eventhouse_count" widget="statinfo" string="Eventhouses"/>
+                        </button>
+                        <button name="action_view_databases" type="object" class="oe_stat_button" icon="fa-server">
+                            <field name="database_count" widget="statinfo" string="Databases"/>
+                        </button>
+                        <button name="action_view_datasets" type="object" class="oe_stat_button" icon="fa-cubes">
+                            <field name="dataset_count" widget="statinfo" string="Datasets"/>
+                        </button>
+                        <button name="action_view_reports" type="object" class="oe_stat_button" icon="fa-bar-chart">
+                            <field name="report_count" widget="statinfo" string="Reports"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Published" bg_color="text-bg-success" invisible="state != 'published'"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="workspace_name" placeholder="e.g., Sales Analytics Workspace"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="config_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="workspace_id" readonly="1"/>
+                        </group>
+                        <group name="metadata" string="Power BI Metadata">
+                            <field name="created_by" readonly="1"/>
+                            <field name="created_on" readonly="1"/>
+                            <field name="last_updated_on" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+
+                        <page string="Eventhouses" name="eventhouses">
+                            <field name="eventhouse_ids" nolabel="1">
+                                <list>
+                                    <field name="eventhouse_name"/>
+                                    <field name="eventhouse_id"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="database_count"/>
+                                    <field name="created_on"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Datasets" name="datasets">
+                            <field name="dataset_ids" nolabel="1">
+                                <list>
+                                    <field name="dataset_name"/>
+                                    <field name="dataset_id"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="last_refresh_date"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Reports" name="reports">
+                            <field name="report_ids" nolabel="1">
+                                <list>
+                                    <field name="report_name"/>
+                                    <field name="report_id"/>
+                                    <field name="report_type"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="model_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the purpose of this workspace..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_powerbi_workspace_kanban" model="ir.ui.view">
+        <field name="name">powerbi.workspace.kanban</field>
+        <field name="model">powerbi.workspace</field>
+        <field name="arch" type="xml">
+            <kanban class="o_powerbi_workspace_kanban" create="0">
+
+                <field name="workspace_name"/>
+                <field name="workspace_id"/>
+                <field name="state"/>
+                <field name="eventhouse_count"/>
+                <field name="database_count"/>
+                <field name="dataset_count"/>
+                <field name="report_count"/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click ws_card">
+                            <!-- Top accent bar -->
+                            <div class="ws_accent"/>
+
+                            <div class="ws_body">
+                                <!-- Header: icon + name + state -->
+                                <div class="ws_header">
+                                    <div class="ws_title_wrap">
+                                        <div class="ws_icon">
+                                            <i class="fa fa-cubes"/>
+                                        </div>
+                                        <div class="ws_text">
+                                            <div class="ws_name">
+                                                <field name="workspace_name"/>
+                                            </div>
+                                            <div class="ws_id">
+                                                <field name="workspace_id"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- State badge -->
+                                    <t t-set="state_val" t-value="record.state.value"/>
+                                    <span t-attf-class="ws_state state_#{record.state.raw_value}">
+                                        <span class="ws_state_dot"/>
+                                        <t t-esc="state_val"/>
+                                    </span>
+                                </div>
+
+                                <!-- Divider -->
+                                <div class="ws_divider"/>
+
+                                <!-- Stats 2x2 grid -->
+                                <div class="ws_stats">
+
+                                    <!-- Eventhouses -->
+                                    <div class="ws_stat stat_eventhouse">
+                                        <div class="ws_stat_icon icon_eventhouse">
+                                            <i class="fa fa-bolt"/>
+                                        </div>
+                                        <div class="ws_stat_info">
+                                            <div class="ws_stat_count">
+                                                <field name="eventhouse_count"/>
+                                            </div>
+                                            <div class="ws_stat_label">Eventhouses</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Datasets -->
+                                    <div class="ws_stat stat_dataset">
+                                        <div class="ws_stat_icon icon_dataset">
+                                            <i class="fa fa-th"/>
+                                        </div>
+                                        <div class="ws_stat_info">
+                                            <div class="ws_stat_count">
+                                                <field name="dataset_count"/>
+                                            </div>
+                                            <div class="ws_stat_label">Datasets</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Reports -->
+                                    <div class="ws_stat stat_report">
+                                        <div class="ws_stat_icon icon_report">
+                                            <i class="fa fa-bar-chart"/>
+                                        </div>
+                                        <div class="ws_stat_info">
+                                            <div class="ws_stat_count">
+                                                <field name="report_count"/>
+                                            </div>
+                                            <div class="ws_stat_label">Reports</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Databases -->
+                                    <div class="ws_stat stat_database">
+                                        <div class="ws_stat_icon icon_database">
+                                            <i class="fa fa-database"/>
+                                        </div>
+                                        <div class="ws_stat_info">
+                                            <div class="ws_stat_count">
+                                                <field name="database_count"/>
+                                            </div>
+                                            <div class="ws_stat_label">Databases</div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Workspace Search View -->
+    <record id="view_powerbi_workspace_search" model="ir.ui.view">
+        <field name="name">powerbi.workspace.search</field>
+        <field name="model">powerbi.workspace</field>
+        <field name="arch" type="xml">
+            <search string="Power BI Workspaces">
+                <field name="workspace_name"/>
+                <field name="workspace_id"/>
+                <field name="config_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="To Publish" name="to_publish" domain="[('state', '=', 'to_publish')]"/>
+                <filter string="Published" name="published" domain="[('state', '=', 'published')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Configuration" name="config" domain="[]" context="{'group_by': 'config_id'}"/>
+                    <filter string="Company" name="company" domain="[]" context="{'group_by': 'company_id'}"/>
+                    <filter string="Status" name="status" domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Workspace Search View -->
+    <record id="view_powerbi_workspace_search" model="ir.ui.view">
+        <field name="name">powerbi.workspace.search</field>
+        <field name="model">powerbi.workspace</field>
+        <field name="arch" type="xml">
+            <search string="Power BI Workspaces">
+                <field name="workspace_name"/>
+                <field name="workspace_id"/>
+                <field name="config_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="To Publish" name="to_publish" domain="[('state', '=', 'to_publish')]"/>
+                <filter string="Published" name="published" domain="[('state', '=', 'published')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Configuration" name="config" domain="[]" context="{'group_by': 'config_id'}"/>
+                    <filter string="Company" name="company" domain="[]" context="{'group_by': 'company_id'}"/>
+                    <filter string="Status" name="status" domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Workspace Action -->
+    <record id="action_powerbi_workspace" model="ir.actions.act_window">
+        <field name="name">Workspaces</field>
+        <field name="res_model">powerbi.workspace</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_powerbi_workspace_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Power BI Workspace
+            </p>
+            <p>
+                Workspaces are containers that hold your Power BI content including
+                eventhouses, datasets, reports, and dashboards.
+            </p>
+        </field>
+    </record>
+
+
+</odoo>

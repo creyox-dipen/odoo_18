@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- KQL Database List View -->
+    <record id="view_powerbi_kql_database_list" model="ir.ui.view">
+        <field name="name">powerbi.kql.database.list</field>
+        <field name="model">powerbi.kql.database</field>
+        <field name="arch" type="xml">
+            <list string="KQL Databases" decoration-success="state=='published'">
+                <field name="database_name"/>
+                <field name="database_id"/>
+                <field name="eventhouse_id"/>
+                <field name="workspace_id"/>
+                <field name="state" widget="badge" decoration-success="state=='published'"/>
+                <field name="created_on"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- KQL Database Form View -->
+    <record id="view_powerbi_kql_database_form" model="ir.ui.view">
+        <field name="name">powerbi.kql.database.form</field>
+        <field name="model">powerbi.kql.database</field>
+        <field name="arch" type="xml">
+            <form string="KQL Database">
+                <header>
+                    <button name="action_create_database" string="Create in Power BI" type="object"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+
+                    <button name="action_sync_database" string="Sync from Power BI" type="object"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,to_publish,published"/>
+                </header>
+                <sheet>
+
+                    <widget name="web_ribbon" title="Published" bg_color="text-bg-success" invisible="state != 'published'"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="database_name" placeholder="e.g., Sales Database"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="config_id"/>
+                            <field name="eventhouse_id"/>
+                            <field name="workspace_id"/>
+                            <field name="database_id" readonly="1"/>
+                        </group>
+                        <group name="service_urls" string="Service URLs">
+                            <field name="query_service_uri" readonly="1" widget="url"/>
+                            <field name="ingestion_service_uri" readonly="1" widget="url"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the purpose of this database..."/>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- KQL Database Search View -->
+    <record id="view_powerbi_kql_database_search" model="ir.ui.view">
+        <field name="name">powerbi.kql.database.search</field>
+        <field name="model">powerbi.kql.database</field>
+        <field name="arch" type="xml">
+            <search string="KQL Databases">
+                <field name="database_name"/>
+                <field name="database_id"/>
+                <field name="eventhouse_id"/>
+                <field name="workspace_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Published" name="published" domain="[('state', '=', 'published')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Eventhouse" name="eventhouse" domain="[]" context="{'group_by': 'eventhouse_id'}"/>
+                    <filter string="Workspace" name="workspace" domain="[]" context="{'group_by': 'workspace_id'}"/>
+                    <filter string="Status" name="status" domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- KQL Database Action -->
+    <record id="action_powerbi_kql_database" model="ir.actions.act_window">
+        <field name="name">KQL Databases</field>
+        <field name="res_model">powerbi.kql.database</field>
+        <field name="view_mode">lists,form</field>
+        <field name="search_view_id" ref="view_powerbi_kql_database_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first KQL Database
+            </p>
+            <p>
+                KQL Databases are optimized for Kusto Query Language and provide
+                high-speed querying capabilities for big data analytics.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_powerbi_pipeline_stage_form" model="ir.ui.view">
+        <field name="name">powerbi.pipeline.stage.form</field>
+        <field name="model">powerbi.pipeline.stage</field>
+        <field name="arch" type="xml">
+            <form string="Pipeline Stage" create="0">
+                <header>
+                    <button name="action_deploy_to_next_stage"
+                            string="🚀 Deploy to Next Stage"
+                            type="object"
+                            class="btn-primary"/>
+                    <button name="action_assign_workspace_to_stage"
+                            string="Assign Workspace"
+                            type="object"
+                            class="btn-success"/>
+                    <button name="action_unassign_workspace_from_stage"
+                            string="Unassign Workspace"
+                            type="object"
+                            class="btn-danger"/>
+                </header>
+                <sheet>
+
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="sequence"/>
+                            <field name="pipeline_id"/>
+                            <field name="workspace_id"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="Select a published workspace..."/>
+                        </group>
+
+                    </group>
+
+                    <group string="Description">
+                        <field name="description" nolabel="1" placeholder="Stage description..."/>
+                    </group>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

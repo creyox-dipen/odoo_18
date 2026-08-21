@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Pipeline List View -->
+    <record id="view_powerbi_pipeline_tree" model="ir.ui.view">
+        <field name="name">powerbi.pipeline.list</field>
+        <field name="model">powerbi.pipeline</field>
+        <field name="arch" type="xml">
+            <list string="Pipelines" create="0">
+                <field name="name"/>
+                <field name="pipeline_id"/>
+                <field name="config_id"/>
+
+            </list>
+        </field>
+    </record>
+
+    <!-- Pipeline Form View -->
+    <record id="view_powerbi_pipeline_form" model="ir.ui.view">
+        <field name="name">powerbi.pipeline.form</field>
+        <field name="model">powerbi.pipeline</field>
+        <field name="arch" type="xml">
+            <form string="Pipeline" create="0">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_stages" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <field name="stage_count" widget="statinfo" string="Stages"/>
+                        </button>
+                    </div>
+
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g., Daily Sales Data Pipeline"/>
+                        </h1>
+                    </div>
+
+
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="sequence"/>
+                            <field name="pipeline_id"/>
+                            <field name="config_id"/>
+
+                        </group>
+
+                    </group>
+
+
+                    <notebook>
+
+
+                        <page string="Pipeline Stages" name="stages">
+                            <field name="stage_ids" nolabel="1">
+                                <list editable="bottom" create="0">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="stage_order"/>
+                                </list>
+                            </field>
+                        </page>
+
+
+
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the purpose of this pipeline..."/>
+                        </page>
+
+
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Pipeline Kanban View -->
+    <record id="view_pipeline_kanban" model="ir.ui.view">
+        <field name="name">powerbi.pipeline.kanban</field>
+        <field name="model">powerbi.pipeline</field>
+        <field name="arch" type="xml">
+            <kanban class="o_powerbi_pipeline_kanban" create="0">
+
+                <field name="name"/>
+                <field name="stage_kanban_json"/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="pipeline_main_card">
+
+                            <div class="pipeline_header">
+                                <div class="pipeline_icon">
+                                    <i class="fa fa-sitemap"/>
+                                </div>
+                                <div class="pipeline_name">
+                                    <field name="name"/>
+                                </div>
+                            </div>
+
+                            <div class="pipeline_divider"/>
+
+                            <div class="pipeline_stage_wrapper">
+                                <t t-set="stages" t-value="JSON.parse(record.stage_kanban_json.value or '[]')"/>
+                                <t t-if="stages and stages.length">
+                                    <t t-foreach="stages" t-as="stage">
+                                        <div class="stage_3d">
+                                            <div class="stage_inner">
+                                                <span class="stage_num">
+                                                    0<t t-esc="stage_index + 1"/>
+                                                </span>
+                                                <span class="stage_label">
+                                                    <t t-esc="stage.name"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </t>
+                                <t t-else="">
+                                    <div class="no_stage_wrap">
+                                        <i class="fa fa-inbox"/>
+                                        <span class="no_stage_text">No Stages Defined</span>
+                                    </div>
+                                </t>
+                            </div>
+
+                        </div>
+                    </t>
+                </templates>
+
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Pipeline Action -->
+    <record id="action_powerbi_pipeline" model="ir.actions.act_window">
+        <field name="name">Pipelines</field>
+        <field name="res_model">powerbi.pipeline</field>
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+
+</odoo>

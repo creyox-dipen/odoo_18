@@ -1,0 +1,176 @@
+.o_powerbi_workspace_kanban {
+
+    /* Fix Odoo default fixed-width record */
+    .o_kanban_record {
+        width: auto !important;
+        min-width: 0 !important;
+        flex: 0 0 auto !important;
+    }
+
+    .ws_card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #dde0ea;
+        box-shadow: 0 1px 0 #fff inset, 0 4px 16px rgba(0, 0, 0, 0.07);
+        overflow: hidden;
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+        &:hover {
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+    }
+
+    /* Top teal accent bar */
+    .ws_accent {
+        height: 4px;
+        background: linear-gradient(90deg, #9ddedd 0%, #00A09D 50%, #00524F 100%);
+    }
+
+    .ws_body { padding: 15px 15px 14px; }
+
+    /* ── Header ── */
+    .ws_header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .ws_title_wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .ws_icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(145deg, #00bbb8, #007A78);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 16px;
+        flex-shrink: 0;
+        box-shadow: 0 3px 0 #005A58, 0 4px 8px rgba(0, 160, 157, 0.28);
+    }
+
+    .ws_text { min-width: 0; }
+
+    .ws_name {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #1e2a3a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ws_id {
+        font-size: 10px;
+        color: #9aa5b8;
+        margin-top: 2px;
+        font-family: 'Courier New', monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+    }
+
+    /* ── State Badge ── */
+    .ws_state {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .ws_state_dot { width: 5px; height: 5px; border-radius: 50%; }
+
+    .state_draft      { background: #f0f2f7; color: #6b7a99; .ws_state_dot { background: #9aa3b8; } }
+    .state_to_publish { background: #e0f7f6; color: #007A78; .ws_state_dot { background: #00A09D; } }
+    .state_published  { background: #ccf0ee; color: #005A58; .ws_state_dot { background: #00706E; } }
+    .state_error      { background: #fde8e8; color: #c0392b; .ws_state_dot { background: #e74c3c; } }
+
+    /* ── Divider ── */
+    .ws_divider {
+        height: 1px;
+        background: linear-gradient(90deg, #cceeed, #e8eaf0, transparent);
+        margin-bottom: 12px;
+    }
+
+    /* ── Stats 2×2 Grid ── */
+    .ws_stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+    }
+
+    .ws_stat {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 9px 10px;
+        border-radius: 11px;
+        border: 1px solid transparent;
+        transition: transform 0.15s, box-shadow 0.15s;
+        cursor: default;
+
+        &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.09);
+        }
+    }
+
+    .stat_eventhouse { background: #e8faf9; border-color: #b8ecea; }
+    .stat_dataset    { background: #e4f5f4; border-color: #a8e4e2; }
+    .stat_report     { background: #dff0ef; border-color: #96d8d6; }
+    .stat_database   { background: #d8eceb; border-color: #80ccca; }
+
+    .ws_stat_icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        flex-shrink: 0;
+        color: #fff;
+    }
+
+    /* 3D teal-spectrum icon blocks */
+    .icon_eventhouse { background: linear-gradient(145deg, #5ecfcd, #2db8b5); box-shadow: 0 2px 0 #1a8a88; }
+    .icon_dataset    { background: linear-gradient(145deg, #12b8b5, #00A09D); box-shadow: 0 2px 0 #00706E; }
+    .icon_report     { background: linear-gradient(145deg, #008f8c, #007A78); box-shadow: 0 2px 0 #005A58; }
+    .icon_database   { background: linear-gradient(145deg, #006260, #00524F); box-shadow: 0 2px 0 #003330; }
+
+    .ws_stat_info { min-width: 0; }
+
+    .ws_stat_count {
+        font-size: 16px;
+        font-weight: 800;
+        color: #1e2a3a;
+        line-height: 1;
+    }
+
+    .ws_stat_label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #7a8fa8;
+        margin-top: 2px;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+}

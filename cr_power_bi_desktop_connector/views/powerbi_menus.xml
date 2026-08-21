@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Menu -->
+    <menuitem id="menu_powerbi_connector_root"
+              name="Power BI Connector"
+              sequence="100"
+              web_icon="cr_power_bi_desktop_connector,static/description/icon.png"/>
+
+    <!-- Workspace Menu -->
+    <menuitem id="menu_powerbi_workspace"
+              name="Workspaces"
+              parent="menu_powerbi_connector_root"
+              sequence="10"
+              action="action_powerbi_workspace"/>
+
+    <!-- Power BI Reports Menu -->
+    <menuitem id="menu_powerbi_reports_submenu"
+              name="Power BI Reports"
+              parent="menu_powerbi_connector_root"
+              sequence="20"/>
+
+    <menuitem id="menu_powerbi_report"
+              name="Reports"
+              parent="menu_powerbi_reports_submenu"
+              sequence="1"
+              action="action_powerbi_report"/>
+
+    <menuitem id="menu_powerbi_dashboard_view"
+              name="Dashboards"
+              parent="menu_powerbi_reports_submenu"
+              sequence="2"
+              action="action_powerbi_dashboard_list"/>
+
+    <!-- Data Pipelines Menu -->
+    <menuitem id="menu_powerbi_pipelines"
+              name="Data Pipelines"
+              parent="menu_powerbi_connector_root"
+              sequence="15"
+              action="action_powerbi_pipeline"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_powerbi_configuration"
+              name="Configuration"
+              parent="menu_powerbi_connector_root"
+              sequence="100"
+              action="action_powerbi_config"/>
+
+    <!-- Data Processing Logs -->
+    <menuitem id="menu_cr_data_processing_log"
+              name="Data Processing Logs"
+              parent="menu_powerbi_connector_root"
+              action="action_cr_data_processing_log"
+              sequence="998"/>
+
+</odoo>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Dashboard List View -->
+    <record id="view_powerbi_dashboard_list" model="ir.ui.view">
+        <field name="name">powerbi.dashboard.list</field>
+        <field name="model">powerbi.dashboard</field>
+        <field name="arch" type="xml">
+            <list string="Power BI Dashboards" decoration-success="state=='published'" create="0">
+                <field name="dashboard_name"/>
+                <field name="dashboard_id"/>
+                <field name="workspace_id"/>
+                <field name="tile_count"/>
+                <field name="state" widget="badge" decoration-success="state=='published'"/>
+                <field name="created_on"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Dashboard Form View -->
+    <record id="view_powerbi_dashboard_form" model="ir.ui.view">
+        <field name="name">powerbi.dashboard.form</field>
+        <field name="model">powerbi.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Power BI Dashboard" create="0">
+                <header>
+                    <button name="action_open_dashboard" string="Open in Power BI" type="object"
+                            icon="fa-external-link" invisible="state == 'draft' or not web_url"/>
+                    <button name="action_embed_dashboard" string="View Embedded" type="object"
+            class="btn-primary" icon="fa-tv"
+            invisible="state == 'draft' or not dashboard_id"/>
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,published"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_tiles" type="object" class="oe_stat_button" icon="fa-th">
+                            <field name="tile_count" widget="statinfo" string="Tiles"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Published" bg_color="text-bg-success" invisible="state != 'published'"/>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="dashboard_name" placeholder="e.g., Executive Dashboard"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="config_id"/>
+                            <field name="workspace_id"/>
+                            <field name="dashboard_id" readonly="1"/>
+                        </group>
+                        <group name="urls" string="URLs" invisible="state == 'draft'">
+                            <field name="web_url" widget="url" readonly="1"/>
+                            <field name="embed_url" widget="url" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Tiles" name="tiles">
+                            <field name="tile_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="tile_title"/>
+                                    <field name="subtitle"/>
+                                    <field name="report_id"/>
+                                    <field name="dataset_id"/>
+                                    <field name="tile_id" readonly="1"/>
+                                </list>
+                                <form string="Dashboard Tile">
+                                    <group>
+                                        <group string="Basic Information">
+                                            <field name="sequence"/>
+                                            <field name="tile_title"/>
+                                            <field name="subtitle"/>
+                                        </group>
+                                        <group string="Source">
+                                            <field name="report_id"/>
+                                            <field name="dataset_id"/>
+                                            <field name="tile_id" readonly="1"/>
+                                        </group>
+                                    </group>
+                                    <group string="Embedding">
+                                        <field name="embed_url" widget="url" readonly="1"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Describe the purpose of this dashboard..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Dashboard Search View -->
+    <record id="view_powerbi_dashboard_search" model="ir.ui.view">
+        <field name="name">powerbi.dashboard.search</field>
+        <field name="model">powerbi.dashboard</field>
+        <field name="arch" type="xml">
+            <search string="Power BI Dashboards">
+                <field name="dashboard_name"/>
+                <field name="dashboard_id"/>
+                <field name="workspace_id"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Published" name="published" domain="[('state', '=', 'published')]"/>
+                <separator/>
+                <filter string="Featured" name="featured" domain="[('is_featured', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Workspace" name="workspace" domain="[]" context="{'group_by': 'workspace_id'}"/>
+                    <filter string="Status" name="status" domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Dashboard Action -->
+    <record id="action_powerbi_dashboard_list" model="ir.actions.act_window">
+        <field name="name">Dashboards</field>
+        <field name="res_model">powerbi.dashboard</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_powerbi_dashboard_search"/>
+    </record>
+
+    <!-- Main Dashboard Action (for Dashboard Menu) -->
+    <record id="action_powerbi_dashboard_main" model="ir.actions.act_window">
+        <field name="name">Power BI Dashboard</field>
+        <field name="res_model">powerbi.dashboard</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_featured', '=', True), ('state', '=', 'published')]</field>
+        <field name="context">{'search_default_published': 1}</field>
+    </record>
+
+</odoo>

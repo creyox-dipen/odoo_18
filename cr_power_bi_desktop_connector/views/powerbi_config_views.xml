@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+
+    <!-- ================================================================
+         STANDALONE VIEWS for cr.power.bi.configuration
+         (also re-used inside the Desktop Connector tab popup)
+    ================================================================ -->
+    <record id="view_power_bi_configuration_form" model="ir.ui.view">
+        <field name="name">PowerBi Desktop Connector Configuration</field>
+        <field name="model">cr.power.bi.configuration</field>
+        <field name="arch" type="xml">
+            <form string="Desktop Connector Settings">
+                <header>
+                    <button string="Generate Token"
+                            type="object"
+                            name="generate_token"
+                            class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group string="Connector Details">
+                        <field name="cr_connector_url" readonly="1"/>
+                        <field name="cr_access_token" readonly="1"/>
+                    </group>
+                    <div class="alert alert-info mt-3" role="alert">
+                        <i class="fa fa-info-circle me-1"/>
+                        Click <strong>Generate Token</strong> in the header to create or
+                        rotate the access token. Copy the token and URL into your Power BI
+                        Desktop connector settings.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_power_bi_configuration_list" model="ir.ui.view">
+        <field name="name">PowerBi Desktop Connector Configuration list</field>
+        <field name="model">cr.power.bi.configuration</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="cr_connector_url"/>
+                <field name="cr_access_token"/>
+                <button string="Generate Token"
+                        type="object"
+                        name="generate_token"
+                        class="btn-primary btn-sm"
+                        icon="fa-key"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         POWER BI CONFIG — LIST VIEW
+    ================================================================ -->
+    <record id="view_powerbi_config_list" model="ir.ui.view">
+        <field name="name">powerbi.config.list</field>
+        <field name="model">powerbi.config</field>
+        <field name="arch" type="xml">
+            <list string="Power BI Configurations"
+                  decoration-success="state=='connected'"
+                  decoration-danger="state=='error'">
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="workspace_count"/>
+                <field name="eventhouse_count"/>
+                <field name="database_count"/>
+                <field name="dataset_count"/>
+                <field name="report_count"/>
+                <field name="state" widget="badge"
+                       decoration-success="state=='connected'"
+                       decoration-danger="state=='error'"/>
+                <field name="last_sync_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         POWER BI CONFIG — SEARCH VIEW
+    ================================================================ -->
+    <record id="view_powerbi_config_search" model="ir.ui.view">
+        <field name="name">powerbi.config.search</field>
+        <field name="model">powerbi.config</field>
+        <field name="arch" type="xml">
+            <search string="Power BI Configurations">
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <filter string="Active"    name="active"    domain="[('active', '=', True)]"/>
+                <filter string="Inactive"  name="inactive"  domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Connected" name="connected" domain="[('state', '=', 'connected')]"/>
+                <filter string="Error"     name="error"     domain="[('state', '=', 'error')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Company" name="company" domain="[]" context="{'group_by': 'company_id'}"/>
+                    <filter string="Status"  name="status"  domain="[]" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         POWER BI CONFIG — FORM VIEW  (main merged form)
+    ================================================================ -->
+    <record id="view_powerbi_config_form" model="ir.ui.view">
+        <field name="name">powerbi.config.form</field>
+        <field name="model">powerbi.config</field>
+        <field name="arch" type="xml">
+            <form string="Power BI Configuration">
+                <header>
+                    <button name="action_test_connection"
+                            string="Test Connection"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state == 'connected'"/>
+                    <button name="action_sync_workspaces"
+                            string="Fetch Workspaces"
+                            type="object"
+                            class="btn-info"
+                            invisible="state != 'connected'"/>
+                    <button name="action_fetch_pipelines"
+                            string="Fetch Pipelines"
+                            type="object"
+                            class="btn-info"
+                            invisible="state != 'connected'"/>
+                    <button name="action_generate_token"
+                            string="Generate Token"
+                            type="object"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,connected"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_workspaces" type="object"
+                                class="oe_stat_button" icon="fa-folder-open">
+                            <field name="workspace_count" widget="statinfo" string="Workspaces"/>
+                        </button>
+                        <button name="action_view_eventhouses" type="object"
+                                class="oe_stat_button" icon="fa-database">
+                            <field name="eventhouse_count" widget="statinfo" string="Eventhouses"/>
+                        </button>
+                        <button name="action_view_databases" type="object"
+                                class="oe_stat_button" icon="fa-server">
+                            <field name="database_count" widget="statinfo" string="Databases"/>
+                        </button>
+                        <button name="action_view_datasets" type="object"
+                                class="oe_stat_button" icon="fa-cubes">
+                            <field name="dataset_count" widget="statinfo" string="Datasets"/>
+                        </button>
+                        <button name="action_view_reports" type="object"
+                                class="oe_stat_button" icon="fa-bar-chart">
+                            <field name="report_count" widget="statinfo" string="Reports"/>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Connected" bg_color="text-bg-success"
+                            invisible="state != 'connected'"/>
+                    <widget name="web_ribbon" title="Error"     bg_color="text-bg-danger"
+                            invisible="state != 'error'"/>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g., Production Power BI"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                        <group name="status_info" string="Status">
+                            <field name="last_sync_date" readonly="1"/>
+                            <field name="token_expiry"   readonly="1" invisible="not access_token"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+
+                        <!-- ── Authentication ──────────────────────────────────── -->
+                        <page string="Authentication" name="authentication">
+                            <group>
+                                <group string="Azure AD Credentials">
+                                    <field name="tenant_id"     password="True"/>
+                                    <field name="client_id"     password="True"/>
+                                    <field name="client_secret" password="True"/>
+                                </group>
+                                <group string="Access Token" invisible="not access_token">
+                                    <field name="access_token" password="True" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="Connection Test Result"
+                                   invisible="not connection_test_result">
+                                <field name="connection_test_result" readonly="1" nolabel="1"/>
+                            </group>
+                        </page>
+
+                        <page string="Desktop Connector" name="desktop_connector">
+                            <group string="Odoo Connector Settings">
+                                <field name="cr_connector_url" readonly="1"/>
+                                <field name="cr_access_token" readonly="1"/>
+                            </group>
+                            <button string="Generate Token"
+                                    name="action_generate_connector_token"
+                                    type="object"
+                                    class="btn btn-primary"
+                                    icon="fa-key"/>
+                        </page>
+
+                        <!-- ── Workspaces ──────────────────────────────────────── -->
+                        <page string="Workspaces" name="workspaces">
+                            <field name="workspace_ids" nolabel="1">
+                                <list>
+                                    <field name="workspace_name"/>
+                                    <field name="workspace_id"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="eventhouse_count"/>
+                                    <field name="database_count"/>
+                                    <field name="dataset_count"/>
+                                    <field name="report_count"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ── Notes ───────────────────────────────────────────── -->
+                        <page string="Notes" name="notes">
+                            <field name="notes"
+                                   placeholder="Add any configuration notes here..."/>
+                        </page>
+
+                    </notebook>
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         POWER BI CONFIG — MAIN ACTION
+    ================================================================ -->
+    <record id="action_powerbi_config" model="ir.actions.act_window">
+        <field name="name">Power BI Configurations</field>
+        <field name="res_model">powerbi.config</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_powerbi_config_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Power BI Configuration
+            </p>
+            <p>
+                Configure your Microsoft Power BI connection settings to start
+                syncing data between Odoo and Power BI.
+            </p>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         ACTION: Opens cr.power.bi.configuration in a popup dialog.
+         Used by the "Open Connector Settings" button on the Desktop
+         Connector tab. Pure view — no Python changes needed.
+    ================================================================ -->
+    <record id="action_power_bi_configuration_config" model="ir.actions.act_window">
+        <field name="name">PowerBi Desktop Connector</field>
+        <field name="res_model">cr.power.bi.configuration</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_power_bi_configuration_list"/>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
