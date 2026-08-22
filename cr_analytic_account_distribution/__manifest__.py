@@ -5,6 +5,7 @@
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "support@creyox.com",
+    'live_test_url': 'https://www.creyox.com/helpdesk?module_tech_name=cr_analytic_account_distribution&version=18.0',
     "category": "Warehouse",
     "summary": """
     The Analytic Account & Distribution Manager for Stock automatically transfers analytic accounts or analytic distribution from Sales and Purchase Orders to Delivery and Receipt operations, eliminating manual data entry and ensuring accurate financial tracking. It supports analytic configuration at both Picking and Stock Move levels, maintains a complete audit trail across inventory operations, and enables precise multi-plan, percentage-based cost allocation for better visibility into operational costs and profitability.
