@@ -809,9 +809,27 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             # memo lives at data.extra.memo in the Channable payload
             memo = inner_data.get('extra', {}).get('memo', '')
 
+            # Resolve sale_channel_id based on country (Belgium: 3/42, Netherlands: 4/41)
+            is_fbb = str(market_ref).upper().endswith('-FBB')
+            sale_channel_id = False
+            # Read country code directly from the Channable payload to avoid reused partner record country overrides
+            raw_country = (shipping_data.get('country_code') or shipping_data.get('country') or 
+                           billing_data.get('country_code') or billing_data.get('country') or '').strip()
+            country_code_upper = raw_country[:2].upper()
+            if country_code_upper == 'BE':
+                sale_channel_id = 42 if is_fbb else 3
+            elif country_code_upper == 'NL':
+                sale_channel_id = 41 if is_fbb else 4
+
+            if sale_channel_id:
+                _logger.info("Determined sale_channel_id %s for Channable order %s (country: %s, FBB: %s)", sale_channel_id, channable_id, raw_country, is_fbb)
+
+            name_prefix = 'LVB' if is_fbb else 'BL'
+
             # ── Build sale.order vals ─────────────────────────────────────────
             order_vals = {
                 # ── Core sale.order fields ─────────────────────────────────────
+                'name': name_prefix + (market_ref or channable_id),
                 'partner_id': invoice_partner.id,
                 'partner_invoice_id': invoice_partner.id,
                 'partner_shipping_id': shipping_partner.id,
@@ -824,7 +842,8 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 'fiscal_position_id': fiscal_position_id,
                 'team_id': marketplace.team_id.id if marketplace.team_id else False,
                 'pricelist_id': marketplace.pricelist_id.id if marketplace.pricelist_id else False,
-                'note': memo,
+                'x_studio_opmerkingen': memo,
+                'sale_channel_id': sale_channel_id,
                 # ── Channable-specific fields ─────────────────────────────────
                 'channable_marketplace_id': marketplace.id,
                 'channable_order_id': channable_id,
@@ -852,7 +871,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     order_vals['order_line'] = [(5, 0, 0)] + order_lines
                 else:
                     # For confirmed orders, strictly limit updates to safe fields
-                    safe_fields = ['note', 'channable_status', 'channable_market_ref']
+                    safe_fields = ['channable_status', 'channable_market_ref', 'x_studio_opmerkingen']
                     order_vals = {k: v for k, v in order_vals.items() if k in safe_fields}
                 
                 updates_mapping.append((existing_info['id'], order_vals, ch_total, channable_id))

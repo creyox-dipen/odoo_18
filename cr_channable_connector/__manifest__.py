@@ -6,7 +6,7 @@
     'website': "https://www.creyox.com",
     "support": "https://www.creyox.com/helpdesk",
     "live_test_url": "https://www.creyox.com/helpdesk?module_tech_name=cr_channable_connector&version=18.0",
-    'version': '18.0.0.1',
+    'version': '18.0.0.2',
     'category': 'Sales',
     'summary': 
     """
