@@ -137,7 +137,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 'name': full_name,
                 'email': email,
                 'phone': billing_data.get('phone', ''),
-                'street': billing_data.get('street', ''),
+                'street': (billing_data.get('address1') or billing_data.get('street') or '').strip(),
                 'street2': billing_data.get('street2', ''),
                 'city': billing_data.get('city', ''),
                 'zip': billing_data.get('zip_code', ''),
@@ -184,7 +184,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
         Partner = self.env['res.partner']
 
-        ship_street = (shipping_data.get('street') or '').strip()
+        ship_street = (shipping_data.get('address1') or shipping_data.get('street') or '').strip()
         ship_city = (shipping_data.get('city') or '').strip()
         ship_zip = (shipping_data.get('zip_code') or '').strip()
 

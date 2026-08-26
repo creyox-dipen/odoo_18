@@ -17,3 +17,4 @@
 - Set sale_channel_id on sales orders dynamically based on country and FBB suffix (Belgium: 3, Netherlands: 4, Belgium with -FBB: 42, Netherlands with -FBB: 41).
 - Set sales order name to 'BL' or 'LVB' (for FBB orders) + Market Reference number.
 - Sync Channable order memo directly to the custom Odoo field x_studio_opmerkingen instead of the standard note field.
+- Map Channable API address1 payload (containing combined street and house number) to Odoo street field during partner creation.
