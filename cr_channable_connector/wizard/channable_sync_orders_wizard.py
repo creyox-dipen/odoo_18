@@ -83,7 +83,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             partner_cache = {}
 
         Partner = self.env['res.partner']
-        email = (billing_data.get('email') or '').strip().lower()
+        email = str(billing_data.get('email') or '').strip().lower()
 
         # Check in-memory cache first
         if email and email in partner_cache:
@@ -116,7 +116,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
             state_code = billing_data.get('state_code') or billing_data.get('state', '')
             if country and state_code:
-                state_code_upper = (state_code or '').strip().upper()
+                state_code_upper = str(state_code or '').strip().upper()
                 state_key = (country.id, state_code_upper)
                 if state_key in state_cache:
                     state = state_cache[state_key]
@@ -128,19 +128,34 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     if state:
                         state_cache[state_key] = state
 
-            fname = (billing_data.get('first_name') or '').strip()
-            lname = (billing_data.get('last_name') or '').strip()
+            fname = str(billing_data.get('first_name') or '').strip()
+            lname = str(billing_data.get('last_name') or '').strip()
             full_name = f'{fname} {lname}'.strip() or 'Channable Customer'
-            company_name = (billing_data.get('company') or '').strip()
+            company_name = str(billing_data.get('company') or '').strip()
+            billing_street_name = str(billing_data.get('street') or '').strip()
+            billing_house_number = str(billing_data.get('house_number') or '').strip()
+            billing_house_ext = str(billing_data.get('house_number_ext') or '').strip()
+
+            billing_parts = []
+            if billing_street_name:
+                billing_parts.append(billing_street_name)
+            if billing_house_number:
+                billing_parts.append(billing_house_number)
+            if billing_house_ext:
+                billing_parts.append(billing_house_ext)
+
+            billing_street = " ".join(billing_parts)
+            if not billing_street:
+                billing_street = str(billing_data.get('address1') or '').strip()
 
             partner_vals = {
                 'name': full_name,
                 'email': email,
-                'phone': billing_data.get('phone', ''),
-                'street': (billing_data.get('address1') or billing_data.get('street') or '').strip(),
-                'street2': billing_data.get('street2', ''),
-                'city': billing_data.get('city', ''),
-                'zip': billing_data.get('zip_code', ''),
+                'phone': str(billing_data.get('phone') or '').strip(),
+                'street': billing_street,
+                'street2': str(billing_data.get('street2') or '').strip(),
+                'city': str(billing_data.get('city') or '').strip(),
+                'zip': str(billing_data.get('zip_code') or '').strip(),
                 'vat': billing_data.get('vat') or marketplace.default_partner_vat or False,
                 'lang': (
                     marketplace.language_id.code
@@ -184,9 +199,24 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
         Partner = self.env['res.partner']
 
-        ship_street = (shipping_data.get('address1') or shipping_data.get('street') or '').strip()
-        ship_city = (shipping_data.get('city') or '').strip()
-        ship_zip = (shipping_data.get('zip_code') or '').strip()
+        ship_street_name = str(shipping_data.get('street') or '').strip()
+        ship_house_number = str(shipping_data.get('house_number') or '').strip()
+        ship_house_ext = str(shipping_data.get('house_number_ext') or '').strip()
+
+        ship_parts = []
+        if ship_street_name:
+            ship_parts.append(ship_street_name)
+        if ship_house_number:
+            ship_parts.append(ship_house_number)
+        if ship_house_ext:
+            ship_parts.append(ship_house_ext)
+
+        ship_street = " ".join(ship_parts)
+        if not ship_street:
+            ship_street = str(shipping_data.get('address1') or '').strip()
+
+        ship_city = str(shipping_data.get('city') or '').strip()
+        ship_zip = str(shipping_data.get('zip_code') or '').strip()
 
         # Quick equality check
         if (ship_street == (invoice_partner.street or '').strip()
@@ -216,7 +246,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
         state_code = shipping_data.get('state_code') or shipping_data.get('state', '')
         if country and state_code:
-            state_code_upper = (state_code or '').strip().upper()
+            state_code_upper = str(state_code or '').strip().upper()
             state_key = (country.id, state_code_upper)
             if state_key in state_cache:
                 state = state_cache[state_key]
@@ -228,8 +258,8 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 if state:
                     state_cache[state_key] = state
 
-        fname = (shipping_data.get('first_name') or '').strip()
-        lname = (shipping_data.get('last_name') or '').strip()
+        fname = str(shipping_data.get('first_name') or '').strip()
+        lname = str(shipping_data.get('last_name') or '').strip()
         ship_name = f'{fname} {lname}'.strip() or invoice_partner.name
 
         # Search for an existing delivery child under this partner
@@ -247,10 +277,10 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 'type': 'delivery',
                 'parent_id': invoice_partner.id,
                 'street': ship_street,
-                'street2': shipping_data.get('street2', ''),
+                'street2': str(shipping_data.get('street2') or '').strip(),
                 'city': ship_city,
                 'zip': ship_zip,
-                'phone': shipping_data.get('phone', '') or invoice_partner.phone,
+                'phone': str(shipping_data.get('phone') or '').strip() or invoice_partner.phone,
                 'email': invoice_partner.email,
             }
             if country:
@@ -842,7 +872,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 'fiscal_position_id': fiscal_position_id,
                 'team_id': marketplace.team_id.id if marketplace.team_id else False,
                 'pricelist_id': marketplace.pricelist_id.id if marketplace.pricelist_id else False,
-                'x_studio_opmerkingen': memo,
+                'comments': memo,
                 'sale_channel_id': sale_channel_id,
                 # ── Channable-specific fields ─────────────────────────────────
                 'channable_marketplace_id': marketplace.id,
@@ -871,7 +901,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     order_vals['order_line'] = [(5, 0, 0)] + order_lines
                 else:
                     # For confirmed orders, strictly limit updates to safe fields
-                    safe_fields = ['channable_status', 'channable_market_ref', 'x_studio_opmerkingen']
+                    safe_fields = ['channable_status', 'channable_market_ref', 'comments']
                     order_vals = {k: v for k, v in order_vals.items() if k in safe_fields}
                 
                 updates_mapping.append((existing_info['id'], order_vals, ch_total, channable_id))

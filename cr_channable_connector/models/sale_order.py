@@ -203,7 +203,7 @@ class SaleOrder(models.Model):
                         order.channable_market_ref = str(order_data['channel_order_id'])
                     # Sync the customer note / memo from Channable if present
                     if order_data.get('memo'):
-                        order.x_studio_opmerkingen = order_data['memo']
+                        order.comments = order_data['memo']
             except Exception as e:
                 order._channable_log_error('Sync Order Error', 'sync_order', e)
 
