@@ -872,7 +872,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 'fiscal_position_id': fiscal_position_id,
                 'team_id': marketplace.team_id.id if marketplace.team_id else False,
                 'pricelist_id': marketplace.pricelist_id.id if marketplace.pricelist_id else False,
-                'comments': memo,
+                'x_studio_opmerkingen': memo,
                 'sale_channel_id': sale_channel_id,
                 # ── Channable-specific fields ─────────────────────────────────
                 'channable_marketplace_id': marketplace.id,
@@ -901,7 +901,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     order_vals['order_line'] = [(5, 0, 0)] + order_lines
                 else:
                     # For confirmed orders, strictly limit updates to safe fields
-                    safe_fields = ['channable_status', 'channable_market_ref', 'comments']
+                    safe_fields = ['channable_status', 'channable_market_ref', 'x_studio_opmerkingen']
                     order_vals = {k: v for k, v in order_vals.items() if k in safe_fields}
                 
                 updates_mapping.append((existing_info['id'], order_vals, ch_total, channable_id))
