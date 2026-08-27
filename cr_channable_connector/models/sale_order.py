@@ -10,7 +10,6 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
-
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
@@ -109,6 +108,13 @@ class SaleOrder(models.Model):
 
     # ── Helpers ──────────────────────────────────────────────────────────────
 
+    def _find_channable_comments_field(self):
+        """Dynamically locate the field representing 'Comments' on sale.order, falling back to 'comments'."""
+        for fname, field in self._fields.items():
+            if field.string in ('Comments', 'comments'):
+                return fname
+        return 'comments'
+
     def _channable_get_connection_and_headers(self):
         """Return (connection, url_base, headers) for this order."""
         self.ensure_one()
@@ -203,7 +209,8 @@ class SaleOrder(models.Model):
                         order.channable_market_ref = str(order_data['channel_order_id'])
                     # Sync the customer note / memo from Channable if present
                     if order_data.get('memo'):
-                        order.x_studio_opmerkingen = order_data['memo']
+                        comments_field = order._find_channable_comments_field()
+                        order[comments_field] = order_data['memo']
             except Exception as e:
                 order._channable_log_error('Sync Order Error', 'sync_order', e)
 
