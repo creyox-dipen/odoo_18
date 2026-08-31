@@ -865,7 +865,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             # memo lives at data.extra.memo in the Channable payload
             memo = inner_data.get('extra', {}).get('memo', '')
 
-            # Resolve sale_channel_id based on country (Belgium: 3/42, Netherlands: 4/41)
+            # Resolve sale_channel_id based on country (Belgium: 28/42, Netherlands: 29/41)
             is_fbb = str(market_ref).upper().endswith('-FBB')
             sale_channel_id = False
             # Read country code directly from the Channable payload to avoid reused partner record country overrides
@@ -873,9 +873,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                            billing_data.get('country_code') or billing_data.get('country') or '').strip()
             country_code_upper = raw_country[:2].upper()
             if country_code_upper == 'BE':
-                sale_channel_id = 42 if is_fbb else 3
+                sale_channel_id = 42 if is_fbb else 28
             elif country_code_upper == 'NL':
-                sale_channel_id = 41 if is_fbb else 4
+                sale_channel_id = 41 if is_fbb else 29
 
             if sale_channel_id:
                 _logger.info("Determined sale_channel_id %s for Channable order %s (country: %s, FBB: %s)", sale_channel_id, channable_id, raw_country, is_fbb)

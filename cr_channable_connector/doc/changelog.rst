@@ -14,8 +14,9 @@
 18.0.0.2(Date: 24th Aug,2026)
 -------------------------------
 
-- Set sale_channel_id on sales orders dynamically based on country and FBB suffix (Belgium: 3, Netherlands: 4, Belgium with -FBB: 42, Netherlands with -FBB: 41).
+- Set sale_channel_id on sales orders dynamically based on country and FBB suffix (Belgium: 28, Netherlands: 29, Belgium with -FBB: 42, Netherlands with -FBB: 41).
 - Set sales order name to 'BL' or 'LVB' (for FBB orders) + Market Reference number.
 - Sync Channable order memo dynamically to a custom Odoo field labeled 'Comments' (falling back to 'comments') instead of the standard note field.
-- Map Channable API address components (street + house_number + house_number_ext) combined to Odoo street field during partner creation.
-- Update address, name, and phone details on existing partners if they already exist in Odoo.
+- Map Channable API address components (street + house_number + house_number_ext) combined to Odoo street field during partner creation (falling back to address1).
+- Automatically update and sync address, name, and phone details on existing billing and shipping partners when details differ, preventing cache bypass.
+- Cast incoming address metadata (house number, phone, zip code) to strings to prevent 'int' object strip crashes.
