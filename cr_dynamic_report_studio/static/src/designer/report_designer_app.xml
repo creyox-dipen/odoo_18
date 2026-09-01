@@ -1357,8 +1357,8 @@
                                         <label class="list-group-item list-group-item-action d-flex align-items-center py-3 border-bottom border-0 m-0" t-attf-style="background-color: {{ state.previewSelectedRecords.includes(record.id) ? '#eef2fb' : 'transparent' }}; cursor: pointer; border-bottom: 1px solid #f8f9fa !important;">
                                             <input class="form-check-input m-0 me-3 shadow-none" type="checkbox" t-att-checked="state.previewSelectedRecords.includes(record.id)" t-on-change="() => this.toggleRecordSelection(record.id)" style="width: 18px; height: 18px; border-color: #adb5bd;" />
                                             <div>
-                                                <div class="text-dark mb-1" style="font-size: 14px;"><t t-esc="record.name"/></div>
-                                                <div class="text-muted" style="font-size: 11px;">ID: <t t-esc="record.id"/></div>
+                                                <div class="text-dark mb-1" t-attf-style="font-size: 14px; color: {{ state.previewSelectedRecords.includes(record.id) ? '#212529' : 'inherit' }} !important;"><t t-esc="record.name"/></div>
+                                                <div class="text-muted" t-attf-style="font-size: 11px; color: {{ state.previewSelectedRecords.includes(record.id) ? '#6c757d' : 'inherit' }} !important;">ID: <t t-esc="record.id"/></div>
                                             </div>
                                         </label>
                                     </t>

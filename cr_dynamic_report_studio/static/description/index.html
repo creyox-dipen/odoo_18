@@ -131,9 +131,9 @@
                 <div class="px-md-5 px-4 pt-2 pb-5">
 
                     <!-- ✨ UNIQUE EDITOR MOCKUP BLOCK ✨ -->
-                    <div class="my-5 rounded-5 shadow-sm position-relative overflow-hidden" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="my-5 rounded-5 position-relative p-2 p-md-4" style="background-color: #f8fafc; border: 1px solid #cbd5e1; box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.07);">
                         <!-- Header -->
-                        <div class="p-5 text-center">
+                        <div class="p-4 p-md-5 text-center">
                             <h2 class="fw-bolder mb-3" style="color: #0f172a; font-size: 42px; letter-spacing: -1px;">
                                 A True <span style="color: #3b82f6;">Drag-and-Drop</span> Experience
                             </h2>
@@ -141,138 +141,669 @@
                                 No more guessing with XML. See exactly what your document will look like as you build it in real-time.
                             </p>
                         </div>
-                        
-                        <!-- Mac Window Mockup -->
-                        <div class="mx-auto mb-5" style="max-width: 1000px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #cbd5e1; overflow: hidden;">
-                            <!-- Window Toolbar -->
-                            <div class="d-flex align-items-center px-3 py-2" style="background-color: #f1f5f9; border-bottom: 1px solid #e2e8f0;">
-                                <div class="d-flex gap-2">
-                                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444;"></div>
-                                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #f59e0b;"></div>
-                                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #10b981;"></div>
+                        <!-- Desktop Interactive Anatomy (Hidden on Mobile) -->
+                        <div class="d-none d-xl-block mx-auto mb-5 position-relative" style="max-width: 750px;">
+                            
+                            <!-- The Main Large Image Box -->
+                            <div class="bg-white rounded-4 overflow-hidden position-relative w-100" style="z-index: 1; border: 1px solid #cbd5e1; box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.12);">
+                                <div class="d-flex align-items-center px-3 py-2 border-bottom" style="background-color: #f1f5f9;">
+                                    <div class="d-flex gap-2">
+                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444;"></div>
+                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #f59e0b;"></div>
+                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #10b981;"></div>
+                                    </div>
                                 </div>
+                                <img src="images/report_designer_light.png" alt="Drag and Drop Builder" class="img-fluid w-100 d-block">
+                                
+                                <!-- Precise Target Dots on the Image -->
+                                <div class="position-absolute rounded-circle" style="top: 25%; left: 8%; width: 18px; height: 18px; background-color: #3b82f6; border: 3px solid #ffffff; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.35), 0 4px 10px rgba(0,0,0,0.2); transform: translate(-50%, -50%); z-index: 20;"></div>
+                                <div class="position-absolute rounded-circle" style="top: 12%; right: 40%; width: 18px; height: 18px; background-color: #f59e0b; border: 3px solid #ffffff; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.35), 0 4px 10px rgba(0,0,0,0.2); transform: translate(50%, -50%); z-index: 20;"></div>
+                                <div class="position-absolute rounded-circle" style="top: 70%; left: 50%; width: 18px; height: 18px; background-color: #10b981; border: 3px solid #ffffff; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35), 0 4px 10px rgba(0,0,0,0.2); transform: translate(-50%, -50%); z-index: 20;"></div>
+                                <div class="position-absolute rounded-circle" style="top: 65%; right: 15%; width: 18px; height: 18px; background-color: #8b5cf6; border: 3px solid #ffffff; box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.35), 0 4px 10px rgba(0,0,0,0.2); transform: translate(50%, -50%); z-index: 20;"></div>
                             </div>
                             
-                            <!-- Window Body (Editor Image) -->
-                            <div class="w-100 bg-light d-flex align-items-center justify-content-center">
-                                <img src="images/report_designer_light.png" alt="Drag and Drop Builder Mockup" class="img-fluid w-100 d-block" style="border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+                            <!-- OUTSIDE BADGES & PRECISE LINES -->
+                            
+                            <!-- 1. Sidebar (Left) -->
+                            <div class="position-absolute p-3 rounded-4 bg-white" style="top: 15%; left: -240px; width: 220px; border: 1px solid #bfdbfe; border-left: 5px solid #3b82f6; box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15); z-index: 30;">
+                                <h6 class="mb-1 fw-bold" style="color: #0f172a; font-size: 14px;"><span style="color: #3b82f6; font-weight: 900;">1.</span> Components</h6>
+                                <p style="color: #64748b; font-size: 12px; margin-bottom: 0;">Drag and drop elements like Text, Fields, Images, Tables, Lines, and Page Breaks onto the canvas.</p>
+                            </div>
+                            <!-- Connecting Line 1 -->
+                            <div class="position-absolute" style="top: 25%; left: -20px; width: calc(8% + 20px); border-top: 4px dashed #3b82f6; opacity: 0.9; z-index: 10;"></div>
+                            
+                            <!-- 2. Toolbar (Right) -->
+                            <div class="position-absolute p-3 rounded-4 bg-white" style="top: 2%; right: -240px; width: 220px; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.15); z-index: 30;">
+                                <h6 class="mb-1 fw-bold" style="color: #0f172a; font-size: 14px;"><span style="color: #f59e0b; font-weight: 900;">2.</span> Action Toolbar</h6>
+                                <p style="color: #64748b; font-size: 12px; margin-bottom: 0;">Manage your report with one-click actions: Save, Undo, Redo, Delete, and Preview.</p>
+                            </div>
+                            <!-- Connecting Line 2 -->
+                            <div class="position-absolute" style="top: 12%; right: -20px; width: calc(40% + 20px); border-top: 4px dashed #f59e0b; opacity: 0.9; z-index: 10;"></div>
+                            
+                            <!-- 3. Canvas (Left) -->
+                            <div class="position-absolute p-3 rounded-4 bg-white" style="top: 60%; left: -240px; width: 220px; border: 1px solid #a7f3d0; border-left: 5px solid #10b981; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.15); z-index: 30;">
+                                <h6 class="mb-1 fw-bold" style="color: #0f172a; font-size: 14px;"><span style="color: #10b981; font-weight: 900;">3.</span> Live Canvas</h6>
+                                <p style="color: #64748b; font-size: 12px; margin-bottom: 0;">What you see is what you get. Position elements with pixel-perfect accuracy.</p>
+                            </div>
+                            <!-- Connecting Line 3 -->
+                            <div class="position-absolute" style="top: 70%; left: -20px; width: calc(50% + 20px); border-top: 4px dashed #10b981; opacity: 0.9; z-index: 10;"></div>
+                            
+                            <!-- 4. Properties (Right) -->
+                            <div class="position-absolute p-3 rounded-4 bg-white" style="top: 55%; right: -240px; width: 220px; border: 1px solid #ddd6fe; border-left: 5px solid #8b5cf6; box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.15); z-index: 30;">
+                                <h6 class="mb-1 fw-bold" style="color: #0f172a; font-size: 14px;"><span style="color: #8b5cf6; font-weight: 900;">4.</span> Properties Panel</h6>
+                                <p style="color: #64748b; font-size: 12px; margin-bottom: 0;">Modify advanced settings like formatting, borders, sizing, alignment, visibility and expressions.</p>
+                            </div>
+                            <!-- Connecting Line 4 -->
+                            <div class="position-absolute" style="top: 65%; right: -20px; width: calc(15% + 20px); border-top: 4px dashed #8b5cf6; opacity: 0.9; z-index: 10;"></div>
+                        </div>
+
+                        <!-- Mobile / Tablet Fallback (Since absolute lines break on small screens) -->
+                        <div class="d-xl-none px-4 pb-5">
+                            <div class="mx-auto mb-4" style="max-width: 800px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #cbd5e1; overflow: hidden;">
+                                <div class="d-flex align-items-center px-3 py-2" style="background-color: #f1f5f9; border-bottom: 1px solid #e2e8f0;">
+                                    <div class="d-flex gap-2">
+                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444;"></div>
+                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #f59e0b;"></div>
+                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #10b981;"></div>
+                                    </div>
+                                </div>
+                                <img src="images/report_designer_light.png" alt="Drag and Drop Builder Mockup" class="img-fluid w-100 d-block">
+                            </div>
+
+                            <div class="container text-start">
+                                <div class="row g-4 justify-content-center">
+                                    <div class="col-md-6">
+                                        <div class="h-100 p-4 rounded-4 shadow-sm" style="background-color: #ffffff; border: 1px solid #bfdbfe; border-left: 5px solid #3b82f6; box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15);">
+                                            <h5 class="mb-1 fw-bold" style="color: #1e293b; font-size: 15px;"><span style="color: #3b82f6; font-weight: 900;">1.</span> Components</h5>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Drag and drop elements like Text, Fields, Images, Tables, Lines, and Page Breaks onto the canvas.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="h-100 p-4 rounded-4 shadow-sm" style="background-color: #ffffff; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.15);">
+                                            <h5 class="mb-1 fw-bold" style="color: #1e293b; font-size: 15px;"><span style="color: #f59e0b; font-weight: 900;">2.</span> Action Toolbar</h5>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Manage your report with one-click actions: Save, Undo, Redo, Delete, and Preview.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="h-100 p-4 rounded-4 shadow-sm" style="background-color: #ffffff; border: 1px solid #a7f3d0; border-left: 5px solid #10b981; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.15);">
+                                            <h5 class="mb-1 fw-bold" style="color: #1e293b; font-size: 15px;"><span style="color: #10b981; font-weight: 900;">3.</span> Live Canvas</h5>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">What you see is what you get. Position elements with pixel-perfect accuracy.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="h-100 p-4 rounded-4 shadow-sm" style="background-color: #ffffff; border: 1px solid #ddd6fe; border-left: 5px solid #8b5cf6; box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.15);">
+                                            <h5 class="mb-1 fw-bold" style="color: #1e293b; font-size: 15px;"><span style="color: #8b5cf6; font-weight: 900;">4.</span> Properties Panel</h5>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Modify advanced settings like formatting, borders, sizing, alignment, visibility and expressions.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    
-                    <!-- Feature Highlights Tiles -->
-                    <div class="row g-4 mb-5 mt-5">
-                        <!-- Feature Highlights Section Header -->
-                        <div class="mt-5 pt-4 px-3 text-center">
-                            <h2 class="mb-3" style="font-weight: 900; color: #1e293b; font-size: 36px;">Core <span style="color: #3b82f6;">Features</span></h2>
-                            <p class="mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px;">
-                                Everything you need to build powerful, dynamic, and professional reports without writing a single line of code.
+                    <!-- Report Design Showcase Gallery Section -->
+                    <div class="my-5 rounded-5 p-4 p-md-5 position-relative" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #cbd5e1; box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.05);">
+                        
+                        <!-- Header -->
+                        <div class="text-center mb-5">
+                            <span class="badge rounded-pill px-3 py-2 border fw-bold text-uppercase mb-3" style="background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe !important; font-size: 11px; letter-spacing: 1px;">
+                                <i class="fa fa-picture-o me-1"></i> REPORT DESIGN GALLERY
+                            </span>
+                            <h2 style="font-weight: 900; color: #1e293b; font-size: 36px;" class="mb-3">
+                                Design Any Report <span style="color: #3b82f6;">You Imagine</span>
+                            </h2>
+                            <p class="mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px; line-height: 1.6;">
+                                Create customized, pixel-perfect PDF reports tailored for your business needs. Here are examples of reports you can build effortlessly with the Studio.
                             </p>
                         </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #10b981;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #f0fdf4; border-radius: 20px; color: #10b981; font-size: 30px;">
-                                    <i class="fa fa-mouse-pointer"></i>
+
+                        <!-- Gallery Showcase Grid -->
+                        <!-- Row 1: 3 Gallery Cards -->
+                        <div class="row g-4 mb-4">
+                            
+                            <!-- Sample 1: Sales Order -->
+                            <div class="col-lg-4 col-md-6">
+                                <div class="h-100 rounded-4 overflow-hidden shadow-sm bg-white border" style="border-color: #cbd5e1 !important; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background-color: #f8fafc;">
+                                        <span class="fw-bold" style="color: #0f172a; font-size: 13.5px;">
+                                            <i class="fa fa-file-text-o text-success me-1"></i> Sales Order Report
+                                        </span>
+                                        <span class="badge rounded-pill px-2 py-1 bg-white border text-muted" style="font-size: 10px;">SAMPLE</span>
+                                    </div>
+                                    <div class="p-2" style="background-color: #f1f5f9;">
+                                        <img src="images/report_1.png" class="w-100 rounded-3 shadow-sm d-block" alt="Sales Order Report Sample" style="border: 1px solid #e2e8f0; max-height: 320px; object-fit: cover; object-position: top;">
+                                    </div>
                                 </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">Drag & Drop Builder</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Intuitively design complex reports by dragging elements directly onto the canvas.</p>
+                            </div>
+
+                            <!-- Sample 2: Tax Invoice -->
+                            <div class="col-lg-4 col-md-6">
+                                <div class="h-100 rounded-4 overflow-hidden shadow-sm bg-white border" style="border-color: #cbd5e1 !important; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background-color: #f8fafc;">
+                                        <span class="fw-bold" style="color: #0f172a; font-size: 13.5px;">
+                                            <i class="fa fa-calculator text-primary me-1"></i> Tax Invoice Report
+                                        </span>
+                                        <span class="badge rounded-pill px-2 py-1 bg-white border text-muted" style="font-size: 10px;">SAMPLE</span>
+                                    </div>
+                                    <div class="p-2" style="background-color: #f1f5f9;">
+                                        <img src="images/report_2.png" class="w-100 rounded-3 shadow-sm d-block" alt="Tax Invoice Report Sample" style="border: 1px solid #e2e8f0; max-height: 320px; object-fit: cover; object-position: top;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sample 3: Delivery Slip -->
+                            <div class="col-lg-4 col-md-6">
+                                <div class="h-100 rounded-4 overflow-hidden shadow-sm bg-white border" style="border-color: #cbd5e1 !important; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background-color: #f8fafc;">
+                                        <span class="fw-bold" style="color: #0f172a; font-size: 13.5px;">
+                                            <i class="fa fa-truck text-warning me-1"></i> Delivery & Shipping Slip
+                                        </span>
+                                        <span class="badge rounded-pill px-2 py-1 bg-white border text-muted" style="font-size: 10px;">SAMPLE</span>
+                                    </div>
+                                    <div class="p-2" style="background-color: #f1f5f9;">
+                                        <img src="images/report_3.png" class="w-100 rounded-3 shadow-sm d-block" alt="Delivery Slip Report Sample" style="border: 1px solid #e2e8f0; max-height: 320px; object-fit: cover; object-position: top;">
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #f59e0b;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #fff7ed; border-radius: 20px; color: #f59e0b; font-size: 30px;">
-                                    <i class="fa fa-eye"></i>
+
+                        <!-- Row 2: 2 Gallery Cards (Centered) -->
+                        <div class="row g-4 justify-content-center">
+                            
+                            <!-- Sample 4: Purchase Order -->
+                            <div class="col-lg-6 col-md-6">
+                                <div class="h-100 rounded-4 overflow-hidden shadow-sm bg-white border" style="border-color: #cbd5e1 !important; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background-color: #f8fafc;">
+                                        <span class="fw-bold" style="color: #0f172a; font-size: 14px;">
+                                            <i class="fa fa-shopping-cart text-purple me-1" style="color: #7c3aed;"></i> Corporate Purchase Order
+                                        </span>
+                                        <span class="badge rounded-pill px-2 py-1 bg-white border text-muted" style="font-size: 10px;">SAMPLE</span>
+                                    </div>
+                                    <div class="p-2" style="background-color: #f1f5f9;">
+                                        <img src="images/report_4.png" class="w-100 rounded-3 shadow-sm d-block" alt="Purchase Order Report Sample" style="border: 1px solid #e2e8f0; max-height: 340px; object-fit: cover; object-position: top;">
+                                    </div>
                                 </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">Live Preview</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Instantly preview your report with real database records before publishing.</p>
                             </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #3b82f6;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #eff6ff; border-radius: 20px; color: #3b82f6; font-size: 30px;">
-                                    <i class="fa fa-database"></i>
+
+                            <!-- Sample 5: Executive Custom Report -->
+                            <div class="col-lg-6 col-md-6">
+                                <div class="h-100 rounded-4 overflow-hidden shadow-sm bg-white border" style="border-color: #cbd5e1 !important; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background-color: #f8fafc;">
+                                        <span class="fw-bold" style="color: #0f172a; font-size: 14px;">
+                                            <i class="fa fa-star text-danger me-1"></i> Executive Custom Layout
+                                        </span>
+                                        <span class="badge rounded-pill px-2 py-1 bg-white border text-muted" style="font-size: 10px;">SAMPLE</span>
+                                    </div>
+                                    <div class="p-2" style="background-color: #f1f5f9;">
+                                        <img src="images/sale_order_report.png" class="w-100 rounded-3 shadow-sm d-block" alt="Executive Custom Report Sample" style="border: 1px solid #e2e8f0; max-height: 340px; object-fit: cover; object-position: top;">
+                                    </div>
                                 </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">All Models Supported</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Create custom reports for any standard or custom Odoo model with ease.</p>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #ef4444;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #fef2f2; border-radius: 20px; color: #ef4444; font-size: 30px;">
-                                    <i class="fa fa-bolt"></i>
-                                </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">Dynamic Fields</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Link elements directly to Odoo database fields to display real-time values.</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Extended Feature Tiles: Row 2 -->
-                    <div class="row g-4 mb-5">
-                        <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #8b5cf6;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #faf5ff; border-radius: 20px; color: #8b5cf6; font-size: 30px;">
-                                    <i class="fa fa-barcode"></i>
-                                </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">Smart Barcodes</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Easily embed 1D and 2D barcodes, including QR codes, directly into designs.</p>
-                            </div>
+                    <!-- Design Reports Like a Pro Section -->
+                    <div class="my-5 rounded-5 p-4 p-md-5 position-relative" style="background-color: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.06);">
+                        
+                        <!-- Top Centered Header -->
+                        <div class="text-center mb-5">
+                            <span class="badge rounded-pill px-3 py-2 border fw-bold text-uppercase mb-3" style="background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe !important; font-size: 11px; letter-spacing: 1px;">
+                                <i class="fa fa-magic me-1"></i> ADVANCED DESIGN EXPERIENCE
+                            </span>
+                            <h2 style="font-weight: 900; color: #1e293b; font-size: 36px;" class="mb-0">
+                                Design Reports <span style="color: #3b82f6;">Like a Pro</span>
+                            </h2>
                         </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #06b6d4;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #ecfeff; border-radius: 20px; color: #06b6d4; font-size: 30px;">
-                                    <i class="fa fa-paint-brush"></i>
+
+                        <!-- Middle Side-by-Side Row: Image Left (7 cols), Icon Feature Cards Right (5 cols) -->
+                        <div class="row align-items-center g-4 g-lg-5 mb-4">
+                            
+                            <!-- Left Column: Mac Browser Window Showcase -->
+                            <div class="col-lg-7">
+                                <div class="position-relative shadow-lg rounded-4 overflow-hidden" style="border: 2px solid #cbd5e1; background-color: #ffffff;">
+                                    <!-- Window Header Bar -->
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background-color: #f1f5f9;">
+                                        <div class="d-flex gap-2">
+                                            <div style="width: 11px; height: 11px; border-radius: 50%; background-color: #ef4444;"></div>
+                                            <div style="width: 11px; height: 11px; border-radius: 50%; background-color: #f59e0b;"></div>
+                                            <div style="width: 11px; height: 11px; border-radius: 50%; background-color: #10b981;"></div>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-1 bg-white border" style="color: #0f172a; font-size: 11px; font-weight: 700;">
+                                            <i class="fa fa-paint-brush text-primary me-1"></i> REPORT DESIGN STUDIO
+                                        </span>
+                                    </div>
+                                    <!-- Image Preview -->
+                                    <img src="images/custom_template.png" class="w-100 d-block" alt="Report Designer Interface">
                                 </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">Rich Formatting</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Customize fonts, colors, alignments, and borders with a visual toolbar.</p>
                             </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #f43f5e;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #fff1f2; border-radius: 20px; color: #f43f5e; font-size: 30px;">
-                                    <i class="fa fa-shield"></i>
+
+                            <!-- Right Column: 4 Icon Feature Cards -->
+                            <div class="col-lg-5">
+                                <div class="d-flex flex-column gap-3">
+                                    
+                                    <!-- Card 1: Drag & Drop -->
+                                    <div class="p-3 rounded-4 border d-flex align-items-center gap-3" style="background-color: #f8fafc; border-color: #e2e8f0 !important; transition: all 0.3s ease;">
+                                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #3b82f6; color: #ffffff; border-radius: 14px; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(59, 130, 246, 0.4);">
+                                            <i class="fa fa-arrows"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1" style="color: #0f172a; font-size: 15px;">Drag & Drop Canvas</h6>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Add components from palette to canvas seamlessly.</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card 2: Multi-Page Templates -->
+                                    <div class="p-3 rounded-4 border d-flex align-items-center gap-3" style="background-color: #f8fafc; border-color: #e2e8f0 !important; transition: all 0.3s ease;">
+                                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #10b981; color: #ffffff; border-radius: 14px; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(16, 185, 129, 0.4);">
+                                            <i class="fa fa-files-o"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1" style="color: #0f172a; font-size: 15px;">Multi-Page Templates</h6>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Create and manage multi-page report templates effortlessly.</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card 3: Instant Preview with Real Data -->
+                                    <div class="p-3 rounded-4 border d-flex align-items-center gap-3" style="background-color: #f8fafc; border-color: #e2e8f0 !important; transition: all 0.3s ease;">
+                                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #f59e0b; color: #ffffff; border-radius: 14px; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(245, 158, 11, 0.4);">
+                                            <i class="fa fa-eye"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1" style="color: #0f172a; font-size: 15px;">Instant Preview with Real Data</h6>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Test designs on live database records in real time.</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card 4: Layer Ordering -->
+                                    <div class="p-3 rounded-4 border d-flex align-items-center gap-3" style="background-color: #f8fafc; border-color: #e2e8f0 !important; transition: all 0.3s ease;">
+                                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #8b5cf6; color: #ffffff; border-radius: 14px; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(139, 92, 246, 0.4);">
+                                            <i class="fa fa-clone"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1" style="color: #0f172a; font-size: 15px;">Layer Ordering & Visibility</h6>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Bring to front/back & z-index layer management.</p>
+                                        </div>
+                                    </div>
+
                                 </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">Secure Watermarks</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Add text or image background watermarks to protect your documents.</p>
                             </div>
+
                         </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #6366f1;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #eef2ff; border-radius: 20px; color: #6366f1; font-size: 30px;">
-                                    <i class="fa fa-history"></i>
+
+                        <!-- Bottom Centered Bullet Points Row (Optimized Full-Width Grid) -->
+                        <div class="pt-4 border-top" style="border-color: #e2e8f0 !important;">
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 justify-content-center">
+                                <div class="col">
+                                    <div class="p-3 rounded-4 bg-light border text-center h-100 d-flex align-items-center justify-content-center gap-2" style="border-color: #e2e8f0 !important;">
+                                        <i class="fa fa-search-plus text-primary fs-6"></i>
+                                        <span style="color: #334155; font-size: 13px;"><strong>Zoom Controls:</strong> Precision zoom levels</span>
+                                    </div>
                                 </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">Print Tracking</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Keep a detailed log of when and by whom reports were printed.</p>
+                                <div class="col">
+                                    <div class="p-3 rounded-4 bg-light border text-center h-100 d-flex align-items-center justify-content-center gap-2" style="border-color: #e2e8f0 !important;">
+                                        <i class="fa fa-undo text-primary fs-6"></i>
+                                        <span style="color: #334155; font-size: 13px;"><strong>Undo / Redo:</strong> Full action history</span>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="p-3 rounded-4 bg-light border text-center h-100 d-flex align-items-center justify-content-center gap-2" style="border-color: #e2e8f0 !important;">
+                                        <i class="fa fa-th text-primary fs-6"></i>
+                                        <span style="color: #334155; font-size: 13px;"><strong>Rulers & Grid:</strong> Alignment guides</span>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="p-3 rounded-4 bg-light border text-center h-100 d-flex align-items-center justify-content-center gap-2" style="border-color: #e2e8f0 !important;">
+                                        <i class="fa fa-files-o text-primary fs-6"></i>
+                                        <span style="color: #334155; font-size: 13px;"><strong>Copy & Paste:</strong> Positioned paste</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Extended Feature Tiles: Row 3 -->
-                    <div class="row g-4 mb-5">
-                        <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #f97316;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #fff7ed; border-radius: 20px; color: #f97316; font-size: 30px;">
-                                    <i class="fa fa-magic"></i>
+                    <!-- Odoo Integration Section -->
+                    <div class="my-5 rounded-5 p-4 p-md-5 position-relative" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #cbd5e1; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.06);">
+                        
+                        <!-- Top Centered Header -->
+                        <div class="text-center mb-5">
+                            <span class="badge rounded-pill px-3 py-2 border fw-bold text-uppercase mb-3" style="background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe !important; font-size: 11px; letter-spacing: 1px;">
+                                <i class="fa fa-plug me-1"></i> SEAMLESS WORKFLOW
+                            </span>
+                            <h2 style="font-weight: 900; color: #1e293b; font-size: 36px;" class="mb-0">
+                                Native Odoo <span style="color: #3b82f6;">Action Binding</span>
+                            </h2>
+                        </div>
+
+                        <!-- Middle Side-by-Side Row -->
+                        <div class="row align-items-center g-4 g-lg-5 mb-4">
+                            
+                            <!-- Left Column: 2 Feature Images Showcase -->
+                            <div class="col-lg-7">
+                                <div class="d-flex align-items-center justify-content-center gap-3">
+                                    
+                                    <!-- Image 1: Template Action / Print Menu Card -->
+                                    <div class="shadow-sm rounded-4 overflow-hidden bg-white border" style="width: 42%; border-color: #cbd5e1 !important;">
+                                        <div class="p-2 border-bottom text-center" style="background-color: #f8fafc;">
+                                            <span class="fw-bold" style="color: #475569; font-size: 11px; letter-spacing: 0.5px;">ADD TO PRINT MENU</span>
+                                        </div>
+                                        <div class="p-2">
+                                            <img src="images/template_add_menu.png" class="w-100 rounded-3 d-block" alt="Add to Print Menu" style="border: 1px solid #e2e8f0; object-fit: contain;">
+                                        </div>
+                                    </div>
+
+                                    <!-- Image 2: All Reports Kanban Dashboard -->
+                                    <div class="shadow-sm rounded-4 overflow-hidden bg-white border" style="width: 56%; border-color: #cbd5e1 !important;">
+                                        <div class="p-2 border-bottom text-center" style="background-color: #f8fafc;">
+                                            <span class="fw-bold" style="color: #475569; font-size: 11px; letter-spacing: 0.5px;">NATIVE PRINT MENU ACTION</span>
+                                        </div>
+                                        <div class="p-2">
+                                            <img src="images/sale_order_report_button.png" class="w-100 rounded-3 d-block" alt="All Reports Dashboard" style="border: 1px solid #e2e8f0; object-fit: contain;">
+                                        </div>
+                                    </div>
+
                                 </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">No XML Required</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Say goodbye to complex QWeb/XML syntax. Build everything visually.</p>
+                            </div>
+
+                            <!-- Right Column: Deploy & Manage Your Reports + 3 Feature Cards -->
+                            <div class="col-lg-5">
+                                <h4 style="font-weight: 800; color: #1e293b; font-size: 22px;" class="mb-4">
+                                    Deploy & Manage Your Reports
+                                </h4>
+
+                                <!-- Stacked Cards -->
+                                <div class="d-flex flex-column gap-3">
+                                    
+                                    <!-- Card 1: Print Menu Binding -->
+                                    <div class="p-3 rounded-4 border d-flex align-items-center gap-3" style="background-color: #ffffff; border-color: #e2e8f0 !important; transition: all 0.3s ease;">
+                                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #3b82f6; color: #ffffff; border-radius: 14px; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(59, 130, 246, 0.4);">
+                                            <i class="fa fa-print"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1" style="color: #0f172a; font-size: 15px;">Print Menu Binding</h6>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Add/remove from print menu in one click.</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card 2: Create & Duplicate -->
+                                    <div class="p-3 rounded-4 border d-flex align-items-center gap-3" style="background-color: #ffffff; border-color: #e2e8f0 !important; transition: all 0.3s ease;">
+                                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #10b981; color: #ffffff; border-radius: 14px; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(16, 185, 129, 0.4);">
+                                            <i class="fa fa-plus"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1" style="color: #0f172a; font-size: 15px;">Create & Duplicate</h6>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Start from scratch or clone existing templates.</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card 3: Import/Export -->
+                                    <div class="p-3 rounded-4 border d-flex align-items-center gap-3" style="background-color: #ffffff; border-color: #e2e8f0 !important; transition: all 0.3s ease;">
+                                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #06b6d4; color: #ffffff; border-radius: 14px; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(6, 182, 212, 0.4);">
+                                            <i class="fa fa-exchange"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1" style="color: #0f172a; font-size: 15px;">Import / Export</h6>
+                                            <p style="color: #64748b; font-size: 13px; margin-bottom: 0;">Share templates easily as JSON files.</p>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Bottom Centered Bullet Points Row -->
+                        <div class="pt-4 border-top" style="border-color: #e2e8f0 !important;">
+                            <div class="row row-cols-1 row-cols-md-2 g-3 justify-content-center text-center">
+                                <div class="col-md-5">
+                                    <div class="p-3 rounded-4 bg-white border h-100 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="border-color: #e2e8f0 !important;">
+                                        <i class="fa fa-picture-o text-primary fs-6"></i>
+                                        <span style="color: #334155; font-size: 13.5px;"><strong>Thumbnails:</strong> Visual preview in template list</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="p-3 rounded-4 bg-white border h-100 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="border-color: #e2e8f0 !important;">
+                                        <i class="fa fa-check-circle text-primary fs-6"></i>
+                                        <span style="color: #334155; font-size: 13.5px;"><strong>Print Menu Integration:</strong> Direct Odoo action print integration</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
+                    </div>
+
+                    <!-- Feature Highlights Section Header -->
+                    <div class="mt-5 pt-4 px-3 text-center">
+                        <h2 class="mb-3" style="font-weight: 900; color: #1e293b; font-size: 36px;">Core <span style="color: #3b82f6;">Features</span></h2>
+                        <p class="mx-auto mb-5" style="color: #64748b; font-size: 18px; max-width: 800px;">
+                            Everything you need to build powerful, dynamic, and professional reports without writing a single line of code.
+                        </p>
+                    </div>
+
+                    <!-- Feature Highlights Tiles -->
+                    <div class="row g-4 mb-5">
+                        <!-- Card 1: Drag & Drop Builder (Emerald Green) -->
                         <div class="col-lg-3 col-md-6">
-                            <div class="p-4 h-100 shadow d-flex flex-column align-items-center text-center" style="background-color: #ffffff; border-radius: 30px; border-left: 8px solid #a855f7;">
-                                <div class="d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; background-color: #f3e8ff; border-radius: 20px; color: #a855f7; font-size: 30px;">
-                                    <i class="fa fa-table"></i>
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #f0fdf4; border-radius: 24px; border: 2px solid #a7f3d0;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #10b981; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(16, 185, 129, 0.4);">
+                                        <i class="fa fa-mouse-pointer"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #10b981; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">01</span>
                                 </div>
-                                <h5 style="font-weight: 800; color: #1e293b;">Dynamic Tables</h5>
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">Render complex, data-driven tables with automatic grouping and dynamic sub-totals.</p>
+                                <h5 class="fw-bold mb-2" style="color: #065f46; font-size: 17px; line-height: 1.3;">Drag & Drop Builder</h5>
+                                <p style="font-size: 13.5px; color: #047857; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Intuitively design complex reports by dragging elements directly onto the canvas.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #a7f3d0;">
+                                    <div class="d-flex align-items-center" style="color: #065f46; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #10b981;"></span>
+                                        <span>Visual Studio</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Live Preview (Gold Yellow) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #fefce8; border-radius: 24px; border: 2px solid #fef08a;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #eab308; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(234, 179, 8, 0.4);">
+                                        <i class="fa fa-eye"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #eab308; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">02</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #854d0e; font-size: 17px; line-height: 1.3;">Live Preview</h5>
+                                <p style="font-size: 13.5px; color: #a16207; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Instantly preview your report with real database records before publishing.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #fef08a;">
+                                    <div class="d-flex align-items-center" style="color: #854d0e; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #eab308;"></span>
+                                        <span>Real-Time</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: All Models Supported (Royal Blue) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #eff6ff; border-radius: 24px; border: 2px solid #bfdbfe;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #2563eb; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.4);">
+                                        <i class="fa fa-database"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #2563eb; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">03</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #1e40af; font-size: 17px; line-height: 1.3;">All Models Supported</h5>
+                                <p style="font-size: 13.5px; color: #1d4ed8; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Create custom reports for any standard or custom Odoo model with ease.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #bfdbfe;">
+                                    <div class="d-flex align-items-center" style="color: #1e40af; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #2563eb;"></span>
+                                        <span>Universal</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Dynamic Fields (Crimson Red) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #fef2f2; border-radius: 24px; border: 2px solid #fecaca;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #ef4444; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.4);">
+                                        <i class="fa fa-bolt"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #ef4444; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">04</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #991b1b; font-size: 17px; line-height: 1.3;">Dynamic Fields</h5>
+                                <p style="font-size: 13.5px; color: #b91c1c; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Link elements directly to Odoo database fields to display real-time values.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #fecaca;">
+                                    <div class="d-flex align-items-center" style="color: #991b1b; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #ef4444;"></span>
+                                        <span>Dynamic Data</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 5: Smart Barcodes (Deep Violet) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #f5f3ff; border-radius: 24px; border: 2px solid #ddd6fe;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #7c3aed; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(124, 58, 237, 0.4);">
+                                        <i class="fa fa-barcode"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #7c3aed; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">05</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #5b21b6; font-size: 17px; line-height: 1.3;">Smart Barcodes</h5>
+                                <p style="font-size: 13.5px; color: #6d28d9; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Easily embed 1D and 2D barcodes, including QR codes, directly into designs.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #ddd6fe;">
+                                    <div class="d-flex align-items-center" style="color: #5b21b6; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #7c3aed;"></span>
+                                        <span>Barcodes & QR</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 6: Rich Formatting (Teal Green) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #f0fdfa; border-radius: 24px; border: 2px solid #99f6e4;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #0d9488; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(13, 148, 136, 0.4);">
+                                        <i class="fa fa-paint-brush"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #0d9488; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">06</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #115e59; font-size: 17px; line-height: 1.3;">Rich Formatting</h5>
+                                <p style="font-size: 13.5px; color: #0f766e; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Customize fonts, colors, alignments, and borders with a visual toolbar.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #99f6e4;">
+                                    <div class="d-flex align-items-center" style="color: #115e59; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #0d9488;"></span>
+                                        <span>Styling Engine</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 7: Secure Watermarks (Hot Pink) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #fdf2f8; border-radius: 24px; border: 2px solid #fbcfe8;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #ec4899; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(236, 72, 153, 0.4);">
+                                        <i class="fa fa-shield"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #ec4899; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">07</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #9d174d; font-size: 17px; line-height: 1.3;">Secure Watermarks</h5>
+                                <p style="font-size: 13.5px; color: #be185d; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Add text or image background watermarks to protect your documents.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #fbcfe8;">
+                                    <div class="d-flex align-items-center" style="color: #9d174d; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #ec4899;"></span>
+                                        <span>Security</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 8: Print Tracking (Indigo) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #eef2ff; border-radius: 24px; border: 2px solid #c7d2fe;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #4f46e5; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(79, 70, 229, 0.4);">
+                                        <i class="fa fa-history"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #4f46e5; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">08</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #3730a3; font-size: 17px; line-height: 1.3;">Print Tracking</h5>
+                                <p style="font-size: 13.5px; color: #4338ca; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Keep a detailed log of when and by whom reports were printed.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #c7d2fe;">
+                                    <div class="d-flex align-items-center" style="color: #3730a3; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #4f46e5;"></span>
+                                        <span>Audit Trail</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 9: No XML Required (Vivid Orange) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #fff7ed; border-radius: 24px; border: 2px solid #ffedd5;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #ea580c; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(234, 88, 12, 0.4);">
+                                        <i class="fa fa-magic"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #ea580c; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">09</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #9a3412; font-size: 17px; line-height: 1.3;">No XML Required</h5>
+                                <p style="font-size: 13.5px; color: #c2410c; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Say goodbye to complex QWeb/XML syntax. Build everything visually.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #ffedd5;">
+                                    <div class="d-flex align-items-center" style="color: #9a3412; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #ea580c;"></span>
+                                        <span>Zero Code</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 10: Dynamic Tables (Lime Green) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #f7fee7; border-radius: 24px; border: 2px solid #d9f99d;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #65a30d; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(101, 163, 13, 0.4);">
+                                        <i class="fa fa-table"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #65a30d; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">10</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #3f6212; font-size: 17px; line-height: 1.3;">Dynamic Tables</h5>
+                                <p style="font-size: 13.5px; color: #4d7c0f; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Render complex, data-driven tables with automatic grouping and dynamic sub-totals.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #d9f99d;">
+                                    <div class="d-flex align-items-center" style="color: #3f6212; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #65a30d;"></span>
+                                        <span>Advanced Tables</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Components Showcase Coded Block -->
-                    <div class="mt-5 pt-5 mx-5 text-center">
+                    <div class="mt-5 pt-5 text-center">
                         <h2 class="mb-3" style="font-weight: 900; color: #1e293b; font-size: 36px;">Rich <span style="color: #3b82f6;">Component</span> Library</h2>
                         <p class="mb-5 mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px;">
                             Everything you need to build pixel-perfect reports. Drag and drop these elements directly onto your canvas to create professional documents instantly.
@@ -281,284 +812,328 @@
                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 text-start">
                             <!-- Card 1: Text -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">1</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Text</h5>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-font"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Text</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(37, 99, 235, 0.2); color: #93c5fd; font-size: 11px; font-weight: 700;">01</span>
                                         </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add and style text</p>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Add & style typography</p>
                                         
-                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
-                                            <div class="position-relative d-flex justify-content-center align-items-center" style="width: 70px; height: 70px; border: 1px dashed #6366f1;">
-                                                <div style="position: absolute; top: -4px; left: -4px; width: 8px; height: 8px; background-color: #818cf8; border-radius: 1px;"></div>
-                                                <div style="position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; background-color: #818cf8; border-radius: 1px;"></div>
-                                                <div style="position: absolute; bottom: -4px; left: -4px; width: 8px; height: 8px; background-color: #818cf8; border-radius: 1px;"></div>
-                                                <div style="position: absolute; bottom: -4px; right: -4px; width: 8px; height: 8px; background-color: #818cf8; border-radius: 1px;"></div>
-                                                <span style="font-family: serif; font-size: 46px; color: #ffffff; line-height: 1;">T</span>
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex flex-column justify-content-center align-items-center rounded-4 mb-4 p-3" style="background-color: #1e293b; height: 145px; border: 1px solid #334155;">
+                                            <div class="position-relative d-flex flex-column justify-content-center align-items-center p-2 rounded-3" style="width: 90%; background-color: rgba(37, 99, 235, 0.1); border: 2px dashed #60a5fa; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
+                                                <div style="position: absolute; top: -5px; left: -5px; width: 8px; height: 8px; background-color: #60a5fa; border-radius: 2px;"></div>
+                                                <div style="position: absolute; top: -5px; right: -5px; width: 8px; height: 8px; background-color: #60a5fa; border-radius: 2px;"></div>
+                                                <div style="position: absolute; bottom: -5px; left: -5px; width: 8px; height: 8px; background-color: #60a5fa; border-radius: 2px;"></div>
+                                                <div style="position: absolute; bottom: -5px; right: -5px; width: 8px; height: 8px; background-color: #60a5fa; border-radius: 2px;"></div>
+                                                <span class="fw-bold" style="font-size: 26px; color: #ffffff; line-height: 1;">Invoice #1042</span>
+                                            </div>
+                                            <div class="d-flex gap-2 mt-2">
+                                                <span class="badge" style="background-color: rgba(96, 165, 250, 0.2); color: #93c5fd; font-size: 10px;">Bold</span>
+                                                <span class="badge" style="background-color: rgba(96, 165, 250, 0.2); color: #93c5fd; font-size: 10px;">24px</span>
+                                                <span class="badge" style="background-color: rgba(96, 165, 250, 0.2); color: #93c5fd; font-size: 10px;">Inter</span>
                                             </div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Add headings, paragraphs or labels and customize font, size, color and alignment.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Add headings, paragraphs or labels and customize font, size, color and alignment.</p>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Card 2: Field -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">2</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Field</h5>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-database"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Field</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; font-size: 11px; font-weight: 700;">02</span>
                                         </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Insert dynamic data</p>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Insert dynamic data</p>
                                         
-                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
-                                            <i class="fa fa-database me-3" style="font-size: 45px; color: #818cf8; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));"></i>
-                                            <div class="d-flex flex-column gap-2">
-                                                <div class="rounded-pill" style="width: 45px; height: 8px; background-color: #334155;"></div>
-                                                <div class="rounded-pill" style="width: 35px; height: 8px; background-color: #334155;"></div>
-                                                <div class="rounded-pill" style="width: 50px; height: 8px; background-color: #334155;"></div>
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex flex-column justify-content-center align-items-center rounded-4 mb-4 p-3" style="background-color: #1e293b; height: 145px; border: 1px solid #334155;">
+                                            <div class="d-flex align-items-center p-2 px-3 rounded-pill mb-2" style="background-color: rgba(16, 185, 129, 0.15); border: 1.5px solid #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                                                <i class="fa fa-code me-2" style="color: #34d399; font-size: 14px;"></i>
+                                                <span class="fw-bold" style="font-family: monospace; font-size: 12px; color: #a7f3d0;">{ partner_id.name }</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1 mt-1">
+                                                <i class="fa fa-arrow-down" style="font-size: 10px; color: #34d399;"></i>
+                                                <span class="badge" style="background-color: #0f172a; color: #ffffff; border: 1px solid #475569; font-size: 11px;">Deco Addict</span>
                                             </div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Insert fields to automatically populate data from your sources.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Insert fields to automatically populate live data from your Odoo database models.</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Card 3: Image -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">3</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Image</h5>
-                                        </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add images</p>
-                                        
-                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
-                                            <div class="position-relative overflow-hidden shadow" style="width: 70px; height: 50px; background-color: #3b82f6; border-radius: 4px; border: 2px solid #818cf8;">
-                                                <div class="rounded-circle" style="position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; background-color: #fcd34d;"></div>
-                                                <div style="position: absolute; bottom: -10px; left: -10px; width: 45px; height: 45px; background-color: #10b981; transform: rotate(45deg);"></div>
-                                                <div style="position: absolute; bottom: -15px; right: -15px; width: 55px; height: 55px; background-color: #059669; transform: rotate(45deg);"></div>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-picture-o"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Image</h5>
                                             </div>
-                                            <div style="position: absolute; top: 22px; left: 16px; width: 6px; height: 6px; background-color: #818cf8; border-radius: 1px;"></div>
-                                            <div style="position: absolute; bottom: 22px; right: 16px; width: 6px; height: 6px; background-color: #818cf8; border-radius: 1px;"></div>
-                                            <div style="position: absolute; top: 22px; left: 22px; right: 22px; height: 1px; border-top: 1px dashed #6366f1;"></div>
-                                            <div style="position: absolute; bottom: 22px; left: 22px; right: 22px; height: 1px; border-top: 1px dashed #6366f1;"></div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(139, 92, 246, 0.2); color: #c4b5fd; font-size: 11px; font-weight: 700;">03</span>
+                                        </div>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Add company logos & media</p>
+                                        
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: #1e293b; height: 145px; border: 1px solid #334155;">
+                                            <div class="position-relative overflow-hidden rounded-3 shadow d-flex flex-column align-items-center justify-content-center" style="width: 100px; height: 75px; background-color: rgba(139, 92, 246, 0.15); border: 2px solid #8b5cf6;">
+                                                <i class="fa fa-image" style="font-size: 32px; color: #a78bfa;"></i>
+                                                <span style="font-size: 9px; font-weight: 800; color: #c4b5fd; margin-top: 2px;">LOGO.PNG</span>
+                                            </div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Upload or choose images to enhance your document visually.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Upload static images or bind dynamic record attachments directly into reports.</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Card 4: Watermark -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">4</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Watermark</h5>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-shield"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Watermark</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(244, 63, 94, 0.2); color: #fca5a5; font-size: 11px; font-weight: 700;">04</span>
                                         </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Brand your documents</p>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Brand & protect documents</p>
                                         
-                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
-                                            <div class="position-relative p-2 shadow" style="width: 60px; height: 80px; background-color: #e2e8f0; border-radius: 4px; border-top-right-radius: 12px;">
-                                                <div style="position: absolute; top: 0; right: 0; width: 12px; height: 12px; background-color: #cbd5e1; border-bottom-left-radius: 4px;"></div>
-                                                <div class="mb-2 mt-2" style="width: 100%; height: 3px; background-color: #cbd5e1;"></div>
-                                                <div class="mb-2" style="width: 80%; height: 3px; background-color: #cbd5e1;"></div>
-                                                <div class="mb-2" style="width: 90%; height: 3px; background-color: #cbd5e1;"></div>
-                                                <div class="mb-2" style="width: 70%; height: 3px; background-color: #cbd5e1;"></div>
-                                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); color: rgba(99, 102, 241, 0.5); font-weight: 900; font-size: 9px; letter-spacing: 1px; border: 1px solid rgba(99, 102, 241, 0.5); padding: 2px;">CONFIDENTIAL</div>
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: #1e293b; height: 145px; border: 1px solid #334155;">
+                                            <div class="position-relative p-2 rounded-2 shadow" style="width: 70px; height: 95px; background-color: #0f172a; border: 1px solid #475569;">
+                                                <div class="mb-1" style="width: 100%; height: 3px; background-color: #334155;"></div>
+                                                <div class="mb-1" style="width: 80%; height: 3px; background-color: #334155;"></div>
+                                                <div class="mb-1" style="width: 90%; height: 3px; background-color: #334155;"></div>
+                                                <div class="mb-1" style="width: 60%; height: 3px; background-color: #334155;"></div>
+                                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); color: #fb7185; font-weight: 900; font-size: 8px; letter-spacing: 0.5px; border: 1px solid #f43f5e; padding: 2px 4px; border-radius: 2px; background-color: rgba(244, 63, 94, 0.25);">CONFIDENTIAL</div>
                                             </div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Add text or image watermarks to protect and brand your documents.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Add text or image background watermarks to protect and brand your documents.</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Card 5: Line -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">5</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Line</h5>
-                                        </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Draw lines and connectors</p>
-                                        
-                                        <div class="position-relative d-flex flex-column justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1); gap: 15px;">
-                                            <div class="d-flex align-items-center w-75">
-                                                <div style="flex-grow: 1; height: 3px; background-color: #818cf8; border-radius: 2px;"></div>
-                                                <i class="fa fa-caret-right" style="color: #818cf8; margin-left: -2px; font-size: 18px;"></i>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(249, 115, 22, 0.15); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-minus"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Line</h5>
                                             </div>
-                                            <div class="w-75" style="height: 2px; border-bottom: 2px dashed #64748b;"></div>
-                                            <div class="w-50" style="height: 2px; border-bottom: 3px dotted #94a3b8; align-self: flex-start; margin-left: 12.5%;"></div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(249, 115, 22, 0.2); color: #ffedd5; font-size: 11px; font-weight: 700;">05</span>
+                                        </div>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Draw lines & dividers</p>
+                                        
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex flex-column justify-content-center align-items-center rounded-4 mb-4 p-3" style="background-color: #1e293b; height: 145px; border: 1px solid #334155; gap: 12px;">
+                                            <div class="w-80" style="height: 3px; background-color: #fb923c; border-radius: 2px; width: 80%;"></div>
+                                            <div class="w-80" style="height: 2px; border-bottom: 2px dashed #fb923c; width: 80%;"></div>
+                                            <div class="w-80" style="height: 2px; border-bottom: 3px dotted #fb923c; width: 80%;"></div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Use lines to separate content or connect information clearly.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Use solid, dashed or dotted lines to separate content or connect information clearly.</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Card 6: Shapes -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">6</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Shapes</h5>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-th-large"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Shapes</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(234, 179, 8, 0.2); color: #fef08a; font-size: 11px; font-weight: 700;">06</span>
                                         </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add shapes</p>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Add geometric shapes</p>
                                         
-                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
-                                            <div class="position-relative" style="width: 80px; height: 80px;">
-                                                <div class="rounded-circle shadow" style="position: absolute; top: 5px; left: 5px; width: 40px; height: 40px; background-color: #6366f1;"></div>
-                                                <div class="shadow" style="position: absolute; top: 15px; right: 5px; width: 35px; height: 35px; background-color: #3b82f6; border-radius: 4px;"></div>
-                                                <div style="position: absolute; bottom: 5px; left: 20px; width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 35px solid #10b981; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));"></div>
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: #1e293b; height: 145px; border: 1px solid #334155;">
+                                            <div class="position-relative" style="width: 85px; height: 60px;">
+                                                <div class="rounded-circle shadow" style="position: absolute; top: 0; left: 0; width: 36px; height: 36px; background-color: #facc15;"></div>
+                                                <div class="rounded-3 shadow" style="position: absolute; top: 10px; right: 0; width: 34px; height: 34px; background-color: #3b82f6;"></div>
+                                                <div style="position: absolute; bottom: 0; left: 22px; width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-bottom: 30px solid #ef4444;"></div>
                                             </div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Insert shapes to highlight content and create visual structure.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Insert circles, rectangles, triangles, and badges to highlight content visually.</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Card 7: Section -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">7</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Section</h5>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-columns"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Section</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(6, 182, 212, 0.2); color: #a5f3fc; font-size: 11px; font-weight: 700;">07</span>
                                         </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Organize content</p>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Organize multi-column layout</p>
                                         
-                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
-                                            <div class="d-flex flex-column shadow" style="width: 70px; height: 80px; background-color: #1e293b; border-radius: 4px; padding: 6px; gap: 6px;">
-                                                <div style="width: 100%; height: 18px; background-color: #6366f1; border-radius: 2px;"></div>
-                                                <div class="d-flex h-100" style="gap: 6px;">
-                                                    <div style="flex: 2; height: 100%; background-color: #334155; border-radius: 2px;"></div>
-                                                    <div class="d-flex flex-column" style="flex: 1; height: 100%; gap: 6px;">
-                                                        <div style="flex: 1; width: 100%; background-color: #475569; border-radius: 2px;"></div>
-                                                        <div style="flex: 1; width: 100%; background-color: #475569; border-radius: 2px;"></div>
-                                                    </div>
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: #1e293b; height: 145px; border: 1px solid #334155;">
+                                            <div class="d-flex flex-column rounded-3 p-2 shadow" style="width: 90px; height: 85px; background-color: #0f172a; border: 1px solid #06b6d4; gap: 5px;">
+                                                <div style="width: 100%; height: 16px; background-color: #06b6d4; border-radius: 3px;"></div>
+                                                <div class="d-flex h-100" style="gap: 5px;">
+                                                    <div style="flex: 1; height: 100%; background-color: rgba(6, 182, 212, 0.25); border-radius: 3px;"></div>
+                                                    <div style="flex: 1; height: 100%; background-color: rgba(6, 182, 212, 0.25); border-radius: 3px;"></div>
                                                 </div>
                                             </div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Divide your document into sections for better organization.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Divide your document into structured sections and multi-column grids for clean organization.</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Card 8: Table -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">8</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Table</h5>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-table"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Table</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(99, 102, 241, 0.2); color: #c7d2fe; font-size: 11px; font-weight: 700;">08</span>
                                         </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Insert tables</p>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Insert dynamic data tables</p>
                                         
-                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
-                                            <div class="d-flex flex-column shadow" style="width: 80px; border: 1px solid #334155; border-radius: 4px; overflow: hidden;">
-                                                <div class="d-flex" style="background-color: #6366f1; height: 14px;">
-                                                    <div style="flex: 1; border-right: 1px solid rgba(255,255,255,0.2);"></div>
-                                                    <div style="flex: 1; border-right: 1px solid rgba(255,255,255,0.2);"></div>
-                                                    <div style="flex: 1;"></div>
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: #1e293b; height: 145px; border: 1px solid #334155;">
+                                            <div class="d-flex flex-column rounded-3 shadow overflow-hidden" style="width: 95px; border: 1px solid #6366f1;">
+                                                <div class="d-flex align-items-center px-1" style="background-color: #6366f1; height: 16px;">
+                                                    <div style="flex: 1; height: 4px; background-color: #ffffff; border-radius: 1px; margin-right: 2px;"></div>
+                                                    <div style="flex: 1; height: 4px; background-color: #ffffff; border-radius: 1px;"></div>
                                                 </div>
-                                                <div class="d-flex" style="height: 14px; border-bottom: 1px solid #334155; background-color: #1e293b;">
-                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
-                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
-                                                    <div style="flex: 1;"></div>
+                                                <div class="d-flex align-items-center px-1" style="height: 14px; background-color: #0f172a; border-bottom: 1px solid #334155;">
+                                                    <div style="flex: 1; height: 3px; background-color: #475569; margin-right: 2px;"></div>
+                                                    <div style="flex: 1; height: 3px; background-color: #818cf8;"></div>
                                                 </div>
-                                                <div class="d-flex" style="height: 14px; border-bottom: 1px solid #334155; background-color: #1e293b;">
-                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
-                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
-                                                    <div style="flex: 1;"></div>
+                                                <div class="d-flex align-items-center px-1" style="height: 14px; background-color: rgba(99, 102, 241, 0.1); border-bottom: 1px solid #334155;">
+                                                    <div style="flex: 1; height: 3px; background-color: #475569; margin-right: 2px;"></div>
+                                                    <div style="flex: 1; height: 3px; background-color: #818cf8;"></div>
                                                 </div>
-                                                <div class="d-flex" style="height: 14px; background-color: #1e293b;">
-                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
-                                                    <div style="flex: 1; border-right: 1px solid #334155;"></div>
-                                                    <div style="flex: 1;"></div>
+                                                <div class="d-flex align-items-center px-1" style="height: 14px; background-color: #0f172a;">
+                                                    <div style="flex: 1; height: 3px; background-color: #475569; margin-right: 2px;"></div>
+                                                    <div style="flex: 1; height: 3px; background-color: #818cf8;"></div>
                                                 </div>
                                             </div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Add tables to present data in rows and columns clearly.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Add dynamic tables to present record lines, quantities, prices and sub-totals.</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Card 9: Barcode -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">9</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Barcode</h5>
-                                        </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add barcodes</p>
-                                        
-                                        <div class="position-relative d-flex flex-column justify-content-center align-items-center rounded-4 mb-4" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1);">
-                                            <div class="bg-white p-2 rounded-2 shadow" style="width: 75px;">
-                                                <div class="d-flex align-items-end justify-content-between" style="height: 35px;">
-                                                    <div style="width: 3px; height: 100%; background-color: #0f172a;"></div>
-                                                    <div style="width: 1px; height: 100%; background-color: #0f172a;"></div>
-                                                    <div style="width: 4px; height: 100%; background-color: #0f172a;"></div>
-                                                    <div style="width: 2px; height: 100%; background-color: #0f172a;"></div>
-                                                    <div style="width: 1px; height: 100%; background-color: #0f172a;"></div>
-                                                    <div style="width: 3px; height: 100%; background-color: #0f172a;"></div>
-                                                    <div style="width: 4px; height: 100%; background-color: #0f172a;"></div>
-                                                    <div style="width: 2px; height: 100%; background-color: #0f172a;"></div>
-                                                    <div style="width: 1px; height: 100%; background-color: #0f172a;"></div>
-                                                    <div style="width: 3px; height: 100%; background-color: #0f172a;"></div>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(13, 148, 136, 0.15); color: #2dd4bf; border: 1px solid rgba(13, 148, 136, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-barcode"></i>
                                                 </div>
-                                                <div class="text-center mt-1" style="font-family: monospace; font-size: 8px; color: #0f172a; font-weight: 900; letter-spacing: 1px;">12345678</div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Barcode</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(13, 148, 136, 0.2); color: #99f6e4; font-size: 11px; font-weight: 700;">09</span>
+                                        </div>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Generate 1D & 2D codes</p>
+                                        
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4" style="background-color: #1e293b; height: 145px; border: 1px solid #334155;">
+                                            <div class="bg-white p-2 rounded-3 shadow d-flex flex-column align-items-center" style="width: 85px; border: 1px solid #2dd4bf;">
+                                                <div class="d-flex align-items-end justify-content-between w-100" style="height: 32px;">
+                                                    <div style="width: 3px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 1px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 4px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 2px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 1px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 3px; height: 100%; background-color: #0f172a;"></div>
+                                                    <div style="width: 4px; height: 100%; background-color: #0f172a;"></div>
+                                                </div>
+                                                <span class="mt-1" style="font-family: monospace; font-size: 8px; color: #0d9488; font-weight: 900;">12345678</span>
                                             </div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Generate barcodes to encode information automatically.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Generate 1D barcodes and 2D QR codes to encode information automatically.</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Card 10: Page Break -->
                             <div class="col">
-                                <div class="card h-100 shadow rounded-4" style="background-color: #0f172a; border: 1px solid #1e293b;">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <span class="d-flex justify-content-center align-items-center rounded-circle shadow-sm" style="width: 28px; height: 28px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 800; margin-right: 12px;">10</span>
-                                            <h5 class="mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Page Break</h5>
+                                <div class="card h-100 shadow-lg rounded-4 position-relative" style="background-color: #0f172a; border: 1px solid #1e293b;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-scissors"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold" style="color: #ffffff; font-size: 18px;">Page Break</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(236, 72, 153, 0.2); color: #fbcfe8; font-size: 11px; font-weight: 700;">10</span>
                                         </div>
-                                        <p style="color: #cbd5e1; font-size: 14px; font-weight: 500; margin-bottom: 16px; margin-left: 40px;">Add page breaks</p>
+                                        <p style="color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 16px;">Control pagination flow</p>
                                         
-                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4 overflow-hidden" style="background-color: rgba(99, 102, 241, 0.05); height: 140px; border: 1px solid rgba(99, 102, 241, 0.1); gap: 10px;">
-                                            <div class="shadow" style="width: 35px; height: 50px; background-color: #cbd5e1; border-radius: 2px; border-top-right-radius: 10px; position: relative;">
-                                                <div style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; background-color: #94a3b8; border-bottom-left-radius: 2px;"></div>
-                                                <div style="position: absolute; top: 20px; left: 5px; right: 5px; height: 2px; background-color: #94a3b8;"></div>
-                                                <div style="position: absolute; top: 30px; left: 5px; right: 15px; height: 2px; background-color: #94a3b8;"></div>
+                                        <!-- Visual Graphic -->
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4 overflow-hidden" style="background-color: #1e293b; height: 145px; border: 1px solid #334155; gap: 12px;">
+                                            <div class="shadow rounded-2 p-1" style="width: 38px; height: 55px; background-color: #0f172a; border: 1px solid #475569; position: relative;">
+                                                <span style="font-size: 7px; font-weight: 800; color: #f472b6;">PAGE A</span>
                                             </div>
                                             
-                                            <div class="d-flex flex-column align-items-center" style="position: absolute; top: 0; bottom: 0; justify-content: center; left: 50%; transform: translateX(-50%); z-index: 2;">
-                                                <div style="width: 2px; height: 100%; border-left: 2px dashed #818cf8;"></div>
-                                                <i class="fa fa-scissors" style="position: absolute; color: #818cf8; font-size: 18px; background-color: #162032; padding: 4px; border-radius: 50%;"></i>
+                                            <div class="d-flex flex-column align-items-center justify-content-center" style="position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 2;">
+                                                <div style="width: 2px; height: 100%; border-left: 2px dashed #f472b6;"></div>
+                                                <i class="fa fa-scissors" style="position: absolute; color: #ffffff; font-size: 12px; background-color: #f472b6; padding: 4px; border-radius: 50%;"></i>
                                             </div>
 
-                                            <div class="shadow" style="width: 35px; height: 50px; background-color: #cbd5e1; border-radius: 2px; border-top-right-radius: 10px; position: relative;">
-                                                <div style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; background-color: #94a3b8; border-bottom-left-radius: 2px;"></div>
-                                                <div style="position: absolute; top: 20px; left: 5px; right: 5px; height: 2px; background-color: #94a3b8;"></div>
-                                                <div style="position: absolute; top: 30px; left: 5px; right: 15px; height: 2px; background-color: #94a3b8;"></div>
+                                            <div class="shadow rounded-2 p-1" style="width: 38px; height: 55px; background-color: #0f172a; border: 1px solid #475569; position: relative;">
+                                                <span style="font-size: 7px; font-weight: 800; color: #f472b6;">PAGE B</span>
                                             </div>
                                         </div>
                                         
-                                        <p style="color: #ffffff; font-size: 14px; line-height: 1.6; margin-bottom: 0;">Insert page breaks to control content flow across pages.</p>
+                                        <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; margin-bottom: 0; flex-grow: 1;">Insert page breaks to control content flow and structure across multiple pages.</p>
                                     </div>
                                 </div>
                             </div>
@@ -566,60 +1141,107 @@
                     </div>
 
                     <!-- Dark & Light Theme Showcase -->
-                    <div class="my-5 bg-white rounded-5 shadow-sm position-relative border" style="border-color: #e2e8f0 !important;">
+                    <div class="my-5 rounded-5 position-relative p-2 p-md-4" style="background-color: #f8fafc; border: 1px solid #cbd5e1; box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.07);">
                         <div class="position-relative p-md-5 p-4 z-1">
                             <div class="text-center mb-5 mt-3">
                                 <h2 style="font-weight: 900; color: #1e293b; font-size: 36px;">Seamless <span style="color: #3b82f6;">Dark & Light</span> Themes</h2>
                                 <p class="mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px;">
-                                    Designed to look stunning whether you prefer working in the light or the dark.
+                                    Designed to look stunning whether you prefer working in the light or the dark mode interface.
                                 </p>
                             </div>
 
                             <!-- Desktop Layout -->
-                            <div class="d-none d-lg-block position-relative mx-auto my-5" style="width: 100%; max-width: 1200px; padding-bottom: 250px;">
-                                <!-- Connection Line -->
-                                <div class="position-absolute d-flex align-items-center justify-content-center" style="width: 52%; height: 200px; left: 50%; top: 150px; transform: translateX(-50%); z-index: 1;">
-                                    <!-- Horizontal Line -->
-                                    <div style="position: absolute; width: 100%; height: 2px; background-color: #cbd5e1; top: 50%; left: 0;"></div>
-                                    <!-- Vertical Line Left (Down to Light Theme) -->
-                                    <div style="position: absolute; width: 2px; height: 50%; background-color: #cbd5e1; left: 0; bottom: 0;"></div>
-                                    <!-- Vertical Line Right (Up to Dark Theme) -->
-                                    <div style="position: absolute; width: 2px; height: 50%; background-color: #cbd5e1; right: 0; top: 0;"></div>
-                                    <!-- Arrow Down -->
-                                    <i class="fa fa-chevron-down" style="position: absolute; color: #cbd5e1; left: -6.5px; bottom: -8px; font-size: 16px;"></i>
-                                    <!-- Arrow Up -->
-                                    <i class="fa fa-chevron-up" style="position: absolute; color: #cbd5e1; right: -6.5px; top: -8px; font-size: 16px;"></i>
-                                </div>
+                            <div class="d-none d-lg-block position-relative mx-auto my-5" style="width: 100%; max-width: 1100px; padding-bottom: 390px;">
                                 
-                                <!-- Dark & Light Badge (Rendered on top) -->
-                                <div class="position-absolute d-flex align-items-center justify-content-center" style="width: 100%; left: 0; top: 232px; z-index: 10;">
-                                    <div class="px-5 py-3 rounded-pill shadow-lg" style="background-color: #ffffff; color: #1e293b; font-weight: 800; border: 2px solid #3b82f6; font-size: 16px;">
-                                        Dark & Light
+                                <!-- Top Right Box: Light Theme Image Window -->
+                                <div class="position-relative ms-auto shadow-lg rounded-4 overflow-hidden" style="width: 49%; border: 3px solid #1e293b; z-index: 5; background-color: #ffffff;">
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background-color: #f1f5f9;">
+                                        <div class="d-flex gap-2">
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #ef4444;"></div>
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #f59e0b;"></div>
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #10b981;"></div>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-1 bg-white border" style="color: #0f172a; font-size: 11px; font-weight: 700;">
+                                            <i class="fa fa-sun-o text-warning me-1"></i> LIGHT MODE
+                                        </span>
                                     </div>
-                                </div>
-
-                                <!-- Top Right: Light Theme -->
-                                <div class="position-relative ms-auto shadow-lg rounded-4 overflow-hidden" style="width: 49%; border: 4px solid #1e293b; z-index: 3;">
                                     <img src="images/report_designer_light.png" class="w-100 d-block" alt="Light Theme">
                                 </div>
 
-                                <!-- Bottom Left: Dark Theme -->
-                                <div class="position-absolute shadow-lg rounded-4 overflow-hidden" style="width: 49%; left: 0; top: 250px; border: 4px solid grey; z-index: 3;">
+                                <!-- Schematic Connecting Lines & Center Text (Symmetrical Gap Alignment) -->
+                                <div class="position-absolute w-100 h-100" style="top: 0; left: 0; pointer-events: none; z-index: 20;">
+                                    
+                                    <!-- Center Text Badge "Dark & Light" -->
+                                    <div class="position-absolute shadow-sm px-4 py-2 rounded-3 bg-white border fw-bold text-center" style="top: 335px; left: 50%; transform: translate(-50%, -50%); color: #0f172a; font-size: 14px; border-color: #cbd5e1 !important; letter-spacing: 0.5px; z-index: 25; pointer-events: auto;">
+                                        Dark & Light
+                                    </div>
+
+                                    <!-- LEFT BRANCH (To Dark Mode Box Top Border): Left -> Down -> Arrow ↓ -->
+                                    <!-- Horizontal Line Left -->
+                                    <div style="position: absolute; top: 335px; left: 24.5%; width: calc(50% - 65px - 24.5%); height: 3px; background-color: #3b82f6; z-index: 20;"></div>
+                                    <!-- Vertical Line Down to Dark Mode Top Border (378px) -->
+                                    <div style="position: absolute; top: 335px; left: 24.5%; width: 3px; height: 43px; background-color: #3b82f6; z-index: 20;"></div>
+                                    <!-- Arrowhead Down ↓ touching Dark Mode Top Border -->
+                                    <div style="position: absolute; top: 365px; left: 24.5%; transform: translateX(-42%); color: #3b82f6; font-size: 16px; z-index: 22;">
+                                        <i class="fa fa-chevron-down"></i>
+                                    </div>
+
+                                    <!-- RIGHT BRANCH (To Light Mode Box Bottom Border): Right -> Up -> Arrow ↑ -->
+                                    <!-- Horizontal Line Right -->
+                                    <div style="position: absolute; top: 335px; left: calc(50% + 65px); width: calc(75.5% - (50% + 65px)); height: 3px; background-color: #3b82f6; z-index: 20;"></div>
+                                    <!-- Vertical Line Up to Light Mode Bottom Border -->
+                                    <div style="position: absolute; top: 290px; left: 75.5%; width: 3px; height: 45px; background-color: #3b82f6; z-index: 20;"></div>
+                                    <!-- Arrowhead Up ↑ touching Light Mode Bottom Border -->
+                                    <div style="position: absolute; top: 278px; left: 75.5%; transform: translateX(-42%); color: #3b82f6; font-size: 16px; z-index: 22;">
+                                        <i class="fa fa-chevron-up"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Left Box: Dark Theme Image Window (Positioned lower at top: 378px) -->
+                                <div class="position-absolute shadow-lg rounded-4 overflow-hidden" style="width: 49%; left: 0; top: 378px; border: 3px solid #3b82f6; z-index: 5; background-color: #0f172a;">
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background-color: #1e293b;">
+                                        <div class="d-flex gap-2">
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #ef4444;"></div>
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #f59e0b;"></div>
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #10b981;"></div>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-1" style="background-color: #0f172a; color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.4); font-size: 11px; font-weight: 700;">
+                                            <i class="fa fa-moon-o me-1"></i> DARK MODE
+                                        </span>
+                                    </div>
                                     <img src="images/report_designer_dark.png" class="w-100 d-block" alt="Dark Theme">
                                 </div>
                             </div>
 
                             <!-- Mobile Layout -->
                             <div class="d-block d-lg-none mt-5">
-                                <div class="mb-4 shadow-lg rounded-4 overflow-hidden border" style="border-color: #1e293b !important; border-width: 4px !important;">
+                                <div class="mb-4 shadow-lg rounded-4 overflow-hidden" style="border: 2px solid #3b82f6; background-color: #0f172a;">
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2" style="background-color: #1e293b;">
+                                        <div class="d-flex gap-2">
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #ef4444;"></div>
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #f59e0b;"></div>
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #10b981;"></div>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-1" style="background-color: #0f172a; color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.4); font-size: 10px;">DARK MODE</span>
+                                    </div>
                                     <img src="images/report_designer_dark.png" class="img-fluid" alt="Dark Theme">
                                 </div>
+                                
                                 <div class="my-4 text-center">
-                                    <div class="px-4 py-2 rounded-pill d-inline-block shadow-sm" style="background-color: #ffffff; color: #1e293b; font-weight: 800; border: 2px solid #3b82f6;">
-                                        Dark & Light
+                                    <div class="px-4 py-2 rounded-pill d-inline-block shadow-sm text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 2px solid #3b82f6; font-weight: 800; font-size: 14px;">
+                                        <i class="fa fa-sun-o text-warning me-1"></i> Dark & Light System <i class="fa fa-moon-o ms-1" style="color: #60a5fa;"></i>
                                     </div>
                                 </div>
-                                <div class="shadow-lg rounded-4 overflow-hidden border" style="border-color: #cbd5e1 !important; border-width: 4px !important;">
+
+                                <div class="shadow-lg rounded-4 overflow-hidden" style="border: 2px solid #cbd5e1; background-color: #ffffff;">
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2" style="background-color: #f1f5f9;">
+                                        <div class="d-flex gap-2">
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #ef4444;"></div>
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #f59e0b;"></div>
+                                            <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #10b981;"></div>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-1 bg-white border" style="color: #0f172a; font-size: 10px; font-weight: 700;">LIGHT MODE</span>
+                                    </div>
                                     <img src="images/report_designer_light.png" class="img-fluid" alt="Light Theme">
                                 </div>
                             </div>

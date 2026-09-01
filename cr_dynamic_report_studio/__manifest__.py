@@ -2,27 +2,26 @@
 # Part of Creyox Technologies.
 {
     "name": "Dynamic Report Studio | Custom Dynamic Report Designer | Custom Report Designer ",
-    "category": "Extra Tools",
     "author": "Creyox Technologies",
     "website": "https://www.creyox.com",
     "support": "https://www.creyox.com/helpdesk",
-    "live_test_url": 'https://www.creyox.com/helpdesk?module_tech_name=cr_dynamic_report_studio&version=18.0',
+    "live_test_url": "https://www.creyox.com/helpdesk?module_tech_name=cr_dynamic_report_studio&version=18.0",
     "category": "Extra Tools",
-    "version": "18.0.0.0",
+    "version": "18.0.0.1",
     "summary": """
-         Dynamic Report Studio is a powerful, visual document design ecosystem for Odoo that completely replaces 
-         the tedious process of coding PDF layouts in HTML and QWeb XML. By introducing an interactive, drag and 
-         drop workspace, it empowers functional consultants, business analysts, and developers to build stunning, 
-         pixel perfect reports, custom invoices, purchase orders, and shipping labels within minutes. The module 
-         features a state of the art canvas supporting diverse components such as text blocks, dynamic database 
-         field paths, custom image libraries, layout shapes, dynamic data tables, barcodes, and QR codes.
+        Dynamic Report Studio is a powerful, visual document design ecosystem for Odoo that completely replaces 
+        the tedious process of coding PDF layouts in HTML and QWeb XML. By introducing an interactive, drag and 
+        drop workspace, it empowers functional consultants, business analysts, and developers to build stunning, 
+        pixel perfect reports, custom invoices, purchase orders, and shipping labels within minutes. The module 
+        features a state of the art canvas supporting diverse components such as text blocks, dynamic database 
+        field paths, custom image libraries, layout shapes, dynamic data tables, barcodes, and QR codes.
 
-         Additionally, it offers unified design syncing through automated watermark mirroring across multiple pages, 
-         strict margin bounding to keep headers and footers neatly formatted, and full dark theme customization. 
-         Dynamic Report Studio bridges the gap between raw database records and presentation ready business documents, 
-         drastically accelerating report turnaround times and optimizing document customizability across your entire 
-         enterprise.
-        """,
+        Additionally, it offers unified design syncing through automated watermark mirroring across multiple pages, 
+        strict margin bounding to keep headers and footers neatly formatted, and full dark theme customization. 
+        Dynamic Report Studio bridges the gap between raw database records and presentation ready business documents, 
+        drastically accelerating report turnaround times and optimizing document customizability across your entire 
+        enterprise.
+    """,
     "description": """
         <h1>Dynamic Report Studio – Drag & Drop Odoo PDF Report Designer</h1>
         <p>Dynamic Report Studio is a visual Odoo report designer that replaces slow, manual QWeb and XML coding with an easy drag-and-drop canvas. Build custom invoices, purchase orders, shipping labels, and business reports in minutes—no developer required.</p>
@@ -114,26 +113,26 @@
     """,
     "license": "OPL-1",
     "depends": [
-        'base',
-        'web',
-        'mail',
+        "base",
+        "web",
+        "mail",
     ],
     "data": [
-        'security/ir.model.access.csv',
-        'views/report_designer_template_views.xml',
-        'views/report_designer_resource_views.xml',
-        'views/report_designer_font_views.xml',
-        'views/report_designer_print_log_views.xml',
-        'views/report_designer_menus.xml',
+        "security/ir.model.access.csv",
+        "views/report_designer_template_views.xml",
+        "views/report_designer_resource_views.xml",
+        "views/report_designer_font_views.xml",
+        "views/report_designer_print_log_views.xml",
+        "views/report_designer_menus.xml",
     ],
     "assets": {
-        'web.assets_backend': [
-            'cr_dynamic_report_studio/static/src/designer/report_designer_app.js',
-            'cr_dynamic_report_studio/static/src/designer/report_designer_app.scss',
-            'cr_dynamic_report_studio/static/src/designer/report_designer_app.xml',
+        "web.assets_backend": [
+            "cr_dynamic_report_studio/static/src/designer/report_designer_app.js",
+            "cr_dynamic_report_studio/static/src/designer/report_designer_app.scss",
+            "cr_dynamic_report_studio/static/src/designer/report_designer_app.xml",
         ],
-        'web.assets_web_dark': [
-            'cr_dynamic_report_studio/static/src/designer/report_designer_app.dark.scss',
+        "web.assets_web_dark": [
+            "cr_dynamic_report_studio/static/src/designer/report_designer_app.dark.scss",
         ],
     },
     "installable": True,
