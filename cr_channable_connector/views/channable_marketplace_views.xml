@@ -300,6 +300,7 @@
                             </group>
                             <group string="Synchronisation Rules">
                                 <field name="sync_product_field"/>
+                                <field name="import_start_date"/>
                                 <field name="valid_states" invisible="1"/>
                                 <field name="saving_attachments"/>
                                 <field name="auto_validate_quotations"/>

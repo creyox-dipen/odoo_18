@@ -40,6 +40,8 @@ class ChannableSyncOrdersWizard(models.TransientModel):
         marketplace_id = res.get('marketplace_id') or self._context.get('default_marketplace_id')
         if marketplace_id:
             marketplace = self.env['channable.marketplace'].browse(marketplace_id)
+            if marketplace.import_start_date:
+                res['date_start'] = marketplace.import_start_date
             # If any status checkbox is True on the marketplace, copy them directly
             status_fields = ['status_not_shipped', 'status_shipped', 'status_waiting', 
                              'status_pending_shipment', 'status_pending_cancellation', 'status_cancelled']
@@ -169,8 +171,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
         if company_name:
             # Make the partner a contact of a company
             partner_vals['company_name'] = company_name
-        if marketplace.tag_ids:
-            partner_vals['category_id'] = [(6, 0, marketplace.tag_ids.ids)]
 
         if not partner:
             partner_vals['customer_rank'] = 1
@@ -426,11 +426,24 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             )
 
             params = {}
+            effective_start_date = self.date_start
+            effective_end_date = self.date_end
+
+            # Apply marketplace.import_start_date cutoff primarily for automatic cron sync
+            is_cron_sync = self._context.get('sync_synchronously') or self._context.get('from_cron')
+            if is_cron_sync and marketplace.import_start_date:
+                if not effective_start_date or effective_start_date < marketplace.import_start_date:
+                    effective_start_date = marketplace.import_start_date
+                if effective_end_date and effective_start_date > effective_end_date:
+                    effective_end_date = effective_start_date + datetime.timedelta(hours=1)
+
             if self.import_by_id and self.order_ids_str:
                 params['order_ids'] = self.order_ids_str.strip()
             elif not self.import_by_id:
-                params['start_date'] = self.date_start.strftime('%Y-%m-%dT%H:%M:%S')
-                params['end_date'] = self.date_end.strftime('%Y-%m-%dT%H:%M:%S')
+                if effective_start_date:
+                    params['start_date'] = effective_start_date.strftime('%Y-%m-%dT%H:%M:%S')
+                if effective_end_date:
+                    params['end_date'] = effective_end_date.strftime('%Y-%m-%dT%H:%M:%S')
 
             statuses = []
             if not self.import_by_id:
@@ -503,6 +516,23 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     if len(page_orders) < limit:
                         break
                     offset += limit
+
+            if is_cron_sync and marketplace.import_start_date and orders_data:
+                cutoff_dt = marketplace.import_start_date
+                filtered_orders = []
+                for order_obj in orders_data:
+                    raw_created = order_obj.get('created', '')
+                    if raw_created:
+                        try:
+                            clean_created = raw_created[:19].replace('T', ' ')
+                            order_dt = fields.Datetime.from_string(clean_created)
+                            if order_dt and order_dt < cutoff_dt:
+                                _logger.info("[Channable] Skipping order %s created at %s because it is prior to import_start_date %s", order_obj.get('id'), order_dt, cutoff_dt)
+                                continue
+                        except Exception:
+                            pass
+                    filtered_orders.append(order_obj)
+                orders_data = filtered_orders
 
             orders_count = len(orders_data)
             
@@ -865,7 +895,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             # memo lives at data.extra.memo in the Channable payload
             memo = inner_data.get('extra', {}).get('memo', '')
 
-            # Resolve sale_channel_id based on country (Belgium: 28/42, Netherlands: 29/41)
+            # Resolve sale_channel_id based on country (Belgium: 28/33, Netherlands: 29/32)
             is_fbb = str(market_ref).upper().endswith('-FBB')
             sale_channel_id = False
             # Read country code directly from the Channable payload to avoid reused partner record country overrides
@@ -873,9 +903,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                            billing_data.get('country_code') or billing_data.get('country') or '').strip()
             country_code_upper = raw_country[:2].upper()
             if country_code_upper == 'BE':
-                sale_channel_id = 42 if is_fbb else 28
+                sale_channel_id = 33 if is_fbb else 28
             elif country_code_upper == 'NL':
-                sale_channel_id = 41 if is_fbb else 29
+                sale_channel_id = 32 if is_fbb else 29
 
             if sale_channel_id:
                 _logger.info("Determined sale_channel_id %s for Channable order %s (country: %s, FBB: %s)", sale_channel_id, channable_id, raw_country, is_fbb)
@@ -901,6 +931,11 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 'pricelist_id': marketplace.pricelist_id.id if marketplace.pricelist_id else False,
                 comments_field: memo,
                 'sale_channel_id': sale_channel_id,
+            }
+            if marketplace.tag_ids:
+                order_vals['tag_ids'] = [(6, 0, marketplace.tag_ids.ids)]
+
+            order_vals.update({
                 # ── Channable-specific fields ─────────────────────────────────
                 'channable_marketplace_id': marketplace.id,
                 'channable_order_id': channable_id,
@@ -908,7 +943,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 'channable_status': status,
                 # ── Lines ─────────────────────────────────────────────────────
                 'order_line': order_lines,
-            }
+            })
 
             # Add carrier to deliver so the default delivery method is set
             if carrier:

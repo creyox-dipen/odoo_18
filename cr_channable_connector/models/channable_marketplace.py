@@ -49,7 +49,7 @@ class ChannableMarketplace(models.Model):
     )
     team_id = fields.Many2one('crm.team', string='Sales Team')
     language_id = fields.Many2one('res.lang', string='Language')
-    tag_ids = fields.Many2many('res.partner.category', string='Tags')
+    tag_ids = fields.Many2many('crm.tag', string='Tags')
     default_partner_vat = fields.Char(string='Default Partner VAT Number')
 
     # ── Synchronisation Configuration ────────────────────────────────────────
@@ -57,6 +57,11 @@ class ChannableMarketplace(models.Model):
         ('default_code', 'Internal Reference'),
         ('barcode', 'Barcode'),
     ], string='Synchronisation Product Field', default='default_code', required=True)
+
+    import_start_date = fields.Datetime(
+        string='Import Orders From Date/Time',
+        help='Only import orders created on or after this date and time. Leave blank to import all orders.'
+    )
 
     valid_states = fields.Char(
         string='Valid States',

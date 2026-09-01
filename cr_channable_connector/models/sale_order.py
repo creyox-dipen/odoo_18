@@ -13,6 +13,16 @@ _logger = logging.getLogger(__name__)
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
+    sale_channel_id = fields.Integer(
+        string="Sale Channel ID",
+        copy=False,
+    )
+
+    comments = fields.Text(
+        string="Comments",
+        copy=False,
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         """Override create to use Channable Market Reference prefixed with 'BL' or 'LVB' as the order name."""
