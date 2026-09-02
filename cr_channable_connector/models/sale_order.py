@@ -142,8 +142,41 @@ class SaleOrder(models.Model):
             except Exception:
                 pass
 
-    # ── Public Actions ────────────────────────────────────────────────────────
+    def _channable_validate_deliveries(self):
+        """Validate all pending outgoing stock pickings for this order when shipped in Channable."""
+        _bypass_ctx = {
+            'mail_create_nosubscribe': True,
+            'mail_create_nolog': True,
+            'mail_notrack': True,
+            'tracking_disable': True,
+            'skip_channable_shipment_notify': True,
+        }
+        for order in self:
+            if order.state in ['draft', 'sent']:
+                try:
+                    order.with_context(**_bypass_ctx).action_confirm()
+                except Exception as conf_err:
+                    _logger.info("Could not auto-confirm order %s before validating delivery: %s", order.name, str(conf_err))
 
+            open_deliveries = order.picking_ids.filtered(
+                lambda p: p.state not in ('done', 'cancel') and p.picking_type_code == 'outgoing'
+            )
+            for delivery in open_deliveries:
+                try:
+                    delivery.with_context(**_bypass_ctx).action_assign()
+                    for move in delivery.move_ids:
+                        if move.state not in ('done', 'cancel'):
+                            move.quantity = move.product_uom_qty
+                    delivery.channable_sync_status = 'done'
+                    delivery.with_context(**_bypass_ctx).button_validate()
+                    order.message_post(
+                        body=_("Delivery %s automatically validated due to Channable status update (Shipped).", delivery.name)
+                    )
+                except Exception as e:
+                    _logger.info("Delivery auto-validation error for order %s: %s", order.name, str(e))
+                    order._channable_log_error('Delivery Auto-Validation Error', 'update_shipment', e)
+
+    # ── Public Actions ────────────────────────────────────────────────────────
 
     def action_channable_sync_order(self):
         """Re-fetch the order from Channable and update editable fields."""
@@ -168,6 +201,8 @@ class SaleOrder(models.Model):
                                 order._channable_create_credit_notes()
                             except Exception as cancel_err:
                                 order.message_post(body=_("Failed to automatically cancel the order in Odoo: %s", str(cancel_err)))
+                    if new_status == 'shipped':
+                        order._channable_validate_deliveries()
                     # Update client reference if it changed
                     if order_data.get('channel_order_id'):
                         order.channable_market_ref = str(order_data['channel_order_id'])

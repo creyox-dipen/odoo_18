@@ -156,8 +156,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             if company_name:
                 # Make the partner a contact of a company
                 partner_vals['company_name'] = company_name
-            if marketplace.tag_ids:
-                partner_vals['category_id'] = [(6, 0, marketplace.tag_ids.ids)]
 
             partner = Partner.with_context(
                 mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
@@ -373,8 +371,10 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             if self.import_by_id and self.order_ids_str:
                 params['order_ids'] = self.order_ids_str.strip()
             elif not self.import_by_id:
-                params['start_date'] = self.date_start.strftime('%Y-%m-%dT%H:%M:%S')
-                params['end_date'] = self.date_end.strftime('%Y-%m-%dT%H:%M:%S')
+                if self.date_start:
+                    params['start_date'] = self.date_start.strftime('%Y-%m-%dT%H:%M:%S')
+                if self.date_end:
+                    params['end_date'] = self.date_end.strftime('%Y-%m-%dT%H:%M:%S')
 
             statuses = []
             if not self.import_by_id:
@@ -838,6 +838,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             if carrier:
                 order_vals['carrier_id'] = carrier.id
 
+            if marketplace.tag_ids:
+                order_vals['tag_ids'] = [(6, 0, marketplace.tag_ids.ids)]
+
             ch_total = float(order_data.get('price', 0.0))
             if not ch_total:
                 ch_total = sum(float(item.get('price', 0.0)) * float(item.get('quantity', 1)) for item in products_data) + shipping_cost
@@ -884,6 +887,11 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                             order.message_post(body=_("Order automatically cancelled in Odoo during import due to Channable status update."))
                         except Exception as cancel_err:
                             order.message_post(body=_("Failed to automatically cancel the order in Odoo: %s", str(cancel_err)))
+                    elif new_status == 'shipped':
+                        try:
+                            order._channable_validate_deliveries()
+                        except Exception as ship_err:
+                            _logger.info("Failed to validate deliveries for order %s during batch update: %s", order.name, str(ship_err))
                 except Exception as update_err:
                     import traceback
                     err_trace = traceback.format_exc()

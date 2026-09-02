@@ -49,7 +49,7 @@ class ChannableMarketplace(models.Model):
     )
     team_id = fields.Many2one('crm.team', string='Sales Team')
     language_id = fields.Many2one('res.lang', string='Language')
-    tag_ids = fields.Many2many('res.partner.category', string='Tags')
+    tag_ids = fields.Many2many('crm.tag', string='Tags')
     default_partner_vat = fields.Char(string='Default Partner VAT Number')
 
     # ── Synchronisation Configuration ────────────────────────────────────────
@@ -57,6 +57,10 @@ class ChannableMarketplace(models.Model):
         ('default_code', 'Internal Reference'),
         ('barcode', 'Barcode'),
     ], string='Synchronisation Product Field', default='default_code', required=True)
+    import_start_date = fields.Datetime(
+        string='Import Starting Date (Cron)',
+        help='If specified, scheduled automatic sync (cron) will fetch orders created from this date to current time. If not set, all orders will be fetched.'
+    )
 
     valid_states = fields.Char(
         string='Valid States',
@@ -355,28 +359,23 @@ class ChannableMarketplace(models.Model):
         """Cron: auto-import orders for all active marketplaces."""
         for marketplace in self.search([('active', '=', True)]):
             try:
+                wizard_vals = {
+                    'marketplace_id': marketplace.id,
+                }
+                if marketplace.import_start_date:
+                    wizard_vals['date_start'] = marketplace.import_start_date
+                    wizard_vals['date_end'] = fields.Datetime.now()
+                else:
+                    wizard_vals['date_start'] = False
+                    wizard_vals['date_end'] = False
+
                 wizard = self.env['channable.sync.orders.wizard'].with_context(
                     sync_synchronously=True,
                     default_marketplace_id=marketplace.id
-                ).create({
-                    'marketplace_id': marketplace.id,
-                })
+                ).create(wizard_vals)
                 wizard.action_import_orders()
             except Exception:
-                _logger.exception("Cron auto-import failed for marketplace '%s'", marketplace.name)
-
-    def action_sync_orders_shipment(self):
-        """Sync shipments for all pending orders in this marketplace."""
-        self.ensure_one()
-        orders = self.env['sale.order'].search([
-            ('channable_marketplace_id', '=', self.id),
-            ('state', 'in', ['sale', 'done']),
-            ('channable_status', 'not in', ['shipped', 'canceled', 'cancelled', 'manual']),
-            ('picking_ids.state', '=', 'done'),
-            ('picking_ids.channable_sync_status', '=', 'pending'),
-        ])
-        if orders:
-            orders.action_channable_notify_shipped()
+                _logger.info("Cron auto-import failed for marketplace '%s'", marketplace.name)
 
     def action_open_cron(self):
         self.ensure_one()

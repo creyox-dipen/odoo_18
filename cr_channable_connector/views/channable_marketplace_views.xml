@@ -11,9 +11,6 @@
                                 string="Sync Orders"
                                 type="object"
                                 class="oe_highlight"/>
-                        <button name="action_sync_orders_shipment"
-                                string="Sync Shipments"
-                                type="object"/>
                         <button name="action_push_product_stock"
                                 string="Push Product Stock"
                                 type="object"/>
@@ -300,6 +297,7 @@
                             </group>
                             <group string="Synchronisation Rules">
                                 <field name="sync_product_field"/>
+                                <field name="import_start_date"/>
                                 <field name="valid_states" invisible="1"/>
                                 <field name="saving_attachments"/>
                                 <field name="auto_validate_quotations"/>
@@ -696,11 +694,6 @@
                                                name="action_sync_orders"
                                                type="object">
                                                 Sync Orders
-                                            </a>
-                                            <a class="my_dashboard_link"
-                                               name="action_sync_orders_shipment"
-                                               type="object">
-                                                Sync Orders Shipment
                                             </a>
                                             <a class="my_dashboard_link mt-1"
                                                name="action_push_product_stock"
