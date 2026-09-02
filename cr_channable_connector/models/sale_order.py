@@ -10,48 +10,9 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
-
-    sale_channel_id = fields.Integer(
-        string="Sale Channel ID",
-        copy=False,
-    )
-
-    comments = fields.Text(
-        string="Comments",
-        copy=False,
-    )
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Override create to use Channable Market Reference prefixed with 'BL' or 'LVB' as the order name."""
-        for vals in vals_list:
-            if 'name' not in vals or vals['name'] == _('New') or vals['name'] == 'New':
-                market_ref = vals.get('channable_market_ref') or vals.get('client_order_ref')
-                channable_id = vals.get('channable_order_id')
-                if (channable_id or vals.get('channable_marketplace_id')):
-                    is_fbb = str(market_ref or '').upper().endswith('-FBB')
-                    name_prefix = 'LVB' if is_fbb else 'BL'
-                    vals['name'] = name_prefix + str(market_ref or channable_id or '')
-
-        orders = super(SaleOrder, self).create(vals_list)
-        for order in orders:
-            if (order.channable_order_id or order.channable_marketplace_id) and order.name:
-                market_ref = order.channable_market_ref or order.client_order_ref or order.channable_order_id
-                if market_ref:
-                    is_fbb = str(market_ref).upper().endswith('-FBB')
-                    name_prefix = 'LVB' if is_fbb else 'BL'
-                    expected_name = name_prefix + str(market_ref)
-                    if order.name != expected_name:
-                        old_name = order.name
-                        order.name = expected_name
-                        _logger.info("Channable order renamed from %s to %s", old_name, order.name)
-                elif order.name.startswith('S'):
-                    old_name = order.name
-                    order.name = 'BL' + order.name[1:]
-                    _logger.info("Channable order renamed from %s to %s", old_name, order.name)
-        return orders
 
     channable_status = fields.Char(
         string='Channable Status', copy=False,
@@ -117,13 +78,6 @@ class SaleOrder(models.Model):
         }
 
     # ── Helpers ──────────────────────────────────────────────────────────────
-
-    def _find_channable_comments_field(self):
-        """Dynamically locate the field representing 'Comments' on sale.order, falling back to 'comments'."""
-        for fname, field in self._fields.items():
-            if field.string in ('Comments', 'comments'):
-                return fname
-        return 'comments'
 
     def _channable_get_connection_and_headers(self):
         """Return (connection, url_base, headers) for this order."""
@@ -219,8 +173,7 @@ class SaleOrder(models.Model):
                         order.channable_market_ref = str(order_data['channel_order_id'])
                     # Sync the customer note / memo from Channable if present
                     if order_data.get('memo'):
-                        comments_field = order._find_channable_comments_field()
-                        order[comments_field] = order_data['memo']
+                        order.note = order_data['memo']
             except Exception as e:
                 order._channable_log_error('Sync Order Error', 'sync_order', e)
 

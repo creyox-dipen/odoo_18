@@ -40,8 +40,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
         marketplace_id = res.get('marketplace_id') or self._context.get('default_marketplace_id')
         if marketplace_id:
             marketplace = self.env['channable.marketplace'].browse(marketplace_id)
-            if marketplace.import_start_date:
-                res['date_start'] = marketplace.import_start_date
             # If any status checkbox is True on the marketplace, copy them directly
             status_fields = ['status_not_shipped', 'status_shipped', 'status_waiting', 
                              'status_pending_shipment', 'status_pending_cancellation', 'status_cancelled']
@@ -85,109 +83,85 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             partner_cache = {}
 
         Partner = self.env['res.partner']
-        email = str(billing_data.get('email') or '').strip().lower()
+        email = (billing_data.get('email') or '').strip().lower()
 
         # Check in-memory cache first
-        partner = False
         if email and email in partner_cache:
-            partner = partner_cache[email]
+            return partner_cache[email]
 
         # ── Search existing partner ──────────────────────────────────────────
-        if not partner and email:
+        partner = False
+        if email:
             # Prefer a company-contact or individual with this e-mail
             partner = Partner.search([
                 ('email', '=ilike', email),
                 ('type', 'in', ['contact', False]),
             ], limit=1)
 
-        # ── Resolve country & state ──────────────────────────────────────
-        country = False
-        state = False
-        country_code = billing_data.get('country_code') or billing_data.get('country', '')
-        if country_code:
-            country_code_upper = country_code[:2].upper()
-            if country_code_upper in country_cache:
-                country = country_cache[country_code_upper]
-            else:
-                country = self.env['res.country'].search(
-                    [('code', '=ilike', country_code[:2])], limit=1
-                )
-                if country:
-                    country_cache[country_code_upper] = country
-
-        state_code = billing_data.get('state_code') or billing_data.get('state', '')
-        if country and state_code:
-            state_code_upper = str(state_code or '').strip().upper()
-            state_key = (country.id, state_code_upper)
-            if state_key in state_cache:
-                state = state_cache[state_key]
-            else:
-                state = self.env['res.country.state'].search([
-                    ('country_id', '=', country.id),
-                    ('code', '=ilike', state_code),
-                ], limit=1)
-                if state:
-                    state_cache[state_key] = state
-
-        fname = str(billing_data.get('first_name') or '').strip()
-        lname = str(billing_data.get('last_name') or '').strip()
-        full_name = f'{fname} {lname}'.strip() or 'Channable Customer'
-        company_name = str(billing_data.get('company') or '').strip()
-        billing_street_name = str(billing_data.get('street') or '').strip()
-        billing_house_number = str(billing_data.get('house_number') or '').strip()
-        billing_house_ext = str(billing_data.get('house_number_ext') or '').strip()
-
-        billing_parts = []
-        if billing_street_name:
-            billing_parts.append(billing_street_name)
-        if billing_house_number:
-            billing_parts.append(billing_house_number)
-        if billing_house_ext:
-            billing_parts.append(billing_house_ext)
-
-        billing_street = " ".join(billing_parts)
-        if not billing_street:
-            billing_street = str(billing_data.get('address1') or '').strip()
-
-        partner_vals = {
-            'name': full_name,
-            'email': email,
-            'phone': str(billing_data.get('phone') or '').strip(),
-            'street': billing_street,
-            'street2': str(billing_data.get('street2') or '').strip(),
-            'city': str(billing_data.get('city') or '').strip(),
-            'zip': str(billing_data.get('zip_code') or '').strip(),
-            'vat': billing_data.get('vat') or marketplace.default_partner_vat or False,
-            'lang': (
-                marketplace.language_id.code
-                if marketplace.language_id
-                else self.env.user.lang
-            ),
-        }
-        if country:
-            partner_vals['country_id'] = country.id
-        if state:
-            partner_vals['state_id'] = state.id
-        if company_name:
-            # Make the partner a contact of a company
-            partner_vals['company_name'] = company_name
-
         if not partner:
-            partner_vals['customer_rank'] = 1
+            # ── Resolve country & state ──────────────────────────────────────
+            country = False
+            state = False
+            country_code = billing_data.get('country_code') or billing_data.get('country', '')
+            if country_code:
+                country_code_upper = country_code[:2].upper()
+                if country_code_upper in country_cache:
+                    country = country_cache[country_code_upper]
+                else:
+                    country = self.env['res.country'].search(
+                        [('code', '=ilike', country_code[:2])], limit=1
+                    )
+                    if country:
+                        country_cache[country_code_upper] = country
+
+            state_code = billing_data.get('state_code') or billing_data.get('state', '')
+            if country and state_code:
+                state_code_upper = (state_code or '').strip().upper()
+                state_key = (country.id, state_code_upper)
+                if state_key in state_cache:
+                    state = state_cache[state_key]
+                else:
+                    state = self.env['res.country.state'].search([
+                        ('country_id', '=', country.id),
+                        ('code', '=ilike', state_code),
+                    ], limit=1)
+                    if state:
+                        state_cache[state_key] = state
+
+            fname = (billing_data.get('first_name') or '').strip()
+            lname = (billing_data.get('last_name') or '').strip()
+            full_name = f'{fname} {lname}'.strip() or 'Channable Customer'
+            company_name = (billing_data.get('company') or '').strip()
+
+            partner_vals = {
+                'name': full_name,
+                'email': email,
+                'phone': billing_data.get('phone', ''),
+                'street': billing_data.get('street', ''),
+                'street2': billing_data.get('street2', ''),
+                'city': billing_data.get('city', ''),
+                'zip': billing_data.get('zip_code', ''),
+                'vat': billing_data.get('vat') or marketplace.default_partner_vat or False,
+                'lang': (
+                    marketplace.language_id.code
+                    if marketplace.language_id
+                    else self.env.user.lang
+                ),
+                'customer_rank': 1,
+            }
+            if country:
+                partner_vals['country_id'] = country.id
+            if state:
+                partner_vals['state_id'] = state.id
+            if company_name:
+                # Make the partner a contact of a company
+                partner_vals['company_name'] = company_name
+            if marketplace.tag_ids:
+                partner_vals['category_id'] = [(6, 0, marketplace.tag_ids.ids)]
+
             partner = Partner.with_context(
                 mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
             ).create(partner_vals)
-        else:
-            # Optimize: Only write if there are actual differences
-            write_vals = {}
-            for k, v in partner_vals.items():
-                current_val = partner[k]
-                if hasattr(current_val, 'id'):
-                    current_val = current_val.id
-                if (current_val or '') != (v or ''):
-                    write_vals[k] = v
-            if write_vals:
-                partner.write(write_vals)
 
         # Save to cache
         if email and partner:
@@ -210,24 +184,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
         Partner = self.env['res.partner']
 
-        ship_street_name = str(shipping_data.get('street') or '').strip()
-        ship_house_number = str(shipping_data.get('house_number') or '').strip()
-        ship_house_ext = str(shipping_data.get('house_number_ext') or '').strip()
-
-        ship_parts = []
-        if ship_street_name:
-            ship_parts.append(ship_street_name)
-        if ship_house_number:
-            ship_parts.append(ship_house_number)
-        if ship_house_ext:
-            ship_parts.append(ship_house_ext)
-
-        ship_street = " ".join(ship_parts)
-        if not ship_street:
-            ship_street = str(shipping_data.get('address1') or '').strip()
-
-        ship_city = str(shipping_data.get('city') or '').strip()
-        ship_zip = str(shipping_data.get('zip_code') or '').strip()
+        ship_street = (shipping_data.get('street') or '').strip()
+        ship_city = (shipping_data.get('city') or '').strip()
+        ship_zip = (shipping_data.get('zip_code') or '').strip()
 
         # Quick equality check
         if (ship_street == (invoice_partner.street or '').strip()
@@ -236,10 +195,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             return invoice_partner
 
         # Check in-memory cache first
-        shipping_partner = False
         cache_key = (invoice_partner.id, ship_street, ship_city, ship_zip)
         if cache_key in shipping_partner_cache:
-            shipping_partner = shipping_partner_cache[cache_key]
+            return shipping_partner_cache[cache_key]
 
         # Resolve country/state for shipping
         country = False
@@ -258,7 +216,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
 
         state_code = shipping_data.get('state_code') or shipping_data.get('state', '')
         if country and state_code:
-            state_code_upper = str(state_code or '').strip().upper()
+            state_code_upper = (state_code or '').strip().upper()
             state_key = (country.id, state_code_upper)
             if state_key in state_cache:
                 state = state_cache[state_key]
@@ -270,52 +228,38 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 if state:
                     state_cache[state_key] = state
 
-        fname = str(shipping_data.get('first_name') or '').strip()
-        lname = str(shipping_data.get('last_name') or '').strip()
+        fname = (shipping_data.get('first_name') or '').strip()
+        lname = (shipping_data.get('last_name') or '').strip()
         ship_name = f'{fname} {lname}'.strip() or invoice_partner.name
 
         # Search for an existing delivery child under this partner
+        domain = [
+            ('parent_id', '=', invoice_partner.id),
+            ('type', '=', 'delivery'),
+            ('street', '=', ship_street),
+            ('city', '=', ship_city),
+            ('zip', '=', ship_zip),
+        ]
+        shipping_partner = Partner.search(domain, limit=1)
         if not shipping_partner:
-            domain = [
-                ('parent_id', '=', invoice_partner.id),
-                ('type', '=', 'delivery'),
-                ('street', '=', ship_street),
-                ('city', '=', ship_city),
-                ('zip', '=', ship_zip),
-            ]
-            shipping_partner = Partner.search(domain, limit=1)
-
-        ship_vals = {
-            'name': ship_name,
-            'type': 'delivery',
-            'parent_id': invoice_partner.id,
-            'street': ship_street,
-            'street2': str(shipping_data.get('street2') or '').strip(),
-            'city': ship_city,
-            'zip': ship_zip,
-            'phone': str(shipping_data.get('phone') or '').strip() or invoice_partner.phone,
-            'email': invoice_partner.email,
-        }
-        if country:
-            ship_vals['country_id'] = country.id
-        if state:
-            ship_vals['state_id'] = state.id
-
-        if not shipping_partner:
+            ship_vals = {
+                'name': ship_name,
+                'type': 'delivery',
+                'parent_id': invoice_partner.id,
+                'street': ship_street,
+                'street2': shipping_data.get('street2', ''),
+                'city': ship_city,
+                'zip': ship_zip,
+                'phone': shipping_data.get('phone', '') or invoice_partner.phone,
+                'email': invoice_partner.email,
+            }
+            if country:
+                ship_vals['country_id'] = country.id
+            if state:
+                ship_vals['state_id'] = state.id
             shipping_partner = Partner.with_context(
                 mail_create_nosubscribe=True, mail_create_nolog=True, tracking_disable=True
             ).create(ship_vals)
-        else:
-            # Optimize: Only write if there are actual differences
-            write_vals = {}
-            for k, v in ship_vals.items():
-                current_val = shipping_partner[k]
-                if hasattr(current_val, 'id'):
-                    current_val = current_val.id
-                if (current_val or '') != (v or ''):
-                    write_vals[k] = v
-            if write_vals:
-                shipping_partner.write(write_vals)
 
         # Cache the result
         shipping_partner_cache[cache_key] = shipping_partner
@@ -426,24 +370,11 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             )
 
             params = {}
-            effective_start_date = self.date_start
-            effective_end_date = self.date_end
-
-            # Apply marketplace.import_start_date cutoff primarily for automatic cron sync
-            is_cron_sync = self._context.get('sync_synchronously') or self._context.get('from_cron')
-            if is_cron_sync and marketplace.import_start_date:
-                if not effective_start_date or effective_start_date < marketplace.import_start_date:
-                    effective_start_date = marketplace.import_start_date
-                if effective_end_date and effective_start_date > effective_end_date:
-                    effective_end_date = effective_start_date + datetime.timedelta(hours=1)
-
             if self.import_by_id and self.order_ids_str:
                 params['order_ids'] = self.order_ids_str.strip()
             elif not self.import_by_id:
-                if effective_start_date:
-                    params['start_date'] = effective_start_date.strftime('%Y-%m-%dT%H:%M:%S')
-                if effective_end_date:
-                    params['end_date'] = effective_end_date.strftime('%Y-%m-%dT%H:%M:%S')
+                params['start_date'] = self.date_start.strftime('%Y-%m-%dT%H:%M:%S')
+                params['end_date'] = self.date_end.strftime('%Y-%m-%dT%H:%M:%S')
 
             statuses = []
             if not self.import_by_id:
@@ -516,23 +447,6 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     if len(page_orders) < limit:
                         break
                     offset += limit
-
-            if is_cron_sync and marketplace.import_start_date and orders_data:
-                cutoff_dt = marketplace.import_start_date
-                filtered_orders = []
-                for order_obj in orders_data:
-                    raw_created = order_obj.get('created', '')
-                    if raw_created:
-                        try:
-                            clean_created = raw_created[:19].replace('T', ' ')
-                            order_dt = fields.Datetime.from_string(clean_created)
-                            if order_dt and order_dt < cutoff_dt:
-                                _logger.info("[Channable] Skipping order %s created at %s because it is prior to import_start_date %s", order_obj.get('id'), order_dt, cutoff_dt)
-                                continue
-                        except Exception:
-                            pass
-                    filtered_orders.append(order_obj)
-                orders_data = filtered_orders
 
             orders_count = len(orders_data)
             
@@ -895,28 +809,9 @@ class ChannableSyncOrdersWizard(models.TransientModel):
             # memo lives at data.extra.memo in the Channable payload
             memo = inner_data.get('extra', {}).get('memo', '')
 
-            # Resolve sale_channel_id based on country (Belgium: 28/33, Netherlands: 29/32)
-            is_fbb = str(market_ref).upper().endswith('-FBB')
-            sale_channel_id = False
-            # Read country code directly from the Channable payload to avoid reused partner record country overrides
-            raw_country = (shipping_data.get('country_code') or shipping_data.get('country') or 
-                           billing_data.get('country_code') or billing_data.get('country') or '').strip()
-            country_code_upper = raw_country[:2].upper()
-            if country_code_upper == 'BE':
-                sale_channel_id = 33 if is_fbb else 28
-            elif country_code_upper == 'NL':
-                sale_channel_id = 32 if is_fbb else 29
-
-            if sale_channel_id:
-                _logger.info("Determined sale_channel_id %s for Channable order %s (country: %s, FBB: %s)", sale_channel_id, channable_id, raw_country, is_fbb)
-
-            name_prefix = 'LVB' if is_fbb else 'BL'
-
             # ── Build sale.order vals ─────────────────────────────────────────
-            comments_field = self.env['sale.order']._find_channable_comments_field()
             order_vals = {
                 # ── Core sale.order fields ─────────────────────────────────────
-                'name': name_prefix + (market_ref or channable_id),
                 'partner_id': invoice_partner.id,
                 'partner_invoice_id': invoice_partner.id,
                 'partner_shipping_id': shipping_partner.id,
@@ -929,13 +824,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 'fiscal_position_id': fiscal_position_id,
                 'team_id': marketplace.team_id.id if marketplace.team_id else False,
                 'pricelist_id': marketplace.pricelist_id.id if marketplace.pricelist_id else False,
-                comments_field: memo,
-                'sale_channel_id': sale_channel_id,
-            }
-            if marketplace.tag_ids:
-                order_vals['tag_ids'] = [(6, 0, marketplace.tag_ids.ids)]
-
-            order_vals.update({
+                'note': memo,
                 # ── Channable-specific fields ─────────────────────────────────
                 'channable_marketplace_id': marketplace.id,
                 'channable_order_id': channable_id,
@@ -943,7 +832,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                 'channable_status': status,
                 # ── Lines ─────────────────────────────────────────────────────
                 'order_line': order_lines,
-            })
+            }
 
             # Add carrier to deliver so the default delivery method is set
             if carrier:
@@ -963,7 +852,7 @@ class ChannableSyncOrdersWizard(models.TransientModel):
                     order_vals['order_line'] = [(5, 0, 0)] + order_lines
                 else:
                     # For confirmed orders, strictly limit updates to safe fields
-                    safe_fields = ['channable_status', 'channable_market_ref', comments_field]
+                    safe_fields = ['note', 'channable_status', 'channable_market_ref']
                     order_vals = {k: v for k, v in order_vals.items() if k in safe_fields}
                 
                 updates_mapping.append((existing_info['id'], order_vals, ch_total, channable_id))
