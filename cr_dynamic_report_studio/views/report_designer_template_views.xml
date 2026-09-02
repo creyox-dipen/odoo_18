@@ -78,7 +78,7 @@
                 <field name="write_date"/>
                 <field name="is_bound_to_print_menu"/>
                 <templates>
-                    <t t-name="card">
+                    <t t-name="kanban-box">
                         <div class="oe_kanban_global_click o_report_designer_kanban_card d-flex flex-column p-0 position-relative">
                             <!-- Dropdown menu in standard Odoo top-right position -->
                             <div class="o_dropdown_kanban dropdown">
