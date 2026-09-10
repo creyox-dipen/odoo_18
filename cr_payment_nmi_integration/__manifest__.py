@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Part of Creyox Technologies
+# Part of Creyox Technologies.
 {
     "name": "NMI Payment Gateway | NMI API Integration | Payment Provider: NMI | NMI Payment Solutions | NMI Payment Processing | NMI Payment System",
     "author": "Creyox Technologies",
@@ -13,7 +13,7 @@
         Additionally, this feature-rich integration includes real-time card BIN lookup via NMI's official v4 Query API, instantly detecting whether an entered card is credit or debit to enforce an automated surcharge matrix fee system. This allows merchants to dynamically apply custom debit or credit card surcharge percentages, automatically calculating the fees and injecting them as line items into the Sales Order and transaction totals. The module also features built-in duplicate transaction protection that intelligently manages retry checkout attempts using dynamic order timestamp signatures to prevent accidental order-declines, ensuring a smooth and uninterrupted payment experience for both customers and administrators.
         """,
     "license": "OPL-1",
-    "version": "18.0.0.2",
+    "version": "18.0.0.3",
     "price": "349",
     "currency": "USD",
     "description": """

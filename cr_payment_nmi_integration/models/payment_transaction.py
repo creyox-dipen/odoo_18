@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Part of Creyox Technologies
+# Part of Creyox Technologies.
 
 import logging
 import urllib.parse
@@ -83,9 +83,6 @@ class PaymentTransaction(models.Model):
         :rtype: payment.transaction recordset
         :raises ValidationError: If no matching transaction can be found.
         """
-        # In Odoo 19 the base payment.transaction no longer defines
-        # _get_tx_from_notification_data, so we guard with try/except to stay
-        # compatible with both Odoo 17/18 (method exists) and 19 (removed).
         try:
             tx = super()._get_tx_from_notification_data(
                 provider_code, notification_data
@@ -142,7 +139,6 @@ class PaymentTransaction(models.Model):
                 # Approved — mark transaction as paid.
                 self.provider_reference = transaction_id
                 self._set_done()
-                self._set_done()
                 if self.tokenize:
                     self._tokenize_from_notification_data(notification_data)
                 _logger.info(
@@ -152,7 +148,7 @@ class PaymentTransaction(models.Model):
                 )
             elif response_code == "2":
                 # Declined by bank.
-                _logger.warning(
+                _logger.info(
                     "ACH transaction %s declined by NMI: %s",
                     self.reference,
                     response_text,
@@ -160,7 +156,7 @@ class PaymentTransaction(models.Model):
                 self._set_canceled()
             else:
                 # Error / communication failure.
-                _logger.warning(
+                _logger.info(
                     "ACH transaction %s failed with NMI error: %s",
                     self.reference,
                     response_text,
@@ -181,11 +177,10 @@ class PaymentTransaction(models.Model):
                 "ekashu_reference", self.reference
             )
             self._set_done()
-            self._set_done()
             if self.tokenize:
                 self._tokenize_from_notification_data(notification_data)
         else:
-            _logger.warning(
+            _logger.info(
                 "Received data with invalid success code (%s) for transaction reference %s.",
                 auth_result,
                 self.reference,
@@ -202,7 +197,7 @@ class PaymentTransaction(models.Model):
 
         token_values = self._extract_token_values(notification_data)
         if not token_values.get("provider_ref"):
-            _logger.warning(
+            _logger.info(
                 "NMI: Tokenization requested but no vault ID found in notification data."
             )
             return
@@ -340,103 +335,139 @@ class PaymentTransaction(models.Model):
             fee_label = "Debit Card Surcharge"
 
         if fee_percentage > 0:
-            surcharge_amount = self.currency_id.round(
-                (self.amount * fee_percentage) / 100
-            )
-            amount_to_charge = self.amount + surcharge_amount
-
-            # Update the Sale Order to include the fee
+            has_preexisting_fee = False
             for order in self.sale_order_ids:
+                existing_fee_lines = order.order_line.filtered(
+                    lambda l: "Surcharge" in (l.name or "")
+                    or (l.product_id and l.product_id.default_code in ("CREDIT_CARD_FEE", "DEBIT_CARD_FEE"))
+                )
+                if existing_fee_lines:
+                    has_preexisting_fee = True
+                    surcharge_amount = sum(existing_fee_lines.mapped("price_subtotal"))
+                    break
+
+            if has_preexisting_fee:
+                amount_to_charge = self.amount
                 _logger.info(
-                    "NMI: Adding %s line to order %s (Saved Card)",
-                    fee_label,
-                    order.name,
+                    "NMI Token Surcharge: Pre-existing fee line found. Amount to charge: %s, Surcharge portion: %s",
+                    amount_to_charge,
+                    surcharge_amount,
                 )
-                fee_product = (
-                    self.env["product.product"]
-                    .sudo()
-                    .search([("default_code", "=", fee_product_code)], limit=1)
+            else:
+                surcharge_amount = self.currency_id.round(
+                    (self.amount * fee_percentage) / 100
                 )
+                amount_to_charge = self.amount + surcharge_amount
 
-                existing_fee_line = order.order_line.filtered(
-                    lambda l: "Surcharge" in l.name
-                )
-                if not existing_fee_line:
-                    self.env["sale.order.line"].sudo().create(
-                        {
-                            "order_id": order.id,
-                            "name": f"{fee_label} ({fee_percentage}%)",
-                            "product_id": fee_product.id if fee_product else False,
-                            "product_uom_qty": 1,
-                            "price_unit": surcharge_amount,
-                            "sequence": 999,
-                        }
+                # Update the Sale Order to include the fee
+                for order in self.sale_order_ids:
+                    _logger.info(
+                        "NMI: Adding %s line to order %s (Saved Card)",
+                        fee_label,
+                        order.name,
                     )
-                else:
-                    existing_fee_line.sudo().write(
-                        {
-                            "name": f"{fee_label} ({fee_percentage}%)",
-                            "product_id": fee_product.id if fee_product else False,
-                            "price_unit": surcharge_amount,
-                        }
+                    fee_product = (
+                        self.env["product.product"]
+                        .sudo()
+                        .search([("default_code", "=", fee_product_code)], limit=1)
                     )
+                    if not fee_product:
+                        template = (
+                            self.env["product.template"]
+                            .sudo()
+                            .search([("default_code", "=", fee_product_code)], limit=1)
+                        )
+                        if template:
+                            fee_product = template.product_variant_id
 
-            for invoice in self.invoice_ids:
-                fee_product = (
-                    self.env["product.product"]
-                    .sudo()
-                    .search([("default_code", "=", fee_product_code)], limit=1)
-                )
-                if fee_product:
-                    invoice_sudo = invoice.sudo()
-                    was_posted = invoice_sudo.state == "posted"
-                    if was_posted:
-                        invoice_sudo.button_draft()
-
-                    existing_fee_line = invoice_sudo.invoice_line_ids.filtered(
-                        lambda l: l.product_id.default_code
-                        in ("CREDIT_CARD_FEE", "DEBIT_CARD_FEE")
+                    existing_fee_line = order.order_line.filtered(
+                        lambda l: "Surcharge" in (l.name or "")
                     )
-
-                    account = (
-                        fee_product.property_account_income_id
-                        or fee_product.categ_id.property_account_income_categ_id
-                    )
-                    if account and invoice_sudo.fiscal_position_id:
-                        account = invoice_sudo.fiscal_position_id.map_account(account)
-                    account_id = account.id if account else False
-
-                    line_vals = {
-                        "name": f"{fee_label} ({fee_percentage}%)",
-                        "product_id": fee_product.id,
-                        "quantity": 1,
-                        "price_unit": surcharge_amount,
-                        "tax_ids": [(5, 0, 0)],
-                    }
-                    if account_id:
-                        line_vals["account_id"] = account_id
-
                     if not existing_fee_line:
-                        invoice_sudo.write({"invoice_line_ids": [(0, 0, line_vals)]})
+                        self.env["sale.order.line"].sudo().create(
+                            {
+                                "order_id": order.id,
+                                "name": f"{fee_label} ({fee_percentage}%)",
+                                "product_id": fee_product.id if fee_product else False,
+                                "product_uom_qty": 1,
+                                "price_unit": surcharge_amount,
+                                "sequence": 999,
+                            }
+                        )
                     else:
-                        existing_fee_line.write(
+                        existing_fee_line.sudo().write(
                             {
                                 "name": f"{fee_label} ({fee_percentage}%)",
+                                "product_id": fee_product.id if fee_product else False,
                                 "price_unit": surcharge_amount,
-                                "tax_ids": [(5, 0, 0)],
                             }
                         )
 
-                    if was_posted and invoice_sudo.state == "draft":
-                        invoice_sudo.action_post()
+                for invoice in self.invoice_ids:
+                    fee_product = (
+                        self.env["product.product"]
+                        .sudo()
+                        .search([("default_code", "=", fee_product_code)], limit=1)
+                    )
+                    if not fee_product:
+                        template = (
+                            self.env["product.template"]
+                            .sudo()
+                            .search([("default_code", "=", fee_product_code)], limit=1)
+                        )
+                        if template:
+                            fee_product = template.product_variant_id
 
-            # Update the Odoo transaction amount
-            _logger.info(
-                "NMI Token Surcharge: Final amount %s for %s",
-                amount_to_charge,
-                self.reference,
-            )
-            self.sudo().write({"amount": amount_to_charge})
+                    if fee_product:
+                        invoice_sudo = invoice.sudo()
+                        was_posted = invoice_sudo.state == "posted"
+                        if was_posted:
+                            invoice_sudo.button_draft()
+
+                        existing_fee_line = invoice_sudo.invoice_line_ids.filtered(
+                            lambda l: l.product_id.default_code
+                            in ("CREDIT_CARD_FEE", "DEBIT_CARD_FEE")
+                        )
+
+                        account = (
+                            fee_product.property_account_income_id
+                            or fee_product.categ_id.property_account_income_categ_id
+                        )
+                        if account and invoice_sudo.fiscal_position_id:
+                            account = invoice_sudo.fiscal_position_id.map_account(account)
+                        account_id = account.id if account else False
+
+                        line_vals = {
+                            "name": f"{fee_label} ({fee_percentage}%)",
+                            "product_id": fee_product.id,
+                            "quantity": 1,
+                            "price_unit": surcharge_amount,
+                            "tax_ids": [(5, 0, 0)],
+                        }
+                        if account_id:
+                            line_vals["account_id"] = account_id
+
+                        if not existing_fee_line:
+                            invoice_sudo.write({"invoice_line_ids": [(0, 0, line_vals)]})
+                        else:
+                            existing_fee_line.write(
+                                {
+                                    "name": f"{fee_label} ({fee_percentage}%)",
+                                    "price_unit": surcharge_amount,
+                                    "tax_ids": [(5, 0, 0)],
+                                }
+                            )
+
+                        if was_posted and invoice_sudo.state == "draft":
+                            invoice_sudo.action_post()
+
+                # Update the Odoo transaction amount
+                _logger.info(
+                    "NMI Token Surcharge: Final amount %s for %s",
+                    amount_to_charge,
+                    self.reference,
+                )
+                self.sudo().write({"amount": amount_to_charge})
 
         # Ensure Order ID is unique for every attempt to prevent NMI duplicate blocks
         import time
@@ -473,7 +504,7 @@ class PaymentTransaction(models.Model):
             )
             nmi_response.raise_for_status()
         except http_requests.exceptions.RequestException as e:
-            _logger.error("NMI Direct Post API token request failed: %s", str(e))
+            _logger.info("NMI Direct Post API token request failed: %s", str(e))
             raise ValidationError("NMI : Connection error — %s" % str(e))
 
         # Parse and process the response.

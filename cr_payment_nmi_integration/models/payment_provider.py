@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Part of Creyox Technologies
+# Part of Creyox Technologies.
 import base64
 import hashlib
 import logging
@@ -158,5 +158,5 @@ class PaymentProvider(models.Model):
             # NMI returns "type": "credit", "debit", etc.
             return data.get("result", "unknown")
         except Exception as e:
-            _logger.error("NMI Card Type Lookup failed: %s", str(e))
+            _logger.info("NMI Card Type Lookup failed: %s", str(e))
             return "unknown"

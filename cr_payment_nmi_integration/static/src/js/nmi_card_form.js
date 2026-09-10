@@ -1,45 +1,11 @@
 /** @odoo-module **/
 // Part of Creyox Technologies
 
-/**
- * NMI Card Payment — Odoo 18 CE frontend handler.
- *
- * WHY THIS APPROACH
- * ─────────────────
- * The original code used `Interaction` from `@web/public/interaction`, which is
- * an Odoo 19/SaaS feature NOT available in Odoo 18 CE. This caused the module
- * to fail loading entirely with:
- *   "@web/public/interaction not in correct asset bundle"
- *
- * The correct Odoo 18 CE pattern (used by payment_demo, payment_stripe, etc.) is
- * to import PaymentForm from '@payment/js/payment_form' and use .include() to
- * extend it with provider-specific overrides.
- *
- * HOW IT WORKS
- * ────────────
- * 1. _prepareInlineForm  → sets paymentContext.flow = 'direct' for NMI card.
- *    This makes _getPaymentFlow() return 'direct' at submit time so
- *    _initiatePaymentFlow calls _processDirectFlow (safe no-op) instead of
- *    _processRedirectFlow (which crashes when redirect_form_html is missing).
- *
- * 2. _processDirectFlow  → handles NMI card via POST to /payment/nmi/card/process.
- *    processingValues.reference is already created by the base RPC call.
- *    paymentContext.tokenizationRequested is already set by _submitForm.
- *
- * 3. _processRedirectFlow → CRITICAL SAFETY NET. If flow is still 'redirect'
- *    (edge case: radio pre-selected and _expandInlineForm not yet called),
- *    we intercept here before the null.setAttribute crash.
- *
- * 4. NmiCardFeeDisplay publicWidget → BIN-lookup fee display using the
- *    standard Odoo 18 publicWidget pattern (no Interaction needed).
- */
-
 import PaymentForm from '@payment/js/payment_form';
 import publicWidget from '@web/legacy/js/public/public_widget';
 import { rpc } from '@web/core/network/rpc';
 
 // ─── Extend PaymentForm (canonical Odoo 18 provider pattern) ─────────────────
-// Same pattern as payment_demo, payment_stripe, payment_authorize, etc.
 
 PaymentForm.include({
 
@@ -149,7 +115,7 @@ PaymentForm.include({
     },
 });
 
-// ─── BIN-Lookup fee display (publicWidget — Odoo 18 CE compatible) ────────────
+// ─── BIN-Lookup fee display & Token Surcharge (publicWidget — Odoo 18 CE) ─────
 
 publicWidget.registry.NmiCardFeeDisplay = publicWidget.Widget.extend({
     selector: '#o_payment_form',
@@ -158,9 +124,119 @@ publicWidget.registry.NmiCardFeeDisplay = publicWidget.Widget.extend({
         'change input[name="o_payment_radio"]': '_onRadioChange',
     },
 
-    _onRadioChange() {
-        this._updateFeeSummary(false);
-        this.lastBin = null;
+    start() {
+        this._super.apply(this, arguments);
+        this._initTokenBadges();
+        this._handleInitialSelection();
+    },
+
+    _initTokenBadges() {
+        const badges = document.querySelectorAll('.nmi-token-fee-badge');
+        if (!badges.length) return;
+
+        const paymentForm = document.querySelector('#o_payment_form') || this.el;
+        const baseAmount = parseFloat(paymentForm?.dataset.amount || 0);
+        const currencyName = paymentForm?.dataset.currencyName || 'USD';
+
+        badges.forEach((badge) => {
+            const cardType = badge.dataset.cardType;
+            const creditFee = parseFloat(badge.dataset.creditFee) || 0;
+            const debitFee = parseFloat(badge.dataset.debitFee) || 0;
+
+            let feePercent = 0;
+            if (cardType === 'credit' || cardType === 'charge') {
+                feePercent = creditFee;
+            } else if (cardType === 'debit') {
+                feePercent = debitFee;
+            }
+
+            if (feePercent > 0) {
+                const feeAmount = (baseAmount * feePercent) / 100;
+                const formatter = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: currencyName,
+                });
+                badge.textContent = `+ ${formatter.format(feeAmount)} Fee`;
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+        });
+    },
+
+    async _handleInitialSelection() {
+        const checkedRadio = this.el.querySelector('input[name="o_payment_radio"]:checked');
+        if (!checkedRadio) return;
+
+        const ds = checkedRadio.dataset;
+        const providerCode = ds.providerCode;
+        const isToken = ds.paymentOptionType === 'token';
+
+        if (isToken && providerCode === 'nmi') {
+            const tokenId = ds.paymentOptionId;
+            try {
+                const result = await rpc('/payment/nmi/token_surcharge', {
+                    token_id: parseInt(tokenId),
+                });
+                this._updateOrderSummaryDOM(result);
+            } catch (error) {
+                console.error('[NMI Token Surcharge] Initial RPC Error:', error);
+            }
+        }
+    },
+
+    async _onRadioChange(ev) {
+        const target = ev ? ev.target : this.el.querySelector('input[name="o_payment_radio"]:checked');
+        if (!target) return;
+
+        const ds = target.dataset;
+        const providerCode = ds.providerCode;
+        const pmCode = ds.paymentMethodCode;
+        const isToken = ds.paymentOptionType === 'token';
+
+        if (isToken && providerCode === 'nmi') {
+            const tokenId = ds.paymentOptionId;
+            console.log('[NMI] Saved Token Selected:', tokenId);
+            this.lastBin = null;
+            this._updateFeeSummary(false);
+            try {
+                const result = await rpc('/payment/nmi/token_surcharge', {
+                    token_id: parseInt(tokenId),
+                });
+                this._updateOrderSummaryDOM(result);
+            } catch (error) {
+                console.error('[NMI Token Surcharge] RPC Error:', error);
+            }
+        } else if (!isToken && providerCode === 'nmi' && pmCode !== 'ach_direct_debit') {
+            const container = target.closest('[name="o_payment_option"]');
+            const cardNumberInput = container?.querySelector('#nmi_ccnumber');
+            const cardVal = cardNumberInput?.value?.replace(/\s+/g, '') || '';
+            if (cardVal.length >= 6) {
+                const bin = cardVal.substring(0, 6);
+                this.lastBin = bin;
+                const providerId = parseInt(ds.providerId);
+                try {
+                    const result = await rpc('/payment/nmi/bin_lookup', {
+                        bin_number: bin,
+                        provider_id: providerId,
+                    });
+                    this._updateFeeSummary(result.type);
+                    this._updateOrderSummaryDOM(result);
+                } catch (error) {
+                    console.error('[NMI BIN Lookup] RPC Error:', error);
+                }
+            } else {
+                this.lastBin = null;
+                this._updateFeeSummary(false);
+                await this._clearSurcharge();
+            }
+        } else {
+            if (this.lastBin) {
+                this.lastBin = null;
+            }
+            this._updateFeeSummary(false);
+            await this._clearSurcharge();
+        }
     },
 
     async _onCardInput(ev) {
@@ -168,6 +244,7 @@ publicWidget.registry.NmiCardFeeDisplay = publicWidget.Widget.extend({
         if (cardNumber.length < 6) {
             this.lastBin = null;
             this._updateFeeSummary(false);
+            await this._clearSurcharge();
             return;
         }
 
@@ -183,9 +260,77 @@ publicWidget.registry.NmiCardFeeDisplay = publicWidget.Widget.extend({
                 provider_id: providerId,
             });
             this._updateFeeSummary(result.type);
+            this._updateOrderSummaryDOM(result);
         } catch (error) {
             console.error('[NMI BIN Lookup] Error:', error);
             this._updateFeeSummary(false);
+        }
+    },
+
+    async _clearSurcharge() {
+        try {
+            const checkedRadio = this.el.querySelector('input[name="o_payment_radio"]:checked');
+            const providerId = parseInt(checkedRadio?.dataset.providerId) || null;
+            const result = await rpc('/payment/nmi/clear_surcharge', { provider_id: providerId });
+            this._updateOrderSummaryDOM(result);
+        } catch (error) {
+            console.error('[NMI Clear Surcharge] RPC Error:', error);
+        }
+    },
+
+    _updateOrderSummaryDOM(result) {
+        if (!result) return;
+        console.log('[NMI] Updating Order Summary DOM:', result);
+
+        if (result.new_total !== undefined && result.new_total > 0) {
+            const paymentForm = document.querySelector('#o_payment_form') || this.el;
+            if (paymentForm) {
+                paymentForm.dataset.amount = result.new_total;
+            }
+            document.querySelectorAll('[name="o_payment_submit_button"]').forEach((btn) => {
+                btn.dataset.amount = result.new_total;
+            });
+        }
+
+        const htmlToUse = result.total_html || result.summary_html;
+        if (htmlToUse) {
+            const cartTotals = document.querySelectorAll('#cart_total');
+            if (cartTotals.length) {
+                cartTotals.forEach((cartTotal) => {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = htmlToUse;
+                    const newTotal = temp.querySelector('#cart_total') || temp.firstElementChild;
+                    if (newTotal && cartTotal.parentElement) {
+                        cartTotal.replaceWith(newTotal);
+                    }
+                });
+            }
+        }
+
+        if (result.cart_lines_html) {
+            const cartProductsList = document.querySelectorAll('#cart_products');
+            if (cartProductsList.length) {
+                cartProductsList.forEach((cartProducts) => {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = result.cart_lines_html;
+                    const newProducts = temp.querySelector('#cart_products') || temp.firstElementChild;
+                    if (newProducts && cartProducts.parentElement) {
+                        cartProducts.replaceWith(newProducts);
+                    }
+                });
+            }
+        }
+
+        const summaryTotalSpans = document.querySelectorAll('#amount_total_summary');
+        if (summaryTotalSpans.length && result.new_total !== undefined) {
+            const currencyName = this.el.dataset.currencyName || 'USD';
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currencyName,
+            });
+            summaryTotalSpans.forEach((span) => {
+                span.textContent = formatter.format(result.new_total);
+            });
         }
     },
 
