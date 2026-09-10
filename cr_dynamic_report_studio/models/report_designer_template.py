@@ -1507,6 +1507,41 @@ class ReportDesignerTemplate(models.Model):
                     record._update_paper_format()
         return res
 
+    def unlink(self):
+        """Unlink template and cleanup associated report action, QWeb view, and paper format."""
+        _logger.info("Unlinking %s report templates and cleaning up print menu actions", len(self))
+        report_actions = self.mapped("report_action_id")
+        views_to_delete = self.env["ir.ui.view"]
+        paperformats_to_delete = self.env["report.paperformat"]
+
+        for record in self:
+            view_key = f"cr_dynamic_report_studio.report_designer_template_{record.id}"
+            view = self.env["ir.ui.view"].search([("key", "=", view_key)])
+            if not view:
+                view = self.env["ir.ui.view"].search(
+                    [("key", "=", f"report_designer_template_{record.id}")]
+                )
+            if view:
+                views_to_delete |= view
+
+            paperformat = self.env["report.paperformat"].search(
+                [("name", "=", f"Paperformat for Template {record.id}")]
+            )
+            if paperformat:
+                paperformats_to_delete |= paperformat
+
+        res = super(ReportDesignerTemplate, self).unlink()
+
+        if report_actions:
+            report_actions.unlink()
+        if views_to_delete:
+            views_to_delete.unlink()
+        if paperformats_to_delete:
+            paperformats_to_delete.unlink()
+
+        self.env.registry.clear_all_caches()
+        return res
+
     def action_duplicate(self):
         for rec in self:
             rec.copy({"name": f"{rec.name} (Copy)"})
