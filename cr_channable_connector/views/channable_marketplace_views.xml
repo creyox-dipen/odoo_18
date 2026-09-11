@@ -11,6 +11,9 @@
                                 string="Sync Orders"
                                 type="object"
                                 class="oe_highlight"/>
+                        <button name="action_sync_orders_shipment"
+                                string="Sync Shipments"
+                                type="object"/>
                         <button name="action_push_product_stock"
                                 string="Push Product Stock"
                                 type="object"/>
@@ -694,6 +697,11 @@
                                                name="action_sync_orders"
                                                type="object">
                                                 Sync Orders
+                                            </a>
+                                            <a class="my_dashboard_link"
+                                               name="action_sync_orders_shipment"
+                                               type="object">
+                                                Sync Orders Shipment
                                             </a>
                                             <a class="my_dashboard_link mt-1"
                                                name="action_push_product_stock"

@@ -10,9 +10,38 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
-
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to use Channable Market Reference prefixed with 'BL' or 'LVB' as the order name."""
+        for vals in vals_list:
+            if 'name' not in vals or vals['name'] == _('New') or vals['name'] == 'New':
+                market_ref = vals.get('channable_market_ref') or vals.get('client_order_ref')
+                channable_id = vals.get('channable_order_id')
+                if (channable_id or vals.get('channable_marketplace_id')):
+                    is_fbb = str(market_ref or '').upper().endswith('-FBB')
+                    name_prefix = 'LVB' if is_fbb else 'BL'
+                    vals['name'] = name_prefix + str(market_ref or channable_id or '')
+
+        orders = super(SaleOrder, self).create(vals_list)
+        for order in orders:
+            if (order.channable_order_id or order.channable_marketplace_id) and order.name:
+                market_ref = order.channable_market_ref or order.client_order_ref or order.channable_order_id
+                if market_ref:
+                    is_fbb = str(market_ref).upper().endswith('-FBB')
+                    name_prefix = 'LVB' if is_fbb else 'BL'
+                    expected_name = name_prefix + str(market_ref)
+                    if order.name != expected_name:
+                        old_name = order.name
+                        order.name = expected_name
+                        _logger.info("Channable order renamed from %s to %s", old_name, order.name)
+                elif order.name.startswith('S'):
+                    old_name = order.name
+                    order.name = 'BL' + order.name[1:]
+                    _logger.info("Channable order renamed from %s to %s", old_name, order.name)
+        return orders
 
     channable_status = fields.Char(
         string='Channable Status', copy=False,
@@ -79,6 +108,25 @@ class SaleOrder(models.Model):
 
     # ── Helpers ──────────────────────────────────────────────────────────────
 
+    def _find_channable_comments_field(self):
+        """Dynamically locate the field representing 'Comments' or 'Opmerkingen' on sale.order."""
+        # 1. Prefer custom x_studio or x_ fields first
+        for fname, field in self._fields.items():
+            if fname.startswith('x_') and field.string in ('Comments', 'Opmerkingen', 'comments', 'opmerkingen'):
+                return fname
+
+        # 2. Check for exact technical names (ignoring case)
+        for fname in self._fields:
+            if fname in ('comments', 'x_studio_opmerkingen', 'x_studio_comments'):
+                return fname
+
+        # 3. Check for any field labeled 'Comments' or 'Opmerkingen'
+        for fname, field in self._fields.items():
+            if field.string in ('Comments', 'Opmerkingen'):
+                return fname
+
+        return 'note'
+
     def _channable_get_connection_and_headers(self):
         """Return (connection, url_base, headers) for this order."""
         self.ensure_one()
@@ -142,41 +190,8 @@ class SaleOrder(models.Model):
             except Exception:
                 pass
 
-    def _channable_validate_deliveries(self):
-        """Validate all pending outgoing stock pickings for this order when shipped in Channable."""
-        _bypass_ctx = {
-            'mail_create_nosubscribe': True,
-            'mail_create_nolog': True,
-            'mail_notrack': True,
-            'tracking_disable': True,
-            'skip_channable_shipment_notify': True,
-        }
-        for order in self:
-            if order.state in ['draft', 'sent']:
-                try:
-                    order.with_context(**_bypass_ctx).action_confirm()
-                except Exception as conf_err:
-                    _logger.info("Could not auto-confirm order %s before validating delivery: %s", order.name, str(conf_err))
-
-            open_deliveries = order.picking_ids.filtered(
-                lambda p: p.state not in ('done', 'cancel') and p.picking_type_code == 'outgoing'
-            )
-            for delivery in open_deliveries:
-                try:
-                    delivery.with_context(**_bypass_ctx).action_assign()
-                    for move in delivery.move_ids:
-                        if move.state not in ('done', 'cancel'):
-                            move.quantity = move.product_uom_qty
-                    delivery.channable_sync_status = 'done'
-                    delivery.with_context(**_bypass_ctx).button_validate()
-                    order.message_post(
-                        body=_("Delivery %s automatically validated due to Channable status update (Shipped).", delivery.name)
-                    )
-                except Exception as e:
-                    _logger.info("Delivery auto-validation error for order %s: %s", order.name, str(e))
-                    order._channable_log_error('Delivery Auto-Validation Error', 'update_shipment', e)
-
     # ── Public Actions ────────────────────────────────────────────────────────
+
 
     def action_channable_sync_order(self):
         """Re-fetch the order from Channable and update editable fields."""
@@ -201,14 +216,13 @@ class SaleOrder(models.Model):
                                 order._channable_create_credit_notes()
                             except Exception as cancel_err:
                                 order.message_post(body=_("Failed to automatically cancel the order in Odoo: %s", str(cancel_err)))
-                    if new_status == 'shipped':
-                        order._channable_validate_deliveries()
                     # Update client reference if it changed
                     if order_data.get('channel_order_id'):
                         order.channable_market_ref = str(order_data['channel_order_id'])
                     # Sync the customer note / memo from Channable if present
                     if order_data.get('memo'):
-                        order.note = order_data['memo']
+                        comments_field = order._find_channable_comments_field()
+                        order[comments_field] = order_data['memo']
             except Exception as e:
                 order._channable_log_error('Sync Order Error', 'sync_order', e)
 
