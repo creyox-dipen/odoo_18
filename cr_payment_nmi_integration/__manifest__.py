@@ -77,7 +77,7 @@
         <p>Watch the youtube video, visit <a href="https://www.youtube.com/@CreyoxTechnologies">Creyox Technologies YouTube Videos</a></p>
         <p>Read our blog post, visit <a href="https://www.creyox.com/blog">Creyox Technologies Blogs</a></p>
     """,
-    "depends": ["base", "payment", "account", "website"],
+    "depends": ["base", "payment", "account", "website", "website_sale"],
     "data": [
         "views/payment_nmi_templates.xml",
         "views/payment_provider_views.xml",
