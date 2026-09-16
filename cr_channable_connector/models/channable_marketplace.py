@@ -305,8 +305,8 @@ class ChannableMarketplace(models.Model):
                 }
             }
 
-        # Send to Channable in chunks of 100 to optimize payload size and avoid timeouts
-        chunk_size = 100
+        # Send to Channable in chunks of 50 to optimize payload size and avoid HTTP 413 Request Entity Too Large errors
+        chunk_size = 50
         total_pushed = 0
         try:
             for i in range(0, len(offers), chunk_size):
