@@ -1,0 +1,42 @@
+<odoo>
+    <record id="view_gelato_order_wizard_form" model="ir.ui.view">
+        <field name="name">gelato.order.wizard.form</field>
+        <field name="model">gelato.order.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Gelato Order Preview">
+                <group>
+                    <field name="order_id"/>
+                    <field name="customer_reference_id"/>
+                    <field name="fulfillment_status"/>
+                    <field name="financial_status"/>
+                    <field name="currency"/>
+                    <field name="channel"/>
+                    <field name="store_id"/>
+                    <field name="created_at"/>
+                    <field name="updated_at"/>
+                    <field name="ordered_at"/>
+                </group>
+                <notebook>
+                    <page string="Items">
+                        <field name="items_json" readonly="1" widget="text"/>
+                    </page>
+                    <page string="Shipment">
+                        <field name="shipment_json" readonly="1" widget="text"/>
+                    </page>
+                    <page string="Billing">
+                        <field name="billing_json" readonly="1" widget="text"/>
+                    </page>
+                    <page string="Shipping">
+                        <field name="shipping_json" readonly="1" widget="text"/>
+                    </page>
+                    <page string="Return Address">
+                        <field name="return_json" readonly="1" widget="text"/>
+                    </page>
+                    <page string="Receipts">
+                        <field name="receipts_json" readonly="1" widget="text"/>
+                    </page>
+                </notebook>
+            </form>
+        </field>
+    </record>
+</odoo>

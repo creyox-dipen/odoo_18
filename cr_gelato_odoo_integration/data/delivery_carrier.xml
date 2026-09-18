@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="standard_product_gelato_delivery" model="product.product">
+        <field name="name">Gelato Standard Delivery Product</field>
+        <field name="default_code">Delivery_008</field>
+        <field name="type">service</field>
+        <field name="categ_id" ref="delivery.product_category_deliveries"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="list_price">0.0</field>
+    </record>
+
+    <record id="express_product_gelato_delivery" model="product.product">
+        <field name="name">Gelato Express Delivery Product</field>
+        <field name="default_code">Delivery_009</field>
+        <field name="type">service</field>
+        <field name="categ_id" ref="delivery.product_category_deliveries"/>
+        <field name="sale_ok" eval="False"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="list_price">0.0</field>
+    </record>
+
+    <record id="gelato_normal_delivery_carrier" model="delivery.carrier">
+        <field name="name">Gelato Standard Delivery</field>
+        <field name="integration_level">rate</field>
+        <field name="cr_gelato_shipping_service_type">normal</field>
+        <field name="fixed_price">0.0</field>
+        <field name="sequence">1</field>
+        <field name="delivery_type">gelato</field>
+        <field name="product_id" ref="cr_gelato_odoo_integration.standard_product_gelato_delivery"/>
+    </record>
+
+    <record id="gelato_express_delivery_carrier" model="delivery.carrier">
+        <field name="name">Gelato Express Delivery</field>
+        <field name="integration_level">rate</field>
+        <field name="cr_gelato_shipping_service_type">express</field>
+        <field name="fixed_price">0.0</field>
+        <field name="sequence">1</field>
+        <field name="delivery_type">gelato</field>
+        <field name="product_id" ref="cr_gelato_odoo_integration.express_product_gelato_delivery"/>
+    </record>
+
+</odoo>

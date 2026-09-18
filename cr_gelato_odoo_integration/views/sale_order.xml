@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="cr_sale_order_form_inherit" model="ir.ui.view">
+        <field name="name">Sale Order Form Inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Gelato" name="gelato_data">
+                    <group>
+                        <group>
+                            <field name="gelato_order_id" />
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button string='Get Gelato Order Information' name='action_open_gelato_order' type="object" invisible="state != 'sale' or not gelato_order_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

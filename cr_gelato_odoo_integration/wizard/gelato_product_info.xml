@@ -1,0 +1,34 @@
+<odoo>
+    <record id="view_gelato_product_template_wizard_form" model="ir.ui.view">
+        <field name="name">gelato.product.template.wizard.form</field>
+        <field name="model">gelato.product.template.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Gelato Product Info" version="7.0">
+                <group>
+                    <field name="product_uid" readonly="1"/>
+                    <field name="coating_type" readonly="1"/>
+                    <field name="color_type" readonly="1"/>
+                    <field name="folding_type" readonly="1"/>
+                    <field name="orientation" readonly="1"/>
+                    <field name="paper_format" readonly="1"/>
+                    <field name="paper_type" readonly="1"/>
+                    <field name="product_status" readonly="1"/>
+                    <field name="protection_type" readonly="1"/>
+                    <field name="spot_finishing_type" readonly="1"/>
+                    <field name="variable" readonly="1"/>
+                    <field name="weight_value" readonly="1"/>
+                    <field name="weight_unit" readonly="1"/>
+                    <field name="supported_countries" readonly="1"/>
+                    <field name="not_supported_countries" readonly="1"/>
+                    <field name="is_stockable" readonly="1"/>
+                    <field name="is_printable" readonly="1"/>
+                    <field name="valid_page_counts" readonly="1"/>
+                </group>
+
+                <footer>
+                    <button string="Close" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

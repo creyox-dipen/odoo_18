@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="cr_product_product_form_inherit" model="ir.ui.view">
+        <field name="name">Product Form Inherit</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Gelato" invisible="not cr_product_uid" name="gelato">
+                    <group>
+                        <group string="Gelato">
+                            <field string="Product UID" name="cr_product_uid"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+             <xpath expr="//header" position="inside">
+                <button string='Get Gelato Product Information' name='action_get_gelato_product_info' type="object" invisible="not cr_product_uid"/>
+                    <button string='Gelato Product Price Information' name='open_gelato_price_wizard' type="object" invisible="not cr_product_uid"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="cr_product_product_easy_form_inherite" model="ir.ui.view">
+        <field name="name">Product Easy Form Inherite</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_variant_easy_edit_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group invisible="not cr_product_uid">
+                    <group string="Gelato" name="gelato">
+                        <field string="Product UID" name="cr_product_uid"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="inherite_variant_easy_edit_price_view_in_gelato" model="ir.ui.view">
+        <field name="name">Easy Form Inherite For Gelato</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_variant_easy_edit_view" />
+        <field name="arch" type="xml">
+            <field name="lst_price" position="attributes">
+                <attribute name="attrs"/>
+                <attribute name="readonly">False</attribute>
+            </field>
+        </field>
+    </record>
+
+</odoo>

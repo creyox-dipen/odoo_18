@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gelato_order_wizard,access.gelato.order.wizard,model_gelato_order_wizard,,1,1,1,1
+access_gelato_product_template_wizard,access.gelato.product.template.wizard,model_gelato_product_template_wizard,,1,1,1,1
+model_gelato_template_wizard_access,gelato.template.wizard access,model_gelato_template_wizard,,1,1,1,1
+access_gelato_product_price_wizard,gelato.product.price.wizard,model_gelato_product_price_wizard,,1,1,1,1
+access_gelato_product_price_line,access_gelato_product_price_line,model_gelato_product_price_line,,1,1,1,1
