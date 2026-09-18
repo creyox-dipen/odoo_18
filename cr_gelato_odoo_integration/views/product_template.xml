@@ -9,7 +9,6 @@
                 <page string="Gelato" name="gelato_data">
                     <group>
                         <group>
-                            <field name="cr_image_ids" invisible="1"/>
                             <field name="cr_missing_images" invisible="1"/>
                             <field
                                     string="Template Reference"
@@ -21,11 +20,11 @@
                                     invisible="product_variant_count &gt; 1"
                             />
 
-                            <field name="cr_image_ids" mode="tree,form">
-                                <tree string="Print Images" editable="bottom">
+                            <field name="cr_image_ids" mode="list,form">
+                                <list string="Print Images" editable="bottom">
                                     <field name="name"/>
                                     <field name="datas" widget="image"/>
-                                </tree>
+                                </list>
                                 <form string="Edit Print Image">
                                     <sheet>
                                         <group>
