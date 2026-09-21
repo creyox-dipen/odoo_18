@@ -81,12 +81,15 @@ class SaleOrder(models.Model):
             'shipmentMethodUid': shipment_method,
             'shippingAddress': self.partner_shipping_id.prepare_address_values(),
         }
+        _logger.info("Generating Gelato order for Sale Order %s, payload: %s", self.name, payload)
         try:
             api_key = self.company_id.sudo().api_key_for_gelato
             data = self.gelato_api_request(api_key, 'order', 'v4', 'orders', payload=payload)
             if data:
                 self.gelato_order_id = data['id']
+                _logger.info("Gelato order created successfully with ID: %s", self.gelato_order_id)
         except UserError as e:
+            _logger.info("UserError while sending order to Gelato: %s", e)
             raise UserError(_(
                 "The order with reference %(order_reference)s was not sent to Gelato.\n"
                 "Reason: %(error_message)s",
@@ -142,7 +145,9 @@ class SaleOrder(models.Model):
             headers = {
                 'X-API-KEY': api_key or None
             }
+            _logger.info("Gelato API Request URL: %s, payload: %s", url, payload)
             response = requests.post(url=url, json=payload, headers=headers, timeout=10)
+            _logger.info("Gelato API Response status code: %s, response text: %s", response.status_code, response.text)
             response_content = response.json()
 
             response.raise_for_status()
@@ -150,11 +155,11 @@ class SaleOrder(models.Model):
             return response.json()
 
         except requests.exceptions.HTTPError as http_err:
-            _logger.error(f"HTTP error occurred: {http_err}")
+            _logger.info("HTTP error occurred: %s, response text: %s", http_err, response.text if 'response' in locals() else None)
         except requests.exceptions.RequestException as req_err:
-            _logger.error(f"Request error occurred: {req_err}")
+            _logger.info("Request error occurred: %s", req_err)
         except Exception as err:
-            _logger.error(f"Unexpected error occurred: {err}")
+            _logger.info("Unexpected error occurred: %s", err)
 
         return None
 
