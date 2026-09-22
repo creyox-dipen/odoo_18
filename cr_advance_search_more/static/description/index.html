@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Odoo Advanced Search Engine | List View Column Search Filter | Multi Keyword OR AND NOT Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+          integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://apps.odoocdn.com/web/content/7247337-184ae0e/1/web.assets_frontend.css" rel="stylesheet">
+</head>
+
+<body>
+<main class="container" style="border-radius:20px;">
+    <!-- Compatibility Header -->
+    <header class="py-2">
+        <div class="row align-items-center" style="margin-top: 20px;">
+            <div class="col-12 col-md-12 text-right">
+                <span style="font-size: 19px; font-weight: 500; margin-right: 20px; color: black;">
+                    <i class="fa fa-check-circle mr-1" style="color: #00D100;"></i> Community
+                </span>
+                <span style="font-size: 19px; font-weight: 500; color: black;">
+                    <i class="fa fa-check-circle mr-1" style="color: #00D100;"></i> Enterprise
+                </span>
+                <span style="font-size: 19px; font-weight: 500; color: black; padding: 15px;">
+                    <i class="fa fa-check-circle mr-1" style="color: #00D100;"></i> Odoo.sh
+                </span>
+            </div>
+        </div>
+        <hr/>
+    </header>
+
+    <!-- Header Demo CTA Banner -->
+    <div class="px-md-5 py-md-4 p-2 mb-4 shadow rounded-5" style="background-color: #0f172a; border: 2px solid #3b82f6;">
+        <div class="p-lg-5 p-3 text-center">
+            <h1 class="mb-3" style="font-weight: 900; font-size: calc(2rem + 1vw); color: #ffffff;">
+                GET <span style="color: #3b82f6;">PERSONALIZED</span> DEMO
+            </h1>
+            <p class="mb-4" style="color: #94a3b8; font-size: 18px;">
+                Direct connection to our engineering team for a customized walkthrough of Smart Advanced Search Engine.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="mailto:support@creyox.com" target="_blank" class="d-flex align-items-center px-4 py-3 shadow rounded-4 text-decoration-none border-0" style="background-color: #3b82f6;">
+                    <img src="static_img/email.png" style="width: 24px;" alt="Email">
+                    <span class="ms-2" style="color: #ffffff; font-weight: 800;">Email Our Team</span>
+                </a>
+                <a href="https://creyox.com/helpdesk" target="_blank" class="d-flex align-items-center px-4 py-3 shadow rounded-4 text-decoration-none border-0" style="background-color: #ffffff;">
+                    <img src="static_img/helpdesk.png" style="width: 24px;" alt="Helpdesk">
+                    <span class="ms-2" style="color: #0f172a; font-weight: 800;">https://creyox.com/helpdesk</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Title Banner -->
+    <div class="px-md-5 py-md-4 p-2 mb-4 shadow rounded-5" style="background-color: #eff6ff; border: 2px solid #bfdbfe;">
+        <div class="p-lg-5 p-3 text-center">
+            <h2 style="font-weight: 800; color: #1e293b;">Smart Advanced Search Engine</h2>
+            <p class="mb-3" style="color: #64748b;">
+                Supercharge your Odoo experience with multi-keyword search modes (Default, OR, AND, NOT), inline list view column header filtering, recent search history, quick saved filters, and glowing search term highlighting across List and Kanban views.
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Wrapper with Tabs -->
+    <div class="bg-white rounded-5" style="font-family: 'Outfit', 'Inter', sans-serif; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.05);">
+
+        <!-- Tab Navigation -->
+        <div class="px-md-5 px-4 mt-5">
+            <style>
+                .water-tab-btn {
+                    font-weight: 800; 
+                    font-size: 16px; 
+                    transition: all 0.3s;
+                    background-color: rgba(14, 165, 233, 0.05); 
+                    color: #64748b; 
+                    border: 1px solid rgba(14, 165, 233, 0.1);
+                }
+                .water-tab-btn:hover {
+                    background-color: rgba(14, 165, 233, 0.1); 
+                    color: #0284c7;
+                }
+                .nav-pills .nav-link.water-tab-btn.active {
+                    background-color: rgba(14, 165, 233, 0.15) !important;
+                    color: #0284c7 !important;
+                    border-color: rgba(14, 165, 233, 0.3) !important;
+                }
+            </style>
+            <ul class="nav nav-pills justify-content-center mb-5 gap-3 border-0" id="pills-tab" role="tablist" style="background-color: white;">
+                <li class="nav-item mx-2" role="presentation">
+                    <a class="nav-link active cursor-pointer px-5 py-3 rounded-pill text-decoration-none water-tab-btn" id="pills-features-tab" data-bs-toggle="pill" data-bs-target="#pills-features" href="javascript:void(0)" role="tab" aria-controls="pills-features" aria-selected="true">Detailed Features</a>
+                </li>
+                <li class="nav-item mx-2" role="presentation">
+                    <a class="nav-link cursor-pointer px-5 py-3 rounded-pill text-decoration-none water-tab-btn" id="pills-faq-tab" data-bs-toggle="pill" data-bs-target="#pills-faq" href="javascript:void(0)" role="tab" aria-controls="pills-faq" aria-selected="false">FAQ</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content" id="pills-tabContent">
+
+            <!-- ============================= -->
+            <!--   TAB 1 : DETAILED FEATURES   -->
+            <!-- ============================= -->
+            <div class="tab-pane fade show active" id="pills-features" role="tabpanel" aria-labelledby="pills-features-tab">
+
+                <div class="px-md-5 px-4 pt-2 pb-5">
+
+                    <!-- EDITOR / MOCKUP BLOCK -->
+                    <div class="my-5 rounded-5 position-relative p-2 p-md-4" style="background-color: #f8fafc; border: 1px solid #cbd5e1; box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.07);">
+                        <!-- Header -->
+                        <div class="p-4 p-md-5 text-center">
+                            <h2 class="fw-bolder mb-3" style="color: #0f172a; font-size: 42px; letter-spacing: -1px;">
+                                Next-Gen <span style="color: #3b82f6;">Search & Filtering</span> Experience
+                            </h2>
+                            <p class="mx-auto" style="color: #64748b; font-size: 19px; max-width: 750px;">
+                                Find exactly what you need in seconds. Search with multi-keyword logic (OR, AND, NOT), filter column by column in list view, and view instant glowing keyword highlights.
+                            </p>
+                        </div>
+
+                        <!-- Browser Mockup Window -->
+                        <div class="mx-auto mb-5 position-relative" style="max-width: 850px;">
+                            <div class="bg-white rounded-4 overflow-hidden position-relative w-100" style="z-index: 1; border: 1px solid #cbd5e1; box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.12);">
+                                <div class="d-flex align-items-center px-3 py-2 border-bottom" style="background-color: #f1f5f9;">
+                                    <div class="d-flex gap-2">
+                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444;"></div>
+                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #f59e0b;"></div>
+                                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #10b981;"></div>
+                                    </div>
+                                    <span class="ms-auto badge rounded-pill px-3 py-1 bg-white border" style="color: #0f172a; font-size: 11px; font-weight: 700;">
+                                        <i class="fa fa-search text-primary me-1"></i> SMART ADVANCED SEARCH ENGINE
+                                    </span>
+                                </div>
+                                <img src="images/advance_search_animation.gif" alt="Smart Advanced Search Engine Overview" class="img-fluid w-100 d-block">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Search Modes Explanation Block -->
+                    <div class="my-5 rounded-5 p-4 p-md-5 position-relative" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #cbd5e1; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.06);">
+                        
+                        <!-- Block Header -->
+                        <div class="text-center mb-5">
+                            <span class="badge rounded-pill px-3 py-2 border border-primary-subtle bg-primary-subtle text-primary fw-bold text-uppercase mb-3" style="font-size: 11px; letter-spacing: 1px;">
+                                <i class="fa fa-sliders me-1"></i> ADVANCED SEARCH LOGIC OPERATORS
+                            </span>
+                            <h2 style="font-weight: 900; color: #1e293b; font-size: 38px;" class="mb-3">
+                                Powerful <span style="color: #3b82f6;">Search Modes</span> Breakdown
+                            </h2>
+                            <p class="mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px; line-height: 1.6;">
+                                Switch search modes directly from the Odoo search bar dropdown to dynamically alter how multi-term queries filter database records.
+                            </p>
+                        </div>
+
+                        <!-- 4 Search Modes Grid -->
+                        <div class="row g-4">
+                            
+                            <!-- Mode 1: Default Search Mode (Royal Blue) -->
+                            <div class="col-lg-3 col-md-6">
+                                <div class="h-100 p-4 position-relative shadow-sm d-flex flex-column bg-white overflow-hidden" style="border-radius: 24px; border: 2px solid #bfdbfe; background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;">
+                                    <div class="position-absolute top-0 start-0 end-0" style="height: 5px; background: #2563eb;"></div>
+                                    <div class="d-flex justify-content-between align-items-center mb-4 mt-1">
+                                        <div class="d-flex justify-content-center align-items-center" style="width: 46px; height: 46px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 14px; color: #ffffff; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(37, 99, 235, 0.4);">
+                                            <i class="fa fa-cogs"></i>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-2" style="background-color: #2563eb; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;">DEFAULT</span>
+                                    </div>
+                                    <h4 class="fw-bolder mb-2" style="color: #1e40af; font-size: 22px; line-height: 1.25;">Default Mode</h4>
+                                    <p style="font-size: 13.5px; color: #3966fb; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                        Searches with standard Odoo default behavior. For example, searching <strong>"black chair"</strong> requires matching records to contain each word in exact sequence/order.
+                                    </p>
+
+                                    <!-- Visual Term Transformation Flow (Standing Order) -->
+                                    <div class="p-2 rounded-3 my-3 border bg-white text-center" style="border-color: #bfdbfe !important;">
+                                        <div class="mb-1">
+                                            <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px;">"black chair"</span>
+                                        </div>
+                                        <div class="my-1">
+                                            <i class="fa fa-long-arrow-down text-muted" style="font-size: 11px;"></i>
+                                        </div>
+                                        <div class="mb-1">
+                                            <span class="badge px-2 py-1 text-white" style="background-color: #2563eb; font-size: 11px;">"black chair"</span>
+                                        </div>
+                                        <div class="fw-semibold mt-1" style="font-size: 10.5px; color: #1e40af;">
+                                            Matches exact phrase in sequence
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-3" style="border-top: 1px dashed #bfdbfe;">
+                                        <div class="d-flex align-items-center justify-content-between" style="color: #1e40af; font-size: 12px; font-weight: 700;">
+                                            <span><i class="fa fa-check-circle me-1" style="color: #2563eb;"></i> Sequential Match</span>
+                                            <span class="badge bg-white text-primary border border-primary-subtle" style="font-size: 10px;">Native</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mode 2: OR Search Mode (Emerald Green) -->
+                            <div class="col-lg-3 col-md-6">
+                                <div class="h-100 p-4 position-relative shadow-sm d-flex flex-column bg-white overflow-hidden" style="border-radius: 24px; border: 2px solid #a7f3d0; background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%) !important;">
+                                    <div class="position-absolute top-0 start-0 end-0" style="height: 5px; background: #10b981;"></div>
+                                    <div class="d-flex justify-content-between align-items-center mb-4 mt-1">
+                                        <div class="d-flex justify-content-center align-items-center" style="width: 46px; height: 46px; background: linear-gradient(135deg, #34d399 0%, #059669 100%); border-radius: 14px; color: #ffffff; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(16, 185, 129, 0.4);">
+                                            <i class="fa fa-code-fork"></i>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-2" style="background-color: #10b981; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;">OR MODE</span>
+                                    </div>
+                                    <h4 class="fw-bolder mb-2" style="color: #065f46; font-size: 22px; line-height: 1.25;">OR Search</h4>
+                                    <p style="font-size: 13.5px; color: #047857; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                        More convenient! Searching <strong>"black chair"</strong> splits terms by space into separate words and displays results matching <strong>ANY</strong> single word, regardless of order.
+                                    </p>
+
+                                    <!-- Visual Term Transformation Flow (Standing Order) -->
+                                    <div class="p-2 rounded-3 my-3 border bg-white text-center" style="border-color: #a7f3d0 !important;">
+                                        <div class="mb-1">
+                                            <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px;">"black chair"</span>
+                                        </div>
+                                        <div class="my-1">
+                                            <i class="fa fa-long-arrow-down text-muted" style="font-size: 11px;"></i>
+                                        </div>
+                                        <div class="d-flex flex-wrap align-items-center justify-content-center gap-1 mb-1">
+                                            <span class="badge bg-light text-success border border-success-subtle px-2 py-1" style="font-size: 11px;">"black"</span>
+                                            <span class="badge text-white px-2 py-1" style="background-color: #10b981; font-size: 9px; font-weight: 800;">OR</span>
+                                            <span class="badge bg-light text-success border border-success-subtle px-2 py-1" style="font-size: 11px;">"chair"</span>
+                                        </div>
+                                        <div class="fw-semibold mt-1" style="font-size: 10.5px; color: #065f46;">
+                                            Matches either "black" or "chair"
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-3" style="border-top: 1px dashed #a7f3d0;">
+                                        <div class="d-flex align-items-center justify-content-between" style="color: #065f46; font-size: 12px; font-weight: 700;">
+                                            <span><i class="fa fa-check-circle me-1" style="color: #10b981;"></i> Any Single Word</span>
+                                            <span class="badge bg-white text-success border border-success-subtle" style="font-size: 10px;">Broad Match</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mode 3: AND Search Mode (Gold Yellow) -->
+                            <div class="col-lg-3 col-md-6">
+                                <div class="h-100 p-4 position-relative shadow-sm d-flex flex-column bg-white overflow-hidden" style="border-radius: 24px; border: 2px solid #fef08a; background: linear-gradient(180deg, #ffffff 0%, #fefce8 100%) !important;">
+                                    <div class="position-absolute top-0 start-0 end-0" style="height: 5px; background: #eab308;"></div>
+                                    <div class="d-flex justify-content-between align-items-center mb-4 mt-1">
+                                        <div class="d-flex justify-content-center align-items-center" style="width: 46px; height: 46px; background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%); border-radius: 14px; color: #ffffff; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(234, 179, 8, 0.4);">
+                                            <i class="fa fa-bullseye"></i>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-2" style="background-color: #eab308; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;">AND MODE</span>
+                                    </div>
+                                    <h4 class="fw-bolder mb-2" style="color: #854d0e; font-size: 22px; line-height: 1.25;">AND Search</h4>
+                                    <p style="font-size: 13.5px; color: #a16207; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                        Searching <strong>"black chair"</strong> splits terms by space into words and shows only results containing <strong>EACH</strong> word, regardless of order.
+                                    </p>
+
+                                    <!-- Visual Term Transformation Flow (Standing Order) -->
+                                    <div class="p-2 rounded-3 my-3 border bg-white text-center" style="border-color: #fef08a !important;">
+                                        <div class="mb-1">
+                                            <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px;">"black chair"</span>
+                                        </div>
+                                        <div class="my-1">
+                                            <i class="fa fa-long-arrow-down text-muted" style="font-size: 11px;"></i>
+                                        </div>
+                                        <div class="d-flex flex-wrap align-items-center justify-content-center gap-1 mb-1">
+                                            <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px; color: #854d0e !important; border-color: #fef08a !important;">"black"</span>
+                                            <span class="badge text-white px-2 py-1" style="background-color: #eab308; font-size: 9px; font-weight: 800;">AND</span>
+                                            <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px; color: #854d0e !important; border-color: #fef08a !important;">"chair"</span>
+                                        </div>
+                                        <div class="fw-semibold mt-1" style="font-size: 10.5px; color: #854d0e;">
+                                            Matches both words in any order
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-3" style="border-top: 1px dashed #fef08a;">
+                                        <div class="d-flex align-items-center justify-content-between" style="color: #854d0e; font-size: 12px; font-weight: 700;">
+                                            <span><i class="fa fa-check-circle me-1" style="color: #eab308;"></i> Each Word Required</span>
+                                            <span class="badge bg-white text-warning border border-warning-subtle" style="font-size: 10px;">Exact Precision</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mode 4: NOT Search Mode (Crimson Red) -->
+                            <div class="col-lg-3 col-md-6">
+                                <div class="h-100 p-4 position-relative shadow-sm d-flex flex-column bg-white overflow-hidden" style="border-radius: 24px; border: 2px solid #fecaca; background: linear-gradient(180deg, #ffffff 0%, #fef2f2 100%) !important;">
+                                    <div class="position-absolute top-0 start-0 end-0" style="height: 5px; background: #ef4444;"></div>
+                                    <div class="d-flex justify-content-between align-items-center mb-4 mt-1">
+                                        <div class="d-flex justify-content-center align-items-center" style="width: 46px; height: 46px; background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); border-radius: 14px; color: #ffffff; font-size: 18px; box-shadow: 0 6px 14px -3px rgba(239, 68, 68, 0.4);">
+                                            <i class="fa fa-minus-circle"></i>
+                                        </div>
+                                        <span class="badge rounded-pill px-3 py-2" style="background-color: #ef4444; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;">NOT MODE</span>
+                                    </div>
+                                    <h4 class="fw-bolder mb-2" style="color: #991b1b; font-size: 22px; line-height: 1.25;">NOT Search</h4>
+                                    <p style="font-size: 13.5px; color: #b91c1c; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                        In NOT search mode, searching <strong>"black chair"</strong> splits terms by space and excludes records containing <strong>NOT "black"</strong> and <strong>NOT "chair"</strong>.
+                                    </p>
+
+                                    <!-- Visual Term Transformation Flow (Standing Order) -->
+                                    <div class="p-2 rounded-3 my-3 border bg-white text-center" style="border-color: #fecaca !important;">
+                                        <div class="mb-1">
+                                            <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 11px;">"black chair"</span>
+                                        </div>
+                                        <div class="my-1">
+                                            <i class="fa fa-long-arrow-down text-muted" style="font-size: 11px;"></i>
+                                        </div>
+                                        <div class="d-flex flex-wrap align-items-center justify-content-center gap-1 mb-1">
+                                            <span class="badge text-white px-2 py-1" style="background-color: #ef4444; font-size: 9px; font-weight: 800;">NOT</span>
+                                            <span class="badge bg-light text-danger border border-danger-subtle px-2 py-1" style="font-size: 11px;">"black"</span>
+                                            <span class="badge bg-light text-danger border border-danger-subtle px-2 py-1" style="font-size: 11px;">"chair"</span>
+                                        </div>
+                                        <div class="fw-semibold mt-1" style="font-size: 10.5px; color: #991b1b;">
+                                            Excludes records with either word
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-3" style="border-top: 1px dashed #fecaca;">
+                                        <div class="d-flex align-items-center justify-content-between" style="color: #991b1b; font-size: 12px; font-weight: 700;">
+                                            <span><i class="fa fa-times-circle me-1" style="color: #ef4444;"></i> Exclude Each Word</span>
+                                            <span class="badge bg-white text-danger border border-danger-subtle" style="font-size: 10px;">Exclusion Filter</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Component Library / Feature Highlights (Dark Slate Cards) -->
+                    <div class="mt-5 pt-5 text-center">
+                        <h2 class="mb-3" style="font-weight: 900; color: #1e293b; font-size: 36px;">Smart <span style="color: #3b82f6;">Saved Presets & Relational</span> Search</h2>
+                        <p class="mb-5 mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px;">
+                            Save time by bookmarking frequent searches, custom filters, Group By hierarchies, and leveraging multi-keyword logic across relational fields.
+                        </p>
+                        
+                        <div class="row row-cols-1 row-cols-md-2 g-4 text-start">
+                            
+                            <!-- Dark Card 1: Saved Search History -->
+                            <div class="col">
+                                <div class="d-flex flex-column h-100 shadow-lg rounded-4 position-relative border bg-dark" style="background-color: #0f172a !important; border-color: #1e293b !important;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-history"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold text-white" style="font-size: 21px;">Search History</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; font-size: 11px; font-weight: 700;">01</span>
+                                        </div>
+                                        <p class="fw-semibold mb-3" style="color: #e2e8f0 !important; font-size: 15px;">Recent keyword memory</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4 overflow-hidden border p-1" style="background-color: #1e293b; border-color: #334155 !important;">
+                                            <img src="images/search_history.png" alt="Saved Search History" class="img-fluid w-100 rounded-3 shadow-sm" style="display: block; height: auto;">
+                                        </div>
+                                        
+                                        <p class="lh-base mb-0 flex-grow-1" style="color: #e2e8f0; font-size: 15px; line-height: 1.6;">Automatically saves recent search terms per model in Odoo for instant 1-click re-application without typing.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Dark Card 2: Saved Custom Filters -->
+                            <div class="col">
+                                <div class="d-flex flex-column h-100 shadow-lg rounded-4 position-relative bg-dark" style="background-color: #0f172a !important; border: 1px solid #1e293b !important;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-bookmark"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold text-white" style="font-size: 21px;">Saved Filters</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; font-size: 11px; font-weight: 700;">02</span>
+                                        </div>
+                                        <p class="fw-semibold mb-3" style="color: #e2e8f0; font-size: 15px;">1-Click custom filter presets</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4 overflow-hidden border p-1" style="background-color: #1e293b; border-color: #334155 !important;">
+                                            <img src="images/saved_filter.png" alt="Saved Custom Filters" class="img-fluid w-100 rounded-3 shadow-sm" style="display: block; height: auto;">
+                                        </div>
+                                        
+                                        <p class="lh-base mb-0 flex-grow-1" style="color: #e2e8f0; font-size: 15px; line-height: 1.6;">
+                                            Stores saved custom filters for instant 1-click re-use in list and kanban view.
+                                            <span class="d-block mt-1" style="color: #e2e8f0; font-size: 15px; line-height: 1.6;">
+                                                Rename labels by clicking the pencil (<i class="fa fa-pencil text-warning"></i>) icon and delete saved filters by clicking the cross (<i class="fa fa-times text-danger"></i>) icon.
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dark Card 3: Saved Group By Filters -->
+                            <div class="col">
+                                <div class="d-flex flex-column h-100 shadow-lg rounded-4 position-relative bg-dark" style="background-color: #0f172a !important; border: 1px solid #1e293b !important;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-cubes"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold text-white" style="font-size: 21px;">Saved Group By</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(245, 158, 11, 0.2); color: #fde68a; font-size: 11px; font-weight: 700;">03</span>
+                                        </div>
+                                        <p class="fw-semibold mb-3" style="color: #e2e8f0; font-size: 15px;">Preset grouping hierarchies</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4 overflow-hidden border p-1" style="background-color: #1e293b; border-color: #334155 !important;">
+                                            <img src="images/saved_groupby_filter.png" alt="Saved Group By Filters" class="img-fluid w-100 rounded-3 shadow-sm" style="display: block; height: auto;">
+                                        </div>
+                                        
+                                        <p class="lh-base mb-0 flex-grow-1" style="color: #e2e8f0; font-size: 15px; line-height: 1.6;">
+                                            Stores custom Group By presets to quickly organize and structure records.
+                                            <span class="d-block mt-1" style="color: #e2e8f0; font-size: 15px; line-height: 1.6;">
+                                                Rename labels by clicking the pencil (<i class="fa fa-pencil text-warning"></i>) icon and delete saved groupings by clicking the cross (<i class="fa fa-times text-danger"></i>) icon.
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dark Card 4: Relational Field Search Modes -->
+                            <div class="col">
+                                <div class="d-flex flex-column h-100 shadow-lg rounded-4 position-relative bg-dark" style="background-color: #0f172a !important; border: 1px solid #1e293b !important;">
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-center align-items-center rounded-3 me-3" style="width: 44px; height: 44px; background-color: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); font-size: 18px;">
+                                                    <i class="fa fa-link"></i>
+                                                </div>
+                                                <h5 class="mb-0 fw-bold text-white" style="font-size: 21px;">Relational Search</h5>
+                                            </div>
+                                            <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(139, 92, 246, 0.2); color: #c4b5fd; font-size: 11px; font-weight: 700;">04</span>
+                                        </div>
+                                        <p class="fw-semibold mb-3" style="color: #e2e8f0; font-size: 15px;">Works on all relational fields</p>
+                                        
+                                        <div class="position-relative d-flex justify-content-center align-items-center rounded-4 mb-4 overflow-hidden border p-1" style="background-color: #1e293b; border-color: #334155 !important;">
+                                            <img src="images/relational_search.png" alt="Relational Field Search Modes" class="img-fluid w-100 rounded-3 shadow-sm" style="display: block; height: auto;">
+                                        </div>
+                                        
+                                        <p class="lh-base mb-0 flex-grow-1" style="color: #e2e8f0; font-size: 15px; line-height: 1.6;">Search modes (Default, OR, AND, NOT) work seamlessly across all relational fields including Many2one, Many2many, and One2many.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Core Features Section Header -->
+                    <div class="mt-5 pt-4 px-3 text-center">
+                        <h2 class="mb-3" style="font-weight: 900; color: #1e293b; font-size: 36px;">Core <span style="color: #3b82f6;">Features</span></h2>
+                        <p class="mx-auto mb-5" style="color: #64748b; font-size: 18px; max-width: 800px;">
+                            Everything you need to transform Odoo standard search into a high-performance, intelligent search system.
+                        </p>
+                    </div>
+
+                    <!-- Feature Grid Cards (Numbered 01 to 08 Tiles) -->
+                    <div class="row g-4 mb-5">
+                        
+                        <!-- Card 1: Multi-Keyword Search Modes (Emerald Green) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #f0fdf4; border-radius: 24px; border: 2px solid #a7f3d0;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #10b981; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(16, 185, 129, 0.4);">
+                                        <i class="fa fa-filter"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #10b981; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">01</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #065f46; font-size: 17px; line-height: 1.3;">Multi-Keyword Search Modes</h5>
+                                <p style="font-size: 13.5px; color: #047857; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Switch search logic on the fly between Default, OR, AND, and NOT modes for accurate multi-word searches.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #a7f3d0;">
+                                    <div class="d-flex align-items-center" style="color: #065f46; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #10b981;"></span>
+                                        <span>Search Modes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Inline Column Header Search (Gold Yellow) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #fefce8; border-radius: 24px; border: 2px solid #fef08a;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #eab308; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(234, 179, 8, 0.4);">
+                                        <i class="fa fa-table"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #eab308; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">02</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #854d0e; font-size: 17px; line-height: 1.3;">Inline Column Header Search</h5>
+                                <p style="font-size: 13.5px; color: #a16207; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Filter records directly under column headers with text inputs, date ranges, selection, and boolean dropdowns.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #fef08a;">
+                                    <div class="d-flex align-items-center" style="color: #854d0e; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #eab308;"></span>
+                                        <span>List Filtering</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Search Keyword Highlighting (Royal Blue) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #eff6ff; border-radius: 24px; border: 2px solid #bfdbfe;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #2563eb; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.4);">
+                                        <i class="fa fa-pencil"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #2563eb; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">03</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #1e40af; font-size: 17px; line-height: 1.3;">Search Keyword Highlighting</h5>
+                                <p style="font-size: 13.5px; color: #1d4ed8; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Highlight searched text automatically across List view rows and Kanban cards for fast visual identification.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #bfdbfe;">
+                                    <div class="d-flex align-items-center" style="color: #1e40af; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #2563eb;"></span>
+                                        <span>Visual Highlighting</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Recent Search History (Crimson Red) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #fef2f2; border-radius: 24px; border: 2px solid #fecaca;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #ef4444; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.4);">
+                                        <i class="fa fa-history"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #ef4444; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">04</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #991b1b; font-size: 17px; line-height: 1.3;">Recent Search History</h5>
+                                <p style="font-size: 13.5px; color: #b91c1c; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Automatically saves up to 15 recent search terms per model in Odoo for instant 1-click re-application without re-typing.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #fecaca;">
+                                    <div class="d-flex align-items-center" style="color: #991b1b; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #ef4444;"></span>
+                                        <span>Search History Memory</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 5: Saved Custom Filters (Warm Amber) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #fffbeb; border-radius: 24px; border: 2px solid #fde68a;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #f59e0b; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(245, 158, 11, 0.4);">
+                                        <i class="fa fa-bookmark"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #f59e0b; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">05</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #92400e; font-size: 17px; line-height: 1.3;">Saved Custom Filters</h5>
+                                <p style="font-size: 13.5px; color: #b45309; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Save up to 15 custom filters per model for instant 1-click re-use across views, with easy pencil rename and delete.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #fde68a;">
+                                    <div class="d-flex align-items-center" style="color: #92400e; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #f59e0b;"></span>
+                                        <span>Saved Filter Presets</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 6: Saved Custom Group By (Purple Lavender) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #faf5ff; border-radius: 24px; border: 2px solid #e9d5ff;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #a855f7; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(168, 85, 247, 0.4);">
+                                        <i class="fa fa-cubes"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #a855f7; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">06</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #6b21a8; font-size: 17px; line-height: 1.3;">Saved Custom Group By</h5>
+                                <p style="font-size: 13.5px; color: #7e22ce; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Save up to 15 custom Group By presets per model to organize records instantly, with easy pencil rename and delete.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #e9d5ff;">
+                                    <div class="d-flex align-items-center" style="color: #6b21a8; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #a855f7;"></span>
+                                        <span>Saved Groupings</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 7: Relational Field Search Modes (Deep Violet) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #f5f3ff; border-radius: 24px; border: 2px solid #ddd6fe;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #7c3aed; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(124, 58, 237, 0.4);">
+                                        <i class="fa fa-link"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #7c3aed; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">07</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #5b21b6; font-size: 17px; line-height: 1.3;">Relational Search Modes</h5>
+                                <p style="font-size: 13.5px; color: #6d28d9; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Search modes (Default, OR, AND, NOT) work seamlessly across all relational fields, including Many2one, Many2many, and One2many.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #ddd6fe;">
+                                    <div class="d-flex align-items-center" style="color: #5b21b6; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #7c3aed;"></span>
+                                        <span>Relational Fields</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 8: 1-Click Clear All Filters (Teal Green) -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="h-100 p-4 position-relative shadow d-flex flex-column" style="background-color: #f0fdfa; border-radius: 24px; border: 2px solid #99f6e4;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex justify-content-center align-items-center" style="width: 58px; height: 58px; background-color: #0d9488; border-radius: 18px; color: #ffffff; font-size: 24px; box-shadow: 0 8px 16px -4px rgba(13, 148, 136, 0.4);">
+                                        <i class="fa fa-times-circle"></i>
+                                    </div>
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #0d9488; color: #ffffff; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">08</span>
+                                </div>
+                                <h5 class="fw-bold mb-2" style="color: #115e59; font-size: 17px; line-height: 1.3;">1-Click Clear All Filters</h5>
+                                <p style="font-size: 13.5px; color: #0f766e; margin-bottom: 0; line-height: 1.6; flex-grow: 1;">
+                                    Reset all active column search inputs instantly with a single click of the header clear button.
+                                </p>
+                                <div class="mt-4 pt-3" style="border-top: 1px dashed #99f6e4;">
+                                    <div class="d-flex align-items-center" style="color: #115e59; font-size: 12px; font-weight: 700;">
+                                        <span class="rounded-circle d-inline-block me-2" style="width: 8px; height: 8px; background-color: #0d9488;"></span>
+                                        <span>Instant Reset</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!--        GIF EXPLAINER / FEATURE WALKTHROUGH SECTION        -->
+                    <!-- ========================================================= -->
+                    <div class="mt-5 pt-5 text-start">
+                        
+                        <!-- Section Header -->
+                        <div class="text-center mb-5 pb-2">
+                            <span class="badge rounded-pill px-3 py-2 text-uppercase mb-2" style="background-color: rgba(59, 130, 246, 0.12); color: #2563eb; font-weight: 700; font-size: 12px; letter-spacing: 1px;">
+                                Visual Walkthrough
+                            </span>
+                            <h2 class="mb-3" style="font-weight: 900; color: #1e293b; font-size: 36px;">
+                                How It <span style="color: #3b82f6;">Works in Action</span>
+                            </h2>
+                            <p class="mx-auto" style="color: #64748b; font-size: 18px; max-width: 800px;">
+                                Explore how each intelligent search capability accelerates your daily Odoo operations with interactive visual demonstrations.
+                            </p>
+                        </div>
+
+                        <!-- 1) Search Mode -->
+                        <div class="p-4 p-md-5 mb-5 rounded-4 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; border-radius: 28px !important;">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge rounded-pill px-3 py-2 me-2" style="background-color: #ecfdf5; color: #059669; font-weight: 700; font-size: 13px;">
+                                    01 • Search Modes
+                                </span>
+                                <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(59, 130, 246, 0.1); color: #2563eb; font-weight: 700; font-size: 13px;">
+                                    Default | OR | AND | NOT
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-3" style="color: #0f172a; font-size: 26px;">
+                                Dynamic Multi-Keyword Search Modes
+                            </h3>
+                            <div class="row align-items-center g-3 g-md-4 mb-3">
+                                <div class="col-lg-6">
+                                    <p class="mb-0" style="color: #475569; font-size: 16.5px; line-height: 1.7;">
+                                        Switch search logic on the fly right beside the search bar. The engine splits multi-word phrases into distinct keywords and applies the selected logical operator across standard fields as well as relational fields (Many2one, Many2many, One2many).
+                                    </p>
+                                </div>
+                                <div class="col-lg-6">
+                                    <ul class="list-unstyled mb-0" style="color: #334155; font-size: 15.5px; line-height: 1.7;">
+                                        <li class="mb-2"><i class="fa fa-check-circle text-success me-2 fs-6"></i><strong>Default Mode:</strong> Searches using standard Odoo search logic.</li>
+                                        <li class="mb-2"><i class="fa fa-check-circle text-success me-2 fs-6"></i><strong>OR Mode:</strong> Matches records containing any of the typed keywords.</li>
+                                        <li class="mb-2"><i class="fa fa-check-circle text-success me-2 fs-6"></i><strong>AND Mode:</strong> Requires every keyword to be present in the record.</li>
+                                        <li class="mb-0"><i class="fa fa-check-circle text-success me-2 fs-6"></i><strong>NOT Mode:</strong> Instantly excludes records matching the specified keywords.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="position-relative d-flex justify-content-center align-items-center rounded-3 overflow-hidden p-1 shadow-sm my-4" style="background-color: #0f172a !important; border: 1px solid #1e293b !important;">
+                                <img src="images/search_mode_animation.gif" alt="Multi-Keyword Search Modes" class="img-fluid rounded-2 w-100" style="display: block; height: auto;">
+                            </div>
+                            <div class="p-3 p-md-4 rounded-3" style="background-color: #f8fafc; border-left: 4px solid #10b981;">
+                                <div class="d-flex align-items-start">
+                                    <i class="fa fa-lightbulb-o text-warning fs-5 me-2 mt-1"></i>
+                                    <div class="w-100">
+                                        <strong style="color: #0f172a; font-size: 16px;">Real-World Example with <span class="badge bg-white text-dark border px-2 py-1" style="font-size: 13px;">Desk Chair</span>:</strong>
+                                        <ul class="list-unstyled mt-2 mb-0" style="color: #475569; font-size: 15px; line-height: 1.65;">
+                                            <li class="mb-1">
+                                                <span class="badge rounded-pill px-2 py-1 me-1" style="background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 12.5px; font-weight: 700;">OR</span>
+                                                Finds all records containing <em>either</em> "Desk" <strong>or</strong> "Chair" (or both).
+                                            </li>
+                                            <li class="mb-1">
+                                                <span class="badge rounded-pill px-2 py-1 me-1" style="background-color: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 12.5px; font-weight: 700;">AND</span>
+                                                Finds only records that contain <em>both</em> "Desk" <strong>and</strong> "Chair".
+                                            </li>
+                                            <li class="mb-0">
+                                                <span class="badge rounded-pill px-2 py-1 me-1" style="background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 12.5px; font-weight: 700;">NOT</span>
+                                                Finds all records while <strong>excluding</strong> any that match "Desk" or "Chair".
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2) Search History -->
+                        <div class="p-4 p-md-5 mb-5 rounded-4 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; border-radius: 28px !important;">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge rounded-pill px-3 py-2 me-2" style="background-color: #fef2f2; color: #dc2626; font-weight: 700; font-size: 13px;">
+                                    02 • Search History
+                                </span>
+                                <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(239, 68, 68, 0.1); color: #dc2626; font-weight: 700; font-size: 13px;">
+                                    Up to 15 per Model
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-3" style="color: #0f172a; font-size: 26px;">
+                                Recent Search History
+                            </h3>
+                            <div class="row align-items-center g-3 g-md-4 mb-3">
+                                <div class="col-lg-6">
+                                    <p class="mb-0" style="color: #475569; font-size: 16.5px; line-height: 1.7;">
+                                        Never type repetitive search queries again. The system automatically records up to 15 recent search terms per model in Odoo, enabling immediate 1-click re-execution with the exact search mode preserved.
+                                    </p>
+                                </div>
+                                <div class="col-lg-6">
+                                    <ul class="list-unstyled mb-0" style="color: #334155; font-size: 15.5px; line-height: 1.7;">
+                                        <li class="mb-2"><i class="fa fa-check-circle text-danger me-2 fs-6"></i><strong>Instant Recall:</strong> Re-run any past search keyword with a single click.</li>
+                                        <li class="mb-2"><i class="fa fa-check-circle text-danger me-2 fs-6"></i><strong>Mode Preservation:</strong> Automatically remembers the active search mode used.</li>
+                                        <li class="mb-0"><i class="fa fa-check-circle text-danger me-2 fs-6"></i><strong>Item Control:</strong> Delete specific items by (<i class="fa fa-times text-danger"></i>) or clear history completely.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="position-relative d-flex justify-content-center align-items-center rounded-3 overflow-hidden p-1 shadow-sm my-4" style="background-color: #0f172a !important; border: 1px solid #1e293b !important;">
+                                <img src="images/search_history_animation.gif" alt="Recent Search History Memory" class="img-fluid rounded-2 w-100" style="display: block; height: auto;">
+                            </div>
+                            <div class="p-3 p-md-4 rounded-3" style="background-color: #f8fafc; border-left: 4px solid #ef4444;">
+                                <div class="d-flex align-items-start">
+                                    <i class="fa fa-lightbulb-o text-warning fs-5 me-2 mt-1"></i>
+                                    <div>
+                                        <strong style="color: #0f172a; font-size: 16px;">Real-World Example:</strong>
+                                        <p class="mb-0 text-muted" style="font-size: 15px; line-height: 1.65;">
+                                            If you frequently search for <span class="badge bg-white text-dark border px-2 py-1" style="font-size: 13px;">Deco Addict</span> or <span class="badge bg-white text-dark border px-2 py-1" style="font-size: 13px;">Ready Mat</span>, simply click the History icon in the search bar to execute the search in 1 click.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3) Saved Custom Filter -->
+                        <div class="p-4 p-md-5 mb-5 rounded-4 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; border-radius: 28px !important;">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge rounded-pill px-3 py-2 me-2" style="background-color: #fffbeb; color: #d97706; font-weight: 700; font-size: 13px;">
+                                    03 • Custom Filters
+                                </span>
+                                <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(245, 158, 11, 0.1); color: #d97706; font-weight: 700; font-size: 13px;">
+                                    Inline Rename &amp; Delete
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-3" style="color: #0f172a; font-size: 26px;">
+                                Saved Custom Filter Presets
+                            </h3>
+                            <div class="row align-items-center g-3 g-md-4 mb-3">
+                                <div class="col-lg-6">
+                                    <p class="mb-0" style="color: #475569; font-size: 16.5px; line-height: 1.7;">
+                                        Bookmark complex, multi-criteria filter domains (up to 15 per model) for quick access across any list and kanban view. Rename filter presets directly from the dropdown to keep your workflows intuitive and well-organized.
+                                    </p>
+                                </div>
+                                <div class="col-lg-6">
+                                    <ul class="list-unstyled mb-0" style="color: #334155; font-size: 15.5px; line-height: 1.7;">
+                                        <li class="mb-2"><i class="fa fa-check-circle text-warning me-2 fs-6"></i><strong>Store Presets:</strong> Saves active multi-clause filters and search domains automatically.</li>
+                                        <li class="mb-2"><i class="fa fa-check-circle text-warning me-2 fs-6"></i><strong>Pencil Rename:</strong> Click the pencil (<i class="fa fa-pencil text-warning"></i>) icon to edit filter labels anytime.</li>
+                                        <li class="mb-0"><i class="fa fa-check-circle text-warning me-2 fs-6"></i><strong>Cross Delete:</strong> Click the cross (<i class="fa fa-times text-danger"></i>) icon to remove filter presets.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="position-relative d-flex justify-content-center align-items-center rounded-3 overflow-hidden p-1 shadow-sm my-4" style="background-color: #0f172a !important; border: 1px solid #1e293b !important;">
+                                <img src="images/custom_filter_animation.gif" alt="Saved Custom Filters" class="img-fluid rounded-2 w-100" style="display: block; height: auto;">
+                            </div>
+                            <div class="p-3 p-md-4 rounded-3" style="background-color: #f8fafc; border-left: 4px solid #f59e0b;">
+                                <div class="d-flex align-items-start">
+                                    <i class="fa fa-lightbulb-o text-warning fs-5 me-2 mt-1"></i>
+                                    <div>
+                                        <strong style="color: #0f172a; font-size: 16px;">Real-World Example:</strong>
+                                        <p class="mb-0 text-muted" style="font-size: 15px; line-height: 1.65;">
+                                            Create a filter for <span class="badge bg-white text-dark border px-2 py-1" style="font-size: 13px;">Total &gt; $10,000 &amp; Status = Sale</span>, rename it to <em>"VIP High-Value Deals"</em>, and re-apply it with one click anytime.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4) Saved Custom Group By -->
+                        <div class="p-4 p-md-5 mb-5 rounded-4 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; border-radius: 28px !important;">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge rounded-pill px-3 py-2 me-2" style="background-color: #faf5ff; color: #9333ea; font-weight: 700; font-size: 13px;">
+                                    04 • Custom Group By
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-3" style="color: #0f172a; font-size: 26px;">
+                                Saved Custom Group By
+                            </h3>
+                            <div class="row align-items-center g-3 g-md-4 mb-3">
+                                <div class="col-lg-6">
+                                    <p class="mb-0" style="color: #475569; font-size: 16.5px; line-height: 1.7;">
+                                        Stores your custom Group By history (up to 15 per model) to quickly group and organize records with a single click.
+                                    </p>
+                                </div>
+                                <div class="col-lg-6">
+                                    <ul class="list-unstyled mb-0" style="color: #334155; font-size: 15.5px; line-height: 1.7;">
+                                        <li class="mb-2"><i class="fa fa-check-circle text-primary me-2 fs-6"></i><strong>Group By History:</strong> Stores your custom Group By history (up to 15 per model).</li>
+                                        <li class="mb-2"><i class="fa fa-check-circle text-primary me-2 fs-6"></i><strong>Pencil Rename:</strong> Click the pencil (<i class="fa fa-pencil text-warning"></i>) icon to customize grouping names.</li>
+                                        <li class="mb-0"><i class="fa fa-check-circle text-primary me-2 fs-6"></i><strong>Cross Delete:</strong> Click the cross (<i class="fa fa-times text-danger"></i>) icon to remove saved groupings.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="position-relative d-flex justify-content-center align-items-center rounded-3 overflow-hidden p-1 shadow-sm my-4" style="background-color: #0f172a !important; border: 1px solid #1e293b !important;">
+                                <img src="images/group_by_animation.gif" alt="Saved Custom Group By" class="img-fluid rounded-2 shadow-sm w-100" style="display: block; height: auto;">
+                            </div>
+                            <div class="p-3 p-md-4 rounded-3" style="background-color: #f8fafc; border-left: 4px solid #a855f7;">
+                                <div class="d-flex align-items-start">
+                                    <i class="fa fa-lightbulb-o text-warning fs-5 me-2 mt-1"></i>
+                                    <div>
+                                        <strong style="color: #0f172a; font-size: 16px;">Real-World Example:</strong>
+                                        <p class="mb-0 text-muted" style="font-size: 15px; line-height: 1.65;">
+                                            Save a custom group by like <span class="badge bg-white text-dark border px-2 py-1" style="font-size: 13px;">Product Category</span> in Products named <em>"Category Wise"</em> to group records in 1 click anytime.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5) Inline Search in List View -->
+                        <div class="p-4 p-md-5 mb-5 rounded-4 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; border-radius: 28px !important;">
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge rounded-pill px-3 py-2 me-2" style="background-color: #eff6ff; color: #2563eb; font-weight: 700; font-size: 13px;">
+                                    05 • List View Search
+                                </span>
+                                <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(37, 99, 235, 0.1); color: #2563eb; font-weight: 700; font-size: 13px;">
+                                    Real-Time &amp; Highlights
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-3" style="color: #0f172a; font-size: 26px;">
+                                Inline Column Header Search &amp; Reset
+                            </h3>
+                            <div class="row align-items-center g-3 g-md-4 mb-3">
+                                <div class="col-lg-6">
+                                    <p class="mb-0" style="color: #475569; font-size: 16.5px; line-height: 1.7;">
+                                        Filter table records directly underneath list headers with field-tailored search inputs. Matched search terms are highlighted with glowing high-contrast tags, and all column filters can be cleared in one click.
+                                    </p>
+                                </div>
+                                <div class="col-lg-6">
+                                    <ul class="list-unstyled mb-0" style="color: #334155; font-size: 15.5px; line-height: 1.7;">
+                                        <li class="mb-2"><i class="fa fa-check-circle text-info me-2 fs-6"></i><strong>Field Inputs:</strong> Text, date ranges (From/To), selection, and boolean selectors.</li>
+                                        <li class="mb-2"><i class="fa fa-check-circle text-info me-2 fs-6"></i><strong>Keyword Highlighting:</strong> Automatically highlights matching text across list rows.</li>
+                                        <li class="mb-0"><i class="fa fa-check-circle text-info me-2 fs-6"></i><strong>1-Click Reset:</strong> Click <i class="fa fa-times-circle text-danger"></i> on the top-left header to clear all column inputs.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="position-relative d-flex justify-content-center align-items-center rounded-3 overflow-hidden p-1 shadow-sm my-4" style="background-color: #0f172a !important; border: 1px solid #1e293b !important;">
+                                <img src="images/inline_search_animation.gif" alt="Inline Column Header Search in List View" class="img-fluid rounded-2 shadow-sm w-100" style="display: block; height: auto;">
+                            </div>
+                            <div class="p-3 p-md-4 rounded-3" style="background-color: #f8fafc; border-left: 4px solid #2563eb;">
+                                <div class="d-flex align-items-start">
+                                    <i class="fa fa-lightbulb-o text-warning fs-5 me-2 mt-1"></i>
+                                    <div>
+                                        <strong style="color: #0f172a; font-size: 16px;">Real-World Example:</strong>
+                                        <p class="mb-0 text-muted" style="font-size: 15px; line-height: 1.65;">
+                                            On the Sales list view, set <span class="badge bg-white text-dark border px-2 py-1" style="font-size: 13px;">From Date</span> and <span class="badge bg-white text-dark border px-2 py-1" style="font-size: 13px;">To Date</span> under Order Date to filter sales orders between specific dates instantly.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EXPLORE SIMILAR PICKS + OUR SERVICES (bottom of Detailed Features tab) -->
+                    <div class="pr-5" style="font-size: 1.6rem; font-weight: 600; color: #0b3b52; margin-top: 60px;">
+                        <center>
+                            <h2 style="font-size:35px; color:#000099; margin-bottom:20px; font-weight:700;">
+                                Explore similar picks
+                            </h2>
+                            <div style="border: 1px solid black; width:30%;"></div>
+                        </center>
+                        <br/>
+
+                        <!-- Card Wrapper Grid -->
+                        <div class="row">
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_smart_filters" target="_blank">
+                                            <img src="banner_images/cr_smart_filters.png" style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_advanced_website_searchbar" target="_blank">
+                                            <img src="banner_images/cr_advanced_website_searchbar.png" style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_pos_search_product_custom" target="_blank">
+                                            <img src="banner_images/cr_pos_search_product_custom.jpg" style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_column_order_in_list" target="_blank">
+                                            <img src="banner_images/cr_column_order_in_list.png" style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_searchpanel_resize" target="_blank">
+                                            <img src="banner_images/cr_searchpanel_resize.png" style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="margin-top:1rem">
+                                <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                    <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                        <a href="https://apps.odoo.com/apps/modules/18.0/cr_dynamic_report_studio" target="_blank">
+                                            <img src="banner_images/cr_dynamic_report_studio.png" style="width:100%; height:200px; object-fit:contain">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <br/>
+                        <center>
+                            <a class="btn btn-primary btn-lg mt8" target="_blank" style="color: #FFFFFF !important;" href="https://apps.odoo.com/apps/modules/browse?author=Creyox Technologies">
+                                <i class="fa fa-list"></i> Explore Our Other Apps
+                            </a>
+                        </center>
+                        <br/>
+                        <center>
+                            <div style="border: 1px solid black; width:50%;"></div>
+                        </center>
+                    </div>
+
+                    <!-- Our Services -->
+                    <div class="row mb-5">
+                        <div class="col-12 col-md-12 text-center text-md-left" style="margin-top: 40px;">
+                            <center>
+                                <h2 style="color: #000099;">
+                                    <i class="fa fa-handshake-o" style="color: #B87333;"></i> Our Services <i class="fa fa-handshake-o" style="color: #B87333;"></i>
+                                </h2>
+                            </center>
+                        </div>
+                    </div>
+                    <div class="container" style="width:100%; height:100%;">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3" style="background-color:#99b3ff; border:2px solid #000099; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-cloud-upload" style="color:#000099;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#000099; font-weight:bold;">Odoo <br/> Implementation</p>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3" style="background-color:#99ff99; border:2px solid #006600; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-gear" style="color:#006600;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#006600; font-weight:bold;">Odoo <br/> Customization</p>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3" style="background-color:#ffccff; border:2px solid #b300b3; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-magic" style="color:#b300b3;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#b300b3; font-weight:bold;">AI Powered <br/> Odoo Solutions</p>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3" style="background-color:#ff9980; border:2px solid #b32400; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-exchange" style="color:#b32400;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#b32400; font-weight:bold;">Odoo Data & <br/> Module Migration</p>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3" style="background-color:#ffeb99; border:2px solid #b38f00; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-link" style="color:#b38f00;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#b38f00; font-weight:bold;">Third Party <br/> App Integration</p>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3" style="background-color:#c2d6ff; border:2px solid #0047b3; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-lightbulb-o" style="color:#0047b3;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#0047b3; font-weight:bold;">Odoo Artificial <br/> Intelligence Services</p>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3" style="background-color:#b3e6ff; border:2px solid #006699; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-mobile" style="color:#006699;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#006699; font-weight:bold;">Mobile App <br/> Development</p>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3" style="background-color:#99ffcf; border:2px solid #00796b; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-users" style="color:#00796b;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#00796b; font-weight:bold;">Support & <br/> Maintenance</p>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="box p-4 shadow rounded mb-3" style="background-color:#d9ffb3; border:2px solid #4d9900; border-radius:0.25rem!important;">
+                                    <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                        <div class="icon_img mb-2">
+                                            <h3><i class="fa fa-graduation-cap" style="color:#4d9900;"></i></h3>
+                                        </div>
+                                        <p class="mb-0" style="font-size:18px; color:#4d9900; font-weight:bold;">Odoo Training <br/> & Guidance</p>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="height: 60px;"></div>
+                </div>
+            </div>
+
+            <!-- ============================= -->
+            <!--         TAB 3 : FAQ           -->
+            <!-- ============================= -->
+            <div class="tab-pane fade px-md-5 px-4" id="pills-faq" role="tabpanel" aria-labelledby="pills-faq-tab">
+                <div class="panel-group mt-5" id="accordion" role="tablist">
+                    
+                    <!-- FAQ 1 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #3b82f6; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #3b82f6; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-search"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">What is Smart Advanced Search Engine?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                It is an advanced search enhancement module for Odoo that adds multi-keyword search modes (Default, OR, AND, NOT), inline column header filtering in list view, search keyword glowing highlights, recent search history memory, and quick filter access popups.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 2 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #10b981; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #10b981; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-filter"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">How do the Search Modes (Default, OR, AND, NOT) work?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Simply pick a mode from the search bar dropdown. <b>Default</b> uses standard Odoo behavior; <b>OR</b> matches records containing any of the typed words; <b>AND</b> requires all words to match; and <b>NOT</b> excludes records containing those words.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 3 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #0ea5e9; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #0ea5e9; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-table"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Which field types are supported in Inline Column Search?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                It supports text fields (Char, Text, Selection, Many2one, Integer, Float), dual date ranges (From / To date inputs), and boolean fields via a clean <code>Yes / No</code> dropdown.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 4 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #6366f1; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #6366f1; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-pencil"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Does search keyword highlighting work in Kanban view?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Yes! Search term highlighting automatically highlights matched text across both List view table cells and Kanban view cards with glowing high-contrast background tags.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 5 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #f59e0b; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #f59e0b; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-building"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Is this app compatible with Odoo Community & Enterprise?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Yes, this module works seamlessly with Odoo Enterprise (Odoo.sh & On-Premise) as well as Odoo Community edition.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 6 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #ef4444; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #ef4444; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-globe"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Is this app compatible with Odoo Online (SaaS)?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                No, custom Odoo apps that patch Web Client assets require Odoo.sh, On-Premise, or self-hosted deployment, and are not supported on Odoo Online (SaaS).
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 7 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #8b5cf6; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #8b5cf6; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-envelope"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">How to contact if customization or support is needed?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Please contact our engineering team directly at <strong>support@creyox.com</strong> or raise a ticket on <a href="https://creyox.com/helpdesk" target="_blank">https://creyox.com/helpdesk</a>.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 8 -->
+                    <div class="panel panel-default shadow mb-4 rounded-5" style="border: 2px solid #ec4899; overflow: hidden; background-color: #ffffff;">
+                        <div class="panel-heading d-flex align-items-center p-4" style="background-color: #0f172a;">
+                            <div class="d-flex justify-content-center align-items-center me-4 rounded-5" style="width: 45px; height: 45px; background-color: #ec4899; color: #ffffff; font-size: 20px;">
+                                <i class="fa fa-shopping-cart"></i>
+                            </div>
+                            <h4 class="panel-title mb-0" style="color: #ffffff; font-weight: 800; font-size: 18px;">Do I need to buy all versions separately?</h4>
+                        </div>
+                        <div class="panel-collapse">
+                            <div class="panel-body p-4" style="color: #475569; font-size: 16px; line-height: 1.8; background-color: #f8fafc;">
+                                Yes, app purchases apply to the target Odoo major version.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SIMILAR PICKS + OUR SERVICES (bottom of FAQ tab) -->
+                <div class="pr-5" style="font-size: 1.6rem; font-weight: 600; color: #0b3b52;">
+                    <center>
+                        <h2 style="font-size:35px; color:#000099; margin-bottom:20px; font-weight:700;">Explore similar picks</h2>
+                        <div style="border: 1px solid black; width:30%;"></div>
+                    </center>
+                    <br/>
+
+                    <div class="row">
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_smart_filters" target="_blank">
+                                        <img src="banner_images/cr_smart_filters.png" style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_advanced_website_searchbar" target="_blank">
+                                        <img src="banner_images/cr_advanced_website_searchbar.png" style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_pos_search_product_custom" target="_blank">
+                                        <img src="banner_images/cr_pos_search_product_custom.jpg" style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_column_order_in_list" target="_blank">
+                                        <img src="banner_images/cr_column_order_in_list.png" style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_searchpanel_resize" target="_blank">
+                                        <img src="banner_images/cr_searchpanel_resize.png" style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4" style="margin-top:1rem">
+                            <div class="sh_content" style="text-align:center; border:1px solid #aaa">
+                                <div class="sh_img" style="padding:10px; border-bottom:1px solid #aaa">
+                                    <a href="https://apps.odoo.com/apps/modules/18.0/cr_dynamic_report_studio" target="_blank">
+                                        <img src="banner_images/cr_dynamic_report_studio.png" style="width:100%; height:200px; object-fit:contain">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br/>
+                    <center>
+                        <a class="btn btn-primary btn-lg mt8" target="_blank" style="color: #FFFFFF !important;" href="https://apps.odoo.com/apps/modules/browse?author=Creyox Technologies">
+                            <i class="fa fa-list"></i> Explore Our Other Apps
+                        </a>
+                    </center>
+                    <br/>
+                    <center>
+                        <div style="border: 1px solid black; width:50%;"></div>
+                    </center>
+                </div>
+
+                <!-- Our Services -->
+                <div class="row mb-5">
+                    <div class="col-12 col-md-12 text-center text-md-left" style="margin-top: 40px;">
+                        <center>
+                            <h2 style="color: #000099;">
+                                <i class="fa fa-handshake-o" style="color: #B87333;"></i> Our Services <i class="fa fa-handshake-o" style="color: #B87333;"></i>
+                            </h2>
+                        </center>
+                    </div>
+                </div>
+                <div class="container" style="width:100%; height:100%;">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3" style="background-color:#99b3ff; border:2px solid #000099; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2"><h3><i class="fa fa-cloud-upload" style="color:#000099;"></i></h3></div>
+                                    <p class="mb-0" style="font-size:18px; color:#000099; font-weight:bold;">Odoo <br/> Implementation</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3" style="background-color:#99ff99; border:2px solid #006600; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2"><h3><i class="fa fa-gear" style="color:#006600;"></i></h3></div>
+                                    <p class="mb-0" style="font-size:18px; color:#006600; font-weight:bold;">Odoo <br/> Customization</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3" style="background-color:#ffccff; border:2px solid #b300b3; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2"><h3><i class="fa fa-magic" style="color:#b300b3;"></i></h3></div>
+                                    <p class="mb-0" style="font-size:18px; color:#b300b3; font-weight:bold;">AI Powered <br/> Odoo Solutions</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3" style="background-color:#ff9980; border:2px solid #b32400; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2"><h3><i class="fa fa-exchange" style="color:#b32400;"></i></h3></div>
+                                    <p class="mb-0" style="font-size:18px; color:#b32400; font-weight:bold;">Odoo Data & <br/> Module Migration</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3" style="background-color:#ffeb99; border:2px solid #b38f00; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2"><h3><i class="fa fa-link" style="color:#b38f00;"></i></h3></div>
+                                    <p class="mb-0" style="font-size:18px; color:#b38f00; font-weight:bold;">Third Party <br/> App Integration</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3" style="background-color:#c2d6ff; border:2px solid #0047b3; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2"><h3><i class="fa fa-lightbulb-o" style="color:#0047b3;"></i></h3></div>
+                                    <p class="mb-0" style="font-size:18px; color:#0047b3; font-weight:bold;">Odoo Artificial <br/> Intelligence Services</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3" style="background-color:#b3e6ff; border:2px solid #006699; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2"><h3><i class="fa fa-mobile" style="color:#006699;"></i></h3></div>
+                                    <p class="mb-0" style="font-size:18px; color:#006699; font-weight:bold;">Mobile App <br/> Development</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3" style="background-color:#99ffcf; border:2px solid #00796b; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2"><h3><i class="fa fa-users" style="color:#00796b;"></i></h3></div>
+                                    <p class="mb-0" style="font-size:18px; color:#00796b; font-weight:bold;">Support & <br/> Maintenance</p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="box p-4 shadow rounded mb-3" style="background-color:#d9ffb3; border:2px solid #4d9900; border-radius:0.25rem!important;">
+                                <a href="mailto:support@creyox.com" style="text-decoration:none;">
+                                    <div class="icon_img mb-2"><h3><i class="fa fa-graduation-cap" style="color:#4d9900;"></i></h3></div>
+                                    <p class="mb-0" style="font-size:18px; color:#4d9900; font-weight:bold;">Odoo Training <br/> & Guidance</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 60px;"></div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+</body>
+</html>

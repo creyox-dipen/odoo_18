@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="web.SearchBar" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_searchview')]" position="before">
+            <div class="o_advance_search_mode_wrapper">
+                <!-- Search Mode Dropdown Selector -->
+                <select class="o_advance_search_mode_select"
+                        t-att-value="currentSearchMode"
+                        t-on-change="onSearchModeChange"
+                        title="Select Search Mode (Default / OR / AND / NOT)">
+                    <option value="default">Default</option>
+                    <option value="or">OR</option>
+                    <option value="and">AND</option>
+                    <option value="not">NOT</option>
+                </select>
+
+                <!-- Button 1: Recent Searches History -->
+                <button class="o_recent_search_toggle"
+                        t-on-click="toggleHistoryDropdown"
+                        title="Recent Searches History">
+                    <i class="fa fa-history"/>
+                </button>
+
+                <!-- Dropdown 1: Recent Searches Popup -->
+                <div t-if="state.showHistoryDropdown" class="o_recent_search_dropdown">
+                    <div class="o_recent_search_header">
+                        Recent Searches
+                    </div>
+                    <t t-if="recentSearchItems.length">
+                        <t t-foreach="recentSearchItems" t-as="item" t-key="item.id">
+                            <div class="o_recent_search_item" t-on-click="() => this.onSelectHistoryItem(item)">
+                                <span t-attf-class="o_history_badge o_history_badge_{{item.mode}}">
+                                    <t t-esc="item.mode"/>
+                                </span>
+                                <span class="o_recent_search_text" t-esc="item.query"/>
+                                <span class="o_recent_search_delete" title="Remove" t-on-click.stop="(ev) => this.onDeleteHistoryItem(ev, item)">
+                                    <i class="fa fa-times"/>
+                                </span>
+                            </div>
+                        </t>
+                        <div class="o_recent_search_footer">
+                            <button class="o_clear_history_btn" t-on-click="(ev) => this.onClearHistory(ev)">
+                                Clear History
+                            </button>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="o_recent_search_item text-muted" style="pointer-events: none;">
+                            No recent searches found.
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Button 2: Saved Custom Filters -->
+                <button class="o_recent_search_toggle o_saved_filter_toggle"
+                        t-on-click="toggleSavedFiltersDropdown"
+                        title="Saved Custom Filters">
+                    <i class="fa fa-filter"/>
+                </button>
+
+                <!-- Dropdown 2: Saved Custom Filters Popup -->
+                <div t-if="state.showSavedFiltersDropdown" class="o_recent_search_dropdown o_saved_filter_dropdown">
+                    <div class="o_recent_search_header">
+                        Saved Custom Filters
+                    </div>
+                    <t t-if="savedFilterItems.length">
+                        <t t-foreach="savedFilterItems" t-as="item" t-key="item.id">
+                            <div class="o_recent_search_item" t-on-click="() => this.onSelectSavedFilter(item)">
+                                <span t-attf-class="o_history_badge o_history_badge_{{item.mode || 'default'}}">
+                                    <t t-esc="item.mode || 'FILTER'"/>
+                                </span>
+                                <t t-if="state.editingFilterId === item.id">
+                                    <input class="o_rename_filter_input"
+                                           type="text"
+                                           t-att-value="item.name"
+                                           t-on-click.stop=""
+                                           t-on-keydown="(ev) => this.onKeydownRenameFilter(ev, item)"
+                                           t-on-blur="(ev) => this.onSaveRenameFilter(ev, item)"/>
+                                    <span class="o_recent_search_action o_recent_search_save_edit" title="Save Label" t-on-click.stop="(ev) => this.onSaveRenameFilter(ev, item)">
+                                        <i class="fa fa-check"/>
+                                    </span>
+                                </t>
+                                <t t-else="">
+                                    <span class="o_recent_search_text" t-esc="item.name" t-att-title="item.name"/>
+                                    <div class="o_recent_search_actions">
+                                        <span class="o_recent_search_action o_recent_search_edit" title="Rename Filter Label" t-on-click.stop="(ev) => this.onStartRenameFilter(ev, item)">
+                                            <i class="fa fa-pencil"/>
+                                        </span>
+                                        <span class="o_recent_search_action o_recent_search_delete" title="Remove" t-on-click.stop="(ev) => this.onDeleteSavedFilter(ev, item)">
+                                            <i class="fa fa-times"/>
+                                        </span>
+                                    </div>
+                                </t>
+                            </div>
+                        </t>
+                        <div class="o_recent_search_footer">
+                            <button class="o_clear_history_btn" t-on-click="(ev) => this.onClearSavedFilters(ev)">
+                                Clear Saved Filters
+                            </button>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="o_recent_search_item text-muted" style="pointer-events: none;">
+                            No saved filters found.
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Button 3: Saved Custom Group By -->
+                <button class="o_recent_search_toggle o_saved_groupby_toggle"
+                        t-on-click="toggleSavedGroupByDropdown"
+                        title="Saved Custom Group By">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle;">
+                        <path d="M8 1.5L1.5 4.8L8 8.1L14.5 4.8L8 1.5Z"/>
+                        <path d="M1.5 8L8 11.3L14.5 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M1.5 11.2L8 14.5L14.5 11.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </button>
+
+                <!-- Dropdown 3: Saved Custom Group By Popup -->
+                <div t-if="state.showSavedGroupByDropdown" class="o_recent_search_dropdown o_saved_groupby_dropdown">
+                    <div class="o_recent_search_header">
+                        Saved Custom Group By
+                    </div>
+                    <t t-if="savedGroupByItems.length">
+                        <t t-foreach="savedGroupByItems" t-as="item" t-key="item.id">
+                            <div class="o_recent_search_item" t-on-click="() => this.onSelectSavedGroupBy(item)">
+                                <span class="o_history_badge o_history_badge_and">
+                                    <t t-esc="item.mode || 'GROUP'"/>
+                                </span>
+                                <t t-if="state.editingFilterId === item.id">
+                                    <input class="o_rename_filter_input"
+                                           type="text"
+                                           t-att-value="item.name"
+                                           t-on-click.stop=""
+                                           t-on-keydown="(ev) => this.onKeydownRenameGroupBy(ev, item)"
+                                           t-on-blur="(ev) => this.onSaveRenameGroupBy(ev, item)"/>
+                                    <span class="o_recent_search_action o_recent_search_save_edit" title="Save Label" t-on-click.stop="(ev) => this.onSaveRenameGroupBy(ev, item)">
+                                        <i class="fa fa-check"/>
+                                    </span>
+                                </t>
+                                <t t-else="">
+                                    <span class="o_recent_search_text" t-esc="item.name" t-att-title="item.name"/>
+                                    <div class="o_recent_search_actions">
+                                        <span class="o_recent_search_action o_recent_search_edit" title="Rename Group By Label" t-on-click.stop="(ev) => this.onStartRenameGroupBy(ev, item)">
+                                            <i class="fa fa-pencil"/>
+                                        </span>
+                                        <span class="o_recent_search_action o_recent_search_delete" title="Remove" t-on-click.stop="(ev) => this.onDeleteSavedGroupBy(ev, item)">
+                                            <i class="fa fa-times"/>
+                                        </span>
+                                    </div>
+                                </t>
+                            </div>
+                        </t>
+                        <div class="o_recent_search_footer">
+                            <button class="o_clear_history_btn" t-on-click="(ev) => this.onClearSavedGroupBy(ev)">
+                                Clear Saved Group Bys
+                            </button>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="o_recent_search_item text-muted" style="pointer-events: none;">
+                            No saved group by items found.
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </xpath>
+    </t>
+</templates>
