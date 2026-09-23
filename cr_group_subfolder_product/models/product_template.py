@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Part of Creyox Technologies
+# Part of Creyox Technologies.
 
 from odoo import fields, models, api, Command, _
 from odoo.exceptions import UserError, RedirectWarning
@@ -198,6 +198,20 @@ class ProductTemplate(models.Model):
                     if product.categ_id.folder_structure_ids:
                         product._cr_create_folder_structure(product.categ_id)
 
+        if "default_code" in vals and vals.get("default_code"):
+            for product in self:
+                root_folders = self.env["documents.document"].sudo().search(
+                    [
+                        ("type", "=", "folder"),
+                        ("res_model", "=", "product.template"),
+                        ("res_id", "=", product.id),
+                        ("cr_is_product_root", "=", True),
+                    ]
+                )
+                for root_folder in root_folders:
+                    if root_folder.name != vals["default_code"]:
+                        root_folder.write({"name": vals["default_code"]})
+
         return result
 
     @api.onchange("categ_id")
@@ -359,7 +373,10 @@ class ProductTemplate(models.Model):
             limit=1,
         )
 
-        if not root_folder:
+        if root_folder:
+            if self.default_code and root_folder.name != self.default_code:
+                root_folder.sudo().write({"name": self.default_code})
+        else:
             base_folder = self._cr_get_base_folder()
             root_folder = Document.sudo().create(
                 {

@@ -13,3 +13,7 @@
 18.3(Date: 20th May,2026)
 -------------------------------
 - Move Documents smart button just after the Forcast Button
+
+18.4(Date: 23th September,2026)
+-------------------------------
+- Update product root folder name when Everest PN (default_code) is set or modified

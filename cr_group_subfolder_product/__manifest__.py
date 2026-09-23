@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Part of Creyox Technologies
+# Part of Creyox Technologies.
 {
     "name": "Group Subfolder Per Product",
     "author": "Creyox Technologies",
@@ -10,7 +10,7 @@
     Group Subfolder Per Product
     """,
     "license": "OPL-1",
-    "version": "18.0.0.3",
+    "version": "18.0.0.4",
     "description": """
     Group Subfolder Per Product
     """,
