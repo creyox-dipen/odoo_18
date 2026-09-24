@@ -283,8 +283,11 @@ class ChannableMarketplace(models.Model):
 
         offers = []
         for product in products:
-            # Retrieve quantity available in the context of the marketplace's warehouse
-            stock_qty = product.with_context(warehouse=self.warehouse_id.id).qty_available
+            stock_qty = getattr(
+                product,
+                'x_studio_beschikbare_voorraad_lo',
+                product.with_context(warehouse=self.warehouse_id.id).qty_available
+            )
             channable_product_id = getattr(product, sync_field)
             if not channable_product_id:
                 continue

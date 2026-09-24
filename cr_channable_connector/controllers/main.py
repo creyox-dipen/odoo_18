@@ -37,8 +37,11 @@ class ChannableFeedController(http.Controller):
         base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
         
         for product in products:
-            # Retrieve quantity available in the context of the marketplace's warehouse
-            stock_qty = product.with_context(warehouse=marketplace.warehouse_id.id).qty_available
+            stock_qty = getattr(
+                product,
+                'x_studio_beschikbare_voorraad_lo',
+                product.with_context(warehouse=marketplace.warehouse_id.id).qty_available
+            )
             stock_qty = int(stock_qty) if stock_qty > 0 else 0
             
             # Retrieve identifier mapped to Channable
