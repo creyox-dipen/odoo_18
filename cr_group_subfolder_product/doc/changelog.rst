@@ -17,3 +17,8 @@
 18.4(Date: 23th September,2026)
 -------------------------------
 - Update product root folder name when Everest PN (default_code) is set or modified
+
+18.5(Date: 24th September,2026)
+-------------------------------
+- Fixed folder deletion warning wizard model conflict causing constraint error when deleting folder lines
+- Changed model name from `cr.category.folder.delete.warning` to `documents.document.folder.delete.warning`

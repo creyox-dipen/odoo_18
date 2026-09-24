@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Part of Creyox Technologies
+# Part of Creyox Technologies.
 
 from odoo import fields, models, api, _
 from odoo.exceptions import UserError, RedirectWarning
@@ -171,7 +171,7 @@ class ProductCategory(models.Model):
             return {
                 "name": _("Deletion Information"),
                 "type": "ir.actions.act_window",
-                "res_model": "cr.folder.delete.warning",
+                "res_model": "cr.category.folder.delete.warning",
                 "view_mode": "form",
                 "target": "new",
                 "context": {

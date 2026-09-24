@@ -2,8 +2,8 @@
 <odoo>
 
     <record id="view_cr_folder_delete_warning_form" model="ir.ui.view">
-        <field name="name">cr.folder.delete.warning.form</field>
-        <field name="model">cr.folder.delete.warning</field>
+        <field name="name">cr.category.folder.delete.warning.form</field>
+        <field name="model">cr.category.folder.delete.warning</field>
         <field name="arch" type="xml">
             <form string="Folder Deletion Status">
                 <sheet>
@@ -29,7 +29,7 @@
 
     <record id="action_cr_folder_delete_warning" model="ir.actions.act_window">
         <field name="name">Confirm Folder Deletion</field>
-        <field name="res_model">cr.folder.delete.warning</field>
+        <field name="res_model">cr.category.folder.delete.warning</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>

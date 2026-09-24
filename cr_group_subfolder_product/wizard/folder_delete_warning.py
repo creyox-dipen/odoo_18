@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-# Part of Creyox Technologies
+# Part of Creyox Technologies.
 
 from odoo import fields, models, api, _
 
 
-class CrFolderDeleteWarning(models.TransientModel):
+class CrCategoryFolderDeleteWarning(models.TransientModel):
     """
     Wizard shown when a user tries to delete a folder structure line
     that has existing documents in its related folders on products.
     """
 
-    _name = "cr.folder.delete.warning"
+    _name = "cr.category.folder.delete.warning"
     _description = "Folder Line Delete Warning"
 
     category_id = fields.Many2one("product.category", string="Category", required=True)
