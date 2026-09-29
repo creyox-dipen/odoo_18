@@ -25,3 +25,4 @@
 - Synchronize customer phone and mobile phone numbers from Channable payload (billing, shipping, and customer data) to Odoo partner phone and mobile fields.
 - Fixed Push Product Stock payload size (HTTP 413 Client Error: Request Entity Too Large) by reducing payload batch chunk size.
 - Map product stock quantity to custom Studio field x_studio_beschikbare_voorraad_lo when available on product/template, falling back to warehouse qty_available.
+- Added dedicated 'Channable: Push Product Stock' scheduled action (cron) with a default 15-minute interval and 'Schedule Stock Push' smart button on Marketplace form.

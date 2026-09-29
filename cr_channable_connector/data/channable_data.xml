@@ -23,6 +23,17 @@
             <field name="active">True</field>
         </record>
 
+        <!-- ── Cron: push product stock for all active marketplaces ───────── -->
+        <record id="ir_cron_channable_push_stock" model="ir.cron">
+            <field name="name">Channable: Push Product Stock</field>
+            <field name="model_id" ref="model_channable_marketplace"/>
+            <field name="state">code</field>
+            <field name="code">model.action_push_product_stock_cron()</field>
+            <field name="interval_number">15</field>
+            <field name="interval_type">minutes</field>
+            <field name="active">True</field>
+        </record>
+
         <!-- ── Cron: notify shipped orders to Channable ────────────────────── -->
 <!--        <record id="ir_cron_channable_notify_shipped" model="ir.cron">-->
 <!--            <field name="name">Channable: Notify Shipped Orders</field>-->

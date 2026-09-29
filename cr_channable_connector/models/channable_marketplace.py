@@ -373,6 +373,17 @@ class ChannableMarketplace(models.Model):
             except Exception:
                 _logger.exception("Cron auto-import failed for marketplace '%s'", marketplace.name)
 
+    @api.model
+    def action_push_product_stock_cron(self):
+        """Cron: auto-push product stock for all active marketplaces."""
+        _logger.info("Starting scheduled stock push for active Channable marketplaces.")
+        for marketplace in self.search([('active', '=', True)]):
+            try:
+                _logger.info("Cron stock push starting for marketplace '%s'", marketplace.name)
+                marketplace.action_push_product_stock()
+            except Exception:
+                _logger.exception("Cron stock push failed for marketplace '%s'", marketplace.name)
+
     def action_sync_orders_shipment(self):
         """Sync shipments for all pending orders in this marketplace."""
         self.ensure_one()
@@ -387,11 +398,26 @@ class ChannableMarketplace(models.Model):
             orders.action_channable_notify_shipped()
 
     def action_open_cron(self):
+        """Open the scheduled action (cron) record for order import."""
         self.ensure_one()
         cron = self.env.ref('cr_channable_connector.ir_cron_channable_sync_orders', raise_if_not_found=False)
         if cron:
             return {
                 'name': _('Schedule Automatic Sync'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'ir.cron',
+                'view_mode': 'form',
+                'res_id': cron.id,
+            }
+        return False
+
+    def action_open_push_stock_cron(self):
+        """Open the scheduled action (cron) record for pushing product stock."""
+        self.ensure_one()
+        cron = self.env.ref('cr_channable_connector.ir_cron_channable_push_stock', raise_if_not_found=False)
+        if cron:
+            return {
+                'name': _('Schedule Stock Push'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'ir.cron',
                 'view_mode': 'form',
